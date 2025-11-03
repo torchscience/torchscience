@@ -1,0 +1,11 @@
+*.egg
+*.egg-info/
+*.py[cod]
+*.so
+*~
+.idea/
+.venv/
+__pycache__/
+build/
+dist/
+venv/
