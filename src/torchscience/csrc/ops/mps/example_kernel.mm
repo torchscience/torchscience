@@ -1,148 +1,178 @@
 #include <ATen/ATen.h>
+
+// Suppress availability warnings for MPS APIs
+// The MPS backend requires macOS 12.0+ at runtime
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+
 #include <ATen/mps/MPSProfiler.h>
 #include <ATen/native/mps/OperationUtils.h>
-#include "mps_kernels.h"
 
-namespace vision {
+namespace science {
 namespace ops {
 
 namespace {
 
-at::Tensor deform_conv2d_forward_kernel(
-    const at::Tensor& input,
-    const at::Tensor& weight,
-    const at::Tensor& offset,
-    const at::Tensor& mask,
-    const at::Tensor& bias,
-    int64_t stride_h,
-    int64_t stride_w,
-    int64_t pad_h,
-    int64_t pad_w,
-    int64_t dilation_h,
-    int64_t dilation_w,
-    int64_t n_weight_grps,
-    int64_t n_offset_grps,
-    bool use_mask) {
-  using namespace at::native::mps;
-  at::Tensor input_c = input.contiguous();
-  at::Tensor weight_c = weight.contiguous();
-  at::Tensor offset_c = offset.contiguous();
-  at::Tensor mask_c = mask.contiguous();
-  at::Tensor bias_c = bias.contiguous();
+// Embedded Metal shader library
+static at::native::mps::MetalShaderLibrary lib(R"SCIENCE_METAL(
 
-  TORCH_CHECK(input_c.ndimension() == 4, "Input tensor must be 4D");
-  TORCH_CHECK(weight_c.ndimension() == 4, "Weight tensor must be 4D");
-  TORCH_CHECK(offset_c.ndimension() == 4, "Offset tensor must be 4D");
-  TORCH_CHECK(!use_mask || mask_c.ndimension() == 4, "Mask tensor must be 4D if use_mask is true");
-  TORCH_CHECK(input_c.is_mps(), "input must be a MPS tensor");
-  TORCH_CHECK(weight.is_mps(), "weight must be a MPS tensor");
-  TORCH_CHECK(offset.is_mps(), "offset must be a MPS tensor");
-  TORCH_CHECK(mask.is_mps(), "mask must be a MPS tensor");
-  TORCH_CHECK(bias.is_mps(), "bias must be a MPS tensor");
+#include <metal_stdlib>
+using namespace metal;
 
-  at::DeviceGuard guard(input_c.device());
+// Helper macro for 1D kernel loops
+#define MPS_1D_KERNEL_LOOP(i, n, n_tgs)                 \
+  for (uint i = (tgid.x * tptg.x) + tid2.x; i < (n);   \
+       i += (tptg.x * n_tgs))
 
-  uint32_t batch = input_c.size(0);
-  uint32_t in_channels = input_c.size(1);
-  uint32_t in_h = input_c.size(2);
-  uint32_t in_w = input_c.size(3);
-  uint32_t weight_h = weight_c.size(2);
-  uint32_t weight_w = weight_c.size(3);
-  uint32_t out_channels = weight_c.size(0);
-  uint32_t ker_h = dilation_h * (weight_h - 1) + 1;
-  uint32_t ker_w = dilation_w * (weight_w - 1) + 1;
-  uint32_t out_h = ((in_h + 2 * pad_h - ker_h) / stride_h) + 1;
-  uint32_t out_w = ((in_w + 2 * pad_w - ker_w) / stride_w) + 1;
-  uint32_t pad_h_u = static_cast<uint32_t>(pad_h);
-  uint32_t pad_w_u = static_cast<uint32_t>(pad_w);
-  uint32_t stride_h_u = static_cast<uint32_t>(stride_h);
-  uint32_t stride_w_u = static_cast<uint32_t>(stride_w);
-  uint32_t dilation_h_u = static_cast<uint32_t>(dilation_h);
-  uint32_t dilation_w_u = static_cast<uint32_t>(dilation_w);
-
-  TORCH_CHECK(weight_c.size(1) * n_weight_grps == in_channels,
-    "Input channels (", in_channels,
-    ") must equal weight.size(1) * n_weight_grps (", weight_c.size(1), " * ", n_weight_grps, ")");
-  TORCH_CHECK(weight_c.size(0) % n_weight_grps == 0,
-    "Weight tensor's out channels (", weight_c.size(0),
-    ") must be divisible by n_weight_grps (", n_weight_grps, ")");
-  TORCH_CHECK(offset_c.size(1) == n_offset_grps * 2 * weight_h * weight_w,
-    "Offset tensor shape[1] is invalid: got ", offset_c.size(1),
-    ", expected ", n_offset_grps * 2 * weight_h * weight_w);
-  TORCH_CHECK(!use_mask || mask_c.size(1) == n_offset_grps * weight_h * weight_w,
-    "Mask tensor shape[1] is invalid: got ", mask_c.size(1),
-    ", expected ", n_offset_grps * weight_h * weight_w);
-  TORCH_CHECK(in_channels % n_offset_grps == 0,
-    "Input tensor channels (", in_channels,
-    ") must be divisible by n_offset_grps (", n_offset_grps, ")");
-  TORCH_CHECK(offset_c.size(0) == batch,
-    "Offset tensor batch size (", offset_c.size(0),
-    ") must match input tensor batch size (", batch, ")");
-  TORCH_CHECK(offset_c.size(2) == out_h && offset_c.size(3) == out_w,
-    "Offset tensor spatial dimensions (", offset_c.size(2), ", ", offset_c.size(3),
-    ") must match calculated output dimensions (", out_h, ", ", out_w, ")");
-  TORCH_CHECK(!use_mask || mask_c.size(0) == batch,
-    "Mask tensor batch size (", mask_c.size(0),
-    ") must match input tensor batch size (", batch, ")");
-  TORCH_CHECK(!use_mask || (mask_c.size(2) == out_h && mask_c.size(3) == out_w),
-    "Mask tensor spatial dimensions (", mask_c.size(2), ", ", mask_c.size(3),
-    ") must match calculated output dimensions (", out_h, ", ", out_w, ")");
-  TORCH_CHECK(out_h > 0 && out_w > 0,
-    "Calculated output size too small - out_h: ", out_h, " out_w: ", out_w);
-
-  auto columns = at::empty({in_channels * weight_h * weight_w, batch * out_h * out_w}, input_c.options());
-
-  id<MTLBuffer> inputBuffer  = getMTLBufferStorage(input_c);
-  id<MTLBuffer> offsetBuffer = getMTLBufferStorage(offset_c);
-  id<MTLBuffer> maskBuffer   = use_mask ? getMTLBufferStorage(mask_c) : nil;
-  id<MTLBuffer> outputBuffer = getMTLBufferStorage(columns);
-
-  id<MTLDevice> device = MPSDevice::getInstance()->device();
-  std::string kernelName = "deformable_im2col_" + scalarToMetalTypeString(input.scalar_type());
-  id<MTLComputePipelineState> pipelineState = mps::visionPipelineState(device, kernelName);
-
-  int num_kernels = in_channels * out_h * out_w * batch;
-  NSUInteger threadsPerThreadgroup = pipelineState.maxTotalThreadsPerThreadgroup;
-  NSUInteger threadgroups = (num_kernels + threadsPerThreadgroup - 1) / threadsPerThreadgroup;
-  MTLSize threadGroupSize = MTLSizeMake(threadsPerThreadgroup, 1, 1);
-  MTLSize threadgroupsPerGrid = MTLSizeMake(threadgroups, 1, 1);
-
-  MPSStream* mpsStream = getCurrentMPSStream();
-  dispatch_sync(mpsStream->queue(), ^{
-    @autoreleasepool {
-      id<MTLComputeCommandEncoder> computeEncoder = mpsStream->commandEncoder();
-      [computeEncoder setComputePipelineState:pipelineState];
-      at::native::mps::mtl_setArgs(computeEncoder, inputBuffer, offsetBuffer, maskBuffer,
-                                   std::array<uint32_t, 2>{in_h, in_w},
-                                   std::array<uint32_t, 2>{weight_h, weight_w},
-                                   std::array<uint32_t, 2>{pad_h_u, pad_w_u},
-                                   std::array<uint32_t, 2>{stride_h_u, stride_w_u},
-                                   std::array<uint32_t, 2>{dilation_h_u, dilation_w_u},
-                                   batch, in_channels, n_offset_grps,
-                                   std::array<uint32_t, 2>{out_h, out_w},
-                                   use_mask, outputBuffer);
-      [computeEncoder dispatchThreadgroups:threadgroupsPerGrid threadsPerThreadgroup:threadGroupSize];
+// Example kernel - adds scalar to all elements
+template<typename T>
+kernel void example_kernel(
+    constant T*       input     [[buffer(0)]],
+    device T*         output    [[buffer(1)]],
+    constant int64_t& numel     [[buffer(2)]],
+    constant T&       x         [[buffer(3)]],
+    uint3             tgid      [[threadgroup_position_in_grid]],
+    uint3             tptg      [[threads_per_threadgroup]],
+    uint3             tid2      [[thread_position_in_threadgroup]]
+) {
+    MPS_1D_KERNEL_LOOP(index, numel, 1) {
+        // Add scalar to each element: output = input + x
+        output[index] = input[index] + x;
     }
-  });
-  int in_channels_per_grp = in_channels / n_weight_grps;
-  int out_channels_per_grp = out_channels / n_weight_grps;
-  auto weight_grouped = weight_c.view({n_weight_grps, out_channels_per_grp, in_channels_per_grp, weight_h, weight_w});
-  auto columns_grouped = columns.view({n_weight_grps,
-                                      (in_channels * weight_h * weight_w) / n_weight_grps,
-                                      batch * out_h * out_w});
-  auto weight_reshaped = weight_grouped.reshape({n_weight_grps, out_channels_per_grp, -1});
-  auto out_grouped = at::bmm(weight_reshaped, columns_grouped);
-  auto out = out_grouped.reshape({n_weight_grps * out_channels_per_grp, batch, out_h, out_w})
-              .transpose(0, 1);
-  return out + bias_c.view({1, out_channels, 1, 1});
+}
+
+// Register kernel variants for different data types
+#define REGISTER_EXAMPLE_OP(DTYPE)                              \
+template                                                        \
+[[host_name("example_" #DTYPE)]]                                \
+kernel void example_kernel<DTYPE>(                              \
+    constant DTYPE*       input     [[buffer(0)]],              \
+    device DTYPE*         output    [[buffer(1)]],              \
+    constant int64_t&     numel     [[buffer(2)]],              \
+    constant DTYPE&       x         [[buffer(3)]],              \
+    uint3                 tgid      [[threadgroup_position_in_grid]], \
+    uint3                 tptg      [[threads_per_threadgroup]], \
+    uint3                 tid2      [[thread_position_in_threadgroup]]);
+
+// Register for common types
+REGISTER_EXAMPLE_OP(float);
+REGISTER_EXAMPLE_OP(half);
+REGISTER_EXAMPLE_OP(int);
+REGISTER_EXAMPLE_OP(long);
+
+)SCIENCE_METAL");
+
+// Helper function to get pipeline state for a kernel
+static id<MTLComputePipelineState> sciencePipelineState(
+    id<MTLDevice> device,
+    const std::string& kernel) {
+  return lib.getPipelineStateForFunc(kernel);
+}
+
+
+at::Tensor example_forward_kernel(
+    const at::Tensor& input,
+    const at::Scalar& x
+) {
+    using namespace at::native::mps;
+
+    TORCH_CHECK(input.device().is_mps(), "input must be a MPS tensor");
+
+    // Make input contiguous for Metal buffer access
+    at::Tensor input_c = input.contiguous();
+
+    at::DeviceGuard guard(input_c.device());
+
+    // Create output tensor
+    auto output = at::empty_like(input_c);
+
+    int64_t numel = input_c.numel();
+
+    if (numel == 0) {
+        return output;
+    }
+
+    // Get Metal buffers
+    id<MTLBuffer> inputBuffer = getMTLBufferStorage(input_c);
+    id<MTLBuffer> outputBuffer = getMTLBufferStorage(output);
+
+    // Get Metal device and kernel
+    id<MTLDevice> device = MPSDevice::getInstance()->device();
+
+    // Get kernel name based on dtype
+    std::string kernelName = "example_" + scalarToMetalTypeString(input.scalar_type());
+
+    // Get compiled pipeline state
+    id<MTLComputePipelineState> pipelineState = sciencePipelineState(device, kernelName);
+
+    if (pipelineState == nil) {
+        TORCH_CHECK(false, "Failed to get pipeline state for kernel: ", kernelName);
+    }
+
+    // Calculate threadgroup configuration
+    NSUInteger threadsPerThreadgroup = pipelineState.maxTotalThreadsPerThreadgroup;
+    NSUInteger threadgroups = (numel + threadsPerThreadgroup - 1) / threadsPerThreadgroup;
+
+    MTLSize threadGroupSize = MTLSizeMake(threadsPerThreadgroup, 1, 1);
+    MTLSize threadgroupsPerGrid = MTLSizeMake(threadgroups, 1, 1);
+
+    // Get MPS stream and execute
+    MPSStream* mpsStream = getCurrentMPSStream();
+
+    dispatch_sync(mpsStream->queue(), ^{
+        @autoreleasepool {
+            id<MTLComputeCommandEncoder> computeEncoder = mpsStream->commandEncoder();
+
+            [computeEncoder setComputePipelineState:pipelineState];
+
+            // Set all arguments - need to convert scalar to the right type for Metal
+            AT_DISPATCH_ALL_TYPES_AND2(
+                at::kHalf, at::kBFloat16,
+                input.scalar_type(),
+                "example_mps_setargs",
+                [&] {
+                    scalar_t x_val = x.to<scalar_t>();
+                    mtl_setArgs(computeEncoder, inputBuffer, outputBuffer, numel, x_val);
+                }
+            );
+
+            [computeEncoder dispatchThreadgroups:threadgroupsPerGrid
+                           threadsPerThreadgroup:threadGroupSize];
+        }
+    });
+
+    return output;
+}
+
+at::Tensor example_backward_kernel(
+    const at::Tensor& grad_out,
+    const at::Tensor& input,
+    const at::Scalar& x
+) {
+    // Unused parameters
+    (void)input;
+    (void)x;
+
+    // Gradient of (input + x) with respect to input is 1
+    // So gradient just passes through unchanged
+    return grad_out.contiguous();
 }
 
 } // namespace
 
-TORCH_LIBRARY_IMPL(torchvision, MPS, m) {
-  m.impl(
-      TORCH_SELECTIVE_NAME("torchvision::deform_conv2d"),
-      TORCH_FN(deform_conv2d_forward_kernel));
+TORCH_LIBRARY_IMPL(torchscience, MPS, module) {
+    module.impl(
+        TORCH_SELECTIVE_NAME("torchscience::example"),
+        TORCH_FN(example_forward_kernel)
+    );
+
+    module.impl(
+        TORCH_SELECTIVE_NAME("torchscience::_example_backward"),
+        TORCH_FN(example_backward_kernel)
+    );
 }
+
 } // namespace ops
-} // namespace vision
+} // namespace science
+
+#pragma clang diagnostic pop
