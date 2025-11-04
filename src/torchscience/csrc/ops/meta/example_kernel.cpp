@@ -1,7 +1,7 @@
+#include "../example.h"
+
 #include <ATen/ATen.h>
 #include <torch/library.h>
-
-#include "../example.h"
 
 namespace science {
 namespace ops {
@@ -16,11 +16,8 @@ at::Tensor example_forward_meta(const at::Tensor& input, const at::Scalar& x) {
 }
 
 // Meta kernel for example backward
-at::Tensor example_backward_meta(
-    const at::Tensor& grad_out,
-    const at::Tensor& input,
-    const at::Scalar& x
-) {
+at::Tensor example_backward_meta(const at::Tensor& grad_out, const at::Tensor& input,
+                                 const at::Scalar& x) {
     // The gradient has the same shape as grad_out (which has the same shape as input)
     return at::empty_like(grad_out);
 }

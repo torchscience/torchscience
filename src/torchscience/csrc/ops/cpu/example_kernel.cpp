@@ -6,10 +6,7 @@ namespace ops {
 namespace {
 
 // Forward pass: adds scalar x to all elements of input
-at::Tensor example_forward_kernel(
-    const at::Tensor& input,
-    const at::Scalar& x
-) {
+at::Tensor example_forward_kernel(const at::Tensor& input, const at::Scalar& x) {
     TORCH_CHECK(input.device().is_cpu(), "input must be a CPU tensor");
 
     // Add scalar to all elements: output = input + x
@@ -17,11 +14,8 @@ at::Tensor example_forward_kernel(
 }
 
 // Backward pass: gradient with respect to input
-at::Tensor example_backward_kernel(
-    const at::Tensor& grad_out,
-    const at::Tensor& input,
-    const at::Scalar& x
-) {
+at::Tensor example_backward_kernel(const at::Tensor& grad_out, const at::Tensor& input,
+                                   const at::Scalar& x) {
     // Unused parameters
     (void)input;
     (void)x;
@@ -31,19 +25,14 @@ at::Tensor example_backward_kernel(
     return grad_out.contiguous();
 }
 
-} // namespace
+}  // namespace
 
 TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
-    module.impl(
-        TORCH_SELECTIVE_NAME("torchscience::example"),
-        TORCH_FN(example_forward_kernel)
-    );
+    module.impl(TORCH_SELECTIVE_NAME("torchscience::example"), TORCH_FN(example_forward_kernel));
 
-    module.impl(
-        TORCH_SELECTIVE_NAME("torchscience::_example_backward"),
-        TORCH_FN(example_backward_kernel)
-    );
+    module.impl(TORCH_SELECTIVE_NAME("torchscience::_example_backward"),
+                TORCH_FN(example_backward_kernel));
 }
 
-} // namespace ops
-} // namespace science
+}  // namespace ops
+}  // namespace science

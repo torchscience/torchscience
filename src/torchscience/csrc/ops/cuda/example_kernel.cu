@@ -10,12 +10,8 @@ namespace {
 // CUDA kernel for the example operator (adds scalar to all elements)
 // This demonstrates a simple element-wise GPU kernel
 template <typename scalar_t>
-__global__ void example_cuda_kernel(
-    const scalar_t* __restrict__ input,
-    scalar_t* __restrict__ output,
-    int64_t numel,
-    scalar_t x
-) {
+__global__ void example_cuda_kernel(const scalar_t* __restrict__ input,
+                                    scalar_t* __restrict__ output, int64_t numel, scalar_t x) {
     // Calculate global thread ID
     int64_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -33,14 +29,12 @@ inline int get_num_threads() {
 
 inline int get_num_blocks(int64_t numel, int threads_per_block) {
     const int max_blocks = 65535;
-    return std::min(max_blocks, static_cast<int>((numel + threads_per_block - 1) / threads_per_block));
+    return std::min(max_blocks,
+                    static_cast<int>((numel + threads_per_block - 1) / threads_per_block));
 }
 
 // Forward pass: adds scalar x to all elements with actual CUDA kernel execution
-at::Tensor example_forward_kernel(
-    const at::Tensor& input,
-    const at::Scalar& x
-) {
+at::Tensor example_forward_kernel(const at::Tensor& input, const at::Scalar& x) {
     TORCH_CHECK(input.device().is_cuda(), "input must be a CUDA tensor");
 
     at::cuda::CUDAGuard device_guard(input.device());
@@ -60,18 +54,10 @@ at::Tensor example_forward_kernel(
 
     // Dispatch kernel based on tensor dtype
     AT_DISPATCH_ALL_TYPES_AND2(
-        at::kHalf, at::kBFloat16,
-        input.scalar_type(),
-        "example_cuda_kernel",
-        [&] {
+        at::kHalf, at::kBFloat16, input.scalar_type(), "example_cuda_kernel", [&] {
             example_cuda_kernel<scalar_t><<<blocks, threads, 0, at::cuda::getCurrentCUDAStream()>>>(
-                input.data_ptr<scalar_t>(),
-                output.data_ptr<scalar_t>(),
-                numel,
-                x.to<scalar_t>()
-            );
-        }
-    );
+                input.data_ptr<scalar_t>(), output.data_ptr<scalar_t>(), numel, x.to<scalar_t>());
+        });
 
     // Check for CUDA errors
     C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -80,11 +66,8 @@ at::Tensor example_forward_kernel(
 }
 
 // Backward pass: gradient with respect to input
-at::Tensor example_backward_kernel(
-    const at::Tensor& grad_out,
-    const at::Tensor& input,
-    const at::Scalar& x
-) {
+at::Tensor example_backward_kernel(const at::Tensor& grad_out, const at::Tensor& input,
+                                   const at::Scalar& x) {
     // Unused parameters
     (void)input;
     (void)x;
@@ -96,19 +79,14 @@ at::Tensor example_backward_kernel(
     return grad_out.contiguous();
 }
 
-} // namespace
+}  // namespace
 
 TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
-    module.impl(
-        TORCH_SELECTIVE_NAME("torchscience::example"),
-        TORCH_FN(example_forward_kernel)
-    );
+    module.impl(TORCH_SELECTIVE_NAME("torchscience::example"), TORCH_FN(example_forward_kernel));
 
-    module.impl(
-        TORCH_SELECTIVE_NAME("torchscience::_example_backward"),
-        TORCH_FN(example_backward_kernel)
-    );
+    module.impl(TORCH_SELECTIVE_NAME("torchscience::_example_backward"),
+                TORCH_FN(example_backward_kernel));
 }
 
-} // namespace ops
-} // namespace science
+}  // namespace ops
+}  // namespace science

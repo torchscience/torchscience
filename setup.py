@@ -3,25 +3,21 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import os
-import torch
 import glob
+import os
 
+import torch
 from setuptools import find_packages, setup
-
 from torch.utils.cpp_extension import (
+    CUDA_HOME,
+    BuildExtension,
     CppExtension,
     CUDAExtension,
-    BuildExtension,
-    CUDA_HOME,
 )
 
 library_name = "torchscience"
 
-if torch.__version__ >= "2.6.0":
-    py_limited_api = True
-else:
-    py_limited_api = False
+py_limited_api = torch.__version__ >= "2.6.0"
 
 
 def get_extensions():
@@ -37,7 +33,8 @@ def get_extensions():
     sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
 
     extra_link_args = [
-        "-isysroot", sdk_path,
+        "-isysroot",
+        sdk_path,
         "-L/opt/homebrew/opt/llvm/lib/c++",
         "-Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++",
     ]
@@ -46,7 +43,8 @@ def get_extensions():
             "-O3" if not debug_mode else "-O0",
             "-fdiagnostics-color=always",
             "-DPy_LIMITED_API=0x03090000",  # min CPython version 3.9
-            "-isysroot", sdk_path,
+            "-isysroot",
+            sdk_path,
         ],
         "nvcc": [
             "-O3" if not debug_mode else "-O0",
@@ -96,6 +94,11 @@ def get_extensions():
     return ext_modules
 
 
+def read_readme():
+    with open("README.md") as f:
+        return f.read()
+
+
 setup(
     name=library_name,
     version="0.0.1",
@@ -104,7 +107,7 @@ setup(
     ext_modules=get_extensions(),
     install_requires=["torch"],
     description="Example of PyTorch C++ and CUDA extensions",
-    long_description=open("README.md").read(),
+    long_description=read_readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/0x00b1/torch-science",
     cmdclass={"build_ext": BuildExtension},

@@ -1,0 +1,75 @@
+# Pre-commit hooks for torch-science
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Ruff - Fast Python linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix]
+        types_or: [python, pyi]
+      # Run the formatter
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  # Clang-format for C++/CUDA files
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v19.1.6
+    hooks:
+      - id: clang-format
+        types_or: [c++, c, cuda]
+        # Format C++ and CUDA files (.mm files need special Objective-C++ handling)
+        files: \.(cpp|hpp|h|c|cu|cuh)$
+        exclude: \.mm$
+
+  # General file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Prevent large files from being committed
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      # Check for files that would conflict in case-insensitive filesystems
+      - id: check-case-conflict
+      # Check for merge conflict markers
+      - id: check-merge-conflict
+      # Check YAML syntax
+      - id: check-yaml
+        exclude: ^(conda/|\.github/)
+      # Check TOML syntax
+      - id: check-toml
+      # Ensure files end with a newline
+      - id: end-of-file-fixer
+        exclude: \.(svg|ipynb)$
+      # Remove trailing whitespace
+      - id: trailing-whitespace
+        exclude: \.(svg|ipynb)$
+      # Check for debugger imports and breakpoints
+      - id: debug-statements
+
+  # Additional Python checks
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      # Enforce type annotations
+      - id: python-check-blanket-type-ignore
+      # Prevent deprecated APIs
+      - id: python-check-mock-methods
+      # Ensure proper use of typing.TYPE_CHECKING
+      - id: python-use-type-annotations
+
+# Configuration
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false

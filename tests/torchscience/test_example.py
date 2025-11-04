@@ -1,9 +1,9 @@
 import pytest
 import torch
-import torchscience
-from torchscience import ops
-from torch.library import opcheck
 from torch.autograd import gradcheck, gradgradcheck
+from torch.library import opcheck
+
+from torchscience import ops
 
 
 class TestExampleOperator:
@@ -67,13 +67,13 @@ class TestExampleOperator:
     def test_different_shapes(self, device):
         """Test with various tensor shapes."""
         shapes = [
-            (1,),           # 1D
-            (10,),          # 1D larger
-            (5, 5),         # 2D square
-            (3, 7),         # 2D rectangular
-            (2, 3, 4),      # 3D
-            (2, 3, 4, 5),   # 4D
-            (1, 2, 3, 4, 5), # 5D
+            (1,),  # 1D
+            (10,),  # 1D larger
+            (5, 5),  # 2D square
+            (3, 7),  # 2D rectangular
+            (2, 3, 4),  # 3D
+            (2, 3, 4, 5),  # 4D
+            (1, 2, 3, 4, 5),  # 5D
         ]
 
         scalar_val = 1.5
@@ -155,17 +155,17 @@ class TestExampleOperator:
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_cuda(self):
         """Test CUDA backend."""
-        x = torch.randn(100, 100, device='cuda')
+        x = torch.randn(100, 100, device="cuda")
         scalar_val = 2.5
         result = ops.example(x, scalar_val)
 
-        assert result.device.type == 'cuda'
+        assert result.device.type == "cuda"
         assert torch.allclose(result.cpu(), (x + scalar_val).cpu())
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_cuda_half_precision(self):
         """Test CUDA backend with half precision."""
-        x = torch.randn(100, 100, dtype=torch.float16, device='cuda')
+        x = torch.randn(100, 100, dtype=torch.float16, device="cuda")
         scalar_val = 1.5
         result = ops.example(x, scalar_val)
 
@@ -175,11 +175,11 @@ class TestExampleOperator:
     @pytest.mark.skipif(not torch.backends.mps.is_available(), reason="MPS not available")
     def test_mps(self):
         """Test MPS backend (Apple Silicon)."""
-        x = torch.randn(100, 100, device='mps')
+        x = torch.randn(100, 100, device="mps")
         scalar_val = 3.0
         result = ops.example(x, scalar_val)
 
-        assert result.device.type == 'mps'
+        assert result.device.type == "mps"
         assert torch.allclose(result.cpu(), (x + scalar_val).cpu())
 
     @pytest.mark.skipif(not torch.backends.mps.is_available(), reason="MPS not available")
@@ -190,9 +190,9 @@ class TestExampleOperator:
         for dtype in dtypes:
             scalar_val = 5
             if dtype in [torch.float32, torch.float16]:
-                x = torch.randn(50, 50, dtype=dtype, device='mps')
+                x = torch.randn(50, 50, dtype=dtype, device="mps")
             else:
-                x = torch.randint(0, 100, (50, 50), dtype=dtype, device='mps')
+                x = torch.randint(0, 100, (50, 50), dtype=dtype, device="mps")
 
             result = ops.example(x, scalar_val)
 
@@ -283,10 +283,10 @@ def test_quantized_cpu():
 def test_operator_registration():
     """Test that the operator is properly registered."""
     # Check that the operator exists in the torchscience.ops namespace
-    assert hasattr(ops, 'example')
+    assert hasattr(ops, "example")
 
     # Check that backward operator is registered
-    assert hasattr(ops, '_example_backward')
+    assert hasattr(ops, "_example_backward")
 
     # Test that operator is callable
     x = torch.randn(5, 5)
@@ -319,40 +319,40 @@ class TestExampleOpcheck:
         """
         sample_inputs = [
             # Small tensors with requires_grad for autograd testing
-            (torch.randn(10, requires_grad=True, device='cpu'), 5.0),
-            (torch.randn(10, requires_grad=True, device='cpu'), -2.5),
-
+            (torch.randn(10, requires_grad=True, device="cpu"), 5.0),
+            (torch.randn(10, requires_grad=True, device="cpu"), -2.5),
             # 2D tensors with different shapes
-            (torch.randn(5, 10, requires_grad=True, device='cpu'), 1.0),
-            (torch.randn(100, 100, requires_grad=True, device='cpu'), 3.5),
-
+            (torch.randn(5, 10, requires_grad=True, device="cpu"), 1.0),
+            (torch.randn(100, 100, requires_grad=True, device="cpu"), 3.5),
             # Different dtypes
-            (torch.randn(20, dtype=torch.float64, requires_grad=True, device='cpu'), 2.0),
-            (torch.randn(20, dtype=torch.float32, requires_grad=True, device='cpu'), -1.0),
-
+            (torch.randn(20, dtype=torch.float64, requires_grad=True, device="cpu"), 2.0),
+            (torch.randn(20, dtype=torch.float32, requires_grad=True, device="cpu"), -1.0),
             # Non-contiguous tensors
-            (torch.randn(10, 20, requires_grad=True, device='cpu').t(), 4.0),
-
+            (torch.randn(10, 20, requires_grad=True, device="cpu").t(), 4.0),
             # Higher dimensional tensors
-            (torch.randn(2, 3, 4, 5, requires_grad=True, device='cpu'), 0.5),
+            (torch.randn(2, 3, 4, 5, requires_grad=True, device="cpu"), 0.5),
         ]
 
         # Add CUDA tests if available
         if torch.cuda.is_available():
-            sample_inputs.extend([
-                (torch.randn(10, requires_grad=True, device='cuda'), 5.0),
-                (torch.randn(100, 100, requires_grad=True, device='cuda'), -2.5),
-                (torch.randn(20, dtype=torch.float16, requires_grad=True, device='cuda'), 1.5),
-            ])
+            sample_inputs.extend(
+                [
+                    (torch.randn(10, requires_grad=True, device="cuda"), 5.0),
+                    (torch.randn(100, 100, requires_grad=True, device="cuda"), -2.5),
+                    (torch.randn(20, dtype=torch.float16, requires_grad=True, device="cuda"), 1.5),
+                ]
+            )
 
         # Add MPS tests if available
         # Note: MPS is not yet supported by PyTorch's autograd_registration_check
         if include_mps and torch.backends.mps.is_available():
-            sample_inputs.extend([
-                (torch.randn(10, requires_grad=True, device='mps'), 5.0),
-                (torch.randn(100, 100, requires_grad=True, device='mps'), -2.5),
-                (torch.randn(20, dtype=torch.float16, requires_grad=True, device='mps'), 1.5),
-            ])
+            sample_inputs.extend(
+                [
+                    (torch.randn(10, requires_grad=True, device="mps"), 5.0),
+                    (torch.randn(100, 100, requires_grad=True, device="mps"), -2.5),
+                    (torch.randn(20, dtype=torch.float16, requires_grad=True, device="mps"), 1.5),
+                ]
+            )
 
         return sample_inputs
 
@@ -387,9 +387,7 @@ class TestExampleOpcheck:
         for i, sample_input in enumerate(sample_inputs):
             try:
                 opcheck(
-                    torch.ops.torchscience.example.default,
-                    sample_input,
-                    test_utils="test_schema"
+                    torch.ops.torchscience.example.default, sample_input, test_utils="test_schema"
                 )
             except Exception as e:
                 device = sample_input[0].device
@@ -415,7 +413,7 @@ class TestExampleOpcheck:
                 opcheck(
                     torch.ops.torchscience.example.default,
                     sample_input,
-                    test_utils="test_autograd_registration"
+                    test_utils="test_autograd_registration",
                 )
             except Exception as e:
                 device = sample_input[0].device
@@ -435,7 +433,7 @@ class TestExampleOpcheck:
                 opcheck(
                     torch.ops.torchscience.example.default,
                     sample_input,
-                    test_utils="test_faketensor"
+                    test_utils="test_faketensor",
                 )
             except Exception as e:
                 device = sample_input[0].device
@@ -455,7 +453,7 @@ class TestExampleOpcheck:
                 opcheck(
                     torch.ops.torchscience.example.default,
                     sample_input,
-                    test_utils="test_aot_dispatch_static"
+                    test_utils="test_aot_dispatch_static",
                 )
             except Exception as e:
                 device = sample_input[0].device
@@ -475,7 +473,7 @@ class TestExampleOpcheck:
                 opcheck(
                     torch.ops.torchscience.example.default,
                     sample_input,
-                    test_utils="test_aot_dispatch_dynamic"
+                    test_utils="test_aot_dispatch_dynamic",
                 )
             except Exception as e:
                 device = sample_input[0].device
@@ -501,9 +499,9 @@ class TestExampleOpcheck:
     def test_opcheck_cuda_only(self):
         """Quick opcheck test for CUDA only."""
         cuda_inputs = [
-            (torch.randn(10, requires_grad=True, device='cuda'), 5.0),
-            (torch.randn(100, 100, requires_grad=True, device='cuda'), -2.5),
-            (torch.randn(20, dtype=torch.float16, requires_grad=True, device='cuda'), 1.5),
+            (torch.randn(10, requires_grad=True, device="cuda"), 5.0),
+            (torch.randn(100, 100, requires_grad=True, device="cuda"), -2.5),
+            (torch.randn(20, dtype=torch.float16, requires_grad=True, device="cuda"), 1.5),
         ]
 
         for sample_input in cuda_inputs:
@@ -518,9 +516,9 @@ class TestExampleOpcheck:
         autograd_registration_check doesn't support MPS yet.
         """
         mps_inputs = [
-            (torch.randn(10, requires_grad=True, device='mps'), 5.0),
-            (torch.randn(100, 100, requires_grad=True, device='mps'), -2.5),
-            (torch.randn(20, dtype=torch.float16, requires_grad=True, device='mps'), 1.5),
+            (torch.randn(10, requires_grad=True, device="mps"), 5.0),
+            (torch.randn(100, 100, requires_grad=True, device="mps"), -2.5),
+            (torch.randn(20, dtype=torch.float16, requires_grad=True, device="mps"), 1.5),
         ]
 
         # Run all tests except autograd_registration (which doesn't support MPS)
@@ -533,9 +531,7 @@ class TestExampleOpcheck:
 
         for sample_input in mps_inputs:
             opcheck(
-                torch.ops.torchscience.example.default,
-                sample_input,
-                test_utils=test_utils_for_mps
+                torch.ops.torchscience.example.default, sample_input, test_utils=test_utils_for_mps
             )
 
 
@@ -579,18 +575,18 @@ class TestExampleGradcheck:
         for scalar_val in scalar_values:
             x = torch.randn(3, 3, dtype=torch.float64, requires_grad=True)
 
-            def func(x):
-                return ops.example(x, scalar_val)
+            def func(x, scalar=scalar_val):
+                return ops.example(x, scalar)
 
             assert gradcheck(func, x, eps=1e-6, atol=1e-4)
 
     def test_gradcheck_different_shapes(self):
         """Test gradient correctness with different tensor shapes."""
         shapes = [
-            (5,),           # 1D
-            (3, 4),         # 2D
-            (2, 3, 4),      # 3D
-            (2, 2, 2, 2),   # 4D
+            (5,),  # 1D
+            (3, 4),  # 2D
+            (2, 3, 4),  # 3D
+            (2, 2, 2, 2),  # 4D
         ]
 
         scalar_val = 2.0
@@ -630,7 +626,7 @@ class TestExampleGradcheck:
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_gradcheck_cuda_float64(self):
         """Test gradient correctness on CUDA with float64."""
-        x = torch.randn(5, 5, dtype=torch.float64, device='cuda', requires_grad=True)
+        x = torch.randn(5, 5, dtype=torch.float64, device="cuda", requires_grad=True)
         scalar_val = 2.5
 
         def func(x):
@@ -641,7 +637,7 @@ class TestExampleGradcheck:
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_gradcheck_cuda_float32(self):
         """Test gradient correctness on CUDA with float32."""
-        x = torch.randn(5, 5, dtype=torch.float32, device='cuda', requires_grad=True)
+        x = torch.randn(5, 5, dtype=torch.float32, device="cuda", requires_grad=True)
         scalar_val = 1.5
 
         def func(x):
@@ -652,7 +648,7 @@ class TestExampleGradcheck:
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_gradgradcheck_cuda(self):
         """Test second-order gradient correctness on CUDA."""
-        x = torch.randn(3, 3, dtype=torch.float64, device='cuda', requires_grad=True)
+        x = torch.randn(3, 3, dtype=torch.float64, device="cuda", requires_grad=True)
         scalar_val = 2.0
 
         def func(x):
@@ -667,7 +663,7 @@ class TestExampleGradcheck:
 
         Note: MPS doesn't support float64, so we use float32 with relaxed tolerances.
         """
-        x = torch.randn(5, 5, dtype=torch.float32, device='mps', requires_grad=True)
+        x = torch.randn(5, 5, dtype=torch.float32, device="mps", requires_grad=True)
         scalar_val = 1.5
 
         def func(x):
@@ -683,7 +679,7 @@ class TestExampleGradcheck:
         scalar_val = 2.0
 
         for shape in shapes:
-            x = torch.randn(*shape, dtype=torch.float32, device='mps', requires_grad=True)
+            x = torch.randn(*shape, dtype=torch.float32, device="mps", requires_grad=True)
 
             def func(x):
                 return ops.example(x, scalar_val)
