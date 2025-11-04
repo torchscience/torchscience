@@ -23,10 +23,23 @@ py_limited_api = torch.__version__ >= "2.6.0"
 def get_extensions():
     debug_mode = os.getenv("DEBUG", "0") == "1"
     use_cuda = os.getenv("USE_CUDA", "1") == "1"
+    use_rocm = os.getenv("USE_ROCM", "0") == "1"
+
     if debug_mode:
         print("Compiling in debug mode")
 
+    # Check for CUDA availability
     use_cuda = use_cuda and torch.cuda.is_available() and CUDA_HOME is not None
+
+    # Check for ROCm availability (AMD GPUs)
+    rocm_home = os.getenv("ROCM_HOME")
+    use_rocm = use_rocm and torch.version.hip is not None and rocm_home is not None
+
+    if use_cuda:
+        print("Building with CUDA support")
+    if use_rocm:
+        print("Building with ROCm/HIP support")
+
     extension = CUDAExtension if use_cuda else CppExtension
 
     # Override SDK path to use the correct Xcode SDK
@@ -68,18 +81,29 @@ def get_extensions():
     sources += list(glob.glob(os.path.join(extensions_dir, "ops", "meta", "*.cpp")))
     sources += list(glob.glob(os.path.join(extensions_dir, "ops", "quantized", "cpu", "*.cpp")))
 
+    # Sparse CPU backend (always included)
+    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "sparse", "cpu", "*.cpp")))
+
     # MPS backend (Apple Silicon)
     # Note: MPS implementation requires macOS 12.0+ at runtime
     mps_sources = list(glob.glob(os.path.join(extensions_dir, "ops", "mps", "*.mm")))
     sources += mps_sources
 
-    # CUDA sources
+    # CUDA sources (including sparse CUDA)
     extensions_cuda_dir = os.path.join(extensions_dir, "cuda")
     cuda_sources = list(glob.glob(os.path.join(extensions_cuda_dir, "*.cu")))
     cuda_sources += list(glob.glob(os.path.join(extensions_dir, "ops", "cuda", "*.cu")))
+    cuda_sources += list(glob.glob(os.path.join(extensions_dir, "ops", "sparse", "cuda", "*.cu")))
 
     if use_cuda:
         sources += cuda_sources
+
+    # HIP/ROCm sources (AMD GPUs)
+    if use_rocm:
+        hip_sources = list(glob.glob(os.path.join(extensions_dir, "ops", "hip", "*.cpp")))
+        sources += hip_sources
+        # Add ROCm-specific compile flags
+        extra_compile_args["cxx"].append("-DUSE_ROCM")
 
     ext_modules = [
         extension(

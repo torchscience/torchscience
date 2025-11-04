@@ -715,3 +715,210 @@ class TestExampleGradcheck:
             return ops.example(z, 1.0)
 
         assert gradcheck(func, x, eps=1e-6, atol=1e-4)
+
+
+class TestExampleSparse:
+    """
+    Tests for sparse tensor support (SparseCPU and SparseCUDA backends).
+
+    Sparse tensors only store non-zero values, making them efficient for
+    data with many zeros (e.g., embeddings, graphs, text data).
+    """
+
+    def test_sparse_cpu_basic(self):
+        """Test basic sparse CPU operation."""
+        # Create a sparse tensor (COO format)
+        indices = torch.tensor([[0, 1, 2], [0, 1, 2]])  # Diagonal elements
+        values = torch.tensor([1.0, 2.0, 3.0])
+        shape = (3, 3)
+
+        x_sparse = torch.sparse_coo_tensor(indices, values, shape)
+        scalar_val = 5.0
+
+        result = ops.example(x_sparse, scalar_val)
+
+        # Check result is sparse
+        assert result.is_sparse
+
+        # Check values were updated correctly
+        expected_values = values + scalar_val
+        assert torch.allclose(result._values(), expected_values)
+
+        # Check indices unchanged
+        assert torch.equal(result._indices(), indices)
+
+        # Check shape unchanged
+        assert result.shape == shape
+
+    def test_sparse_cpu_coalesced(self):
+        """Test sparse CPU with coalesced tensor."""
+        indices = torch.tensor([[0, 1, 1], [0, 0, 1]])
+        values = torch.tensor([1.0, 2.0, 3.0])
+        x_sparse = torch.sparse_coo_tensor(indices, values, (2, 2)).coalesce()
+
+        result = ops.example(x_sparse, 10.0)
+
+        assert result.is_sparse
+        assert result.is_coalesced
+
+    def test_sparse_cpu_different_dtypes(self):
+        """Test sparse CPU with different data types."""
+        indices = torch.tensor([[0, 1], [0, 1]])
+        dtypes = [torch.float32, torch.float64]
+
+        for dtype in dtypes:
+            values = torch.tensor([1.0, 2.0], dtype=dtype)
+            x_sparse = torch.sparse_coo_tensor(indices, values, (2, 2))
+
+            result = ops.example(x_sparse, 3.0)
+
+            assert result.is_sparse
+            assert result.dtype == dtype
+            assert torch.allclose(result._values(), values + 3.0)
+
+    def test_sparse_cpu_large(self):
+        """Test sparse CPU with larger tensor."""
+        # Create a 1000x1000 sparse tensor with 100 non-zero elements
+        indices = torch.randint(0, 1000, (2, 100))
+        values = torch.randn(100)
+        x_sparse = torch.sparse_coo_tensor(indices, values, (1000, 1000))
+
+        result = ops.example(x_sparse, 2.5)
+
+        assert result.is_sparse
+        assert result.shape == (1000, 1000)
+        assert torch.allclose(result._values(), values + 2.5)
+
+    def test_sparse_cpu_empty(self):
+        """Test sparse CPU with no non-zero elements."""
+        indices = torch.tensor([[], []], dtype=torch.int64).reshape(2, 0)
+        values = torch.tensor([])
+        x_sparse = torch.sparse_coo_tensor(indices, values, (5, 5))
+
+        result = ops.example(x_sparse, 1.0)
+
+        assert result.is_sparse
+        assert result._values().numel() == 0
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    def test_sparse_cuda_basic(self):
+        """Test basic sparse CUDA operation."""
+        indices = torch.tensor([[0, 1, 2], [0, 1, 2]], device="cuda")
+        values = torch.tensor([1.0, 2.0, 3.0], device="cuda")
+
+        x_sparse = torch.sparse_coo_tensor(indices, values, (3, 3))
+        scalar_val = 5.0
+
+        result = ops.example(x_sparse, scalar_val)
+
+        assert result.is_sparse
+        assert result.is_cuda
+        assert torch.allclose(result._values(), values + scalar_val)
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    def test_sparse_cuda_coalesced(self):
+        """Test sparse CUDA with coalesced tensor."""
+        indices = torch.tensor([[0, 1, 1], [0, 0, 1]], device="cuda")
+        values = torch.tensor([1.0, 2.0, 3.0], device="cuda")
+        x_sparse = torch.sparse_coo_tensor(indices, values, (2, 2)).coalesce()
+
+        result = ops.example(x_sparse, 10.0)
+
+        assert result.is_sparse
+        assert result.is_cuda
+        assert result.is_coalesced
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    def test_sparse_cuda_large(self):
+        """Test sparse CUDA with larger tensor."""
+        indices = torch.randint(0, 1000, (2, 100), device="cuda")
+        values = torch.randn(100, device="cuda")
+        x_sparse = torch.sparse_coo_tensor(indices, values, (1000, 1000))
+
+        result = ops.example(x_sparse, 2.5)
+
+        assert result.is_sparse
+        assert result.is_cuda
+        assert torch.allclose(result._values(), values + 2.5)
+
+    @pytest.mark.skip(reason="Sparse tensor autograd requires special dispatch handling")
+    def test_sparse_cpu_autograd(self):
+        """Test sparse CPU with autograd (requires_grad).
+
+        Note: Autograd support for sparse tensors with custom operators is limited
+        due to PyTorch's dispatch key precedence. SparseCPU dispatch key takes
+        precedence over Autograd, bypassing the autograd machinery. Full support
+        would require registering autograd functions specifically for sparse layouts.
+        """
+        indices = torch.tensor([[0, 1], [0, 1]])
+        values = torch.tensor([1.0, 2.0], requires_grad=True)
+        x_sparse = torch.sparse_coo_tensor(indices, values, (2, 2))
+
+        result = ops.example(x_sparse, 5.0)
+        loss = result._values().sum()
+        loss.backward()
+
+        # Gradient should be ones for addition
+        assert values.grad is not None
+        assert torch.allclose(values.grad, torch.ones_like(values))
+
+
+@pytest.mark.skipif(
+    not hasattr(torch.version, "hip") or torch.version.hip is None, reason="HIP not available"
+)
+class TestExampleHIP:
+    """
+    Tests for HIP backend (AMD GPUs with ROCm).
+
+    HIP is AMD's alternative to CUDA for GPU programming.
+    These tests only run when PyTorch is built with ROCm support.
+    """
+
+    def test_hip_basic(self):
+        """Test basic HIP operation."""
+        x = torch.randn(100, 100, device="hip")
+        scalar_val = 2.5
+        result = ops.example(x, scalar_val)
+
+        assert result.device.type == "hip"
+        assert torch.allclose(result.cpu(), (x + scalar_val).cpu())
+
+    def test_hip_different_dtypes(self):
+        """Test HIP with different data types."""
+        dtypes = [torch.float32, torch.float64, torch.float16]
+
+        for dtype in dtypes:
+            x = torch.randn(50, 50, dtype=dtype, device="hip")
+            result = ops.example(x, 3.0)
+
+            assert result.dtype == dtype
+            assert result.device.type == "hip"
+            assert torch.allclose(result.cpu(), (x + 3.0).cpu(), atol=1e-3)
+
+    def test_hip_large_tensor(self):
+        """Test HIP with large tensor."""
+        x = torch.randn(1000, 1000, device="hip")
+        result = ops.example(x, 1.5)
+
+        assert result.device.type == "hip"
+        assert torch.allclose(result.cpu(), (x + 1.5).cpu())
+
+    def test_hip_autograd(self):
+        """Test HIP with autograd."""
+        x = torch.randn(10, 10, device="hip", requires_grad=True)
+        result = ops.example(x, 5.0)
+        loss = result.sum()
+        loss.backward()
+
+        assert x.grad is not None
+        assert torch.allclose(x.grad, torch.ones_like(x))
+
+    def test_hip_non_contiguous(self):
+        """Test HIP with non-contiguous tensor."""
+        x = torch.randn(10, 20, device="hip").t()
+        assert not x.is_contiguous()
+
+        result = ops.example(x, 2.0)
+
+        assert result.device.type == "hip"
+        assert torch.allclose(result.cpu(), (x + 2.0).cpu())
