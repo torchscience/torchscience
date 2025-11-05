@@ -46,31 +46,47 @@ def get_extensions():
     # Detect platform
     is_macos = sys.platform == "darwin"
 
-    # Override SDK path to use the correct Xcode SDK
-    sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
-
-    extra_link_args = [
-        "-isysroot",
-        sdk_path,
-        "-L/opt/homebrew/opt/llvm/lib/c++",
-        "-Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++",
-    ]
-    extra_compile_args = {
-        "cxx": [
-            "-O3" if not debug_mode else "-O0",
-            "-fdiagnostics-color=always",
-            "-DPy_LIMITED_API=0x030A0000",  # min CPython version 3.10
+    # Configure compiler flags based on platform
+    if is_macos:
+        # macOS-specific configuration (Homebrew LLVM, SDK paths)
+        sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+        extra_link_args = [
             "-isysroot",
             sdk_path,
-        ],
-        "nvcc": [
-            "-O3" if not debug_mode else "-O0",
-        ],
-    }
-    if debug_mode:
-        extra_compile_args["cxx"].append("-g")
-        extra_compile_args["nvcc"].append("-g")
-        extra_link_args.extend(["-O0", "-g"])
+            "-L/opt/homebrew/opt/llvm/lib/c++",
+            "-Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++",
+        ]
+        extra_compile_args = {
+            "cxx": [
+                "-O3" if not debug_mode else "-O0",
+                "-fdiagnostics-color=always",
+                "-DPy_LIMITED_API=0x030A0000",  # min CPython version 3.10
+                "-isysroot",
+                sdk_path,
+            ],
+            "nvcc": [
+                "-O3" if not debug_mode else "-O0",
+            ],
+        }
+        if debug_mode:
+            extra_compile_args["cxx"].append("-g")
+            extra_compile_args["nvcc"].append("-g")
+            extra_link_args.extend(["-O0", "-g"])
+    else:
+        # Linux/Windows - use default compiler detection
+        extra_compile_args = {
+            "cxx": [
+                "-O3" if not debug_mode else "-O0",
+                "-fdiagnostics-color=always",
+                "-DPy_LIMITED_API=0x030A0000",  # min CPython version 3.10
+            ],
+            "nvcc": [
+                "-O3" if not debug_mode else "-O0",
+            ],
+        }
+        if debug_mode:
+            extra_compile_args["cxx"].append("-g")
+            extra_compile_args["nvcc"].append("-g")
 
     extensions_dir = os.path.join("src", library_name, "csrc")
 
@@ -114,9 +130,12 @@ def get_extensions():
     ext_kwargs = {
         "sources": sources,
         "extra_compile_args": extra_compile_args,
-        "extra_link_args": extra_link_args,
         "py_limited_api": py_limited_api,
     }
+
+    # Only add extra_link_args on macOS
+    if is_macos:
+        ext_kwargs["extra_link_args"] = extra_link_args
 
     ext_modules = [extension(f"{library_name}._C", **ext_kwargs)]
 
