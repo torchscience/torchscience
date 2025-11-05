@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 import torch
 from torch.autograd import gradcheck, gradgradcheck
@@ -356,6 +358,10 @@ class TestExampleOpcheck:
 
         return sample_inputs
 
+    @pytest.mark.skipif(
+        sys.version_info >= (3, 14),
+        reason="PyTorch opcheck has Python 3.14 compatibility issues with typing.Union",
+    )
     def test_opcheck_all(self):
         """
         Run all opcheck tests on the example operator.
@@ -444,6 +450,10 @@ class TestExampleOpcheck:
                     f"Error: {e}"
                 )
 
+    @pytest.mark.skipif(
+        sys.version_info >= (3, 14),
+        reason="PyTorch opcheck has Python 3.14 compatibility issues with typing.Union",
+    )
     def test_opcheck_aot_autograd_static(self):
         """Test AOT Autograd with static shapes (torch.compile compatibility)."""
         sample_inputs = self.get_sample_inputs()
@@ -484,6 +494,10 @@ class TestExampleOpcheck:
                     f"Error: {e}"
                 )
 
+    @pytest.mark.skipif(
+        sys.version_info >= (3, 14),
+        reason="PyTorch opcheck has Python 3.14 compatibility issues with typing.Union",
+    )
     def test_opcheck_cpu_only(self):
         """Quick opcheck test for CPU only (useful for CI without GPU)."""
         cpu_inputs = [
