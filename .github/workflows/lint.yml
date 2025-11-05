@@ -138,9 +138,7 @@ jobs:
       run: |
         USE_CUDA=0 uv pip install --system -e .
       shell: bash
-      env:
-        CC: ${{ runner.os == 'macOS' && format('{0}/bin/clang', env.HOMEBREW_PREFIX) || '' }}
-        CXX: ${{ runner.os == 'macOS' && format('{0}/bin/clang++', env.HOMEBREW_PREFIX) || '' }}
+      # CC/CXX already set in GITHUB_ENV for macOS, no env vars needed here
 
     - name: Test import
       run: |
