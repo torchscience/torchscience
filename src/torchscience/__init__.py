@@ -2,7 +2,7 @@ from pathlib import Path
 
 import torch
 
-from . import _C
+from . import _C  # type: ignore[attr-defined]
 
 __version__ = "0.0.1"
 
