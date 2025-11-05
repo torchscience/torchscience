@@ -60,9 +60,7 @@ jobs:
       run: |
         USE_CUDA=0 uv pip install --system -e .
       shell: bash
-      env:
-        CC: ${{ format('{0}/bin/clang', env.HOMEBREW_PREFIX) }}
-        CXX: ${{ format('{0}/bin/clang++', env.HOMEBREW_PREFIX) }}
+      # CC/CXX already set in GITHUB_ENV above, no env block needed
 
     - name: Build extension (CPU only - Linux/Windows)
       if: runner.os != 'macOS'
