@@ -359,7 +359,7 @@ class TestExampleOpcheck:
         return sample_inputs
 
     @pytest.mark.skipif(
-        sys.version_info >= (3, 14),
+        sys.version_info[:2] >= (3, 14),
         reason="PyTorch opcheck has Python 3.14 compatibility issues with typing.Union",
     )
     def test_opcheck_all(self):
@@ -451,7 +451,7 @@ class TestExampleOpcheck:
                 )
 
     @pytest.mark.skipif(
-        sys.version_info >= (3, 14),
+        sys.version_info[:2] >= (3, 14),
         reason="PyTorch opcheck has Python 3.14 compatibility issues with typing.Union",
     )
     def test_opcheck_aot_autograd_static(self):
@@ -495,7 +495,7 @@ class TestExampleOpcheck:
                 )
 
     @pytest.mark.skipif(
-        sys.version_info >= (3, 14),
+        sys.version_info[:2] >= (3, 14),
         reason="PyTorch opcheck has Python 3.14 compatibility issues with typing.Union",
     )
     def test_opcheck_cpu_only(self):
