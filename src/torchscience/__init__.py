@@ -24,10 +24,21 @@ ops = _Ops()
 
 
 def cuda_version():
-    """Get the CUDA version used to compile the extension."""
-    return torch.ops.torchscience._cuda_version()
+    """Get the CUDA version used to compile the extension.
+
+    Returns None if CUDA support was not compiled in.
+    """
+    try:
+        return torch.ops.torchscience._cuda_version()
+    except (NotImplementedError, RuntimeError):
+        # CUDA support not available (CPU-only build)
+        return None
 
 
 def main() -> None:
     print("Hello from torch-science!")
-    print(f"CUDA version: {cuda_version()}")
+    cuda_ver = cuda_version()
+    if cuda_ver is not None:
+        print(f"CUDA version: {cuda_ver}")
+    else:
+        print("CUDA support: not available (CPU-only build)")
