@@ -386,6 +386,10 @@ class TestExampleOpcheck:
                     f"Error: {e}"
                 )
 
+    @pytest.mark.skipif(
+        sys.version_info[:2] >= (3, 14),
+        reason="PyTorch opcheck has Python 3.14 compatibility issues with typing.Union",
+    )
     def test_opcheck_schema(self):
         """Test schema correctness specifically."""
         sample_inputs = self.get_sample_inputs()
@@ -404,6 +408,10 @@ class TestExampleOpcheck:
                     f"Error: {e}"
                 )
 
+    @pytest.mark.skipif(
+        sys.version_info[:2] >= (3, 14),
+        reason="PyTorch opcheck has Python 3.14 compatibility issues with typing.Union",
+    )
     def test_opcheck_autograd_registration(self):
         """
         Test autograd registration specifically.
@@ -430,6 +438,10 @@ class TestExampleOpcheck:
                     f"Error: {e}"
                 )
 
+    @pytest.mark.skipif(
+        sys.version_info[:2] >= (3, 14),
+        reason="PyTorch opcheck has Python 3.14 compatibility issues with typing.Union",
+    )
     def test_opcheck_faketensor(self):
         """Test FakeTensor support (meta kernel) specifically."""
         sample_inputs = self.get_sample_inputs()
@@ -474,6 +486,10 @@ class TestExampleOpcheck:
                     f"Error: {e}"
                 )
 
+    @pytest.mark.skipif(
+        sys.version_info[:2] >= (3, 14),
+        reason="PyTorch opcheck has Python 3.14 compatibility issues with typing.Union",
+    )
     def test_opcheck_aot_autograd_dynamic(self):
         """Test AOT Autograd with dynamic shapes."""
         sample_inputs = self.get_sample_inputs()
