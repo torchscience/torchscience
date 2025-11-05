@@ -4,6 +4,8 @@ import torch
 
 from . import _C
 
+__version__ = "0.0.1"
+
 
 class _Ops:
     """Wrapper for torchscience operators providing a cleaner API."""
