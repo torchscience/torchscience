@@ -5,6 +5,7 @@
 
 import glob
 import os
+import sys
 
 import torch
 from setuptools import find_packages, setup
@@ -42,27 +43,40 @@ def get_extensions():
 
     extension = CUDAExtension if use_cuda else CppExtension
 
-    # Override SDK path to use the correct Xcode SDK
-    sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+    # Detect platform
+    is_macos = sys.platform == "darwin"
 
-    extra_link_args = [
-        "-isysroot",
-        sdk_path,
-        "-L/opt/homebrew/opt/llvm/lib/c++",
-        "-Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++",
-    ]
+    # Base compile and link args
+    extra_link_args = []
     extra_compile_args = {
         "cxx": [
             "-O3" if not debug_mode else "-O0",
             "-fdiagnostics-color=always",
-            "-DPy_LIMITED_API=0x03090000",  # min CPython version 3.9
-            "-isysroot",
-            sdk_path,
+            "-DPy_LIMITED_API=0x030A0000",  # min CPython version 3.10
         ],
         "nvcc": [
             "-O3" if not debug_mode else "-O0",
         ],
     }
+
+    # Add macOS-specific flags
+    if is_macos:
+        sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+        extra_link_args.extend(
+            [
+                "-isysroot",
+                sdk_path,
+                "-L/opt/homebrew/opt/llvm/lib/c++",
+                "-Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++",
+            ]
+        )
+        extra_compile_args["cxx"].extend(
+            [
+                "-isysroot",
+                sdk_path,
+            ]
+        )
+
     if debug_mode:
         extra_compile_args["cxx"].append("-g")
         extra_compile_args["nvcc"].append("-g")
@@ -84,10 +98,11 @@ def get_extensions():
     # Sparse CPU backend (always included)
     sources += list(glob.glob(os.path.join(extensions_dir, "ops", "sparse", "cpu", "*.cpp")))
 
-    # MPS backend (Apple Silicon)
+    # MPS backend (Apple Silicon) - only on macOS
     # Note: MPS implementation requires macOS 12.0+ at runtime
-    mps_sources = list(glob.glob(os.path.join(extensions_dir, "ops", "mps", "*.mm")))
-    sources += mps_sources
+    if is_macos:
+        mps_sources = list(glob.glob(os.path.join(extensions_dir, "ops", "mps", "*.mm")))
+        sources += mps_sources
 
     # CUDA sources (including sparse CUDA)
     extensions_cuda_dir = os.path.join(extensions_dir, "cuda")
@@ -135,5 +150,6 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/0x00b1/torch-science",
     cmdclass={"build_ext": BuildExtension},
-    options={"bdist_wheel": {"py_limited_api": "cp39"}} if py_limited_api else {},
+    options={"bdist_wheel": {"py_limited_api": "cp310"}} if py_limited_api else {},
+    python_requires=">=3.10",
 )
