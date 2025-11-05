@@ -40,8 +40,9 @@ jobs:
 
     - name: Check C++ formatting
       run: |
-        find src/torchscience/csrc -name '*.cpp' -o -name '*.h' -o -name '*.cu' -o -name '*.mm' | \
+        find src/torchscience/csrc -name '*.cpp' -o -name '*.h' -o -name '*.cu' | \
           xargs clang-format --dry-run --Werror
+        # Exclude .mm files (Objective-C++) as they require newer clang-format
 
   python-lint:
     name: Python Linting
