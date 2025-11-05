@@ -55,13 +55,20 @@ jobs:
         uv pip install --system pytest pytest-xdist numpy
       shell: bash
 
-    - name: Build extension (CPU only)
+    - name: Build extension (CPU only - macOS)
+      if: runner.os == 'macOS'
       run: |
         USE_CUDA=0 uv pip install --system -e .
       shell: bash
       env:
-        CC: ${{ runner.os == 'macOS' && format('{0}/bin/clang', env.HOMEBREW_PREFIX) || '' }}
-        CXX: ${{ runner.os == 'macOS' && format('{0}/bin/clang++', env.HOMEBREW_PREFIX) || '' }}
+        CC: ${{ format('{0}/bin/clang', env.HOMEBREW_PREFIX) }}
+        CXX: ${{ format('{0}/bin/clang++', env.HOMEBREW_PREFIX) }}
+
+    - name: Build extension (CPU only - Linux/Windows)
+      if: runner.os != 'macOS'
+      run: |
+        USE_CUDA=0 uv pip install --system -e .
+      shell: bash
 
     - name: Run tests
       run: |

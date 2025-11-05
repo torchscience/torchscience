@@ -46,7 +46,7 @@ def get_extensions():
     # Detect platform
     is_macos = sys.platform == "darwin"
 
-    # Configure compiler flags - minimal approach, rely on environment variables
+    # Configure compiler flags
     extra_compile_args = {
         "cxx": [
             "-O3" if not debug_mode else "-O0",
@@ -61,6 +61,26 @@ def get_extensions():
     if debug_mode:
         extra_compile_args["cxx"].append("-g")
         extra_compile_args["nvcc"].append("-g")
+
+    # macOS-specific configuration
+    extra_link_args = []
+    if is_macos:
+        sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+        homebrew_prefix = "/opt/homebrew"  # Apple Silicon default
+
+        # Add SDK and libc++ paths
+        extra_compile_args["cxx"].extend(
+            [
+                "-isysroot",
+                sdk_path,
+            ]
+        )
+        extra_link_args = [
+            "-isysroot",
+            sdk_path,
+            f"-L{homebrew_prefix}/opt/llvm/lib/c++",
+            f"-Wl,-rpath,{homebrew_prefix}/opt/llvm/lib/c++",
+        ]
 
     extensions_dir = os.path.join("src", library_name, "csrc")
 
@@ -106,6 +126,10 @@ def get_extensions():
         "extra_compile_args": extra_compile_args,
         "py_limited_api": py_limited_api,
     }
+
+    # Add macOS-specific link args
+    if extra_link_args:
+        ext_kwargs["extra_link_args"] = extra_link_args
 
     ext_modules = [extension(f"{library_name}._C", **ext_kwargs)]
 
