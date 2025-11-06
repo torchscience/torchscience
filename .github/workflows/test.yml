@@ -126,48 +126,10 @@ jobs:
         python -c "import torchscience; print(f'torch-science version: {torchscience.__version__}')"
         python -c "import torchscience; torchscience.main()"
 
-  test-cpu-windows-arm64:
-    name: Test CPU Windows ARM64 - Python ${{ matrix.python-version }}
-    runs-on: torchscience-windows-arm64
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.11', '3.12', '3.13', '3.14']  # Python 3.11+ for Windows ARM64
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install uv
-      run: |
-        irm https://astral.sh/uv/install.ps1 | iex
-        echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-    - name: Install PyTorch 2.9.0
-      run: |
-        uv pip install --system torch==2.9.0 torchvision torchaudio
-
-    - name: Install dependencies
-      run: |
-        uv pip install --system pytest pytest-xdist numpy
-
-    - name: Build extension (CPU only)
-      run: |
-        $env:USE_CUDA = "0"
-        uv pip install --system -e .
-
-    - name: Run tests
-      run: |
-        pytest tests/ -v --tb=short -n auto
-
-    - name: Test import
-      run: |
-        python -c "import torchscience; print(f'torch-science version: {torchscience.__version__}')"
-        python -c "import torchscience; torchscience.main()"
+  # test-cpu-windows-arm64:
+  #   Disabled: PyTorch 2.9.0 does not have Windows ARM64 wheels (win_arm64)
+  #   PyTorch only supports: Linux ARM64, Linux x64, macOS ARM64, Windows x64
+  #   Re-enable when PyTorch adds Windows ARM64 support
 
   test-cuda:
     name: Test CUDA - Python ${{ matrix.python-version }}
