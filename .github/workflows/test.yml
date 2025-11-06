@@ -147,19 +147,17 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install build tools and CUDA toolkit
+    - name: Install build tools
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential g++ gcc
-        # Install CUDA compiler tools from Nvidia repo (much faster than nvidia-cuda-toolkit)
-        # Get CUDA version from nvidia-smi
-        CUDA_VERSION=$(nvidia-smi | grep "CUDA Version" | awk '{print $9}' | cut -d'.' -f1)
-        echo "Detected CUDA version: $CUDA_VERSION"
-        # Install minimal CUDA toolkit for compilation
-        wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
-        sudo dpkg -i cuda-keyring_1.1-1_all.deb
-        sudo apt-get update
-        sudo apt-get install -y cuda-nvcc-${CUDA_VERSION}-* cuda-cudart-dev-${CUDA_VERSION}-*
+
+    - name: Install CUDA Toolkit
+      uses: Jimver/cuda-toolkit@v0.2.19
+      with:
+        cuda: '12.4.0'
+        method: 'network'
+        sub-packages: '["nvcc", "cudart"]'
 
     - name: Install uv
       run: |
@@ -180,32 +178,13 @@ jobs:
         python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
         python -c "import torch; print(f'CUDA version: {torch.version.cuda}')"
         python -c "import torch; print(f'GPU device: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"No GPU\"}')"
-        which nvcc || echo "nvcc not in PATH"
-        nvcc --version || echo "nvcc command failed"
-
-    - name: Find CUDA path
-      id: find-cuda
-      run: |
-        # Try to find nvcc in common locations
-        if command -v nvcc &> /dev/null; then
-          NVCC_PATH=$(which nvcc)
-          CUDA_HOME=$(dirname $(dirname $NVCC_PATH))
-          echo "Found CUDA at: $CUDA_HOME"
-          echo "cuda_home=$CUDA_HOME" >> $GITHUB_OUTPUT
-        elif [ -d "/usr/local/cuda" ] && [ -f "/usr/local/cuda/bin/nvcc" ]; then
-          echo "cuda_home=/usr/local/cuda" >> $GITHUB_OUTPUT
-        elif [ -d "/usr/lib/cuda" ] && [ -f "/usr/lib/cuda/bin/nvcc" ]; then
-          echo "cuda_home=/usr/lib/cuda" >> $GITHUB_OUTPUT
-        else
-          echo "WARNING: Could not find nvcc"
-          echo "cuda_home=" >> $GITHUB_OUTPUT
-        fi
+        nvcc --version
+        echo "CUDA_HOME=$CUDA_HOME"
 
     - name: Build extension with CUDA
       run: |
         USE_CUDA=1 uv pip install --system -e .
       env:
-        CUDA_HOME: ${{ steps.find-cuda.outputs.cuda_home }}
         TORCH_CUDA_ARCH_LIST: "7.0 7.5 8.0 8.6 8.9 9.0+PTX"
 
     - name: Run tests
