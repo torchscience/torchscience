@@ -151,8 +151,15 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential g++ gcc
-        # Install CUDA toolkit (nvcc and headers)
-        sudo apt-get install -y nvidia-cuda-toolkit
+        # Install CUDA compiler tools from Nvidia repo (much faster than nvidia-cuda-toolkit)
+        # Get CUDA version from nvidia-smi
+        CUDA_VERSION=$(nvidia-smi | grep "CUDA Version" | awk '{print $9}' | cut -d'.' -f1)
+        echo "Detected CUDA version: $CUDA_VERSION"
+        # Install minimal CUDA toolkit for compilation
+        wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+        sudo dpkg -i cuda-keyring_1.1-1_all.deb
+        sudo apt-get update
+        sudo apt-get install -y cuda-nvcc-${CUDA_VERSION}-* cuda-cudart-dev-${CUDA_VERSION}-*
 
     - name: Install uv
       run: |
