@@ -62,6 +62,11 @@ def get_extensions():
         extra_compile_args["cxx"].append("-g")
         extra_compile_args["nvcc"].append("-g")
 
+    # Define WITH_CUDA when building with CUDA support
+    if use_cuda:
+        extra_compile_args["cxx"].append("-DWITH_CUDA")
+        extra_compile_args["nvcc"].append("-DWITH_CUDA")
+
     # macOS-specific configuration
     extra_link_args = []
     if is_macos:
@@ -119,6 +124,7 @@ def get_extensions():
         sources += hip_sources
         # Add ROCm-specific compile flags
         extra_compile_args["cxx"].append("-DUSE_ROCM")
+        extra_compile_args["cxx"].append("-DWITH_HIP")
 
     # Build extension kwargs
     ext_kwargs = {
