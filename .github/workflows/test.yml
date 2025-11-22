@@ -139,7 +139,7 @@ jobs:
       - uses: "astral-sh/setup-uv@v6"
         with:
           python-version: ${{ matrix.python-version }}
-      - run: "uv python install"
+      - run: "uv sync"
 
 #  test-mps:
 #    name: Test MPS - Python ${{ matrix.python-version }}
