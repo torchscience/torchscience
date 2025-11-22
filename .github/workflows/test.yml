@@ -136,14 +136,10 @@ jobs:
     steps:
       - run: "nvidia-smi"
       - uses: "actions/checkout@v4"
-      - uses: "Jimver/cuda-toolkit@v0.2.29"
       - uses: "astral-sh/setup-uv@v6"
         with:
           python-version: ${{ matrix.python-version }}
       - run: "uv python install"
-#      - run: "uv run pip install numpy"
-#      - run: "uv sync --all-extras --dev --locked"
-#      - run: "uv run pytest tests"
 
 #  test-mps:
 #    name: Test MPS - Python ${{ matrix.python-version }}
