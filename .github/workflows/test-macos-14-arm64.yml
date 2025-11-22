@@ -1,0 +1,41 @@
+name: macOS 14 Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-macos-14:
+    name: Test macOS 14 (CPU + MPS) - Python ${{ matrix.python-version }}
+    runs-on: "macos-14"
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.12" ]
+    steps:
+      - name: "Check MPS availability"
+        run: |
+          echo "macOS version:"
+          sw_vers
+          echo ""
+          echo "Display info:"
+          system_profiler SPDisplaysDataType | grep -i "metal" || echo "Metal info not found in display profile"
+
+      - uses: "actions/checkout@v4"
+      - uses: "astral-sh/setup-uv@v6"
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - run: "uv sync --locked --all-extras --dev"
+
+      - name: "Verify MPS availability"
+        run: |
+          uv run python -c "import torch; assert torch.backends.mps.is_available(), 'MPS is not available on this runner'; print('✓ MPS is available')"
+
+      - name: "Run tests"
+        run: "uv run pytest tests -v"
