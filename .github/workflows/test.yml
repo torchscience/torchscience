@@ -15,6 +15,9 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [ "3.12" ]
+    env:
+      CUDA_HOME: /usr/local/cuda
+      USE_CUDA: "1"
     steps:
       - run: "nvidia-smi"
       - uses: "actions/checkout@v4"
