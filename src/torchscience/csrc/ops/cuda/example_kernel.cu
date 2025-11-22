@@ -1,3 +1,5 @@
+#include "../example.h"
+
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <c10/cuda/CUDAGuard.h>
@@ -5,13 +7,14 @@
 
 namespace science {
 namespace ops {
-namespace {
+namespace cuda {
 
 // CUDA kernel for the example operator (adds scalar to all elements)
 // This demonstrates a simple element-wise GPU kernel
 template <typename scalar_t>
-__global__ void example_cuda_kernel(const scalar_t* __restrict__ input,
-                                    scalar_t* __restrict__ output, int64_t numel, scalar_t x) {
+__global__ void example_cuda_kernel_impl(const scalar_t* __restrict__ input,
+                                         scalar_t* __restrict__ output, int64_t numel,
+                                         scalar_t x) {
     // Calculate global thread ID
     int64_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -23,11 +26,11 @@ __global__ void example_cuda_kernel(const scalar_t* __restrict__ input,
 }
 
 // Helper to get optimal CUDA launch configuration
-inline int get_num_threads() {
+int get_num_threads() {
     return 256;
 }
 
-inline int get_num_blocks(int64_t numel, int threads_per_block) {
+int get_num_blocks(int64_t numel, int threads_per_block) {
     const int max_blocks = 65535;
     return std::min(max_blocks,
                     static_cast<int>((numel + threads_per_block - 1) / threads_per_block));
@@ -55,8 +58,10 @@ at::Tensor example_forward_kernel(const at::Tensor& input, const at::Scalar& x) 
     // Dispatch kernel based on tensor dtype
     AT_DISPATCH_ALL_TYPES_AND2(
         at::kHalf, at::kBFloat16, input.scalar_type(), "example_cuda_kernel", [&] {
-            example_cuda_kernel<scalar_t><<<blocks, threads, 0, at::cuda::getCurrentCUDAStream()>>>(
-                input.data_ptr<scalar_t>(), output.data_ptr<scalar_t>(), numel, x.to<scalar_t>());
+            example_cuda_kernel_impl<scalar_t>
+                <<<blocks, threads, 0, at::cuda::getCurrentCUDAStream()>>>(
+                    input.data_ptr<scalar_t>(), output.data_ptr<scalar_t>(), numel,
+                    x.to<scalar_t>());
         });
 
     // Check for CUDA errors
@@ -79,14 +84,15 @@ at::Tensor example_backward_kernel(const at::Tensor& grad_out, const at::Tensor&
     return grad_out.contiguous();
 }
 
-}  // namespace
-
-TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
-    module.impl(TORCH_SELECTIVE_NAME("torchscience::example"), TORCH_FN(example_forward_kernel));
-
-    module.impl(TORCH_SELECTIVE_NAME("torchscience::_example_backward"),
-                TORCH_FN(example_backward_kernel));
-}
-
+}  // namespace cuda
 }  // namespace ops
 }  // namespace science
+
+// Register CUDA implementations
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+    module.impl(TORCH_SELECTIVE_NAME("torchscience::example"),
+                TORCH_FN(science::ops::cuda::example_forward_kernel));
+
+    module.impl(TORCH_SELECTIVE_NAME("torchscience::_example_backward"),
+                TORCH_FN(science::ops::cuda::example_backward_kernel));
+}

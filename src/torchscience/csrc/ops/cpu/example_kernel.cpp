@@ -1,9 +1,11 @@
+#include "../example.h"
+
 #include <ATen/ATen.h>
 #include <torch/library.h>
 
 namespace science {
 namespace ops {
-namespace {
+namespace cpu {
 
 // Forward pass: adds scalar x to all elements of input
 at::Tensor example_forward_kernel(const at::Tensor& input, const at::Scalar& x) {
@@ -25,14 +27,15 @@ at::Tensor example_backward_kernel(const at::Tensor& grad_out, const at::Tensor&
     return grad_out.contiguous();
 }
 
-}  // namespace
-
-TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
-    module.impl(TORCH_SELECTIVE_NAME("torchscience::example"), TORCH_FN(example_forward_kernel));
-
-    module.impl(TORCH_SELECTIVE_NAME("torchscience::_example_backward"),
-                TORCH_FN(example_backward_kernel));
-}
-
+}  // namespace cpu
 }  // namespace ops
 }  // namespace science
+
+// Register CPU implementations
+TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
+    module.impl(TORCH_SELECTIVE_NAME("torchscience::example"),
+                TORCH_FN(science::ops::cpu::example_forward_kernel));
+
+    module.impl(TORCH_SELECTIVE_NAME("torchscience::_example_backward"),
+                TORCH_FN(science::ops::cpu::example_backward_kernel));
+}
