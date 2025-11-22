@@ -40,6 +40,6 @@ at::Tensor example_backward_kernel(const at::Tensor& grad_out, const at::Tensor&
 
 // Register SparseCPU implementation
 TORCH_LIBRARY_IMPL(torchscience, SparseCPU, module) {
-    module.impl("example", TORCH_FN(example_forward_kernel));
-    module.impl("_example_backward", TORCH_FN(example_backward_kernel));
+    module.impl("example", example_forward_kernel);
+    module.impl("_example_backward", example_backward_kernel);
 }
