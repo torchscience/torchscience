@@ -139,6 +139,7 @@ jobs:
       - uses: "astral-sh/setup-uv@v6"
         with:
           python-version: ${{ matrix.python-version }}
+      - run: "uv run pip install numpy"
       - run: "uv sync --all-extras --dev --locked"
       - run: "uv run pytest tests"
 
