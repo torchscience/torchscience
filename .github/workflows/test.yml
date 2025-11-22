@@ -18,20 +18,33 @@ jobs:
     steps:
       - run: "nvidia-smi"
       - uses: "actions/checkout@v4"
+
+      - name: "Cache CUDA Toolkit"
+        id: cache-cuda
+        uses: "actions/cache@v4"
+        with:
+          path: /usr/local/cuda
+          key: cuda-toolkit-${{ runner.os }}-${{ hashFiles('.github/workflows/test.yml') }}
+
       - name: "Install CUDA Toolkit"
+        if: steps.cache-cuda.outputs.cache-hit != 'true'
         run: |
           # Install CUDA toolkit (runner has drivers but not nvcc)
           sudo apt-get update -qq
           sudo apt-get install -y nvidia-cuda-toolkit
 
+      - name: "Set CUDA_HOME"
+        run: |
           # Set CUDA_HOME environment variable
           CUDA_HOME=$(dirname $(dirname $(which nvcc)))
           echo "CUDA_HOME=$CUDA_HOME" >> $GITHUB_ENV
-
-          # Verify installation
           nvcc --version
+
       - uses: "astral-sh/setup-uv@v6"
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
       - run: "USE_CUDA=1 uv sync --locked --all-extras --dev"
       - run: "uv run pytest tests"
