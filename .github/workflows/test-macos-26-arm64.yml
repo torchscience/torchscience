@@ -10,7 +10,7 @@ on:
 jobs:
   test-macos:
     name: Test macOS (CPU + MPS) - Python ${{ matrix.python-version }}
-    runs-on: "torchscience-macos-26-arm64"
+    runs-on: getmac
     strategy:
       fail-fast: false
       matrix:
