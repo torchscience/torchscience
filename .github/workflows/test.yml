@@ -18,11 +18,18 @@ jobs:
     steps:
       - run: "nvidia-smi"
       - uses: "actions/checkout@v4"
-      - uses: "Jimver/cuda-toolkit@v0.2.29"
-        with:
-          cuda: "12.4.0"
-          method: "network"
-          use-local-cache: false
+      - name: "Install CUDA Toolkit"
+        run: |
+          # The runner has CUDA drivers but not the toolkit (nvcc)
+          # Install just the CUDA toolkit components we need
+          sudo apt-get update
+          sudo apt-get install -y cuda-nvcc-12-4 cuda-cudart-dev-12-4
+          # Set CUDA_HOME
+          export CUDA_HOME=/usr/local/cuda-12.4
+          echo "CUDA_HOME=$CUDA_HOME" >> $GITHUB_ENV
+          echo "PATH=$CUDA_HOME/bin:$PATH" >> $GITHUB_ENV
+          # Verify installation
+          /usr/local/cuda-12.4/bin/nvcc --version
       - uses: "astral-sh/setup-uv@v6"
         with:
           python-version: ${{ matrix.python-version }}
