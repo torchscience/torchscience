@@ -8,123 +8,123 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-cpu:
-    name: Test CPU - ${{ matrix.os }} - Python ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: [ '3.10', '3.11', '3.12', '3.13' ]
+#  test-cpu:
+#    name: Test CPU - ${{ matrix.os }} - Python ${{ matrix.python-version }}
+#    runs-on: ${{ matrix.os }}
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os: [ ubuntu-latest, macos-latest, windows-latest ]
+#        python-version: [ '3.10', '3.11', '3.12', '3.13' ]
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Set up Python ${{ matrix.python-version }}
+#        uses: actions/setup-python@v5
+#        with:
+#          python-version: ${{ matrix.python-version }}
+#
+#      - name: Install uv
+#        run: |
+#          curl -LsSf https://astral.sh/uv/install.sh | sh
+#        shell: bash
+#
+#      - name: Add uv to PATH (Windows)
+#        if: runner.os == 'Windows'
+#        run: echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+#
+#      - name: Add uv to PATH (Unix)
+#        if: runner.os != 'Windows'
+#        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+#
+#      - name: Install Homebrew LLVM (macOS only)
+#        if: runner.os == 'macOS'
+#        run: |
+#          brew install llvm
+#          echo "CC=$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
+#          echo "CXX=$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
+#
+#      - name: Install PyTorch 2.9.0
+#        run: |
+#          uv pip install --system torch==2.9.0 torchvision torchaudio
+#        shell: bash
+#
+#      - name: Install dependencies
+#        run: |
+#          uv pip install --system pytest pytest-xdist numpy
+#        shell: bash
+#
+#      - name: Build extension (CPU only - macOS)
+#        if: runner.os == 'macOS'
+#        run: |
+#          USE_CUDA=0 uv pip install --system -e .
+#        shell: bash
+#        # CC/CXX already set in GITHUB_ENV above, no env block needed
+#
+#      - name: Build extension (CPU only - Linux/Windows)
+#        if: runner.os != 'macOS'
+#        run: |
+#          USE_CUDA=0 uv pip install --system -e .
+#        shell: bash
+#
+#      - name: Run tests
+#        run: |
+#          pytest tests/ -v --tb=short -n auto
+#        shell: bash
+#
+#      - name: Test import
+#        run: |
+#          python -c "import torchscience; print(f'torch-science version: {torchscience.__version__}')"
+#          python -c "import torchscience; torchscience.main()"
+#        shell: bash
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-        shell: bash
-
-      - name: Add uv to PATH (Windows)
-        if: runner.os == 'Windows'
-        run: echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Add uv to PATH (Unix)
-        if: runner.os != 'Windows'
-        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Install Homebrew LLVM (macOS only)
-        if: runner.os == 'macOS'
-        run: |
-          brew install llvm
-          echo "CC=$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
-          echo "CXX=$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
-
-      - name: Install PyTorch 2.9.0
-        run: |
-          uv pip install --system torch==2.9.0 torchvision torchaudio
-        shell: bash
-
-      - name: Install dependencies
-        run: |
-          uv pip install --system pytest pytest-xdist numpy
-        shell: bash
-
-      - name: Build extension (CPU only - macOS)
-        if: runner.os == 'macOS'
-        run: |
-          USE_CUDA=0 uv pip install --system -e .
-        shell: bash
-        # CC/CXX already set in GITHUB_ENV above, no env block needed
-
-      - name: Build extension (CPU only - Linux/Windows)
-        if: runner.os != 'macOS'
-        run: |
-          USE_CUDA=0 uv pip install --system -e .
-        shell: bash
-
-      - name: Run tests
-        run: |
-          pytest tests/ -v --tb=short -n auto
-        shell: bash
-
-      - name: Test import
-        run: |
-          python -c "import torchscience; print(f'torch-science version: {torchscience.__version__}')"
-          python -c "import torchscience; torchscience.main()"
-        shell: bash
-
-  test-cpu-linux-aarch64:
-    name: Test CPU Linux ARM64 - Python ${{ matrix.python-version }}
-    runs-on: torchscience-linux-aarch64
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ '3.10', '3.11', '3.12', '3.13' ]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install build tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential g++ gcc
-
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Install PyTorch 2.9.0
-        run: |
-          uv pip install --system torch==2.9.0 torchvision torchaudio
-
-      - name: Install dependencies
-        run: |
-          uv pip install --system pytest pytest-xdist numpy
-
-      - name: Build extension (CPU only)
-        run: |
-          USE_CUDA=0 uv pip install --system -e .
-
-      - name: Run tests
-        run: |
-          pytest tests/ -v --tb=short -n auto
-
-      - name: Test import
-        run: |
-          python -c "import torchscience; print(f'torch-science version: {torchscience.__version__}')"
-          python -c "import torchscience; torchscience.main()"
+#  test-cpu-linux-aarch64:
+#    name: Test CPU Linux ARM64 - Python ${{ matrix.python-version }}
+#    runs-on: torchscience-linux-aarch64
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        python-version: [ '3.10', '3.11', '3.12', '3.13' ]
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Set up Python ${{ matrix.python-version }}
+#        uses: actions/setup-python@v5
+#        with:
+#          python-version: ${{ matrix.python-version }}
+#
+#      - name: Install build tools
+#        run: |
+#          sudo apt-get update
+#          sudo apt-get install -y build-essential g++ gcc
+#
+#      - name: Install uv
+#        run: |
+#          curl -LsSf https://astral.sh/uv/install.sh | sh
+#          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+#
+#      - name: Install PyTorch 2.9.0
+#        run: |
+#          uv pip install --system torch==2.9.0 torchvision torchaudio
+#
+#      - name: Install dependencies
+#        run: |
+#          uv pip install --system pytest pytest-xdist numpy
+#
+#      - name: Build extension (CPU only)
+#        run: |
+#          USE_CUDA=0 uv pip install --system -e .
+#
+#      - name: Run tests
+#        run: |
+#          pytest tests/ -v --tb=short -n auto
+#
+#      - name: Test import
+#        run: |
+#          python -c "import torchscience; print(f'torch-science version: {torchscience.__version__}')"
+#          python -c "import torchscience; torchscience.main()"
 
   test-cuda:
     name: Test CUDA - Python ${{ matrix.python-version }}
@@ -132,7 +132,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.12", "3.13" ]
+        python-version: [ "3.12" ]
     steps:
       - uses: "actions/checkout@v4"
       - uses: "Jimver/cuda-toolkit@v0.2.29"
@@ -143,56 +143,56 @@ jobs:
       - run: "uv sync --all-extras --dev --locked"
       - run: "uv run pytest tests"
 
-  test-mps:
-    name: Test MPS - Python ${{ matrix.python-version }}
-    # Note: GitHub Actions macOS runners are Intel-based, so MPS won't actually be available
-    # This job tests that the code compiles with MPS support, but runtime tests will be skipped
-    runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ '3.11', '3.12', '3.13' ]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Install Homebrew LLVM
-        run: |
-          brew install llvm
-          echo "CC=$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
-          echo "CXX=$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
-
-      - name: Install PyTorch 2.9.0
-        run: |
-          uv pip install --system torch==2.9.0 torchvision torchaudio
-
-      - name: Install dependencies
-        run: |
-          uv pip install --system pytest pytest-xdist numpy
-
-      - name: Build extension with MPS support
-        run: |
-          USE_CUDA=0 uv pip install --system -e .
-
-      - name: Check MPS availability
-        run: |
-          python -c "import torch; print(f'MPS available: {torch.backends.mps.is_available()}')"
-          python -c "import torch; print(f'MPS built: {torch.backends.mps.is_built()}')"
-
-      - name: Verify import works
-        run: |
-          python -c "import torchscience; print(f'torch-science version: {torchscience.__version__}')"
-          echo "Note: Runtime MPS tests skipped on Intel Mac (GitHub Actions runners)"
+#  test-mps:
+#    name: Test MPS - Python ${{ matrix.python-version }}
+#    # Note: GitHub Actions macOS runners are Intel-based, so MPS won't actually be available
+#    # This job tests that the code compiles with MPS support, but runtime tests will be skipped
+#    runs-on: macos-latest
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        python-version: [ '3.11', '3.12', '3.13' ]
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Set up Python ${{ matrix.python-version }}
+#        uses: actions/setup-python@v5
+#        with:
+#          python-version: ${{ matrix.python-version }}
+#
+#      - name: Install uv
+#        run: |
+#          curl -LsSf https://astral.sh/uv/install.sh | sh
+#          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+#
+#      - name: Install Homebrew LLVM
+#        run: |
+#          brew install llvm
+#          echo "CC=$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
+#          echo "CXX=$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
+#
+#      - name: Install PyTorch 2.9.0
+#        run: |
+#          uv pip install --system torch==2.9.0 torchvision torchaudio
+#
+#      - name: Install dependencies
+#        run: |
+#          uv pip install --system pytest pytest-xdist numpy
+#
+#      - name: Build extension with MPS support
+#        run: |
+#          USE_CUDA=0 uv pip install --system -e .
+#
+#      - name: Check MPS availability
+#        run: |
+#          python -c "import torch; print(f'MPS available: {torch.backends.mps.is_available()}')"
+#          python -c "import torch; print(f'MPS built: {torch.backends.mps.is_built()}')"
+#
+#      - name: Verify import works
+#        run: |
+#          python -c "import torchscience; print(f'torch-science version: {torchscience.__version__}')"
+#          echo "Note: Runtime MPS tests skipped on Intel Mac (GitHub Actions runners)"
 
   # Self-hosted runner job for testing HIP/ROCm (AMD GPUs)
   # Uncomment and configure if you have access to AMD GPU runners

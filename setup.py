@@ -1,8 +1,3 @@
-# Copyright (c) 2024
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
 import glob
 import os
 import sys
@@ -24,22 +19,12 @@ py_limited_api = torch.__version__ >= "2.6.0"
 def get_extensions():
     debug_mode = os.getenv("DEBUG", "0") == "1"
     use_cuda = os.getenv("USE_CUDA", "1") == "1"
-    use_rocm = os.getenv("USE_ROCM", "0") == "1"
 
     if debug_mode:
         print("Compiling in debug mode")
 
     # Check for CUDA availability
     use_cuda = use_cuda and torch.cuda.is_available() and CUDA_HOME is not None
-
-    # Check for ROCm availability (AMD GPUs)
-    rocm_home = os.getenv("ROCM_HOME")
-    use_rocm = use_rocm and torch.version.hip is not None and rocm_home is not None
-
-    if use_cuda:
-        print("Building with CUDA support")
-    if use_rocm:
-        print("Building with ROCm/HIP support")
 
     extension = CUDAExtension if use_cuda else CppExtension
 
@@ -118,14 +103,6 @@ def get_extensions():
     if use_cuda:
         sources += cuda_sources
 
-    # HIP/ROCm sources (AMD GPUs)
-    if use_rocm:
-        hip_sources = list(glob.glob(os.path.join(extensions_dir, "ops", "hip", "*.cpp")))
-        sources += hip_sources
-        # Add ROCm-specific compile flags
-        extra_compile_args["cxx"].append("-DUSE_ROCM")
-        extra_compile_args["cxx"].append("-DWITH_HIP")
-
     # Build extension kwargs
     ext_kwargs = {
         "sources": sources,
@@ -137,9 +114,12 @@ def get_extensions():
     if extra_link_args:
         ext_kwargs["extra_link_args"] = extra_link_args
 
-    ext_modules = [extension(f"{library_name}._C", **ext_kwargs)]
-
-    return ext_modules
+    return [
+        extension(
+            f"{library_name}._C",
+            **ext_kwargs,
+        ),
+    ]
 
 
 def read_readme():
@@ -157,7 +137,7 @@ setup(
     description="Example of PyTorch C++ and CUDA extensions",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/0x00b1/torch-science",
+    url="https://github.com/torchscience/torchscience",
     cmdclass={"build_ext": BuildExtension},
     options={"bdist_wheel": {"py_limited_api": "cp310"}} if py_limited_api else {},
     python_requires=">=3.10",
