@@ -10,7 +10,7 @@ on:
 jobs:
   test-mps:
     name: Test MPS - Python ${{ matrix.python-version }}
-    runs-on: "macos-26-arm64"
+    runs-on: "macos-latest"
     strategy:
       fail-fast: false
       matrix:
