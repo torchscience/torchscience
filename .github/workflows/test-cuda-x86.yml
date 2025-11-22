@@ -1,4 +1,4 @@
-name: Test Suite
+name: CUDA x86 Test Suite
 
 on:
   push:
@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-cuda:
-    name: Test CUDA - Python ${{ matrix.python-version }}
+  test-cuda-x86:
+    name: Test CUDA x86 - Python ${{ matrix.python-version }}
     runs-on: "torchscience-linux-cuda"
     strategy:
       fail-fast: false
@@ -24,7 +24,7 @@ jobs:
         uses: "actions/cache@v4"
         with:
           path: /usr/local/cuda
-          key: cuda-toolkit-${{ runner.os }}-${{ hashFiles('.github/workflows/test.yml') }}
+          key: cuda-toolkit-${{ runner.os }}-${{ hashFiles('.github/workflows/test-cuda-x86.yml') }}
 
       - name: "Install CUDA Toolkit"
         if: steps.cache-cuda.outputs.cache-hit != 'true'
