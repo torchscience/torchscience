@@ -71,3 +71,8 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 # Auto-detect line endings
 line-ending = "auto"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
