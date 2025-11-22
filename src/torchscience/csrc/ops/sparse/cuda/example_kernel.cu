@@ -7,6 +7,7 @@
 
 namespace science {
 namespace ops {
+namespace {
 
 // Forward kernel for sparse CUDA tensors
 // For sparse tensors, we add the scalar to the sparse values only
@@ -42,11 +43,12 @@ at::Tensor example_backward_kernel(const at::Tensor& grad_out, const at::Tensor&
     return grad_out.coalesce();
 }
 
+}  // namespace
 }  // namespace ops
 }  // namespace science
 
 // Register SparseCUDA implementation
 TORCH_LIBRARY_IMPL(torchscience, SparseCUDA, module) {
-    module.impl("example", science::ops::example_forward_kernel);
-    module.impl("_example_backward", science::ops::example_backward_kernel);
+    module.impl("example", TORCH_FN(example_forward_kernel));
+    module.impl("_example_backward", TORCH_FN(example_backward_kernel));
 }
