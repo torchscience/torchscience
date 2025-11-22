@@ -32,4 +32,10 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - run: "uv sync --locked --all-extras --dev"
-      - run: "uv run pytest tests -v -k mps"
+
+      - name: "Verify MPS availability"
+        run: |
+          uv run python -c "import torch; assert torch.backends.mps.is_available(), 'MPS is not available on this runner'; print('✓ MPS is available')"
+
+      - name: "Run tests"
+        run: "uv run pytest tests -v -k mps"
