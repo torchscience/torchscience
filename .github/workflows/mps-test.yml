@@ -10,7 +10,7 @@ on:
 jobs:
   test-mps:
     name: Test MPS - Python ${{ matrix.python-version }}
-    runs-on: "torchscience-macos-mps"
+    runs-on: "macos-26-arm64"
     strategy:
       fail-fast: false
       matrix:
@@ -23,7 +23,6 @@ jobs:
           sw_vers
 
       - uses: "actions/checkout@v4"
-
       - uses: "astral-sh/setup-uv@v6"
         with:
           python-version: ${{ matrix.python-version }}
@@ -31,6 +30,4 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - run: "uv sync --locked --all-extras --dev"
-
-      - name: "Run tests"
-        run: "uv run pytest tests -v -k mps"
+      - run: "uv run pytest tests -v -k mps"
