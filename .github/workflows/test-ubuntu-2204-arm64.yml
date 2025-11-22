@@ -1,0 +1,38 @@
+name: Ubuntu ARM64 Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-ubuntu-arm64:
+    name: Test Ubuntu ARM64 (CPU) - Python ${{ matrix.python-version }}
+    runs-on: "ubuntu-2204-arm64"
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.12" ]
+    steps:
+      - name: "System info"
+        run: |
+          echo "OS info:"
+          cat /etc/os-release
+          echo ""
+          echo "CPU info:"
+          lscpu | grep -E "Architecture|Model name|CPU\(s\)"
+
+      - uses: "actions/checkout@v4"
+
+      - uses: "astral-sh/setup-uv@v6"
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - run: "uv sync --locked --all-extras --dev"
+
+      - name: "Run tests"
+        run: "uv run pytest tests -v"
