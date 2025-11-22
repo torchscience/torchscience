@@ -34,12 +34,12 @@ at::Tensor example_backward_kernel(const at::Tensor& grad_out, const at::Tensor&
     return grad_out.coalesce();
 }
 
-}  // namespace
-}  // namespace ops
-}  // namespace science
-
 // Register SparseCPU implementation
 TORCH_LIBRARY_IMPL(torchscience, SparseCPU, module) {
     module.impl("example", example_forward_kernel);
     module.impl("_example_backward", example_backward_kernel);
 }
+
+}  // namespace
+}  // namespace ops
+}  // namespace science
