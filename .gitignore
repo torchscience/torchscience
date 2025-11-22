@@ -1,0 +1,14 @@
+*.egg
+*.egg-info/
+*.py[cod]
+*.so
+*~
+.DS_Store
+.idea/
+.venv/
+AGENTS.md
+CLAUDE.md
+__pycache__/
+build/
+dist/
+venv/

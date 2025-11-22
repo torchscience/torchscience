@@ -1,0 +1,553 @@
+name: Build and Publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to PyPI'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build-sdist:
+    name: Build Source Distribution
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install build dependencies
+      run: |
+        pip install build twine
+
+    - name: Build sdist
+      run: |
+        python -m build --sdist
+
+    - name: Check sdist
+      run: |
+        twine check dist/*.tar.gz
+
+    - name: Upload sdist artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: sdist
+        path: dist/*.tar.gz
+
+  build-wheels-linux-x86_64:
+    name: Build Linux x86_64 Wheels - Python ${{ matrix.python }}${{ matrix.free-threaded && 't' || '' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        free-threaded: [false]
+        include:
+          # Add free-threaded builds for Python 3.13+
+          - python: '3.13'
+            free-threaded: true
+          - python: '3.14'
+            free-threaded: true
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python }}
+        free-threaded: ${{ matrix.free-threaded }}
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install build dependencies
+      run: |
+        uv pip install --system build wheel twine auditwheel patchelf torch==2.9.0
+
+    - name: Build wheel
+      run: |
+        python -m build --wheel
+      env:
+        USE_CUDA: 0
+
+    - name: Repair wheel (manylinux)
+      run: |
+        auditwheel repair dist/*.whl -w dist/repaired --plat manylinux_2_28_x86_64
+        rm dist/*.whl
+        mv dist/repaired/*.whl dist/
+
+    - name: Rename wheel with +cpu tag
+      run: |
+        cd dist
+        for wheel in *.whl; do
+          newname=$(echo $wheel | sed 's/-\(cp[0-9]*\)/-cpu-\1/')
+          mv "$wheel" "$newname"
+        done
+
+    - name: Check wheel
+      run: |
+        twine check dist/*.whl
+
+    - name: Upload wheel artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheel-linux-x86_64-cp${{ matrix.python }}-${{ matrix.free-threaded && 't' || 'regular' }}
+        path: dist/*.whl
+
+  build-wheels-linux-aarch64:
+    name: Build Linux ARM64 Wheels - Python ${{ matrix.python }}${{ matrix.free-threaded && 't' || '' }}
+    runs-on: torchscience-linux-aarch64
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        free-threaded: [false]
+        include:
+          - python: '3.13'
+            free-threaded: true
+          - python: '3.14'
+            free-threaded: true
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python }}
+        free-threaded: ${{ matrix.free-threaded }}
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install build dependencies
+      run: |
+        uv pip install --system build wheel twine auditwheel patchelf torch==2.9.0
+
+    - name: Build wheel
+      run: |
+        python -m build --wheel
+      env:
+        USE_CUDA: 0
+
+    - name: Repair wheel (manylinux)
+      run: |
+        auditwheel repair dist/*.whl -w dist/repaired --plat manylinux_2_28_aarch64
+        rm dist/*.whl
+        mv dist/repaired/*.whl dist/
+
+    - name: Rename wheel with +cpu tag
+      run: |
+        cd dist
+        for wheel in *.whl; do
+          newname=$(echo $wheel | sed 's/-\(cp[0-9]*\)/-cpu-\1/')
+          mv "$wheel" "$newname"
+        done
+
+    - name: Check wheel
+      run: |
+        twine check dist/*.whl
+
+    - name: Upload wheel artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheel-linux-aarch64-cp${{ matrix.python }}-${{ matrix.free-threaded && 't' || 'regular' }}
+        path: dist/*.whl
+
+  build-wheels-macos-arm64:
+    name: Build macOS ARM64 Wheels - Python ${{ matrix.python }}${{ matrix.free-threaded && 't' || '' }}
+    runs-on: macos-14  # Apple Silicon runner
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        free-threaded: [false]
+        include:
+          - python: '3.13'
+            free-threaded: true
+          - python: '3.14'
+            free-threaded: true
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python }}
+        free-threaded: ${{ matrix.free-threaded }}
+
+    - name: Install Homebrew LLVM
+      run: |
+        brew install llvm
+        echo "CC=$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
+        echo "CXX=$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install build dependencies
+      run: |
+        uv pip install --system build wheel twine delocate torch==2.9.0
+
+    - name: Build wheel
+      run: |
+        python -m build --wheel
+      env:
+        USE_CUDA: 0
+
+    - name: Repair wheel (delocate)
+      run: |
+        delocate-wheel -w dist/repaired dist/*.whl
+        rm dist/*.whl
+        mv dist/repaired/*.whl dist/
+
+    - name: Check wheel
+      run: |
+        twine check dist/*.whl
+
+    - name: Upload wheel artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheel-macos-arm64-cp${{ matrix.python }}-${{ matrix.free-threaded && 't' || 'regular' }}
+        path: dist/*.whl
+
+  build-wheels-windows-amd64:
+    name: Build Windows x64 Wheels - Python ${{ matrix.python }}${{ matrix.free-threaded && 't' || '' }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        free-threaded: [false]
+        include:
+          - python: '3.13'
+            free-threaded: true
+          - python: '3.14'
+            free-threaded: true
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python }}
+        free-threaded: ${{ matrix.free-threaded }}
+
+    - name: Install uv
+      run: |
+        irm https://astral.sh/uv/install.ps1 | iex
+        echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: Install build dependencies
+      run: |
+        uv pip install --system build wheel twine torch==2.9.0
+      shell: bash
+
+    - name: Build wheel
+      run: |
+        python -m build --wheel
+      env:
+        USE_CUDA: 0
+      shell: bash
+
+    - name: Rename wheel with +cpu tag
+      run: |
+        cd dist
+        Get-ChildItem -Filter *.whl | ForEach-Object {
+          $newname = $_.Name -replace '-cp', '-cpu-cp'
+          Rename-Item $_.Name $newname
+        }
+
+    - name: Check wheel
+      run: |
+        twine check dist/*.whl
+      shell: bash
+
+    - name: Upload wheel artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheel-windows-amd64-cp${{ matrix.python }}-${{ matrix.free-threaded && 't' || 'regular' }}
+        path: dist/*.whl
+
+  build-wheels-windows-arm64:
+    name: Build Windows ARM64 Wheels - Python ${{ matrix.python }}${{ matrix.free-threaded && 't' || '' }}
+    runs-on: torchscience-windows-arm64
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12', '3.13', '3.14']  # Python 3.11+ for Windows ARM64
+        free-threaded: [false]
+        include:
+          - python: '3.13'
+            free-threaded: true
+          - python: '3.14'
+            free-threaded: true
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python }}
+        free-threaded: ${{ matrix.free-threaded }}
+
+    - name: Install uv
+      run: |
+        irm https://astral.sh/uv/install.ps1 | iex
+        echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: Install build dependencies
+      run: |
+        uv pip install --system build wheel twine torch==2.9.0
+      shell: bash
+
+    - name: Build wheel
+      run: |
+        python -m build --wheel
+      env:
+        USE_CUDA: 0
+      shell: bash
+
+    - name: Rename wheel with +cpu tag
+      run: |
+        cd dist
+        Get-ChildItem -Filter *.whl | ForEach-Object {
+          $newname = $_.Name -replace '-cp', '-cpu-cp'
+          Rename-Item $_.Name $newname
+        }
+
+    - name: Check wheel
+      run: |
+        twine check dist/*.whl
+      shell: bash
+
+    - name: Upload wheel artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheel-windows-arm64-cp${{ matrix.python }}-${{ matrix.free-threaded && 't' || 'regular' }}
+        path: dist/*.whl
+
+  build-wheels-cuda:
+    name: Build CUDA Wheels - Python ${{ matrix.python }}${{ matrix.free-threaded && 't' || '' }}
+    runs-on: torchscience-linux-cuda
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        free-threaded: [false]
+        include:
+          - python: '3.13'
+            free-threaded: true
+          - python: '3.14'
+            free-threaded: true
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python }}
+        free-threaded: ${{ matrix.free-threaded }}
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install build dependencies
+      run: |
+        uv pip install --system build wheel twine auditwheel patchelf torch==2.9.0 --index-url https://download.pytorch.org/whl/cu124
+
+    - name: Build CUDA wheel with multi-architecture support
+      run: |
+        python -m build --wheel
+      env:
+        USE_CUDA: 1
+        CUDA_HOME: /usr/local/cuda
+        TORCH_CUDA_ARCH_LIST: "7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+
+    - name: Repair wheel (manylinux)
+      run: |
+        auditwheel repair dist/*.whl -w dist/repaired --plat manylinux_2_28_x86_64
+        rm dist/*.whl
+        mv dist/repaired/*.whl dist/
+
+    - name: Rename wheel with +cu124 tag
+      run: |
+        cd dist
+        for wheel in *.whl; do
+          newname=$(echo $wheel | sed 's/-\(cp[0-9]*\)/-cu124-\1/')
+          mv "$wheel" "$newname"
+        done
+
+    - name: Check wheel
+      run: |
+        twine check dist/*.whl
+
+    - name: Upload CUDA wheel artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheel-cuda-cp${{ matrix.python }}-${{ matrix.free-threaded && 't' || 'regular' }}
+        path: dist/*.whl
+
+  test-wheels:
+    name: Test Wheel - ${{ matrix.os }} - Python ${{ matrix.python }}
+    needs: [build-wheels-linux-x86_64, build-wheels-linux-aarch64, build-wheels-macos-arm64, build-wheels-windows-amd64, build-wheels-windows-arm64]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # x86_64 platforms
+          - os: ubuntu-latest
+            python: '3.11'
+            wheel: wheel-linux-x86_64-cp3.11-regular
+          - os: ubuntu-latest
+            python: '3.12'
+            wheel: wheel-linux-x86_64-cp3.12-regular
+          - os: macos-14
+            python: '3.11'
+            wheel: wheel-macos-arm64-cp3.11-regular
+          - os: macos-14
+            python: '3.12'
+            wheel: wheel-macos-arm64-cp3.12-regular
+          - os: windows-latest
+            python: '3.11'
+            wheel: wheel-windows-amd64-cp3.11-regular
+          - os: windows-latest
+            python: '3.12'
+            wheel: wheel-windows-amd64-cp3.12-regular
+          # ARM64 platforms
+          - os: torchscience-linux-aarch64
+            python: '3.11'
+            wheel: wheel-linux-aarch64-cp3.11-regular
+          - os: torchscience-linux-aarch64
+            python: '3.12'
+            wheel: wheel-linux-aarch64-cp3.12-regular
+          - os: torchscience-windows-arm64
+            python: '3.11'
+            wheel: wheel-windows-arm64-cp3.11-regular
+          - os: torchscience-windows-arm64
+            python: '3.12'
+            wheel: wheel-windows-arm64-cp3.12-regular
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python }}
+
+    - name: Download wheel
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ matrix.wheel }}
+        path: dist/
+
+    - name: Install PyTorch
+      run: |
+        pip install torch==2.9.0
+      shell: bash
+
+    - name: Install wheel
+      run: |
+        pip install dist/*.whl
+      shell: bash
+
+    - name: Test import
+      run: |
+        python -c "import torchscience; print(f'Installed version: {torchscience.__version__}')"
+        python -c "import torchscience; torchscience.main()"
+      shell: bash
+
+    - name: Install test dependencies
+      run: |
+        pip install pytest numpy
+      shell: bash
+
+    - name: Run basic tests
+      run: |
+        pytest tests/ -v -k "not cuda and not mps and not hip" --tb=short
+      shell: bash
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [build-sdist, build-wheels-linux-x86_64, build-wheels-linux-aarch64, build-wheels-macos-arm64, build-wheels-windows-amd64, build-wheels-windows-arm64, build-wheels-cuda, test-wheels]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish == true)
+    environment:
+      name: pypi
+      url: https://pypi.org/project/torchscience/
+    permissions:
+      id-token: write
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: dist/
+        pattern: wheel-*
+        merge-multiple: true
+
+    - name: Download sdist
+      uses: actions/download-artifact@v4
+      with:
+        name: sdist
+        path: dist/
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        skip-existing: false
+        verbose: true
+
+  publish-test-pypi:
+    name: Publish to Test PyPI
+    needs: [build-sdist, build-wheels-linux-x86_64, build-wheels-linux-aarch64, build-wheels-macos-arm64, build-wheels-windows-amd64, build-wheels-windows-arm64, build-wheels-cuda, test-wheels]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/torchscience/
+    permissions:
+      id-token: write
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: dist/
+        pattern: wheel-*
+        merge-multiple: true
+
+    - name: Download sdist
+      uses: actions/download-artifact@v4
+      with:
+        name: sdist
+        path: dist/
+
+    - name: Publish to Test PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        skip-existing: true
+        verbose: true

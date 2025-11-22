@@ -1,0 +1,147 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  pre-commit:
+    name: Pre-commit Checks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install pre-commit
+      run: |
+        pip install pre-commit
+
+    - name: Run pre-commit
+      run: |
+        pre-commit run --all-files
+
+  clang-format:
+    name: C++ Format Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install clang-format
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format
+
+    - name: Check C++ formatting
+      run: |
+        find src/torchscience/csrc -name '*.cpp' -o -name '*.h' -o -name '*.cu' | \
+          xargs clang-format --dry-run --Werror
+        # Exclude .mm files (Objective-C++) as they require newer clang-format
+
+  python-lint:
+    name: Python Linting
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install linting tools
+      run: |
+        pip install ruff mypy
+
+    - name: Run ruff
+      run: |
+        ruff check src/ tests/
+
+    - name: Run mypy
+      run: |
+        mypy src/torchscience --ignore-missing-imports
+
+  cpp-lint:
+    name: C++ Linting
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install clang-tidy
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-tidy
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install PyTorch headers
+      run: |
+        pip install torch
+
+    - name: Run clang-tidy
+      run: |
+        # Note: This is a basic check. Full clang-tidy requires compilation database
+        find src/torchscience/csrc -name '*.cpp' -o -name '*.h' | \
+          head -n 5 | \
+          xargs -I {} clang-tidy {} -- -I$(python -c "import torch; print(torch.utils.cpp_extension.include_paths()[0])") || true
+
+  build-check:
+    name: Build Verification - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+      shell: bash
+
+    - name: Add uv to PATH (Windows)
+      if: runner.os == 'Windows'
+      run: echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: Add uv to PATH (Unix)
+      if: runner.os != 'Windows'
+      run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install Homebrew LLVM (macOS only)
+      if: runner.os == 'macOS'
+      run: |
+        brew install llvm
+        echo "CC=$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
+        echo "CXX=$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
+
+    - name: Install PyTorch
+      run: |
+        uv pip install --system torch
+      shell: bash
+
+    - name: Build extension (verify it compiles)
+      run: |
+        USE_CUDA=0 uv pip install --system -e .
+      shell: bash
+      # CC/CXX already set in GITHUB_ENV for macOS, no env vars needed here
+
+    - name: Test import
+      run: |
+        python -c "import torchscience; print('Import successful')"
+      shell: bash
