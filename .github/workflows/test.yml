@@ -21,15 +21,30 @@ jobs:
       - name: "Install CUDA Toolkit"
         run: |
           # The runner has CUDA drivers but not the toolkit (nvcc)
-          # Install just the CUDA toolkit components we need
+          # Search for available CUDA packages
+          echo "Searching for available CUDA packages..."
           sudo apt-get update
-          sudo apt-get install -y cuda-nvcc-12-4 cuda-cudart-dev-12-4
-          # Set CUDA_HOME
-          export CUDA_HOME=/usr/local/cuda-12.4
-          echo "CUDA_HOME=$CUDA_HOME" >> $GITHUB_ENV
-          echo "PATH=$CUDA_HOME/bin:$PATH" >> $GITHUB_ENV
-          # Verify installation
-          /usr/local/cuda-12.4/bin/nvcc --version
+          apt-cache search cuda-nvcc | grep -E "cuda-nvcc-[0-9]+" | head -10
+
+          # Install CUDA toolkit
+          # Try different package name formats
+          sudo apt-get install -y nvidia-cuda-toolkit || \
+          sudo apt-get install -y cuda-toolkit-12-4 || \
+          sudo apt-get install -y cuda-toolkit || \
+          (echo "Failed to install CUDA toolkit" && exit 1)
+
+          # Find where nvcc was installed
+          NVCC_PATH=$(which nvcc || find /usr -name nvcc -type f 2>/dev/null | head -1)
+          if [ -n "$NVCC_PATH" ]; then
+            export CUDA_HOME=$(dirname $(dirname $NVCC_PATH))
+            echo "CUDA_HOME=$CUDA_HOME" >> $GITHUB_ENV
+            echo "Found nvcc at: $NVCC_PATH"
+            echo "Set CUDA_HOME to: $CUDA_HOME"
+            $NVCC_PATH --version
+          else
+            echo "ERROR: nvcc still not found after installation!"
+            exit 1
+          fi
       - uses: "astral-sh/setup-uv@v6"
         with:
           python-version: ${{ matrix.python-version }}
