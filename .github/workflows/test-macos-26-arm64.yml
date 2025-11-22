@@ -1,4 +1,4 @@
-name: MPS Test Suite
+name: macOS Test Suite
 
 on:
   push:
@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-mps:
-    name: Test MPS - Python ${{ matrix.python-version }}
-    runs-on: "macos-latest"
+  test-macos:
+    name: Test macOS (CPU + MPS) - Python ${{ matrix.python-version }}
+    runs-on: "macos-26-arm64"
     strategy:
       fail-fast: false
       matrix:
@@ -38,4 +38,4 @@ jobs:
           uv run python -c "import torch; assert torch.backends.mps.is_available(), 'MPS is not available on this runner'; print('✓ MPS is available')"
 
       - name: "Run tests"
-        run: "uv run pytest tests -v -k mps"
+        run: "uv run pytest tests -v"
