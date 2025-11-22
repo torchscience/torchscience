@@ -1,0 +1,36 @@
+name: MPS Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-mps:
+    name: Test MPS - Python ${{ matrix.python-version }}
+    runs-on: "torchscience-macos-mps"
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.12" ]
+    steps:
+      - name: "Check MPS availability"
+        run: |
+          system_profiler SPDisplaysDataType | grep -i "metal"
+          echo "macOS version:"
+          sw_vers
+
+      - uses: "actions/checkout@v4"
+
+      - uses: "astral-sh/setup-uv@v6"
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - run: "uv sync --locked --all-extras --dev"
+
+      - name: "Run tests"
+        run: "uv run pytest tests -v -k mps"
