@@ -24,29 +24,47 @@ jobs:
       - name: "Set CUDA_HOME"
         run: |
           # Find nvcc and set CUDA_HOME
-          NVCC_PATH=$(which nvcc || echo "")
+          echo "Searching for nvcc..."
+
+          # First try which command
+          NVCC_PATH=$(which nvcc 2>/dev/null || echo "")
           if [ -n "$NVCC_PATH" ]; then
             export CUDA_HOME=$(dirname $(dirname $NVCC_PATH))
             echo "CUDA_HOME=$CUDA_HOME" >> $GITHUB_ENV
-            echo "Found nvcc at: $NVCC_PATH"
+            echo "Found nvcc in PATH at: $NVCC_PATH"
             echo "Setting CUDA_HOME to: $CUDA_HOME"
-          else
-            # Try common CUDA locations
-            for cuda_path in /usr/local/cuda /usr/local/cuda-* /opt/cuda; do
-              if [ -f "$cuda_path/bin/nvcc" ]; then
-                export CUDA_HOME=$cuda_path
-                echo "CUDA_HOME=$CUDA_HOME" >> $GITHUB_ENV
-                echo "Found CUDA at: $cuda_path"
-                break
-              fi
-            done
-          fi
-          # Verify CUDA_HOME
-          if [ -n "$CUDA_HOME" ]; then
-            echo "Final CUDA_HOME: $CUDA_HOME"
             $CUDA_HOME/bin/nvcc --version
-          else
-            echo "WARNING: Could not find CUDA installation"
+            exit 0
           fi
+
+          # Search common CUDA locations
+          echo "nvcc not in PATH, searching common locations..."
+          for cuda_path in /usr/local/cuda-* /usr/local/cuda /opt/cuda /usr/cuda; do
+            if [ -f "$cuda_path/bin/nvcc" ]; then
+              export CUDA_HOME=$cuda_path
+              echo "CUDA_HOME=$CUDA_HOME" >> $GITHUB_ENV
+              echo "Found nvcc at: $cuda_path/bin/nvcc"
+              echo "Setting CUDA_HOME to: $CUDA_HOME"
+              $CUDA_HOME/bin/nvcc --version
+              exit 0
+            fi
+          done
+
+          # Search system-wide for nvcc
+          echo "Searching entire system for nvcc (this may take a moment)..."
+          FOUND_NVCC=$(find /usr -name nvcc -type f 2>/dev/null | head -1 || echo "")
+          if [ -n "$FOUND_NVCC" ]; then
+            export CUDA_HOME=$(dirname $(dirname $FOUND_NVCC))
+            echo "CUDA_HOME=$CUDA_HOME" >> $GITHUB_ENV
+            echo "Found nvcc at: $FOUND_NVCC"
+            echo "Setting CUDA_HOME to: $CUDA_HOME"
+            $CUDA_HOME/bin/nvcc --version
+            exit 0
+          fi
+
+          echo "ERROR: Could not find nvcc anywhere on the system!"
+          echo "CUDA appears to be available (nvidia-smi works) but nvcc is missing."
+          echo "The CUDA toolkit may not be installed."
+          exit 1
       - run: "USE_CUDA=1 uv sync --locked --all-extras --dev"
       - run: "uv run pytest tests"
