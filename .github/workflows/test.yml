@@ -2,9 +2,9 @@ name: Test Suite
 
 on:
   push:
-    branches: [ "main" ]
-#  pull_request:
-#    branches: [ main, develop ]
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
   workflow_dispatch:
 
 jobs:
@@ -134,14 +134,16 @@ jobs:
       matrix:
         python-version: [ "3.12" ]
     steps:
+      - run: "nvidia-smi"
       - uses: "actions/checkout@v4"
       - uses: "Jimver/cuda-toolkit@v0.2.29"
       - uses: "astral-sh/setup-uv@v6"
         with:
           python-version: ${{ matrix.python-version }}
-      - run: "uv run pip install numpy"
-      - run: "uv sync --all-extras --dev --locked"
-      - run: "uv run pytest tests"
+      - run: "uv python install"
+#      - run: "uv run pip install numpy"
+#      - run: "uv sync --all-extras --dev --locked"
+#      - run: "uv run pytest tests"
 
 #  test-mps:
 #    name: Test MPS - Python ${{ matrix.python-version }}
