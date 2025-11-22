@@ -10,7 +10,7 @@ on:
 jobs:
   test-windows-x64:
     name: Test Windows x64 (CPU) - Python ${{ matrix.python-version }}
-    runs-on: "windows-2025-x64"
+    runs-on: "windows-2025"
     strategy:
       fail-fast: false
       matrix:

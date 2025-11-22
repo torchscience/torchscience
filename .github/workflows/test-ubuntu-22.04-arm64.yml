@@ -10,7 +10,7 @@ on:
 jobs:
   test-ubuntu-arm64:
     name: Test Ubuntu ARM64 (CPU) - Python ${{ matrix.python-version }}
-    runs-on: "ubuntu-2204-arm64"
+    runs-on: "ubuntu-22.04-arm"
     strategy:
       fail-fast: false
       matrix:
