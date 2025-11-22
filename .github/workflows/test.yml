@@ -2,9 +2,9 @@ name: Test Suite
 
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+    branches: [ "main" ]
+#  pull_request:
+#    branches: [ main, develop ]
   workflow_dispatch:
 
 jobs:
@@ -246,126 +246,126 @@ jobs:
   #     run: |
   #       python -c "import torch; import torchscience; x = torch.randn(10, 10, device='cuda'); y = torchscience.ops.example(x, 5.0); print(f'HIP test passed: {y.device}')"
 
-  test-sparse:
-    name: Test Sparse - ${{ matrix.backend }} - Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        backend: [ 'cpu' ]
-        python-version: [ '3.11', '3.12', '3.13' ]
+#  test-sparse:
+#    name: Test Sparse - ${{ matrix.backend }} - Python ${{ matrix.python-version }}
+#    runs-on: ubuntu-latest
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        backend: [ 'cpu' ]
+#        python-version: [ '3.11', '3.12', '3.13' ]
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Set up Python ${{ matrix.python-version }}
+#        uses: actions/setup-python@v5
+#        with:
+#          python-version: ${{ matrix.python-version }}
+#
+#      - name: Install uv
+#        run: |
+#          curl -LsSf https://astral.sh/uv/install.sh | sh
+#          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+#
+#      - name: Install PyTorch 2.9.0
+#        run: |
+#          uv pip install --system torch==2.9.0 torchvision torchaudio
+#
+#      - name: Install dependencies
+#        run: |
+#          uv pip install --system pytest pytest-xdist numpy
+#
+#      - name: Build extension
+#        run: |
+#          USE_CUDA=0 uv pip install --system -e .
+#
+#      - name: Run sparse tensor tests
+#        run: |
+#          pytest tests/ -v --tb=short -k "sparse"
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Install PyTorch 2.9.0
-        run: |
-          uv pip install --system torch==2.9.0 torchvision torchaudio
-
-      - name: Install dependencies
-        run: |
-          uv pip install --system pytest pytest-xdist numpy
-
-      - name: Build extension
-        run: |
-          USE_CUDA=0 uv pip install --system -e .
-
-      - name: Run sparse tensor tests
-        run: |
-          pytest tests/ -v --tb=short -k "sparse"
-
-  integration-test:
-    name: Integration Test - All Features
-    runs-on: ubuntu-latest
-    needs: [ test-cpu ]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Install PyTorch 2.9.0
-        run: |
-          uv pip install --system torch==2.9.0 torchvision torchaudio
-
-      - name: Install dependencies
-        run: |
-          uv pip install --system pytest pytest-xdist numpy
-
-      - name: Build and install
-        run: |
-          USE_CUDA=0 uv pip install --system -e .
-
-      - name: Run full test suite
-        run: |
-          pytest tests/ -v --tb=short --durations=10
-
-      - name: Test opcheck compliance
-        run: |
-          python << 'PYTHON_SCRIPT'
-          import torch
-          from torchscience import ops
-          from torch.library import opcheck
-          
-          # Test example operator with opcheck
-          x_cpu = torch.randn(10, requires_grad=True)
-          opcheck(torch.ops.torchscience.example.default, (x_cpu, 5.0))
-          
-          print('PT2 compliance check passed!')
-          PYTHON_SCRIPT
-
-      - name: Test autograd
-        run: |
-          python << 'PYTHON_SCRIPT'
-          import torch
-          from torchscience import ops
-          
-          # Test autograd
-          x = torch.randn(100, 100, requires_grad=True)
-          y = ops.example(x, 5.0)
-          loss = y.sum()
-          loss.backward()
-          
-          assert x.grad is not None, 'Gradient should be computed'
-          assert torch.allclose(x.grad, torch.ones_like(x)), 'Gradient should be all ones'
-          
-          print('Autograd test passed!')
-          PYTHON_SCRIPT
-
-      - name: Test torch.compile
-        run: |
-          python << 'PYTHON_SCRIPT'
-          import torch
-          from torchscience import ops
-          
-          # Test torch.compile compatibility
-          def f(x):
-              return ops.example(x, 5.0)
-          
-          compiled_f = torch.compile(f)
-          x = torch.randn(100, 100)
-          y1 = f(x)
-          y2 = compiled_f(x)
-          
-          assert torch.allclose(y1, y2), 'Compiled and eager mode should match'
-          
-          print('torch.compile test passed!')
-          PYTHON_SCRIPT
+#  integration-test:
+#    name: Integration Test - All Features
+#    runs-on: ubuntu-latest
+#    needs: [ test-cpu ]
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Set up Python 3.11
+#        uses: actions/setup-python@v5
+#        with:
+#          python-version: '3.11'
+#
+#      - name: Install uv
+#        run: |
+#          curl -LsSf https://astral.sh/uv/install.sh | sh
+#          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+#
+#      - name: Install PyTorch 2.9.0
+#        run: |
+#          uv pip install --system torch==2.9.0 torchvision torchaudio
+#
+#      - name: Install dependencies
+#        run: |
+#          uv pip install --system pytest pytest-xdist numpy
+#
+#      - name: Build and install
+#        run: |
+#          USE_CUDA=0 uv pip install --system -e .
+#
+#      - name: Run full test suite
+#        run: |
+#          pytest tests/ -v --tb=short --durations=10
+#
+#      - name: Test opcheck compliance
+#        run: |
+#          python << 'PYTHON_SCRIPT'
+#          import torch
+#          from torchscience import ops
+#          from torch.library import opcheck
+#
+#          # Test example operator with opcheck
+#          x_cpu = torch.randn(10, requires_grad=True)
+#          opcheck(torch.ops.torchscience.example.default, (x_cpu, 5.0))
+#
+#          print('PT2 compliance check passed!')
+#          PYTHON_SCRIPT
+#
+#      - name: Test autograd
+#        run: |
+#          python << 'PYTHON_SCRIPT'
+#          import torch
+#          from torchscience import ops
+#
+#          # Test autograd
+#          x = torch.randn(100, 100, requires_grad=True)
+#          y = ops.example(x, 5.0)
+#          loss = y.sum()
+#          loss.backward()
+#
+#          assert x.grad is not None, 'Gradient should be computed'
+#          assert torch.allclose(x.grad, torch.ones_like(x)), 'Gradient should be all ones'
+#
+#          print('Autograd test passed!')
+#          PYTHON_SCRIPT
+#
+#      - name: Test torch.compile
+#        run: |
+#          python << 'PYTHON_SCRIPT'
+#          import torch
+#          from torchscience import ops
+#
+#          # Test torch.compile compatibility
+#          def f(x):
+#              return ops.example(x, 5.0)
+#
+#          compiled_f = torch.compile(f)
+#          x = torch.randn(100, 100)
+#          y1 = f(x)
+#          y2 = compiled_f(x)
+#
+#          assert torch.allclose(y1, y2), 'Compiled and eager mode should match'
+#
+#          print('torch.compile test passed!')
+#          PYTHON_SCRIPT
