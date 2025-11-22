@@ -6,8 +6,7 @@
 // These functions are implemented in backend-specific files and can be
 // tested directly in C++ unit tests
 
-namespace science {
-namespace ops {
+namespace science::ops {
 
 // CPU kernels (implemented in ops/cpu/example_kernel.cpp)
 namespace cpu {
@@ -35,5 +34,5 @@ at::Tensor example_forward_meta(const at::Tensor& input, const at::Scalar& x);
 at::Tensor example_backward_meta(const at::Tensor& grad_out, const at::Tensor& input,
                                  const at::Scalar& x);
 
-}  // namespace ops
-}  // namespace science
+} // namespace science::ops
+
