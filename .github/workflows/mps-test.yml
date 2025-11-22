@@ -18,9 +18,11 @@ jobs:
     steps:
       - name: "Check MPS availability"
         run: |
-          system_profiler SPDisplaysDataType | grep -i "metal"
           echo "macOS version:"
           sw_vers
+          echo ""
+          echo "Display info:"
+          system_profiler SPDisplaysDataType | grep -i "metal" || echo "Metal info not found in display profile"
 
       - uses: "actions/checkout@v4"
       - uses: "astral-sh/setup-uv@v6"
