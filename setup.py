@@ -77,28 +77,28 @@ def get_extensions():
     # Collect all source files
     sources = list(glob.glob(os.path.join(extensions_dir, "*.cpp")))
 
-    # Add operator implementation sources
+    # Add operator implementation sources (using recursive glob to catch both direct files and special_functions/)
     sources += list(glob.glob(os.path.join(extensions_dir, "ops", "*.cpp")))
-    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "cpu", "*.cpp")))
-    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "autograd", "*.cpp")))
-    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "autocast", "*.cpp")))
-    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "meta", "*.cpp")))
-    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "quantized", "cpu", "*.cpp")))
+    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "cpu", "**", "*.cpp"), recursive=True))
+    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "autograd", "**", "*.cpp"), recursive=True))
+    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "autocast", "**", "*.cpp"), recursive=True))
+    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "meta", "**", "*.cpp"), recursive=True))
+    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "quantized", "cpu", "**", "*.cpp"), recursive=True))
 
     # Sparse CPU backend (always included)
-    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "sparse", "cpu", "*.cpp")))
+    sources += list(glob.glob(os.path.join(extensions_dir, "ops", "sparse", "cpu", "**", "*.cpp"), recursive=True))
 
     # MPS backend (Apple Silicon) - only on macOS
     # Note: MPS implementation requires macOS 12.0+ at runtime
     if is_macos:
-        mps_sources = list(glob.glob(os.path.join(extensions_dir, "ops", "mps", "*.mm")))
+        mps_sources = list(glob.glob(os.path.join(extensions_dir, "ops", "mps", "**", "*.mm"), recursive=True))
         sources += mps_sources
 
     # CUDA sources (including sparse CUDA)
     extensions_cuda_dir = os.path.join(extensions_dir, "cuda")
     cuda_sources = list(glob.glob(os.path.join(extensions_cuda_dir, "*.cu")))
-    cuda_sources += list(glob.glob(os.path.join(extensions_dir, "ops", "cuda", "*.cu")))
-    cuda_sources += list(glob.glob(os.path.join(extensions_dir, "ops", "sparse", "cuda", "*.cu")))
+    cuda_sources += list(glob.glob(os.path.join(extensions_dir, "ops", "cuda", "**", "*.cu"), recursive=True))
+    cuda_sources += list(glob.glob(os.path.join(extensions_dir, "ops", "sparse", "cuda", "**", "*.cu"), recursive=True))
 
     if use_cuda:
         sources += cuda_sources

@@ -52,44 +52,80 @@ include_directories(
 
 # Source files for tests - mirrors src/torchscience/csrc structure
 set(TEST_SOURCES
-        tests/torchscience/csrc/ops/cpu/test_example_kernel.cpp
-    tests/torchscience/csrc/ops/meta/test_example_kernel.cpp
-    tests/torchscience/csrc/ops/autograd/test_example_kernel.cpp
-    tests/torchscience/csrc/ops/sparse/cpu/test_example_kernel.cpp
-    tests/torchscience/csrc/ops/quantized/cpu/test_example_kernel.cpp
+    # Example operator tests
+
+        # Hypergeometric 2F1 operator tests
+    tests/torchscience/csrc/ops/cpu/special_functions/test_hypergeometric_2_f_1_kernel.cpp
+    tests/torchscience/csrc/ops/meta/special_functions/test_hypergeometric_2_f_1_kernel.cpp
+    tests/torchscience/csrc/ops/autograd/special_functions/test_hypergeometric_2_f_1_kernel.cpp
+    tests/torchscience/csrc/ops/sparse/cpu/special_functions/test_hypergeometric_2_f_1_kernel.cpp
+    tests/torchscience/csrc/ops/quantized/cpu/special_functions/test_hypergeometric_2_f_1_kernel.cpp
 )
 
 # CUDA support
 if(WITH_CUDA OR CUDA_FOUND OR TORCH_CUDA_AVAILABLE)
     enable_language(CUDA)
     list(APPEND TEST_SOURCES
+        # Example operator CUDA tests
         tests/torchscience/csrc/ops/cuda/test_example_kernel.cu
         tests/torchscience/csrc/ops/autocast/test_example_kernel.cpp
         tests/torchscience/csrc/ops/sparse/cuda/test_example_kernel.cu
+
+        # Hypergeometric 2F1 CUDA tests
+        tests/torchscience/csrc/ops/cuda/special_functions/test_hypergeometric_2_f_1_kernel.cu
+        tests/torchscience/csrc/ops/autocast/special_functions/test_hypergeometric_2_f_1_kernel.cpp
+        tests/torchscience/csrc/ops/sparse/cuda/special_functions/test_hypergeometric_2_f_1_kernel.cu
     )
     add_definitions(-DWITH_CUDA)
 endif()
 
 # HIP/ROCm support
 if(WITH_HIP)
-    list(APPEND TEST_SOURCES tests/torchscience/csrc/ops/hip/test_example_kernel.cpp)
+    list(APPEND TEST_SOURCES
+        tests/torchscience/csrc/ops/hip/test_example_kernel.cpp
+        tests/torchscience/csrc/ops/hip/special_functions/test_hypergeometric_2_f_1_kernel.hip
+    )
     add_definitions(-DWITH_HIP)
 endif()
 
 # MPS support (macOS/Apple Silicon)
 if(APPLE)
-    list(APPEND TEST_SOURCES tests/torchscience/csrc/ops/mps/test_example_kernel.mm)
+    list(APPEND TEST_SOURCES
+        tests/torchscience/csrc/ops/mps/special_functions/test_hypergeometric_2_f_1_kernel.mm
+    )
 endif()
 
 # Add source files for the kernels being tested
 list(APPEND TEST_SOURCES
-    src/torchscience/csrc/ops/cpu/example_kernel.cpp
-    src/torchscience/csrc/ops/meta/example_kernel.cpp
+    # Hypergeometric 2F1 operator sources
+    src/torchscience/csrc/ops/cpu/special_functions/hypergeometric_2_f_1_kernel.cpp
+    src/torchscience/csrc/ops/meta/special_functions/hypergeometric_2_f_1_kernel.cpp
+    src/torchscience/csrc/ops/autograd/special_functions/hypergeometric_2_f_1_kernel.cpp
+    src/torchscience/csrc/ops/sparse/cpu/special_functions/hypergeometric_2_f_1_kernel.cpp
+    src/torchscience/csrc/ops/quantized/cpu/special_functions/hypergeometric_2_f_1_kernel.cpp
 )
 
 if(WITH_CUDA OR CUDA_FOUND OR TORCH_CUDA_AVAILABLE)
     list(APPEND TEST_SOURCES
+        # Example operator CUDA sources
         src/torchscience/csrc/ops/cuda/example_kernel.cu
+
+        # Hypergeometric 2F1 CUDA sources
+        src/torchscience/csrc/ops/cuda/special_functions/hypergeometric_2_f_1_kernel.cu
+        src/torchscience/csrc/ops/autocast/special_functions/hypergeometric_2_f_1_kernel.cpp
+        src/torchscience/csrc/ops/sparse/cuda/special_functions/hypergeometric_2_f_1_kernel.cu
+    )
+endif()
+
+if(APPLE)
+    list(APPEND TEST_SOURCES
+        src/torchscience/csrc/ops/mps/special_functions/hypergeometric_2_f_1_kernel.mm
+    )
+endif()
+
+if(WITH_HIP)
+    list(APPEND TEST_SOURCES
+        src/torchscience/csrc/ops/hip/special_functions/hypergeometric_2_f_1_kernel.hip
     )
 endif()
 

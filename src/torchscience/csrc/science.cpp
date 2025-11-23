@@ -46,11 +46,11 @@ int64_t cuda_version() {
 TORCH_LIBRARY(torchscience, module) {
     module.def("_cuda_version() -> int");
 
-    // Register the example operator (adds scalar to all elements)
-    module.def("example(Tensor input, Scalar x) -> Tensor");
+    // Register the hypergeometric_2_f_1 operator (Gaussian hypergeometric function)
+    module.def("hypergeometric_2_f_1(Tensor a, Tensor b, Tensor c, Tensor z) -> Tensor");
 
-    // Register the backward operator
-    module.def("_example_backward(Tensor gradient, Tensor input, Scalar x) -> Tensor");
+    // Register the backward operator for hypergeometric_2_f_1
+    module.def("_hypergeometric_2_f_1_backward(Tensor grad_out, Tensor a, Tensor b, Tensor c, Tensor z, Tensor result) -> (Tensor, Tensor, Tensor, Tensor)");
 }
 
 TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
