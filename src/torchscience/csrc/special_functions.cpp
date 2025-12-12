@@ -21,6 +21,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_beta_backward(Tensor grad_output, Tensor a, Tensor b) -> (Tensor, Tensor)");
   module.def("_bulirsch_elliptic_integral_el1(Tensor x, Tensor kc) -> Tensor");
   module.def("_bulirsch_elliptic_integral_el1_backward(Tensor grad_output, Tensor x, Tensor kc) -> (Tensor, Tensor)");
+  module.def("_carlson_elliptic_r_c(Tensor x, Tensor y) -> Tensor");
+  module.def("_carlson_elliptic_r_c_backward(Tensor grad_output, Tensor x, Tensor y) -> (Tensor, Tensor)");
   module.def("_confluent_hypergeometric_0_f_1(Tensor b, Tensor z) -> Tensor");
   module.def("_confluent_hypergeometric_0_f_1_backward(Tensor grad_output, Tensor b, Tensor z) -> (Tensor, Tensor)");
   module.def("_cos_pi(Tensor input) -> Tensor");

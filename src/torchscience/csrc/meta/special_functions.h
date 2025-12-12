@@ -6,6 +6,7 @@
 #include <torchscience/csrc/meta/special_functions/bessel_y.h>
 #include <torchscience/csrc/meta/special_functions/beta.h>
 #include <torchscience/csrc/meta/special_functions/bulirsch_elliptic_integral_el1.h>
+#include <torchscience/csrc/meta/special_functions/carlson_elliptic_r_c.h>
 #include <torchscience/csrc/meta/special_functions/confluent_hypergeometric_0_f_1.h>
 #include <torchscience/csrc/meta/special_functions/cos_pi.h>
 #include <torchscience/csrc/meta/special_functions/cosine_integral_ci.h>

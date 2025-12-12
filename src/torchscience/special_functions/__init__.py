@@ -4,6 +4,7 @@ from ._bessel_j import bessel_j
 from ._bessel_y import bessel_y
 from ._beta import beta
 from ._bulirsch_elliptic_integral_el1 import bulirsch_elliptic_integral_el1
+from ._carlson_elliptic_r_c import carlson_elliptic_r_c
 from ._confluent_hypergeometric_0_f_1 import confluent_hypergeometric_0_f_1
 from ._cos_pi import cos_pi
 from ._cosine_integral_ci import cosine_integral_ci
@@ -40,6 +41,7 @@ __all__ = [
     "bessel_y",
     "beta",
     "bulirsch_elliptic_integral_el1",
+    "carlson_elliptic_r_c",
     "confluent_hypergeometric_0_f_1",
     "cos_pi",
     "cosine_integral_ci",
