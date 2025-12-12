@@ -6,6 +6,7 @@ PyTorch operators for mathematics, science, and engineering.
 
 - Geometry
 - Graph algorithms
+  - Maximum flow problems
 - Initial value problems
 - Integral transforms
 - Linear algebra

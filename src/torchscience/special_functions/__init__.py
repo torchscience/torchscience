@@ -45,6 +45,7 @@ from ._neville_theta_c import neville_theta_c
 from ._neville_theta_d import neville_theta_d
 from ._neville_theta_n import neville_theta_n
 from ._neville_theta_s import neville_theta_s
+from ._prime_number_p import prime_number_p
 from ._rising_factorial import rising_factorial
 from ._sin_pi import sin_pi
 from ._sinc_pi import sinc_pi
@@ -106,6 +107,7 @@ __all__ = [
     "neville_theta_d",
     "neville_theta_n",
     "neville_theta_s",
+    "prime_number_p",
     "rising_factorial",
     "sin_pi",
     "sinc_pi",
