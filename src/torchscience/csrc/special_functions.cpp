@@ -37,6 +37,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_carlson_elliptic_integral_r_c_backward(Tensor grad_output, Tensor x, Tensor y) -> (Tensor, Tensor)");
   module.def("_carlson_elliptic_integral_r_d(Tensor x, Tensor y, Tensor z) -> Tensor");
   module.def("_carlson_elliptic_integral_r_d_backward(Tensor grad_output, Tensor x, Tensor y, Tensor z) -> (Tensor, Tensor, Tensor)");
+  module.def("_carlson_elliptic_integral_r_e(Tensor x, Tensor y, Tensor z) -> Tensor");
+  module.def("_carlson_elliptic_integral_r_e_backward(Tensor grad_output, Tensor x, Tensor y, Tensor z) -> (Tensor, Tensor, Tensor)");
   module.def("_carlson_elliptic_r_c(Tensor x, Tensor y) -> Tensor");
   module.def("_carlson_elliptic_r_c_backward(Tensor grad_output, Tensor x, Tensor y) -> (Tensor, Tensor)");
   module.def("_complete_carlson_elliptic_r_f(Tensor x, Tensor y) -> Tensor");

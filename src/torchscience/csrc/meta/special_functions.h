@@ -14,6 +14,7 @@
 #include <torchscience/csrc/meta/special_functions/bulirsch_elliptic_integral_el1.h>
 #include <torchscience/csrc/meta/special_functions/carlson_elliptic_integral_r_c.h>
 #include <torchscience/csrc/meta/special_functions/carlson_elliptic_integral_r_d.h>
+#include <torchscience/csrc/meta/special_functions/carlson_elliptic_integral_r_e.h>
 #include <torchscience/csrc/meta/special_functions/carlson_elliptic_r_c.h>
 #include <torchscience/csrc/meta/special_functions/complete_carlson_elliptic_r_f.h>
 #include <torchscience/csrc/meta/special_functions/complete_carlson_elliptic_r_g.h>
