@@ -14,6 +14,7 @@
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/inverse_erfc.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/log_gamma.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/modified_bessel_i.h>
+#include <torchscience/csrc/sparse/coo/cpu/special_functions/modified_bessel_k.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/sin_pi.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/sinc_pi.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/sinhc_pi.h>
