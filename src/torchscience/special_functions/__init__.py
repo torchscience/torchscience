@@ -3,6 +3,7 @@ from ._airy_ai_derivative import airy_ai_derivative
 from ._airy_bi import airy_bi
 from ._airy_bi_derivative import airy_bi_derivative
 from ._bessel_j import bessel_j
+from ._bessel_j_derivative import bessel_j_derivative
 from ._bessel_y import bessel_y
 from ._bernoulli_number_b import bernoulli_number_b
 from ._beta import beta
@@ -74,6 +75,7 @@ __all__ = [
     "airy_bi",
     "airy_bi_derivative",
     "bessel_j",
+    "bessel_j_derivative",
     "bessel_y",
     "bernoulli_number_b",
     "beta",

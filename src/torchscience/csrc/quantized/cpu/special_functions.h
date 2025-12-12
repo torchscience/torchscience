@@ -5,6 +5,7 @@
 #include <torchscience/csrc/quantized/cpu/special_functions/airy_bi.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/airy_bi_derivative.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/bessel_j.h>
+#include <torchscience/csrc/quantized/cpu/special_functions/bessel_j_derivative.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/bessel_y.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/bernoulli_number_b.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/beta.h>
