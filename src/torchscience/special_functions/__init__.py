@@ -17,6 +17,7 @@ from ._chebyshev_polynomial_w import chebyshev_polynomial_w
 from ._shifted_chebyshev_polynomial_t import shifted_chebyshev_polynomial_t
 from ._shifted_chebyshev_polynomial_u import shifted_chebyshev_polynomial_u
 from ._shifted_chebyshev_polynomial_v import shifted_chebyshev_polynomial_v
+from ._shifted_chebyshev_polynomial_w import shifted_chebyshev_polynomial_w
 from ._carlson_elliptic_integral_r_c import carlson_elliptic_integral_r_c
 from ._carlson_elliptic_integral_r_d import carlson_elliptic_integral_r_d
 from ._carlson_elliptic_integral_r_e import carlson_elliptic_integral_r_e
@@ -119,6 +120,7 @@ __all__ = [
     "shifted_chebyshev_polynomial_t",
     "shifted_chebyshev_polynomial_u",
     "shifted_chebyshev_polynomial_v",
+    "shifted_chebyshev_polynomial_w",
     "carlson_elliptic_integral_r_c",
     "carlson_elliptic_integral_r_d",
     "carlson_elliptic_integral_r_e",
