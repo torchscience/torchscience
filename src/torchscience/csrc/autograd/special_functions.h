@@ -56,6 +56,7 @@
 #include <torchscience/csrc/autograd/special_functions/sin_pi.h>
 #include <torchscience/csrc/autograd/special_functions/sinc_pi.h>
 #include <torchscience/csrc/autograd/special_functions/sine_integral_sin.h>
+#include <torchscience/csrc/autograd/special_functions/sine_integral_si.h>
 #include <torchscience/csrc/autograd/special_functions/sinhc_pi.h>
 #include <torchscience/csrc/autograd/special_functions/spherical_bessel_j.h>
 #include <torchscience/csrc/autograd/special_functions/spherical_bessel_y.h>

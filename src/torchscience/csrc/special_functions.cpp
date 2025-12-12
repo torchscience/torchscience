@@ -121,6 +121,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_sinc_pi_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_sine_integral_sin(Tensor input) -> Tensor");
   module.def("_sine_integral_sin_backward(Tensor grad_output, Tensor input) -> Tensor");
+  module.def("_sine_integral_si(Tensor input) -> Tensor");
+  module.def("_sine_integral_si_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_sinhc_pi(Tensor input) -> Tensor");
   module.def("_sinhc_pi_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_spherical_bessel_j(Tensor n, Tensor x) -> Tensor");
