@@ -5,6 +5,8 @@
 
 namespace torchscience::cpu::special_functions {
 
+using namespace torchscience::impl::special_functions;
+
 TORCHSCIENCE_UNARY_CPU_KERNEL(factorial)
 TORCHSCIENCE_UNARY_CPU_KERNEL_IMPL(factorial)
 

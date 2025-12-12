@@ -5,6 +5,8 @@
 
 namespace torchscience::cpu::special_functions {
 
+using namespace torchscience::impl::special_functions;
+
 TORCHSCIENCE_BINARY_CPU_KERNEL(binomial_coefficient, n, k)
 TORCHSCIENCE_BINARY_CPU_KERNEL_IMPL(binomial_coefficient)
 

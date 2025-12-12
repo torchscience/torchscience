@@ -5,6 +5,8 @@
 
 namespace torchscience::cpu::special_functions {
 
+using namespace torchscience::impl::special_functions;
+
 TORCHSCIENCE_BINARY_CPU_KERNEL(neville_theta_d, k, u)
 TORCHSCIENCE_BINARY_CPU_KERNEL_IMPL(neville_theta_d)
 

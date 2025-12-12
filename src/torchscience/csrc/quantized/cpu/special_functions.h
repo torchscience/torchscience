@@ -53,6 +53,7 @@
 #include <torchscience/csrc/quantized/cpu/special_functions/modified_bessel_i.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/modified_bessel_i_derivative.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/modified_bessel_k.h>
+#include <torchscience/csrc/quantized/cpu/special_functions/modified_bessel_k_derivative.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/neville_theta_c.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/neville_theta_d.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/neville_theta_n.h>

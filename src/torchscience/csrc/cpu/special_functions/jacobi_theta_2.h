@@ -5,6 +5,8 @@
 
 namespace torchscience::cpu::special_functions {
 
+using namespace torchscience::impl::special_functions;
+
 TORCHSCIENCE_BINARY_CPU_KERNEL(jacobi_theta_2, z, q)
 TORCHSCIENCE_BINARY_CPU_KERNEL_IMPL(jacobi_theta_2)
 

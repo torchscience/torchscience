@@ -51,6 +51,7 @@ from ._logarithmic_integral_li import logarithmic_integral_li
 from ._modified_bessel_i import modified_bessel_i
 from ._modified_bessel_i_derivative import modified_bessel_i_derivative
 from ._modified_bessel_k import modified_bessel_k
+from ._modified_bessel_k_derivative import modified_bessel_k_derivative
 from ._neville_theta_c import neville_theta_c
 from ._neville_theta_d import neville_theta_d
 from ._neville_theta_n import neville_theta_n
@@ -125,6 +126,7 @@ __all__ = [
     "modified_bessel_i",
     "modified_bessel_i_derivative",
     "modified_bessel_k",
+    "modified_bessel_k_derivative",
     "neville_theta_c",
     "neville_theta_d",
     "neville_theta_n",

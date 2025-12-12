@@ -115,6 +115,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_modified_bessel_i_derivative_backward(Tensor grad_output, Tensor nu, Tensor x) -> (Tensor, Tensor)");
   module.def("_modified_bessel_k(Tensor nu, Tensor x) -> Tensor");
   module.def("_modified_bessel_k_backward(Tensor grad_output, Tensor nu, Tensor x) -> (Tensor, Tensor)");
+  module.def("_modified_bessel_k_derivative(Tensor nu, Tensor x) -> Tensor");
+  module.def("_modified_bessel_k_derivative_backward(Tensor grad_output, Tensor nu, Tensor x) -> (Tensor, Tensor)");
   module.def("_neville_theta_c(Tensor k, Tensor u) -> Tensor");
   module.def("_neville_theta_c_backward(Tensor grad_output, Tensor k, Tensor u) -> (Tensor, Tensor)");
   module.def("_neville_theta_d(Tensor k, Tensor u) -> Tensor");
