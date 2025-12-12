@@ -10,6 +10,7 @@
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/complete_carlson_elliptic_r_f.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/complete_carlson_elliptic_r_g.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/complete_elliptic_integral_e.h>
+#include <torchscience/csrc/sparse/csr/cpu/special_functions/complete_elliptic_integral_k.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/confluent_hypergeometric_0_f_1.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/cos_pi.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/cosine_integral_ci.h>
