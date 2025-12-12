@@ -19,6 +19,7 @@ from ._erf import erf
 from ._erfc import erfc
 from ._exponential_integral_e import exponential_integral_e
 from ._exponential_integral_ei import exponential_integral_ei
+from ._factorial import factorial
 from ._gamma import gamma
 from ._hankel_h_1 import hankel_h_1
 from ._hankel_h_2 import hankel_h_2
@@ -73,6 +74,7 @@ __all__ = [
     "erfc",
     "exponential_integral_e",
     "exponential_integral_ei",
+    "factorial",
     "gamma",
     "hankel_h_1",
     "hankel_h_2",
