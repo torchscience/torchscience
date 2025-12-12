@@ -1,9 +1,9 @@
 from torch import Tensor
 
-from torchscience._C import _confluent_hypergeometric_0_f_1
+import torch
 
 
-def confluent_hypergeometric_0_f_1(b: Tensor, z: Tensor) -> Tensor:
+def confluent_hypergeometric_0_f_1(b: Tensor, z: Tensor, *, out: Tensor | None = None) -> Tensor:
     r"""
     Confluent hypergeometric limit function.
 
@@ -29,4 +29,10 @@ def confluent_hypergeometric_0_f_1(b: Tensor, z: Tensor) -> Tensor:
     Tensor
         Confluent hypergeometric limit function.
     """
-    return _confluent_hypergeometric_0_f_1(b, z)
+    output = torch.ops.torchscience._confluent_hypergeometric_0_f_1(b, z)
+
+    if out is not None:
+        out.copy_(output)
+        return out
+
+    return output

@@ -1,15 +1,15 @@
 #pragma once
 
-#include <boost/math/special_functions/sinint.hpp>
-#include <boost/math/constants/constants.hpp>
+#include <torchscience/csrc/impl/special_functions/sine_integral_si.h>
 
 namespace torchscience::impl::special_functions {
 
 template <typename T>
 C10_HOST_DEVICE T sine_integral_sin(T x) {
-  // si(x) = Si(x) - pi/2 = -integral from x to infinity of sin(t)/t dt
+  // si(x) = Si(x) - π/2 = -integral from x to infinity of sin(t)/t dt
   // This is the "shifted" sine integral that goes to 0 as x -> infinity
-  return boost::math::sinint(x) - boost::math::constants::half_pi<T>();
+  T pi_2 = T(3.14159265358979323846264338327950288) / T(2);
+  return sine_integral_si(x) - pi_2;
 }
 
 template <typename T>

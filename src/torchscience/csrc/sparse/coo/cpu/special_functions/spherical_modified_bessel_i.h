@@ -4,6 +4,8 @@
 
 namespace torchscience::sparse::coo::cpu::special_functions {
 
+using namespace torchscience::impl::special_functions;
+
 TORCHSCIENCE_BINARY_SPARSE_COO_CPU_KERNEL(spherical_modified_bessel_i, n, x)
 TORCHSCIENCE_BINARY_SPARSE_COO_CPU_KERNEL_IMPL(spherical_modified_bessel_i)
 

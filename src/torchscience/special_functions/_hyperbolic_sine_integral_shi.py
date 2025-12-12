@@ -1,9 +1,9 @@
 from torch import Tensor
 
-from torchscience._C import _hyperbolic_sine_integral_shi
+import torch
 
 
-def hyperbolic_sine_integral_shi(input: Tensor) -> Tensor:
+def hyperbolic_sine_integral_shi(input: Tensor, *, out: Tensor | None = None) -> Tensor:
     r"""
     Hyperbolic sine integral.
 
@@ -20,4 +20,10 @@ def hyperbolic_sine_integral_shi(input: Tensor) -> Tensor:
     Tensor
         Hyperbolic sine integral of input.
     """
-    return _hyperbolic_sine_integral_shi(input)
+    output = torch.ops.torchscience._hyperbolic_sine_integral_shi(input)
+
+    if out is not None:
+        out.copy_(output)
+        return out
+
+    return output

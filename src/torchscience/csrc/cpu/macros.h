@@ -20,7 +20,7 @@
       )                                                                         \
       .build();                                                                 \
                                                                                 \
-    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES(                                     \
+    AT_DISPATCH_FLOATING_TYPES(                                                 \
       iterator.common_dtype(),                                                  \
       #SCHEMA_NAME,                                                             \
       [&]() {                                                                   \
@@ -58,7 +58,7 @@
       )                                                                         \
       .build();                                                                 \
                                                                                 \
-    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES(                                     \
+    AT_DISPATCH_FLOATING_TYPES(                                                 \
       iterator.common_dtype(),                                                  \
       #SCHEMA_NAME "_backward",                                                 \
       [&]() {                                                                   \
@@ -115,7 +115,7 @@
       )                                                                         \
       .build();                                                                 \
                                                                                 \
-    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES(                                     \
+    AT_DISPATCH_FLOATING_TYPES(                                     \
       iterator.common_dtype(),                                                  \
       #SCHEMA_NAME,                                                             \
       [&]() {                                                                   \
@@ -163,7 +163,7 @@
       )                                                                         \
       .build();                                                                 \
                                                                                 \
-    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES(                                     \
+    AT_DISPATCH_FLOATING_TYPES(                                     \
       iterator.common_dtype(),                                                  \
       #SCHEMA_NAME "_backward",                                                 \
       [&]() {                                                                   \
@@ -230,7 +230,7 @@
       )                                                                         \
       .build();                                                                 \
                                                                                 \
-    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES(                                     \
+    AT_DISPATCH_FLOATING_TYPES(                                     \
       iterator.common_dtype(),                                                  \
       #SCHEMA_NAME,                                                             \
       [&]() {                                                                   \
@@ -289,7 +289,7 @@
       )                                                                         \
       .build();                                                                 \
                                                                                 \
-    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES(                                     \
+    AT_DISPATCH_FLOATING_TYPES(                                     \
       iterator.common_dtype(),                                                  \
       #SCHEMA_NAME "_backward",                                                 \
       [&]() {                                                                   \
@@ -364,7 +364,7 @@
       )                                                                         \
       .build();                                                                 \
                                                                                 \
-    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES(                                     \
+    AT_DISPATCH_FLOATING_TYPES(                                     \
       iterator.common_dtype(),                                                  \
       #SCHEMA_NAME,                                                             \
       [&]() {                                                                   \
@@ -433,7 +433,7 @@
       )                                                                         \
       .build();                                                                 \
                                                                                 \
-    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES(                                     \
+    AT_DISPATCH_FLOATING_TYPES(                                     \
       iterator.common_dtype(),                                                  \
       #SCHEMA_NAME "_backward",                                                 \
       [&]() {                                                                   \
@@ -517,7 +517,7 @@
       )                                                                         \
       .build();                                                                 \
                                                                                 \
-    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES(                                     \
+    AT_DISPATCH_FLOATING_TYPES(                                     \
       iterator.common_dtype(),                                                  \
       #SCHEMA_NAME,                                                             \
       [&]() {                                                                   \
@@ -596,7 +596,7 @@
       )                                                                         \
       .build();                                                                 \
                                                                                 \
-    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES(                                     \
+    AT_DISPATCH_FLOATING_TYPES(                                     \
       iterator.common_dtype(),                                                  \
       #SCHEMA_NAME "_backward",                                                 \
       [&]() {                                                                   \

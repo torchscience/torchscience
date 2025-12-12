@@ -4,6 +4,8 @@
 
 namespace torchscience::sparse::csr::cpu::special_functions {
 
+using namespace torchscience::impl::special_functions;
+
 TORCHSCIENCE_UNARY_SPARSE_CSR_CPU_KERNEL(complete_elliptic_integral_e)
 
 TORCHSCIENCE_UNARY_SPARSE_CSR_CPU_KERNEL_IMPL(complete_elliptic_integral_e)

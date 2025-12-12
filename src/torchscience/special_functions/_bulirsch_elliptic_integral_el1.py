@@ -1,9 +1,8 @@
+import torch
 from torch import Tensor
 
-from torchscience._C import _bulirsch_elliptic_integral_el1
 
-
-def bulirsch_elliptic_integral_el1(x: Tensor, kc: Tensor) -> Tensor:
+def bulirsch_elliptic_integral_el1(x: Tensor, kc: Tensor, *, out: Tensor | None = None) -> Tensor:
     r"""
     Bulirsch's incomplete elliptic integral of the first kind.
 
@@ -19,10 +18,18 @@ def bulirsch_elliptic_integral_el1(x: Tensor, kc: Tensor) -> Tensor:
         Input tensor.
     kc : Tensor
         Complementary modulus.
+    out : Tensor, optional
+        Output tensor.
 
     Returns
     -------
     Tensor
         Bulirsch's incomplete elliptic integral of the first kind.
     """
-    return _bulirsch_elliptic_integral_el1(x, kc)
+    output: Tensor = torch.ops.torchscience._bulirsch_elliptic_integral_el1(x, kc)
+
+    if out is not None:
+        out.copy_(output)
+        return out
+
+    return output

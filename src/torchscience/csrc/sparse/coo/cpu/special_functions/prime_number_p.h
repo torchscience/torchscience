@@ -4,6 +4,8 @@
 
 namespace torchscience::sparse::coo::cpu::special_functions {
 
+using namespace torchscience::impl::special_functions;
+
 TORCHSCIENCE_UNARY_SPARSE_COO_CPU_KERNEL(prime_number_p)
 
 TORCHSCIENCE_UNARY_SPARSE_COO_CPU_KERNEL_IMPL(prime_number_p)

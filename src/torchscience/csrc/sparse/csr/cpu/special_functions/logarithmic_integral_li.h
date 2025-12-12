@@ -4,6 +4,8 @@
 
 namespace torchscience::sparse::csr::cpu::special_functions {
 
+using namespace torchscience::impl::special_functions;
+
 TORCHSCIENCE_UNARY_SPARSE_CSR_CPU_KERNEL(logarithmic_integral_li)
 
 TORCHSCIENCE_UNARY_SPARSE_CSR_CPU_KERNEL_IMPL(logarithmic_integral_li)

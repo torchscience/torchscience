@@ -1,9 +1,9 @@
 from torch import Tensor
 
-from torchscience._C import _hyperbolic_cosine_integral_chi
+import torch
 
 
-def hyperbolic_cosine_integral_chi(input: Tensor) -> Tensor:
+def hyperbolic_cosine_integral_chi(input: Tensor, *, out: Tensor | None = None) -> Tensor:
     r"""
     Hyperbolic cosine integral.
 
@@ -22,4 +22,10 @@ def hyperbolic_cosine_integral_chi(input: Tensor) -> Tensor:
     Tensor
         Hyperbolic cosine integral of input.
     """
-    return _hyperbolic_cosine_integral_chi(input)
+    output = torch.ops.torchscience._hyperbolic_cosine_integral_chi(input)
+
+    if out is not None:
+        out.copy_(output)
+        return out
+
+    return output

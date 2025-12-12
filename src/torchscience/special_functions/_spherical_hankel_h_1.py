@@ -1,9 +1,9 @@
 from torch import Tensor
 
-from torchscience._C import _spherical_hankel_h_1
+import torch
 
 
-def spherical_hankel_h_1(n: Tensor, x: Tensor) -> Tensor:
+def spherical_hankel_h_1(n: Tensor, x: Tensor, *, out: Tensor | None = None) -> Tensor:
     r"""
     Spherical Hankel function of the first kind.
 
@@ -28,4 +28,10 @@ def spherical_hankel_h_1(n: Tensor, x: Tensor) -> Tensor:
     Tensor
         Spherical Hankel function of the first kind.
     """
-    return _spherical_hankel_h_1(n, x)
+    output = torch.ops.torchscience._spherical_hankel_h_1(n, x)
+
+    if out is not None:
+        out.copy_(output)
+        return out
+
+    return output

@@ -4,6 +4,8 @@
 
 namespace torchscience::quantized::cpu::special_functions {
 
+using namespace torchscience::impl::special_functions;
+
 TORCHSCIENCE_BINARY_QUANTIZED_CPU_KERNEL(complete_elliptic_integral_pi, n, k)
 TORCHSCIENCE_BINARY_QUANTIZED_CPU_KERNEL_IMPL(complete_elliptic_integral_pi)
 

@@ -5,6 +5,8 @@
 
 namespace torchscience::quantized::cpu::special_functions {
 
+using namespace torchscience::impl::special_functions;
+
 TORCHSCIENCE_BINARY_QUANTIZED_CPU_KERNEL(spherical_hankel_h_1, n, x)
 
 TORCHSCIENCE_BINARY_QUANTIZED_CPU_KERNEL_IMPL(spherical_hankel_h_1)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <c10/util/numbers.h>
+#include <boost/math/constants/constants.hpp>
 #include <cmath>
 
 namespace torchscience::impl::special_functions {

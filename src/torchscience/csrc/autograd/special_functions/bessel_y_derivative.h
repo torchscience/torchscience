@@ -4,7 +4,7 @@
 
 namespace torchscience::autograd::special_functions {
 
-TORCHSCIENCE_BINARY_AUTOGRAD(bessel_y_derivative, nu, x)
+TORCHSCIENCE_BINARY_AUTOGRAD(BesselYDerivative, bessel_y_derivative, nu, x)
 
 TORCHSCIENCE_BINARY_AUTOGRAD_IMPL(bessel_y_derivative)
 

@@ -5,9 +5,11 @@
 
 namespace torchscience::quantized::cpu::special_functions {
 
+using namespace torchscience::impl::special_functions;
+
 template <typename scalar_t>
 scalar_t log_beta(scalar_t a, scalar_t b) {
-  return ::log_beta(a, b);
+  return torchscience::impl::special_functions::log_beta(a, b);
 }
 
 TORCHSCIENCE_BINARY_QUANTIZED_CPU_KERNEL(log_beta, a, b)

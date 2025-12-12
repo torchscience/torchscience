@@ -1,9 +1,9 @@
 from torch import Tensor
 
-from torchscience._C import _hankel_h_2
+import torch
 
 
-def hankel_h_2(nu: Tensor, x: Tensor) -> Tensor:
+def hankel_h_2(nu: Tensor, x: Tensor, *, out: Tensor | None = None) -> Tensor:
     r"""
     Hankel function of the second kind.
 
@@ -28,4 +28,10 @@ def hankel_h_2(nu: Tensor, x: Tensor) -> Tensor:
     Tensor
         Hankel function of the second kind.
     """
-    return _hankel_h_2(nu, x)
+    output = torch.ops.torchscience._hankel_h_2(nu, x)
+
+    if out is not None:
+        out.copy_(output)
+        return out
+
+    return output
