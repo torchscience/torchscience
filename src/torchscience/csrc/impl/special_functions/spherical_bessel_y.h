@@ -2,6 +2,8 @@
 
 #include <boost/math/special_functions/bessel.hpp>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T spherical_bessel_y(T n, T x) {
   return boost::math::sph_neumann(static_cast<unsigned>(n), x);
@@ -28,3 +30,5 @@ std::tuple<T, T> spherical_bessel_y_backward(T n, T x) {
 
   return std::make_tuple(grad_n, grad_x);
 }
+
+} // namespace torchscience::impl::special_functions

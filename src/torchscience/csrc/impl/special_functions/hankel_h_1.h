@@ -3,6 +3,8 @@
 #include <boost/math/special_functions/hankel.hpp>
 #include <complex>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 std::complex<T> hankel_h_1(std::complex<T> nu, std::complex<T> x) {
   // Hankel function of the first kind: H^(1)_nu(x) = J_nu(x) + i*Y_nu(x)
@@ -48,3 +50,5 @@ std::tuple<T, T> hankel_h_1_backward(T nu, T x) {
   }
   return std::make_tuple(grad_nu, T(0));
 }
+
+} // namespace torchscience::impl::special_functions

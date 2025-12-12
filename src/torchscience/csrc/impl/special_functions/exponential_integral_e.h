@@ -2,6 +2,8 @@
 
 #include <boost/math/special_functions/expint.hpp>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T exponential_integral_e(T n, T x) {
   return boost::math::expint(static_cast<unsigned>(n), x);
@@ -25,3 +27,5 @@ std::tuple<T, T> exponential_integral_e_backward(T n, T x) {
 
   return std::make_tuple(grad_n, grad_x);
 }
+
+} // namespace torchscience::impl::special_functions

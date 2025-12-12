@@ -15,6 +15,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_airy_ai_derivative_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_airy_bi(Tensor input) -> Tensor");
   module.def("_airy_bi_backward(Tensor grad_output, Tensor input) -> Tensor");
+  module.def("_airy_bi_derivative(Tensor input) -> Tensor");
+  module.def("_airy_bi_derivative_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_bessel_j(Tensor nu, Tensor x) -> Tensor");
   module.def("_bessel_j_backward(Tensor grad_output, Tensor nu, Tensor x) -> (Tensor, Tensor)");
   module.def("_bessel_y(Tensor nu, Tensor x) -> Tensor");

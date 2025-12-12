@@ -2,6 +2,10 @@
 
 #include <torchscience/csrc/sparse/coo/cpu/macros.h>
 
+namespace torchscience::sparse::coo::cpu::special_functions {
+
 TORCHSCIENCE_BINARY_SPARSE_COO_CPU_KERNEL(spherical_hankel_h_1, n, x)
 
 TORCHSCIENCE_BINARY_SPARSE_COO_CPU_KERNEL_IMPL(spherical_hankel_h_1)
+
+} // namespace torchscience::sparse::coo::cpu::special_functions

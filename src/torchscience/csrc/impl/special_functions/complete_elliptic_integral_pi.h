@@ -6,6 +6,8 @@
 #include <cmath>
 #include <tuple>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T complete_elliptic_integral_pi(T n, T k) {
   // Complete elliptic integral of the third kind Π(n, k)
@@ -43,3 +45,5 @@ std::tuple<T, T> complete_elliptic_integral_pi_backward(T n, T k) {
 
   return std::make_tuple(grad_n, grad_k);
 }
+
+} // namespace torchscience::impl::special_functions

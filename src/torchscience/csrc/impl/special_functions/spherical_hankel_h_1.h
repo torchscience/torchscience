@@ -3,6 +3,8 @@
 #include <boost/math/special_functions/hankel.hpp>
 #include <complex>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 std::complex<T> spherical_hankel_h_1(std::complex<T> n, std::complex<T> x) {
   // Spherical Hankel function of the first kind: h^(1)_n(x) = j_n(x) + i*y_n(x)
@@ -63,3 +65,5 @@ std::tuple<T, T> spherical_hankel_h_1_backward(T n, T x) {
   }
   return std::make_tuple(grad_n, T(0));
 }
+
+} // namespace torchscience::impl::special_functions

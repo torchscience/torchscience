@@ -4,6 +4,8 @@
 #include <boost/math/constants/constants.hpp>
 #include <cmath>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T spherical_modified_bessel_i(T n, T x) {
   // i_n(x) = sqrt(pi/(2x)) * I_{n+1/2}(x)
@@ -39,3 +41,5 @@ std::tuple<T, T> spherical_modified_bessel_i_backward(T n, T x) {
 
   return std::make_tuple(grad_n, grad_x);
 }
+
+} // namespace torchscience::impl::special_functions

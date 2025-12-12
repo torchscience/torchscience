@@ -4,6 +4,8 @@
 #include <cmath>
 #include <tuple>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T binomial_coefficient(T n, T k) {
   return boost::math::binomial_coefficient<T>(
@@ -18,3 +20,5 @@ std::tuple<T, T> binomial_coefficient_backward(T n, T k) {
   // Return zero gradients
   return std::make_tuple(T(0), T(0));
 }
+
+} // namespace torchscience::impl::special_functions

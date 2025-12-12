@@ -4,6 +4,8 @@
 #include <cmath>
 #include <tuple>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T jacobi_theta_3(T z, T q) {
   return boost::math::jacobi_theta3(z, q);
@@ -25,3 +27,5 @@ std::tuple<T, T> jacobi_theta_3_backward(T z, T q) {
 
   return std::make_tuple(grad_z, grad_q);
 }
+
+} // namespace torchscience::impl::special_functions

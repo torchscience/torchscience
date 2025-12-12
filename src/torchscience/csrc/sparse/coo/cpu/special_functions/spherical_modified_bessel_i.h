@@ -1,6 +1,10 @@
 #pragma once
 
-#include "torchscience/csrc/sparse/coo/cpu/macros.h"
+#include <torchscience/csrc/sparse/coo/cpu/macros.h>
+
+namespace torchscience::sparse::coo::cpu::special_functions {
 
 TORCHSCIENCE_BINARY_SPARSE_COO_CPU_KERNEL(spherical_modified_bessel_i, n, x)
 TORCHSCIENCE_BINARY_SPARSE_COO_CPU_KERNEL_IMPL(spherical_modified_bessel_i)
+
+} // namespace torchscience::sparse::coo::cpu::special_functions

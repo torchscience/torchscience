@@ -5,6 +5,8 @@
 #include <cmath>
 #include <tuple>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T incomplete_elliptic_integral_e(T phi, T k) {
   // Incomplete elliptic integral of the second kind E(phi, k)
@@ -36,3 +38,5 @@ std::tuple<T, T> incomplete_elliptic_integral_e_backward(T phi, T k) {
 
   return std::make_tuple(grad_phi, grad_k);
 }
+
+} // namespace torchscience::impl::special_functions

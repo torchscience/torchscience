@@ -4,6 +4,8 @@
 #include <cmath>
 #include <tuple>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T incomplete_elliptic_integral_f(T phi, T k) {
   // Incomplete elliptic integral of the first kind F(phi, k)
@@ -39,3 +41,5 @@ std::tuple<T, T> incomplete_elliptic_integral_f_backward(T phi, T k) {
 
   return std::make_tuple(grad_phi, grad_k);
 }
+
+} // namespace torchscience::impl::special_functions

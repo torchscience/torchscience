@@ -2,6 +2,8 @@
 
 #include <boost/math/special_functions/factorials.hpp>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T factorial(T x) {
   return boost::math::factorial<T>(static_cast<unsigned int>(x));
@@ -16,3 +18,5 @@ T factorial_backward(T x) {
   T f_minus = boost::math::factorial<T>(static_cast<unsigned int>(x));
   return (f_plus - f_minus) / eps;
 }
+
+} // namespace torchscience::impl::special_functions

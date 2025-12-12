@@ -2,5 +2,9 @@
 
 #include <torchscience/csrc/meta/macros.h>
 
+namespace torchscience::meta::special_functions {
+
 TORCHSCIENCE_BINARY_META_KERNEL(complete_carlson_elliptic_r_f, x, y)
 TORCHSCIENCE_BINARY_META_KERNEL_IMPL(complete_carlson_elliptic_r_f)
+
+} // namespace torchscience::meta::special_functions

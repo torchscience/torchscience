@@ -2,5 +2,9 @@
 
 #include <torchscience/csrc/sparse/coo/cpu/macros.h>
 
+namespace torchscience::sparse::coo::cpu::special_functions {
+
 TORCHSCIENCE_BINARY_SPARSE_COO_CPU_KERNEL(neville_theta_n, k, u)
 TORCHSCIENCE_BINARY_SPARSE_COO_CPU_KERNEL_IMPL(neville_theta_n)
+
+} // namespace torchscience::sparse::coo::cpu::special_functions

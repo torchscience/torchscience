@@ -4,6 +4,8 @@
 #include <cmath>
 #include <tuple>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T rising_factorial(T x, T n) {
   return boost::math::rising_factorial(x, static_cast<int>(n));
@@ -24,3 +26,5 @@ std::tuple<T, T> rising_factorial_backward(T x, T n) {
 
   return std::make_tuple(grad_x, grad_n);
 }
+
+} // namespace torchscience::impl::special_functions

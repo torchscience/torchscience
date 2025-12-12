@@ -6,6 +6,8 @@
 #include <cmath>
 #include <tuple>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T incomplete_legendre_elliptic_integral_d(T phi, T k) {
   // Incomplete Legendre elliptic integral D(phi, k)
@@ -41,3 +43,5 @@ std::tuple<T, T> incomplete_legendre_elliptic_integral_d_backward(T phi, T k) {
 
   return std::make_tuple(grad_phi, grad_k);
 }
+
+} // namespace torchscience::impl::special_functions

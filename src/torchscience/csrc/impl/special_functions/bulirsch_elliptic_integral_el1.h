@@ -3,6 +3,8 @@
 #include <boost/math/special_functions/ellint_rf.hpp>
 #include <cmath>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T bulirsch_elliptic_integral_el1(T x, T kc) {
   // Bulirsch's incomplete elliptic integral of the first kind
@@ -26,3 +28,5 @@ std::tuple<T, T> bulirsch_elliptic_integral_el1_backward(T x, T kc) {
 
   return std::make_tuple(grad_x, grad_kc);
 }
+
+} // namespace torchscience::impl::special_functions

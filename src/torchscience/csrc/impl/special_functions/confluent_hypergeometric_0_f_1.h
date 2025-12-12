@@ -2,6 +2,8 @@
 
 #include <boost/math/special_functions/hypergeometric_0F1.hpp>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T confluent_hypergeometric_0_f_1(T b, T z) {
   // Confluent hypergeometric limit function 0F1(; b; z)
@@ -19,3 +21,5 @@ std::tuple<T, T> confluent_hypergeometric_0_f_1_backward(T b, T z) {
 
   return std::make_tuple(grad_b, grad_z);
 }
+
+} // namespace torchscience::impl::special_functions

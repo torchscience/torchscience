@@ -4,6 +4,8 @@
 #include <cmath>
 #include <tuple>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T complete_carlson_elliptic_r_f(T x, T y) {
   // Complete Carlson elliptic integral R_F(0, x, y)
@@ -26,3 +28,5 @@ std::tuple<T, T> complete_carlson_elliptic_r_f_backward(T x, T y) {
 
   return std::make_tuple(grad_x, grad_y);
 }
+
+} // namespace torchscience::impl::special_functions

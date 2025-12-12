@@ -4,6 +4,8 @@
 #include <boost/math/special_functions/digamma.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T log_beta(T a, T b) {
   // log(B(a,b)) = log(Gamma(a)) + log(Gamma(b)) - log(Gamma(a+b))
@@ -23,3 +25,5 @@ std::tuple<T, T> log_beta_backward(T a, T b) {
     digamma_b - digamma_ab
   );
 }
+
+} // namespace torchscience::impl::special_functions

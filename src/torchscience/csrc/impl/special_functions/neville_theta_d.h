@@ -4,6 +4,8 @@
 #include <cmath>
 #include <tuple>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T neville_theta_d(T k, T u) {
   return boost::math::neville_theta_d(k, u);
@@ -24,3 +26,5 @@ std::tuple<T, T> neville_theta_d_backward(T k, T u) {
 
   return std::make_tuple(grad_k, grad_u);
 }
+
+} // namespace torchscience::impl::special_functions

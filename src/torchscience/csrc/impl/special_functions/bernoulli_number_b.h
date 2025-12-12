@@ -2,6 +2,8 @@
 
 #include <boost/math/special_functions/bernoulli.hpp>
 
+namespace torchscience::impl::special_functions {
+
 template <typename T>
 T bernoulli_number_b(T n) {
   return boost::math::bernoulli_b2n<T>(static_cast<int>(n));
@@ -13,3 +15,5 @@ T bernoulli_number_b_backward(T n) {
   // Gradient is zero for discrete functions
   return T(0);
 }
+
+} // namespace torchscience::impl::special_functions
