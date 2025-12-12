@@ -4,6 +4,7 @@
 #include <torchscience/csrc/autocast/special_functions/airy_ai_derivative.h>
 #include <torchscience/csrc/autocast/special_functions/airy_bi.h>
 #include <torchscience/csrc/autocast/special_functions/airy_bi_derivative.h>
+#include <torchscience/csrc/autocast/special_functions/associated_legendre_p.h>
 #include <torchscience/csrc/autocast/special_functions/bessel_j.h>
 #include <torchscience/csrc/autocast/special_functions/bessel_j_derivative.h>
 #include <torchscience/csrc/autocast/special_functions/bessel_y.h>
