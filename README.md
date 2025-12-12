@@ -5,19 +5,14 @@ PyTorch operators for mathematics, science, and engineering.
 ## Domains
 
 - Geometry
-- Graph algorithms
-  - Connected component
-  - Maximum flow problems
-  - Shortest path problems
-  - Graph traversal
-  - Subgraphs
+- Graphs
+- Initial value problems
 - Integral transforms
 - Integration
-  - Initial value problems
 - Linear algebra
 - Optimization
-  - Root-finding
 - Probability
+- Root-finding
 - Special functions
 - Statistics
 

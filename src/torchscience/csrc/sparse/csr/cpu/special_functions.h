@@ -41,6 +41,7 @@
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/jacobi_theta_2.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/jacobi_theta_3.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/jacobi_theta_4.h>
+#include <torchscience/csrc/sparse/csr/cpu/special_functions/log_beta.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/log_gamma.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/modified_bessel_i.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/modified_bessel_k.h>

@@ -91,6 +91,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_jacobi_theta_3_backward(Tensor grad_output, Tensor z, Tensor q) -> (Tensor, Tensor)");
   module.def("_jacobi_theta_4(Tensor z, Tensor q) -> Tensor");
   module.def("_jacobi_theta_4_backward(Tensor grad_output, Tensor z, Tensor q) -> (Tensor, Tensor)");
+  module.def("_log_beta(Tensor a, Tensor b) -> Tensor");
+  module.def("_log_beta_backward(Tensor grad_output, Tensor a, Tensor b) -> (Tensor, Tensor)");
   module.def("_log_gamma(Tensor input) -> Tensor");
   module.def("_log_gamma_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_modified_bessel_i(Tensor nu, Tensor x) -> Tensor");
