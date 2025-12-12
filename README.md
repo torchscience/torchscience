@@ -89,3 +89,6 @@ PyTorch operators for mathematics, science, and engineering.
 
 `torchscience` wraps the following open source software libraries:
 
+- [Boost](https://www.boost.org/)
+- [Embree](https://www.embree.org/)
+- [FINUFFT]
