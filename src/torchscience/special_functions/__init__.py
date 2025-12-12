@@ -48,6 +48,12 @@ from ._jacobi_elliptic_dn import jacobi_elliptic_dn
 from ._jacobi_elliptic_sc import jacobi_elliptic_sc
 from ._jacobi_elliptic_sd import jacobi_elliptic_sd
 from ._jacobi_elliptic_sn import jacobi_elliptic_sn
+from ._inverse_jacobi_elliptic_cd import inverse_jacobi_elliptic_cd
+from ._inverse_jacobi_elliptic_cn import inverse_jacobi_elliptic_cn
+from ._inverse_jacobi_elliptic_dn import inverse_jacobi_elliptic_dn
+from ._inverse_jacobi_elliptic_sc import inverse_jacobi_elliptic_sc
+from ._inverse_jacobi_elliptic_sd import inverse_jacobi_elliptic_sd
+from ._inverse_jacobi_elliptic_sn import inverse_jacobi_elliptic_sn
 from ._jacobi_theta_1 import jacobi_theta_1
 from ._jacobi_theta_2 import jacobi_theta_2
 from ._jacobi_theta_3 import jacobi_theta_3
@@ -130,6 +136,12 @@ __all__ = [
     "jacobi_elliptic_sc",
     "jacobi_elliptic_sd",
     "jacobi_elliptic_sn",
+    "inverse_jacobi_elliptic_cd",
+    "inverse_jacobi_elliptic_cn",
+    "inverse_jacobi_elliptic_dn",
+    "inverse_jacobi_elliptic_sc",
+    "inverse_jacobi_elliptic_sd",
+    "inverse_jacobi_elliptic_sn",
     "jacobi_theta_1",
     "jacobi_theta_2",
     "jacobi_theta_3",

@@ -109,6 +109,18 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_jacobi_elliptic_sd_backward(Tensor grad_output, Tensor u, Tensor k) -> (Tensor, Tensor)");
   module.def("_jacobi_elliptic_sn(Tensor u, Tensor k) -> Tensor");
   module.def("_jacobi_elliptic_sn_backward(Tensor grad_output, Tensor u, Tensor k) -> (Tensor, Tensor)");
+  module.def("_inverse_jacobi_elliptic_cd(Tensor x, Tensor k) -> Tensor");
+  module.def("_inverse_jacobi_elliptic_cd_backward(Tensor grad_output, Tensor x, Tensor k) -> (Tensor, Tensor)");
+  module.def("_inverse_jacobi_elliptic_cn(Tensor x, Tensor k) -> Tensor");
+  module.def("_inverse_jacobi_elliptic_cn_backward(Tensor grad_output, Tensor x, Tensor k) -> (Tensor, Tensor)");
+  module.def("_inverse_jacobi_elliptic_dn(Tensor x, Tensor k) -> Tensor");
+  module.def("_inverse_jacobi_elliptic_dn_backward(Tensor grad_output, Tensor x, Tensor k) -> (Tensor, Tensor)");
+  module.def("_inverse_jacobi_elliptic_sc(Tensor x, Tensor k) -> Tensor");
+  module.def("_inverse_jacobi_elliptic_sc_backward(Tensor grad_output, Tensor x, Tensor k) -> (Tensor, Tensor)");
+  module.def("_inverse_jacobi_elliptic_sd(Tensor x, Tensor k) -> Tensor");
+  module.def("_inverse_jacobi_elliptic_sd_backward(Tensor grad_output, Tensor x, Tensor k) -> (Tensor, Tensor)");
+  module.def("_inverse_jacobi_elliptic_sn(Tensor x, Tensor k) -> Tensor");
+  module.def("_inverse_jacobi_elliptic_sn_backward(Tensor grad_output, Tensor x, Tensor k) -> (Tensor, Tensor)");
   module.def("_jacobi_theta_1(Tensor z, Tensor q) -> Tensor");
   module.def("_jacobi_theta_1_backward(Tensor grad_output, Tensor z, Tensor q) -> (Tensor, Tensor)");
   module.def("_jacobi_theta_2(Tensor z, Tensor q) -> Tensor");
