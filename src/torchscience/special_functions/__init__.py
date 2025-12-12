@@ -17,6 +17,7 @@ from ._sin_pi import sin_pi
 from ._sinc_pi import sinc_pi
 from ._sinhc_pi import sinhc_pi
 from ._spherical_bessel_j import spherical_bessel_j
+from ._spherical_bessel_y import spherical_bessel_y
 from ._trigamma import trigamma
 
 __all__ = [
@@ -39,5 +40,6 @@ __all__ = [
     "sinc_pi",
     "sinhc_pi",
     "spherical_bessel_j",
+    "spherical_bessel_y",
     "trigamma",
 ]

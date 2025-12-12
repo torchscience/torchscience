@@ -19,4 +19,5 @@
 #include <torchscience/csrc/autograd/special_functions/sinc_pi.h>
 #include <torchscience/csrc/autograd/special_functions/sinhc_pi.h>
 #include <torchscience/csrc/autograd/special_functions/spherical_bessel_j.h>
+#include <torchscience/csrc/autograd/special_functions/spherical_bessel_y.h>
 #include <torchscience/csrc/autograd/special_functions/trigamma.h>
