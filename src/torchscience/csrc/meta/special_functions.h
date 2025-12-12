@@ -26,6 +26,7 @@
 #include <torchscience/csrc/meta/special_functions/exponential_integral_ei.h>
 #include <torchscience/csrc/meta/special_functions/factorial.h>
 #include <torchscience/csrc/meta/special_functions/falling_factorial.h>
+#include <torchscience/csrc/meta/special_functions/fibonacci_number_f.h>
 #include <torchscience/csrc/meta/special_functions/gamma.h>
 #include <torchscience/csrc/meta/special_functions/hankel_h_1.h>
 #include <torchscience/csrc/meta/special_functions/hankel_h_2.h>

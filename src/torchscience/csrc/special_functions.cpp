@@ -61,6 +61,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_factorial_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_falling_factorial(Tensor x, Tensor n) -> Tensor");
   module.def("_falling_factorial_backward(Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor)");
+  module.def("_fibonacci_number_f(Tensor input) -> Tensor");
+  module.def("_fibonacci_number_f_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_gamma(Tensor input) -> Tensor");
   module.def("_gamma_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_hankel_h_1(Tensor nu, Tensor x) -> Tensor");

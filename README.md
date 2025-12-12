@@ -6,9 +6,14 @@ PyTorch operators for mathematics, science, and engineering.
 
 - Geometry
 - Graph algorithms
+  - Connected component
   - Maximum flow problems
-- Initial value problems
+  - Shortest path problems
+  - Graph traversal
+  - Subgraphs
 - Integral transforms
+- Integration
+  - Initial value problems
 - Linear algebra
 - Optimization
   - Root-finding

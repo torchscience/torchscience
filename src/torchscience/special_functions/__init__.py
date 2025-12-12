@@ -24,6 +24,7 @@ from ._exponential_integral_e import exponential_integral_e
 from ._exponential_integral_ei import exponential_integral_ei
 from ._factorial import factorial
 from ._falling_factorial import falling_factorial
+from ._fibonacci_number_f import fibonacci_number_f
 from ._gamma import gamma
 from ._hankel_h_1 import hankel_h_1
 from ._hankel_h_2 import hankel_h_2
@@ -86,6 +87,7 @@ __all__ = [
     "exponential_integral_ei",
     "factorial",
     "falling_factorial",
+    "fibonacci_number_f",
     "gamma",
     "hankel_h_1",
     "hankel_h_2",
