@@ -43,6 +43,7 @@
 #include <torchscience/csrc/autocast/special_functions/jacobi_theta_4.h>
 #include <torchscience/csrc/autocast/special_functions/log_beta.h>
 #include <torchscience/csrc/autocast/special_functions/log_gamma.h>
+#include <torchscience/csrc/autocast/special_functions/logarithmic_integral_li.h>
 #include <torchscience/csrc/autocast/special_functions/modified_bessel_i.h>
 #include <torchscience/csrc/autocast/special_functions/modified_bessel_k.h>
 #include <torchscience/csrc/autocast/special_functions/neville_theta_c.h>

@@ -41,6 +41,7 @@ from ._jacobi_theta_3 import jacobi_theta_3
 from ._jacobi_theta_4 import jacobi_theta_4
 from ._log_beta import log_beta
 from ._log_gamma import log_gamma
+from ._logarithmic_integral_li import logarithmic_integral_li
 from ._modified_bessel_i import modified_bessel_i
 from ._modified_bessel_k import modified_bessel_k
 from ._neville_theta_c import neville_theta_c
@@ -105,6 +106,7 @@ __all__ = [
     "jacobi_theta_4",
     "log_beta",
     "log_gamma",
+    "logarithmic_integral_li",
     "modified_bessel_i",
     "modified_bessel_k",
     "neville_theta_c",
