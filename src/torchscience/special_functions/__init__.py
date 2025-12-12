@@ -72,6 +72,7 @@ from ._inverse_jacobi_elliptic_dn import inverse_jacobi_elliptic_dn
 from ._inverse_jacobi_elliptic_sc import inverse_jacobi_elliptic_sc
 from ._inverse_jacobi_elliptic_sd import inverse_jacobi_elliptic_sd
 from ._inverse_jacobi_elliptic_sn import inverse_jacobi_elliptic_sn
+from ._legendre_p import legendre_p
 from ._jacobi_theta_1 import jacobi_theta_1
 from ._jacobi_theta_2 import jacobi_theta_2
 from ._jacobi_theta_3 import jacobi_theta_3
@@ -181,6 +182,7 @@ __all__ = [
     "inverse_jacobi_elliptic_sc",
     "inverse_jacobi_elliptic_sd",
     "inverse_jacobi_elliptic_sn",
+    "legendre_p",
     "jacobi_theta_1",
     "jacobi_theta_2",
     "jacobi_theta_3",
