@@ -24,6 +24,11 @@ PyTorch operators for mathematics, science, and engineering.
 - [Embree](https://www.embree.org/)
 - [FINUFFT](https://finufft.readthedocs.io/en/latest/)
 - [NLopt](https://nlopt.readthedocs.io/en/latest/)
-- [OptiX](https://developer.nvidia.com/rtx/ray-tracing/optix)
 - [SUNDIALS](https://computing.llnl.gov/projects/sundials)
 - [SuiteSparse](https://people.engr.tamu.edu/davis/suitesparse.html)
+
+`torchscience` depends on the following closed source software libraries:
+
+- [Accelerate](https://developer.apple.com/documentation/accelerate)
+- [Metal](https://developer.apple.com/documentation/metal)
+- [OptiX](https://developer.nvidia.com/rtx/ray-tracing/optix)
