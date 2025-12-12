@@ -10,6 +10,7 @@ from ._complete_carlson_elliptic_r_g import complete_carlson_elliptic_r_g
 from ._complete_elliptic_integral_e import complete_elliptic_integral_e
 from ._complete_elliptic_integral_k import complete_elliptic_integral_k
 from ._complete_elliptic_integral_pi import complete_elliptic_integral_pi
+from ._complete_legendre_elliptic_integral_d import complete_legendre_elliptic_integral_d
 from ._confluent_hypergeometric_0_f_1 import confluent_hypergeometric_0_f_1
 from ._cos_pi import cos_pi
 from ._cosine_integral_ci import cosine_integral_ci
@@ -52,6 +53,7 @@ __all__ = [
     "complete_elliptic_integral_e",
     "complete_elliptic_integral_k",
     "complete_elliptic_integral_pi",
+    "complete_legendre_elliptic_integral_d",
     "confluent_hypergeometric_0_f_1",
     "cos_pi",
     "cosine_integral_ci",
