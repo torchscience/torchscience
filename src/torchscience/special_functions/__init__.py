@@ -11,6 +11,7 @@ from ._gamma import gamma
 from ._inverse_erf import inverse_erf
 from ._inverse_erfc import inverse_erfc
 from ._log_gamma import log_gamma
+from ._modified_bessel_i import modified_bessel_i
 from ._sin_pi import sin_pi
 from ._sinc_pi import sinc_pi
 from ._sinhc_pi import sinhc_pi
@@ -30,6 +31,7 @@ __all__ = [
     "inverse_erf",
     "inverse_erfc",
     "log_gamma",
+    "modified_bessel_i",
     "sin_pi",
     "sinc_pi",
     "sinhc_pi",

@@ -13,6 +13,7 @@
 #include <torchscience/csrc/autograd/special_functions/inverse_erf.h>
 #include <torchscience/csrc/autograd/special_functions/inverse_erfc.h>
 #include <torchscience/csrc/autograd/special_functions/log_gamma.h>
+#include <torchscience/csrc/autograd/special_functions/modified_bessel_i.h>
 #include <torchscience/csrc/autograd/special_functions/sin_pi.h>
 #include <torchscience/csrc/autograd/special_functions/sinc_pi.h>
 #include <torchscience/csrc/autograd/special_functions/sinhc_pi.h>
