@@ -1,4 +1,18 @@
 #pragma once
 
+#include <torchscience/csrc/cpu/special_functions/airy_ai.h>
+#include <torchscience/csrc/cpu/special_functions/airy_bi.h>
+#include <torchscience/csrc/cpu/special_functions/bessel_j.h>
+#include <torchscience/csrc/cpu/special_functions/beta.h>
 #include <torchscience/csrc/cpu/special_functions/cos_pi.h>
+#include <torchscience/csrc/cpu/special_functions/digamma.h>
+#include <torchscience/csrc/cpu/special_functions/erf.h>
+#include <torchscience/csrc/cpu/special_functions/erfc.h>
+#include <torchscience/csrc/cpu/special_functions/gamma.h>
+#include <torchscience/csrc/cpu/special_functions/inverse_erf.h>
+#include <torchscience/csrc/cpu/special_functions/inverse_erfc.h>
+#include <torchscience/csrc/cpu/special_functions/log_gamma.h>
 #include <torchscience/csrc/cpu/special_functions/sin_pi.h>
+#include <torchscience/csrc/cpu/special_functions/sinc_pi.h>
+#include <torchscience/csrc/cpu/special_functions/sinhc_pi.h>
+#include <torchscience/csrc/cpu/special_functions/trigamma.h>

@@ -11,7 +11,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development)
 
-file(GLOB TORCH_CMAKE_PATH "${CMAKE_SOURCE_DIR}/.venv/lib/python*/site-packages/torch/share/cmake")
+file(
+  GLOB
+  TORCH_CMAKE_PATH
+  "${CMAKE_SOURCE_DIR}/.venv/lib/python*/site-packages/torch/share/cmake"
+)
+
 list(APPEND CMAKE_PREFIX_PATH ${TORCH_CMAKE_PATH})
 
 find_package(Torch REQUIRED)
@@ -23,7 +28,19 @@ FetchContent_Declare(
   URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
+
 FetchContent_MakeAvailable(nlohmann_json)
+
+FetchContent_Declare(
+  Boost
+  URL https://github.com/boostorg/boost/releases/download/boost-1.87.0/boost-1.87.0-cmake.tar.xz
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+
+set(BOOST_INCLUDE_LIBRARIES math)
+set(BUILD_SHARED_LIBS OFF)
+
+FetchContent_MakeAvailable(Boost)
 
 file(GLOB_RECURSE SOURCES "src/torchscience/csrc/*.cpp")
 
@@ -36,7 +53,7 @@ target_include_directories(_csrc PRIVATE
   ${CMAKE_SOURCE_DIR}/src
 )
 
-target_link_libraries(_csrc PRIVATE Python::Python ${TORCH_LIBRARIES} nlohmann_json::nlohmann_json)
+target_link_libraries(_csrc PRIVATE Python::Python ${TORCH_LIBRARIES} nlohmann_json::nlohmann_json Boost::math)
 
 if(SKBUILD)
     install(TARGETS _csrc DESTINATION ${SKBUILD_PROJECT_NAME})
@@ -55,6 +72,7 @@ FetchContent_Declare(
 )
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
 set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
 
@@ -74,9 +92,11 @@ target_include_directories(torchscience_tests PRIVATE
 target_link_libraries(torchscience_tests PRIVATE
   GTest::gtest_main
   ${TORCH_LIBRARIES}
+  Boost::math
 )
 
 include(GoogleTest)
+
 gtest_discover_tests(torchscience_tests)
 
 file(GLOB_RECURSE BENCHMARK_SOURCES "benchmarks/csrc/**/*.cpp")
@@ -93,5 +113,6 @@ if(BENCHMARK_SOURCES)
   target_link_libraries(torchscience_benchmarks PRIVATE
     benchmark::benchmark_main
     ${TORCH_LIBRARIES}
+    Boost::math
   )
 endif()
