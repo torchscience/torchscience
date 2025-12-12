@@ -49,6 +49,7 @@ from ._log_beta import log_beta
 from ._log_gamma import log_gamma
 from ._logarithmic_integral_li import logarithmic_integral_li
 from ._modified_bessel_i import modified_bessel_i
+from ._modified_bessel_i_derivative import modified_bessel_i_derivative
 from ._modified_bessel_k import modified_bessel_k
 from ._neville_theta_c import neville_theta_c
 from ._neville_theta_d import neville_theta_d
@@ -122,6 +123,7 @@ __all__ = [
     "log_gamma",
     "logarithmic_integral_li",
     "modified_bessel_i",
+    "modified_bessel_i_derivative",
     "modified_bessel_k",
     "neville_theta_c",
     "neville_theta_d",

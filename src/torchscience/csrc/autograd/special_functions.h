@@ -51,6 +51,7 @@
 #include <torchscience/csrc/autograd/special_functions/log_gamma.h>
 #include <torchscience/csrc/autograd/special_functions/logarithmic_integral_li.h>
 #include <torchscience/csrc/autograd/special_functions/modified_bessel_i.h>
+#include <torchscience/csrc/autograd/special_functions/modified_bessel_i_derivative.h>
 #include <torchscience/csrc/autograd/special_functions/modified_bessel_k.h>
 #include <torchscience/csrc/autograd/special_functions/neville_theta_c.h>
 #include <torchscience/csrc/autograd/special_functions/neville_theta_d.h>
