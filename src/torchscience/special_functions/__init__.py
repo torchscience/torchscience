@@ -16,6 +16,7 @@ from ._complete_legendre_elliptic_integral_d import complete_legendre_elliptic_i
 from ._confluent_hypergeometric_0_f_1 import confluent_hypergeometric_0_f_1
 from ._cos_pi import cos_pi
 from ._cosine_integral_ci import cosine_integral_ci
+from ._cosine_integral_cin import cosine_integral_cin
 from ._digamma import digamma
 from ._double_factorial import double_factorial
 from ._erf import erf
@@ -84,6 +85,7 @@ __all__ = [
     "confluent_hypergeometric_0_f_1",
     "cos_pi",
     "cosine_integral_ci",
+    "cosine_integral_cin",
     "digamma",
     "double_factorial",
     "erf",

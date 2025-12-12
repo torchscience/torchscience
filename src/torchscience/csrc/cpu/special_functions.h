@@ -18,6 +18,7 @@
 #include <torchscience/csrc/cpu/special_functions/confluent_hypergeometric_0_f_1.h>
 #include <torchscience/csrc/cpu/special_functions/cos_pi.h>
 #include <torchscience/csrc/cpu/special_functions/cosine_integral_ci.h>
+#include <torchscience/csrc/cpu/special_functions/cosine_integral_cin.h>
 #include <torchscience/csrc/cpu/special_functions/digamma.h>
 #include <torchscience/csrc/cpu/special_functions/double_factorial.h>
 #include <torchscience/csrc/cpu/special_functions/erf.h>
