@@ -10,6 +10,7 @@ from ._bernoulli_number_b import bernoulli_number_b
 from ._beta import beta
 from ._binomial_coefficient import binomial_coefficient
 from ._bulirsch_elliptic_integral_el1 import bulirsch_elliptic_integral_el1
+from ._carlson_elliptic_integral_r_c import carlson_elliptic_integral_r_c
 from ._carlson_elliptic_r_c import carlson_elliptic_r_c
 from ._complete_carlson_elliptic_r_f import complete_carlson_elliptic_r_f
 from ._complete_carlson_elliptic_r_g import complete_carlson_elliptic_r_g
@@ -99,6 +100,7 @@ __all__ = [
     "beta",
     "binomial_coefficient",
     "bulirsch_elliptic_integral_el1",
+    "carlson_elliptic_integral_r_c",
     "carlson_elliptic_r_c",
     "complete_carlson_elliptic_r_f",
     "complete_carlson_elliptic_r_g",
