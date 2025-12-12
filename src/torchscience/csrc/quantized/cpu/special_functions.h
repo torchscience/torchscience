@@ -44,6 +44,7 @@
 #include <torchscience/csrc/quantized/cpu/special_functions/inverse_erf.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/inverse_erfc.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/jacobi_amplitude_am.h>
+#include <torchscience/csrc/quantized/cpu/special_functions/jacobi_elliptic_sn.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/jacobi_theta_1.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/jacobi_theta_2.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/jacobi_theta_3.h>
