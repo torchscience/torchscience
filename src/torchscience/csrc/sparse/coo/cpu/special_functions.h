@@ -12,6 +12,7 @@
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/beta.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/binomial_coefficient.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/bulirsch_elliptic_integral_el1.h>
+#include <torchscience/csrc/sparse/coo/cpu/special_functions/chebyshev_polynomial_t.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/carlson_elliptic_integral_r_c.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/carlson_elliptic_integral_r_d.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/carlson_elliptic_integral_r_e.h>

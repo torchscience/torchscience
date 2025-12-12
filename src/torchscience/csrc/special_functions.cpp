@@ -33,6 +33,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_binomial_coefficient_backward(Tensor grad_output, Tensor n, Tensor k) -> (Tensor, Tensor)");
   module.def("_bulirsch_elliptic_integral_el1(Tensor x, Tensor kc) -> Tensor");
   module.def("_bulirsch_elliptic_integral_el1_backward(Tensor grad_output, Tensor x, Tensor kc) -> (Tensor, Tensor)");
+  module.def("_chebyshev_polynomial_t(Tensor n, Tensor x) -> Tensor");
+  module.def("_chebyshev_polynomial_t_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
   module.def("_carlson_elliptic_integral_r_c(Tensor x, Tensor y) -> Tensor");
   module.def("_carlson_elliptic_integral_r_c_backward(Tensor grad_output, Tensor x, Tensor y) -> (Tensor, Tensor)");
   module.def("_carlson_elliptic_integral_r_d(Tensor x, Tensor y, Tensor z) -> Tensor");
