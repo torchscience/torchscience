@@ -15,6 +15,7 @@ from ._confluent_hypergeometric_0_f_1 import confluent_hypergeometric_0_f_1
 from ._cos_pi import cos_pi
 from ._cosine_integral_ci import cosine_integral_ci
 from ._digamma import digamma
+from ._double_factorial import double_factorial
 from ._erf import erf
 from ._erfc import erfc
 from ._exponential_integral_e import exponential_integral_e
@@ -70,6 +71,7 @@ __all__ = [
     "cos_pi",
     "cosine_integral_ci",
     "digamma",
+    "double_factorial",
     "erf",
     "erfc",
     "exponential_integral_e",

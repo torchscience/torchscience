@@ -17,6 +17,7 @@
 #include <torchscience/csrc/autograd/special_functions/cos_pi.h>
 #include <torchscience/csrc/autograd/special_functions/cosine_integral_ci.h>
 #include <torchscience/csrc/autograd/special_functions/digamma.h>
+#include <torchscience/csrc/autograd/special_functions/double_factorial.h>
 #include <torchscience/csrc/autograd/special_functions/erf.h>
 #include <torchscience/csrc/autograd/special_functions/erfc.h>
 #include <torchscience/csrc/autograd/special_functions/exponential_integral_e.h>

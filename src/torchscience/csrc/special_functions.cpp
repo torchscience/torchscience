@@ -43,6 +43,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_cosine_integral_ci_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_digamma(Tensor input) -> Tensor");
   module.def("_digamma_backward(Tensor grad_output, Tensor input) -> Tensor");
+  module.def("_double_factorial(Tensor input) -> Tensor");
+  module.def("_double_factorial_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_erf(Tensor input) -> Tensor");
   module.def("_erf_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_erfc(Tensor input) -> Tensor");

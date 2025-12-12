@@ -86,3 +86,6 @@ PyTorch operators for mathematics, science, and engineering.
 [//]: # (- 3j, 6j, and 9j symbols)
 
 ## Ackowledgements
+
+`torchscience` wraps the following open source software libraries:
+
