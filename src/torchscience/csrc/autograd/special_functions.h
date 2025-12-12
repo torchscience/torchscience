@@ -38,6 +38,7 @@
 #include <torchscience/csrc/autograd/special_functions/log_gamma.h>
 #include <torchscience/csrc/autograd/special_functions/modified_bessel_i.h>
 #include <torchscience/csrc/autograd/special_functions/modified_bessel_k.h>
+#include <torchscience/csrc/autograd/special_functions/neville_theta_c.h>
 #include <torchscience/csrc/autograd/special_functions/sin_pi.h>
 #include <torchscience/csrc/autograd/special_functions/sinc_pi.h>
 #include <torchscience/csrc/autograd/special_functions/sinhc_pi.h>
