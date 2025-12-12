@@ -42,6 +42,11 @@ from ._incomplete_legendre_elliptic_integral_d import incomplete_legendre_ellipt
 from ._inverse_erf import inverse_erf
 from ._inverse_erfc import inverse_erfc
 from ._jacobi_amplitude_am import jacobi_amplitude_am
+from ._jacobi_elliptic_cd import jacobi_elliptic_cd
+from ._jacobi_elliptic_cn import jacobi_elliptic_cn
+from ._jacobi_elliptic_dn import jacobi_elliptic_dn
+from ._jacobi_elliptic_sc import jacobi_elliptic_sc
+from ._jacobi_elliptic_sd import jacobi_elliptic_sd
 from ._jacobi_elliptic_sn import jacobi_elliptic_sn
 from ._jacobi_theta_1 import jacobi_theta_1
 from ._jacobi_theta_2 import jacobi_theta_2
@@ -119,6 +124,11 @@ __all__ = [
     "inverse_erf",
     "inverse_erfc",
     "jacobi_amplitude_am",
+    "jacobi_elliptic_cd",
+    "jacobi_elliptic_cn",
+    "jacobi_elliptic_dn",
+    "jacobi_elliptic_sc",
+    "jacobi_elliptic_sd",
     "jacobi_elliptic_sn",
     "jacobi_theta_1",
     "jacobi_theta_2",

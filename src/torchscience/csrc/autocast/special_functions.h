@@ -44,6 +44,11 @@
 #include <torchscience/csrc/autocast/special_functions/inverse_erf.h>
 #include <torchscience/csrc/autocast/special_functions/inverse_erfc.h>
 #include <torchscience/csrc/autocast/special_functions/jacobi_amplitude_am.h>
+#include <torchscience/csrc/autocast/special_functions/jacobi_elliptic_cd.h>
+#include <torchscience/csrc/autocast/special_functions/jacobi_elliptic_cn.h>
+#include <torchscience/csrc/autocast/special_functions/jacobi_elliptic_dn.h>
+#include <torchscience/csrc/autocast/special_functions/jacobi_elliptic_sc.h>
+#include <torchscience/csrc/autocast/special_functions/jacobi_elliptic_sd.h>
 #include <torchscience/csrc/autocast/special_functions/jacobi_elliptic_sn.h>
 #include <torchscience/csrc/autocast/special_functions/jacobi_theta_1.h>
 #include <torchscience/csrc/autocast/special_functions/jacobi_theta_2.h>
