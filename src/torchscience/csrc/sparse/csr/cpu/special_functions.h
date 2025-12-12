@@ -112,3 +112,4 @@
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/trigamma.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/kelvin_ber.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/kelvin_bei.h>
+#include <torchscience/csrc/sparse/csr/cpu/special_functions/kelvin_ker.h>
