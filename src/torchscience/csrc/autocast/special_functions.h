@@ -5,6 +5,7 @@
 #include <torchscience/csrc/autocast/special_functions/bessel_j.h>
 #include <torchscience/csrc/autocast/special_functions/bessel_y.h>
 #include <torchscience/csrc/autocast/special_functions/beta.h>
+#include <torchscience/csrc/autocast/special_functions/binomial_coefficient.h>
 #include <torchscience/csrc/autocast/special_functions/bulirsch_elliptic_integral_el1.h>
 #include <torchscience/csrc/autocast/special_functions/carlson_elliptic_r_c.h>
 #include <torchscience/csrc/autocast/special_functions/complete_carlson_elliptic_r_f.h>

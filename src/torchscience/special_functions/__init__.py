@@ -3,6 +3,7 @@ from ._airy_bi import airy_bi
 from ._bessel_j import bessel_j
 from ._bessel_y import bessel_y
 from ._beta import beta
+from ._binomial_coefficient import binomial_coefficient
 from ._bulirsch_elliptic_integral_el1 import bulirsch_elliptic_integral_el1
 from ._carlson_elliptic_r_c import carlson_elliptic_r_c
 from ._complete_carlson_elliptic_r_f import complete_carlson_elliptic_r_f
@@ -61,6 +62,7 @@ __all__ = [
     "bessel_j",
     "bessel_y",
     "beta",
+    "binomial_coefficient",
     "bulirsch_elliptic_integral_el1",
     "carlson_elliptic_r_c",
     "complete_carlson_elliptic_r_f",
