@@ -20,6 +20,7 @@
 #include <torchscience/csrc/autograd/special_functions/shifted_chebyshev_polynomial_u.h>
 #include <torchscience/csrc/autograd/special_functions/shifted_chebyshev_polynomial_v.h>
 #include <torchscience/csrc/autograd/special_functions/shifted_chebyshev_polynomial_w.h>
+#include <torchscience/csrc/autograd/special_functions/hermite_polynomial_he.h>
 #include <torchscience/csrc/autograd/special_functions/carlson_elliptic_integral_r_c.h>
 #include <torchscience/csrc/autograd/special_functions/carlson_elliptic_integral_r_d.h>
 #include <torchscience/csrc/autograd/special_functions/carlson_elliptic_integral_r_e.h>
