@@ -38,6 +38,7 @@ from ._modified_bessel_i import modified_bessel_i
 from ._modified_bessel_k import modified_bessel_k
 from ._neville_theta_c import neville_theta_c
 from ._neville_theta_d import neville_theta_d
+from ._neville_theta_n import neville_theta_n
 from ._sin_pi import sin_pi
 from ._sinc_pi import sinc_pi
 from ._sinhc_pi import sinhc_pi
@@ -90,6 +91,7 @@ __all__ = [
     "modified_bessel_k",
     "neville_theta_c",
     "neville_theta_d",
+    "neville_theta_n",
     "sin_pi",
     "sinc_pi",
     "sinhc_pi",

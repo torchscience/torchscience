@@ -89,6 +89,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_neville_theta_c_backward(Tensor grad_output, Tensor k, Tensor u) -> (Tensor, Tensor)");
   module.def("_neville_theta_d(Tensor k, Tensor u) -> Tensor");
   module.def("_neville_theta_d_backward(Tensor grad_output, Tensor k, Tensor u) -> (Tensor, Tensor)");
+  module.def("_neville_theta_n(Tensor k, Tensor u) -> Tensor");
+  module.def("_neville_theta_n_backward(Tensor grad_output, Tensor k, Tensor u) -> (Tensor, Tensor)");
   module.def("_sin_pi(Tensor input) -> Tensor");
   module.def("_sin_pi_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_sinc_pi(Tensor input) -> Tensor");
