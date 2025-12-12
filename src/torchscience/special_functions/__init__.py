@@ -53,6 +53,7 @@ from ._prime_number_p import prime_number_p
 from ._rising_factorial import rising_factorial
 from ._sin_pi import sin_pi
 from ._sinc_pi import sinc_pi
+from ._sine_integral_sin import sine_integral_sin
 from ._sinhc_pi import sinhc_pi
 from ._spherical_bessel_j import spherical_bessel_j
 from ._spherical_bessel_y import spherical_bessel_y
@@ -119,6 +120,7 @@ __all__ = [
     "rising_factorial",
     "sin_pi",
     "sinc_pi",
+    "sine_integral_sin",
     "sinhc_pi",
     "spherical_bessel_j",
     "spherical_bessel_y",

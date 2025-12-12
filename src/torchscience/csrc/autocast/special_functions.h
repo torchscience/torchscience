@@ -55,6 +55,7 @@
 #include <torchscience/csrc/autocast/special_functions/rising_factorial.h>
 #include <torchscience/csrc/autocast/special_functions/sin_pi.h>
 #include <torchscience/csrc/autocast/special_functions/sinc_pi.h>
+#include <torchscience/csrc/autocast/special_functions/sine_integral_sin.h>
 #include <torchscience/csrc/autocast/special_functions/sinhc_pi.h>
 #include <torchscience/csrc/autocast/special_functions/spherical_bessel_j.h>
 #include <torchscience/csrc/autocast/special_functions/spherical_bessel_y.h>
