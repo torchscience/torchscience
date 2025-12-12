@@ -37,6 +37,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_gamma_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_hankel_h_1(Tensor nu, Tensor x) -> Tensor");
   module.def("_hankel_h_1_backward(Tensor grad_output, Tensor nu, Tensor x) -> (Tensor, Tensor)");
+  module.def("_hankel_h_2(Tensor nu, Tensor x) -> Tensor");
+  module.def("_hankel_h_2_backward(Tensor grad_output, Tensor nu, Tensor x) -> (Tensor, Tensor)");
   module.def("_hyperbolic_cosine_integral_chi(Tensor input) -> Tensor");
   module.def("_hyperbolic_cosine_integral_chi_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_hyperbolic_sine_integral_shi(Tensor input) -> Tensor");
