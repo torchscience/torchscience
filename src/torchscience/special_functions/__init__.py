@@ -109,6 +109,7 @@ from ._stirling_number_s_2 import stirling_number_s_2
 from ._tangent_number_t import tangent_number_t
 from ._trigamma import trigamma
 from ._kelvin_ber import kelvin_ber
+from ._kelvin_bei import kelvin_bei
 
 __all__ = [
     "airy_ai",
@@ -222,4 +223,5 @@ __all__ = [
     "tangent_number_t",
     "trigamma",
     "kelvin_ber",
+    "kelvin_bei",
 ]

@@ -111,3 +111,4 @@
 #include <torchscience/csrc/cpu/special_functions/tangent_number_t.h>
 #include <torchscience/csrc/cpu/special_functions/trigamma.h>
 #include <torchscience/csrc/cpu/special_functions/kelvin_ber.h>
+#include <torchscience/csrc/cpu/special_functions/kelvin_bei.h>
