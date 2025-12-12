@@ -114,3 +114,4 @@
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/kelvin_bei.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/kelvin_ker.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/kelvin_kei.h>
+#include <torchscience/csrc/sparse/coo/cpu/special_functions/polygamma.h>
