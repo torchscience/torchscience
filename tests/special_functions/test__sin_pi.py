@@ -23,7 +23,6 @@ class TestSinPi(UnaryOperatorTestCase):
 
     reference = staticmethod(lambda x: torch.sin(torch.pi * x))
 
-    # Our implementation is more accurate at special values (integers)
     reference_atol = 1e-5
     reference_rtol = 1e-5
 

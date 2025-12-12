@@ -4,28 +4,19 @@ from torch import Tensor
 
 def cos_pi(input: Tensor, *, out: Tensor | None = None) -> Tensor:
     """
-    Cosine of pi times input:
-
     .. math::
 
         \\text{cos\\_pi}(x) = \\cos(\\pi x)
 
-    This function computes :math:`\\cos(\\pi x)` more accurately than
-    ``torch.cos(torch.pi * x)`` for large values of ``x`` and for values
-    near half-integers where the result should be exactly zero.
-
     Parameters
     ----------
     input : Tensor, shape=(...)
-        Input tensor.
 
     out : Tensor, shape=(...), optional
-        Output tensor.
 
     Returns
     -------
     Tensor, shape=(...)
-        Cosine of pi times each element of the input tensor.
 
     Examples
     --------

@@ -23,7 +23,6 @@ class TestCosPi(UnaryOperatorTestCase):
 
     reference = staticmethod(lambda x: torch.cos(torch.pi * x))
 
-    # Our implementation is more accurate at special values (half-integers)
     reference_atol = 1e-5
     reference_rtol = 1e-5
 
