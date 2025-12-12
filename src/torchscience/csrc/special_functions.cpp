@@ -45,6 +45,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_sinc_pi_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_sinhc_pi(Tensor input) -> Tensor");
   module.def("_sinhc_pi_backward(Tensor grad_output, Tensor input) -> Tensor");
+  module.def("_spherical_bessel_j(Tensor n, Tensor x) -> Tensor");
+  module.def("_spherical_bessel_j_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
   module.def("_trigamma(Tensor input) -> Tensor");
   module.def("_trigamma_backward(Tensor grad_output, Tensor input) -> Tensor");
 }
