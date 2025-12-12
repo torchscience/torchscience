@@ -1,0 +1,11 @@
+#pragma once
+
+#include <torchscience/csrc/sparse/csr/cpu/macros.h>
+
+namespace torchscience::sparse::csr::cpu::special_functions {
+
+TORCHSCIENCE_BINARY_SPARSE_CSR_CPU_KERNEL(falling_factorial, x, n)
+
+TORCHSCIENCE_BINARY_SPARSE_CSR_CPU_KERNEL_IMPL(falling_factorial)
+
+} // namespace torchscience::sparse::csr::cpu::special_functions

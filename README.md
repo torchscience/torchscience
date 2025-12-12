@@ -91,4 +91,5 @@ PyTorch operators for mathematics, science, and engineering.
 
 - [Boost](https://www.boost.org/)
 - [Embree](https://www.embree.org/)
-- [FINUFFT]
+- [FINUFFT](https://finufft.readthedocs.io/en/latest/)
+- [SUNDIALS](https://computing.llnl.gov/projects/sundials)

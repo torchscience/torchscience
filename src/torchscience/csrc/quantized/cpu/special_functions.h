@@ -23,6 +23,7 @@
 #include <torchscience/csrc/quantized/cpu/special_functions/exponential_integral_e.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/exponential_integral_ei.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/factorial.h>
+#include <torchscience/csrc/quantized/cpu/special_functions/falling_factorial.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/gamma.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/hankel_h_1.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/hankel_h_2.h>
