@@ -1,6 +1,7 @@
 from ._airy_ai import airy_ai
 from ._airy_bi import airy_bi
 from ._bessel_j import bessel_j
+from ._bessel_y import bessel_y
 from ._beta import beta
 from ._cos_pi import cos_pi
 from ._digamma import digamma
@@ -19,6 +20,7 @@ __all__ = [
     "airy_ai",
     "airy_bi",
     "bessel_j",
+    "bessel_y",
     "beta",
     "cos_pi",
     "digamma",

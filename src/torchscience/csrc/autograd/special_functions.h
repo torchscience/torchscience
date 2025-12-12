@@ -3,6 +3,7 @@
 #include <torchscience/csrc/autograd/special_functions/airy_ai.h>
 #include <torchscience/csrc/autograd/special_functions/airy_bi.h>
 #include <torchscience/csrc/autograd/special_functions/bessel_j.h>
+#include <torchscience/csrc/autograd/special_functions/bessel_y.h>
 #include <torchscience/csrc/autograd/special_functions/beta.h>
 #include <torchscience/csrc/autograd/special_functions/cos_pi.h>
 #include <torchscience/csrc/autograd/special_functions/digamma.h>

@@ -3,6 +3,7 @@
 #include <torchscience/csrc/cpu/special_functions/airy_ai.h>
 #include <torchscience/csrc/cpu/special_functions/airy_bi.h>
 #include <torchscience/csrc/cpu/special_functions/bessel_j.h>
+#include <torchscience/csrc/cpu/special_functions/bessel_y.h>
 #include <torchscience/csrc/cpu/special_functions/beta.h>
 #include <torchscience/csrc/cpu/special_functions/cos_pi.h>
 #include <torchscience/csrc/cpu/special_functions/digamma.h>
