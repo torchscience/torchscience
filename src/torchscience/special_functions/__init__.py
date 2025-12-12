@@ -39,6 +39,7 @@ from ._hyperbolic_sine_integral_shi import hyperbolic_sine_integral_shi
 from ._incomplete_elliptic_integral_e import incomplete_elliptic_integral_e
 from ._incomplete_elliptic_integral_f import incomplete_elliptic_integral_f
 from ._incomplete_legendre_elliptic_integral_d import incomplete_legendre_elliptic_integral_d
+from ._legendre_elliptic_integral_pi import legendre_elliptic_integral_pi
 from ._inverse_erf import inverse_erf
 from ._inverse_erfc import inverse_erfc
 from ._jacobi_amplitude_am import jacobi_amplitude_am
@@ -127,6 +128,7 @@ __all__ = [
     "incomplete_elliptic_integral_e",
     "incomplete_elliptic_integral_f",
     "incomplete_legendre_elliptic_integral_d",
+    "legendre_elliptic_integral_pi",
     "inverse_erf",
     "inverse_erfc",
     "jacobi_amplitude_am",

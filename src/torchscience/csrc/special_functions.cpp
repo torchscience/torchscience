@@ -91,6 +91,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_incomplete_elliptic_integral_f_backward(Tensor grad_output, Tensor phi, Tensor k) -> (Tensor, Tensor)");
   module.def("_incomplete_legendre_elliptic_integral_d(Tensor phi, Tensor k) -> Tensor");
   module.def("_incomplete_legendre_elliptic_integral_d_backward(Tensor grad_output, Tensor phi, Tensor k) -> (Tensor, Tensor)");
+  module.def("_legendre_elliptic_integral_pi(Tensor n, Tensor phi, Tensor k) -> Tensor");
+  module.def("_legendre_elliptic_integral_pi_backward(Tensor grad_output, Tensor n, Tensor phi, Tensor k) -> (Tensor, Tensor, Tensor)");
   module.def("_inverse_erf(Tensor input) -> Tensor");
   module.def("_inverse_erf_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_inverse_erfc(Tensor input) -> Tensor");

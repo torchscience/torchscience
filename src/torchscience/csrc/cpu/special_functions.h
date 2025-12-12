@@ -41,6 +41,7 @@
 #include <torchscience/csrc/cpu/special_functions/incomplete_elliptic_integral_e.h>
 #include <torchscience/csrc/cpu/special_functions/incomplete_elliptic_integral_f.h>
 #include <torchscience/csrc/cpu/special_functions/incomplete_legendre_elliptic_integral_d.h>
+#include <torchscience/csrc/cpu/special_functions/legendre_elliptic_integral_pi.h>
 #include <torchscience/csrc/cpu/special_functions/inverse_erf.h>
 #include <torchscience/csrc/cpu/special_functions/inverse_erfc.h>
 #include <torchscience/csrc/cpu/special_functions/jacobi_amplitude_am.h>
