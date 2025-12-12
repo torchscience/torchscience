@@ -24,6 +24,7 @@ from ._hankel_h_1 import hankel_h_1
 from ._hankel_h_2 import hankel_h_2
 from ._hyperbolic_cosine_integral_chi import hyperbolic_cosine_integral_chi
 from ._hyperbolic_sine_integral_shi import hyperbolic_sine_integral_shi
+from ._incomplete_elliptic_integral_e import incomplete_elliptic_integral_e
 from ._inverse_erf import inverse_erf
 from ._inverse_erfc import inverse_erfc
 from ._log_gamma import log_gamma
@@ -67,6 +68,7 @@ __all__ = [
     "hankel_h_2",
     "hyperbolic_cosine_integral_chi",
     "hyperbolic_sine_integral_shi",
+    "incomplete_elliptic_integral_e",
     "inverse_erf",
     "inverse_erfc",
     "log_gamma",
