@@ -21,4 +21,5 @@
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/spherical_bessel_j.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/spherical_bessel_y.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/spherical_modified_bessel_i.h>
+#include <torchscience/csrc/sparse/csr/cpu/special_functions/spherical_modified_bessel_k.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/trigamma.h>

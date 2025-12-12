@@ -19,6 +19,7 @@ from ._sinhc_pi import sinhc_pi
 from ._spherical_bessel_j import spherical_bessel_j
 from ._spherical_bessel_y import spherical_bessel_y
 from ._spherical_modified_bessel_i import spherical_modified_bessel_i
+from ._spherical_modified_bessel_k import spherical_modified_bessel_k
 from ._trigamma import trigamma
 
 __all__ = [
@@ -43,5 +44,6 @@ __all__ = [
     "spherical_bessel_j",
     "spherical_bessel_y",
     "spherical_modified_bessel_i",
+    "spherical_modified_bessel_k",
     "trigamma",
 ]
