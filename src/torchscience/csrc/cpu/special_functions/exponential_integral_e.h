@@ -1,0 +1,7 @@
+#pragma once
+
+#include "torchscience/csrc/cpu/macros.h"
+#include "torchscience/csrc/impl/special_functions/exponential_integral_e.h"
+
+TORCHSCIENCE_BINARY_CPU_KERNEL(exponential_integral_e, n, x)
+TORCHSCIENCE_BINARY_CPU_KERNEL_IMPL(exponential_integral_e)

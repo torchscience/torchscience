@@ -9,6 +9,7 @@
 #include <torchscience/csrc/autocast/special_functions/digamma.h>
 #include <torchscience/csrc/autocast/special_functions/erf.h>
 #include <torchscience/csrc/autocast/special_functions/erfc.h>
+#include <torchscience/csrc/autocast/special_functions/exponential_integral_e.h>
 #include <torchscience/csrc/autocast/special_functions/gamma.h>
 #include <torchscience/csrc/autocast/special_functions/inverse_erf.h>
 #include <torchscience/csrc/autocast/special_functions/inverse_erfc.h>

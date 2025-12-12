@@ -7,6 +7,7 @@ from ._cos_pi import cos_pi
 from ._digamma import digamma
 from ._erf import erf
 from ._erfc import erfc
+from ._exponential_integral_e import exponential_integral_e
 from ._gamma import gamma
 from ._inverse_erf import inverse_erf
 from ._inverse_erfc import inverse_erfc
@@ -32,6 +33,7 @@ __all__ = [
     "digamma",
     "erf",
     "erfc",
+    "exponential_integral_e",
     "gamma",
     "inverse_erf",
     "inverse_erfc",

@@ -27,6 +27,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_erf_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_erfc(Tensor input) -> Tensor");
   module.def("_erfc_backward(Tensor grad_output, Tensor input) -> Tensor");
+  module.def("_exponential_integral_e(Tensor n, Tensor x) -> Tensor");
+  module.def("_exponential_integral_e_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
   module.def("_gamma(Tensor input) -> Tensor");
   module.def("_gamma_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_inverse_erf(Tensor input) -> Tensor");
