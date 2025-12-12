@@ -2,12 +2,15 @@
 
 PyTorch operators for mathematics, science, and engineering.
 
-## Features
+## Domains
 
 - Geometry
+- Graph algorithms
 - Initial value problems
 - Integral transforms
 - Linear algebra
+- Optimization
+  - Root-finding
 - Probability
 - Special functions
 - Statistics
@@ -21,3 +24,5 @@ PyTorch operators for mathematics, science, and engineering.
 - [FINUFFT](https://finufft.readthedocs.io/en/latest/)
 - [OptiX](https://developer.nvidia.com/rtx/ray-tracing/optix)
 - [SUNDIALS](https://computing.llnl.gov/projects/sundials)
+- [SuiteSparse](https://people.engr.tamu.edu/davis/suitesparse.html)
+- 

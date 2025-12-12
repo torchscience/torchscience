@@ -2,6 +2,7 @@ from ._airy_ai import airy_ai
 from ._airy_bi import airy_bi
 from ._bessel_j import bessel_j
 from ._bessel_y import bessel_y
+from ._bernoulli_number_b import bernoulli_number_b
 from ._beta import beta
 from ._binomial_coefficient import binomial_coefficient
 from ._bulirsch_elliptic_integral_el1 import bulirsch_elliptic_integral_el1
@@ -61,6 +62,7 @@ __all__ = [
     "airy_bi",
     "bessel_j",
     "bessel_y",
+    "bernoulli_number_b",
     "beta",
     "binomial_coefficient",
     "bulirsch_elliptic_integral_el1",
