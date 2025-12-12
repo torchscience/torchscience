@@ -1,0 +1,7 @@
+#pragma once
+
+#include <torchscience/csrc/meta/macros.h>
+
+TORCHSCIENCE_BINARY_META_KERNEL(spherical_hankel_h_1, n, x)
+
+TORCHSCIENCE_BINARY_META_KERNEL_IMPL(spherical_hankel_h_1)

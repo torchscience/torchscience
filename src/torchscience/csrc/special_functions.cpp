@@ -63,6 +63,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_spherical_bessel_j_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
   module.def("_spherical_bessel_y(Tensor n, Tensor x) -> Tensor");
   module.def("_spherical_bessel_y_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
+  module.def("_spherical_hankel_h_1(Tensor n, Tensor x) -> Tensor");
+  module.def("_spherical_hankel_h_1_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
   module.def("_spherical_modified_bessel_i(Tensor n, Tensor x) -> Tensor");
   module.def("_spherical_modified_bessel_i_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
   module.def("_spherical_modified_bessel_k(Tensor n, Tensor x) -> Tensor");
