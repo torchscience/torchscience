@@ -75,6 +75,7 @@
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/inverse_jacobi_elliptic_sd.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/inverse_jacobi_elliptic_sn.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/legendre_p.h>
+#include <torchscience/csrc/sparse/csr/cpu/special_functions/legendre_q.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/jacobi_theta_1.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/jacobi_theta_2.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/jacobi_theta_3.h>

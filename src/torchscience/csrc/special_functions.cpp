@@ -159,6 +159,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_inverse_jacobi_elliptic_sn_backward(Tensor grad_output, Tensor x, Tensor k) -> (Tensor, Tensor)");
   module.def("_legendre_p(Tensor n, Tensor x) -> Tensor");
   module.def("_legendre_p_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
+  module.def("_legendre_q(Tensor n, Tensor x) -> Tensor");
+  module.def("_legendre_q_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
   module.def("_jacobi_theta_1(Tensor z, Tensor q) -> Tensor");
   module.def("_jacobi_theta_1_backward(Tensor grad_output, Tensor z, Tensor q) -> (Tensor, Tensor)");
   module.def("_jacobi_theta_2(Tensor z, Tensor q) -> Tensor");
