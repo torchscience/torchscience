@@ -1,4 +1,5 @@
 from ._airy_ai import airy_ai
+from ._airy_ai_derivative import airy_ai_derivative
 from ._airy_bi import airy_bi
 from ._bessel_j import bessel_j
 from ._bessel_y import bessel_y
@@ -68,6 +69,7 @@ from ._trigamma import trigamma
 
 __all__ = [
     "airy_ai",
+    "airy_ai_derivative",
     "airy_bi",
     "bessel_j",
     "bessel_y",

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <torchscience/csrc/cpu/special_functions/airy_ai.h>
+#include <torchscience/csrc/cpu/special_functions/airy_ai_derivative.h>
 #include <torchscience/csrc/cpu/special_functions/airy_bi.h>
 #include <torchscience/csrc/cpu/special_functions/bessel_j.h>
 #include <torchscience/csrc/cpu/special_functions/bessel_y.h>
