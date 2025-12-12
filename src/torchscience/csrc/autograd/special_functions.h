@@ -10,6 +10,7 @@
 #include <torchscience/csrc/autograd/special_functions/erf.h>
 #include <torchscience/csrc/autograd/special_functions/erfc.h>
 #include <torchscience/csrc/autograd/special_functions/exponential_integral_e.h>
+#include <torchscience/csrc/autograd/special_functions/exponential_integral_ei.h>
 #include <torchscience/csrc/autograd/special_functions/gamma.h>
 #include <torchscience/csrc/autograd/special_functions/inverse_erf.h>
 #include <torchscience/csrc/autograd/special_functions/inverse_erfc.h>

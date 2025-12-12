@@ -8,6 +8,7 @@ from ._digamma import digamma
 from ._erf import erf
 from ._erfc import erfc
 from ._exponential_integral_e import exponential_integral_e
+from ._exponential_integral_ei import exponential_integral_ei
 from ._gamma import gamma
 from ._inverse_erf import inverse_erf
 from ._inverse_erfc import inverse_erfc
@@ -34,6 +35,7 @@ __all__ = [
     "erf",
     "erfc",
     "exponential_integral_e",
+    "exponential_integral_ei",
     "gamma",
     "inverse_erf",
     "inverse_erfc",
