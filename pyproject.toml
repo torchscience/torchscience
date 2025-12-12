@@ -1,0 +1,52 @@
+[build-system]
+requires = [
+    "numpy",
+    "scikit-build-core>=0.10",
+    "torch>=2.9.1",
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+authors = [
+    { name = "Allen Goodman", email = "allen.goodman@icloud.com" },
+]
+dependencies = [
+    "numpy",
+    "scipy>=1.16.3",
+    "torch>=2.9.1",
+]
+description = "PyTorch operators for mathematics, science, and engineering."
+name = "torchscience"
+readme = "README.md"
+requires-python = ">=3.13"
+version = "0.1.0"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.148.7",
+    "ipympl>=0.9.8",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.7",
+    "mypy",
+    "pytest",
+    "pyvista[jupyter]>=0.46.4",
+    "trame>=3.12.0",
+]
+
+[tool.scikit-build]
+build-dir = "build/{wheel_tag}"
+minimum-version = "build-system.requires"
+
+[tool.uv]
+cache-keys = [
+    { file = "CMakeLists.txt" },
+    { file = "pyproject.toml" },
+    { file = "src/**/*.{h,c,hpp,cpp}" },
+]
+
+[tool.mypy]
+files = ["src/torchscience"]
+python_version = "3.13"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
