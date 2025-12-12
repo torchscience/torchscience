@@ -43,6 +43,7 @@
 #include <torchscience/csrc/autocast/special_functions/incomplete_legendre_elliptic_integral_d.h>
 #include <torchscience/csrc/autocast/special_functions/inverse_erf.h>
 #include <torchscience/csrc/autocast/special_functions/inverse_erfc.h>
+#include <torchscience/csrc/autocast/special_functions/jacobi_amplitude_am.h>
 #include <torchscience/csrc/autocast/special_functions/jacobi_theta_1.h>
 #include <torchscience/csrc/autocast/special_functions/jacobi_theta_2.h>
 #include <torchscience/csrc/autocast/special_functions/jacobi_theta_3.h>
