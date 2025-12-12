@@ -53,6 +53,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_hermite_polynomial_he_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
   module.def("_hermite_polynomial_h(Tensor n, Tensor x) -> Tensor");
   module.def("_hermite_polynomial_h_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
+  module.def("_confluent_hypergeometric_1_f_1(Tensor a, Tensor b, Tensor z) -> Tensor");
+  module.def("_confluent_hypergeometric_1_f_1_backward(Tensor grad_output, Tensor a, Tensor b, Tensor z) -> (Tensor, Tensor, Tensor)");
   module.def("_carlson_elliptic_integral_r_c(Tensor x, Tensor y) -> Tensor");
   module.def("_carlson_elliptic_integral_r_c_backward(Tensor grad_output, Tensor x, Tensor y) -> (Tensor, Tensor)");
   module.def("_carlson_elliptic_integral_r_d(Tensor x, Tensor y, Tensor z) -> Tensor");

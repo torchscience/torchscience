@@ -22,6 +22,7 @@
 #include <torchscience/csrc/meta/special_functions/shifted_chebyshev_polynomial_w.h>
 #include <torchscience/csrc/meta/special_functions/hermite_polynomial_he.h>
 #include <torchscience/csrc/meta/special_functions/hermite_polynomial_h.h>
+#include <torchscience/csrc/meta/special_functions/confluent_hypergeometric_1_f_1.h>
 #include <torchscience/csrc/meta/special_functions/carlson_elliptic_integral_r_c.h>
 #include <torchscience/csrc/meta/special_functions/carlson_elliptic_integral_r_d.h>
 #include <torchscience/csrc/meta/special_functions/carlson_elliptic_integral_r_e.h>
