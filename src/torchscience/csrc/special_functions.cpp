@@ -189,6 +189,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_neville_theta_s_backward(Tensor grad_output, Tensor k, Tensor u) -> (Tensor, Tensor)");
   module.def("_prime_number_p(Tensor input) -> Tensor");
   module.def("_prime_number_p_backward(Tensor grad_output, Tensor input) -> Tensor");
+  module.def("_riemann_zeta(Tensor input) -> Tensor");
+  module.def("_riemann_zeta_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_rising_factorial(Tensor x, Tensor n) -> Tensor");
   module.def("_rising_factorial_backward(Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor)");
   module.def("_sin_pi(Tensor input) -> Tensor");

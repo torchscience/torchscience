@@ -1,0 +1,13 @@
+#pragma once
+
+#include <torchscience/csrc/impl/special_functions/riemann_zeta.h>
+#include <torchscience/csrc/quantized/cpu/macros.h>
+
+namespace torchscience::quantized::cpu::special_functions {
+
+using namespace torchscience::impl::special_functions;
+
+TORCHSCIENCE_UNARY_QUANTIZED_CPU_KERNEL(riemann_zeta)
+TORCHSCIENCE_UNARY_QUANTIZED_CPU_KERNEL_IMPL(riemann_zeta)
+
+} // namespace torchscience::quantized::cpu::special_functions

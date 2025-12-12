@@ -90,6 +90,7 @@
 #include <torchscience/csrc/autograd/special_functions/neville_theta_n.h>
 #include <torchscience/csrc/autograd/special_functions/neville_theta_s.h>
 #include <torchscience/csrc/autograd/special_functions/prime_number_p.h>
+#include <torchscience/csrc/autograd/special_functions/riemann_zeta.h>
 #include <torchscience/csrc/autograd/special_functions/rising_factorial.h>
 #include <torchscience/csrc/autograd/special_functions/sin_pi.h>
 #include <torchscience/csrc/autograd/special_functions/sinc_pi.h>
