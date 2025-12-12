@@ -37,6 +37,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_gamma_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_hyperbolic_cosine_integral_chi(Tensor input) -> Tensor");
   module.def("_hyperbolic_cosine_integral_chi_backward(Tensor grad_output, Tensor input) -> Tensor");
+  module.def("_hyperbolic_sine_integral_shi(Tensor input) -> Tensor");
+  module.def("_hyperbolic_sine_integral_shi_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_inverse_erf(Tensor input) -> Tensor");
   module.def("_inverse_erf_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_inverse_erfc(Tensor input) -> Tensor");

@@ -14,6 +14,7 @@
 #include <torchscience/csrc/meta/special_functions/exponential_integral_ei.h>
 #include <torchscience/csrc/meta/special_functions/gamma.h>
 #include <torchscience/csrc/meta/special_functions/hyperbolic_cosine_integral_chi.h>
+#include <torchscience/csrc/meta/special_functions/hyperbolic_sine_integral_shi.h>
 #include <torchscience/csrc/meta/special_functions/inverse_erf.h>
 #include <torchscience/csrc/meta/special_functions/inverse_erfc.h>
 #include <torchscience/csrc/meta/special_functions/log_gamma.h>
