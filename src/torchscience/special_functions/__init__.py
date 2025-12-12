@@ -11,6 +11,7 @@ from ._erfc import erfc
 from ._exponential_integral_e import exponential_integral_e
 from ._exponential_integral_ei import exponential_integral_ei
 from ._gamma import gamma
+from ._hankel_h_1 import hankel_h_1
 from ._hyperbolic_cosine_integral_chi import hyperbolic_cosine_integral_chi
 from ._hyperbolic_sine_integral_shi import hyperbolic_sine_integral_shi
 from ._inverse_erf import inverse_erf
@@ -41,6 +42,7 @@ __all__ = [
     "exponential_integral_e",
     "exponential_integral_ei",
     "gamma",
+    "hankel_h_1",
     "hyperbolic_cosine_integral_chi",
     "hyperbolic_sine_integral_shi",
     "inverse_erf",
