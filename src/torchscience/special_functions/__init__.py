@@ -111,6 +111,7 @@ from ._trigamma import trigamma
 from ._kelvin_ber import kelvin_ber
 from ._kelvin_bei import kelvin_bei
 from ._kelvin_ker import kelvin_ker
+from ._kelvin_kei import kelvin_kei
 
 __all__ = [
     "airy_ai",
@@ -226,4 +227,5 @@ __all__ = [
     "kelvin_ber",
     "kelvin_bei",
     "kelvin_ker",
+    "kelvin_kei",
 ]

@@ -113,3 +113,4 @@
 #include <torchscience/csrc/quantized/cpu/special_functions/kelvin_ber.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/kelvin_bei.h>
 #include <torchscience/csrc/quantized/cpu/special_functions/kelvin_ker.h>
+#include <torchscience/csrc/quantized/cpu/special_functions/kelvin_kei.h>
