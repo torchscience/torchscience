@@ -100,6 +100,7 @@ from ._spherical_hankel_h_1 import spherical_hankel_h_1
 from ._spherical_hankel_h_2 import spherical_hankel_h_2
 from ._spherical_modified_bessel_i import spherical_modified_bessel_i
 from ._spherical_modified_bessel_k import spherical_modified_bessel_k
+from ._stirling_number_s_1 import stirling_number_s_1
 from ._tangent_number_t import tangent_number_t
 from ._trigamma import trigamma
 
@@ -206,6 +207,7 @@ __all__ = [
     "spherical_hankel_h_2",
     "spherical_modified_bessel_i",
     "spherical_modified_bessel_k",
+    "stirling_number_s_1",
     "tangent_number_t",
     "trigamma",
 ]

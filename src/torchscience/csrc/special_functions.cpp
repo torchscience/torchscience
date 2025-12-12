@@ -213,6 +213,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_spherical_modified_bessel_i_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
   module.def("_spherical_modified_bessel_k(Tensor n, Tensor x) -> Tensor");
   module.def("_spherical_modified_bessel_k_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
+  module.def("_stirling_number_s_1(Tensor n, Tensor k) -> Tensor");
+  module.def("_stirling_number_s_1_backward(Tensor grad_output, Tensor n, Tensor k) -> (Tensor, Tensor)");
   module.def("_tangent_number_t(Tensor input) -> Tensor");
   module.def("_tangent_number_t_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_trigamma(Tensor input) -> Tensor");
