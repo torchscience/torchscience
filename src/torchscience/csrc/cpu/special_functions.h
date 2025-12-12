@@ -33,6 +33,7 @@
 #include <torchscience/csrc/cpu/special_functions/inverse_erfc.h>
 #include <torchscience/csrc/cpu/special_functions/jacobi_theta_1.h>
 #include <torchscience/csrc/cpu/special_functions/jacobi_theta_2.h>
+#include <torchscience/csrc/cpu/special_functions/jacobi_theta_3.h>
 #include <torchscience/csrc/cpu/special_functions/log_gamma.h>
 #include <torchscience/csrc/cpu/special_functions/modified_bessel_i.h>
 #include <torchscience/csrc/cpu/special_functions/modified_bessel_k.h>

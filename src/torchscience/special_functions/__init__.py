@@ -31,6 +31,7 @@ from ._inverse_erf import inverse_erf
 from ._inverse_erfc import inverse_erfc
 from ._jacobi_theta_1 import jacobi_theta_1
 from ._jacobi_theta_2 import jacobi_theta_2
+from ._jacobi_theta_3 import jacobi_theta_3
 from ._log_gamma import log_gamma
 from ._modified_bessel_i import modified_bessel_i
 from ._modified_bessel_k import modified_bessel_k
@@ -79,6 +80,7 @@ __all__ = [
     "inverse_erfc",
     "jacobi_theta_1",
     "jacobi_theta_2",
+    "jacobi_theta_3",
     "log_gamma",
     "modified_bessel_i",
     "modified_bessel_k",
