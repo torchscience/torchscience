@@ -4,6 +4,7 @@ from ._bessel_j import bessel_j
 from ._bessel_y import bessel_y
 from ._beta import beta
 from ._cos_pi import cos_pi
+from ._cosine_integral_ci import cosine_integral_ci
 from ._digamma import digamma
 from ._erf import erf
 from ._erfc import erfc
@@ -31,6 +32,7 @@ __all__ = [
     "bessel_y",
     "beta",
     "cos_pi",
+    "cosine_integral_ci",
     "digamma",
     "erf",
     "erfc",

@@ -6,6 +6,7 @@
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/bessel_y.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/beta.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/cos_pi.h>
+#include <torchscience/csrc/sparse/coo/cpu/special_functions/cosine_integral_ci.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/digamma.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/erf.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/erfc.h>
