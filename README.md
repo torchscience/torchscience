@@ -25,4 +25,3 @@ PyTorch operators for mathematics, science, and engineering.
 - [OptiX](https://developer.nvidia.com/rtx/ray-tracing/optix)
 - [SUNDIALS](https://computing.llnl.gov/projects/sundials)
 - [SuiteSparse](https://people.engr.tamu.edu/davis/suitesparse.html)
-- 

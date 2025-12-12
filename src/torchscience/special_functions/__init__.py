@@ -55,6 +55,7 @@ from ._spherical_hankel_h_1 import spherical_hankel_h_1
 from ._spherical_hankel_h_2 import spherical_hankel_h_2
 from ._spherical_modified_bessel_i import spherical_modified_bessel_i
 from ._spherical_modified_bessel_k import spherical_modified_bessel_k
+from ._tangent_number_t import tangent_number_t
 from ._trigamma import trigamma
 
 __all__ = [
@@ -115,5 +116,6 @@ __all__ = [
     "spherical_hankel_h_2",
     "spherical_modified_bessel_i",
     "spherical_modified_bessel_k",
+    "tangent_number_t",
     "trigamma",
 ]

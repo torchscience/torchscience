@@ -57,4 +57,5 @@
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/spherical_hankel_h_2.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/spherical_modified_bessel_i.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/spherical_modified_bessel_k.h>
+#include <torchscience/csrc/sparse/coo/cpu/special_functions/tangent_number_t.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/trigamma.h>
