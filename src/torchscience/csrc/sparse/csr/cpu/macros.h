@@ -74,3 +74,144 @@
       &SCHEMA_NAME##_forward_kernel                                             \
     );                                                                          \
   }
+
+#define TORCHSCIENCE_TERNARY_SPARSE_CSR_CPU_KERNEL(SCHEMA_NAME, ARG0, ARG1, ARG2) \
+  at::Tensor SCHEMA_NAME##_forward_kernel(                                      \
+    const at::Tensor& ARG0,                                                     \
+    const at::Tensor& ARG1,                                                     \
+    const at::Tensor& ARG2                                                      \
+  ) {                                                                           \
+    auto values_##ARG0 = ARG0.values();                                         \
+    auto values_##ARG1 = ARG1.values();                                         \
+    auto values_##ARG2 = ARG2.values();                                         \
+                                                                                \
+    auto output = c10::Dispatcher::singleton()                                  \
+      .findSchemaOrThrow(                                                       \
+        "torchscience::_" #SCHEMA_NAME,                                         \
+        ""                                                                      \
+      )                                                                         \
+      .typed<at::Tensor(                                                        \
+        const at::Tensor&,                                                      \
+        const at::Tensor&,                                                      \
+        const at::Tensor&                                                       \
+      )>()                                                                      \
+      .call(                                                                    \
+        values_##ARG0,                                                          \
+        values_##ARG1,                                                          \
+        values_##ARG2                                                           \
+      );                                                                        \
+                                                                                \
+    return at::sparse_csr_tensor(                                               \
+      ARG0.crow_indices(),                                                      \
+      ARG0.col_indices(),                                                       \
+      output,                                                                   \
+      ARG0.sizes(),                                                             \
+      ARG0.options()                                                            \
+    );                                                                          \
+  }
+
+#define TORCHSCIENCE_TERNARY_SPARSE_CSR_CPU_KERNEL_IMPL(SCHEMA_NAME)            \
+  TORCH_LIBRARY_IMPL(torchscience, SparseCsrCPU, module) {                      \
+    module.impl(                                                                \
+      "_" #SCHEMA_NAME,                                                         \
+      &SCHEMA_NAME##_forward_kernel                                             \
+    );                                                                          \
+  }
+
+#define TORCHSCIENCE_QUATERNARY_SPARSE_CSR_CPU_KERNEL(SCHEMA_NAME, ARG0, ARG1, ARG2, ARG3) \
+  at::Tensor SCHEMA_NAME##_forward_kernel(                                      \
+    const at::Tensor& ARG0,                                                     \
+    const at::Tensor& ARG1,                                                     \
+    const at::Tensor& ARG2,                                                     \
+    const at::Tensor& ARG3                                                      \
+  ) {                                                                           \
+    auto values_##ARG0 = ARG0.values();                                         \
+    auto values_##ARG1 = ARG1.values();                                         \
+    auto values_##ARG2 = ARG2.values();                                         \
+    auto values_##ARG3 = ARG3.values();                                         \
+                                                                                \
+    auto output = c10::Dispatcher::singleton()                                  \
+      .findSchemaOrThrow(                                                       \
+        "torchscience::_" #SCHEMA_NAME,                                         \
+        ""                                                                      \
+      )                                                                         \
+      .typed<at::Tensor(                                                        \
+        const at::Tensor&,                                                      \
+        const at::Tensor&,                                                      \
+        const at::Tensor&,                                                      \
+        const at::Tensor&                                                       \
+      )>()                                                                      \
+      .call(                                                                    \
+        values_##ARG0,                                                          \
+        values_##ARG1,                                                          \
+        values_##ARG2,                                                          \
+        values_##ARG3                                                           \
+      );                                                                        \
+                                                                                \
+    return at::sparse_csr_tensor(                                               \
+      ARG0.crow_indices(),                                                      \
+      ARG0.col_indices(),                                                       \
+      output,                                                                   \
+      ARG0.sizes(),                                                             \
+      ARG0.options()                                                            \
+    );                                                                          \
+  }
+
+#define TORCHSCIENCE_QUATERNARY_SPARSE_CSR_CPU_KERNEL_IMPL(SCHEMA_NAME)         \
+  TORCH_LIBRARY_IMPL(torchscience, SparseCsrCPU, module) {                      \
+    module.impl(                                                                \
+      "_" #SCHEMA_NAME,                                                         \
+      &SCHEMA_NAME##_forward_kernel                                             \
+    );                                                                          \
+  }
+
+#define TORCHSCIENCE_QUINARY_SPARSE_CSR_CPU_KERNEL(SCHEMA_NAME, ARG0, ARG1, ARG2, ARG3, ARG4) \
+  at::Tensor SCHEMA_NAME##_forward_kernel(                                      \
+    const at::Tensor& ARG0,                                                     \
+    const at::Tensor& ARG1,                                                     \
+    const at::Tensor& ARG2,                                                     \
+    const at::Tensor& ARG3,                                                     \
+    const at::Tensor& ARG4                                                      \
+  ) {                                                                           \
+    auto values_##ARG0 = ARG0.values();                                         \
+    auto values_##ARG1 = ARG1.values();                                         \
+    auto values_##ARG2 = ARG2.values();                                         \
+    auto values_##ARG3 = ARG3.values();                                         \
+    auto values_##ARG4 = ARG4.values();                                         \
+                                                                                \
+    auto output = c10::Dispatcher::singleton()                                  \
+      .findSchemaOrThrow(                                                       \
+        "torchscience::_" #SCHEMA_NAME,                                         \
+        ""                                                                      \
+      )                                                                         \
+      .typed<at::Tensor(                                                        \
+        const at::Tensor&,                                                      \
+        const at::Tensor&,                                                      \
+        const at::Tensor&,                                                      \
+        const at::Tensor&,                                                      \
+        const at::Tensor&                                                       \
+      )>()                                                                      \
+      .call(                                                                    \
+        values_##ARG0,                                                          \
+        values_##ARG1,                                                          \
+        values_##ARG2,                                                          \
+        values_##ARG3,                                                          \
+        values_##ARG4                                                           \
+      );                                                                        \
+                                                                                \
+    return at::sparse_csr_tensor(                                               \
+      ARG0.crow_indices(),                                                      \
+      ARG0.col_indices(),                                                       \
+      output,                                                                   \
+      ARG0.sizes(),                                                             \
+      ARG0.options()                                                            \
+    );                                                                          \
+  }
+
+#define TORCHSCIENCE_QUINARY_SPARSE_CSR_CPU_KERNEL_IMPL(SCHEMA_NAME)            \
+  TORCH_LIBRARY_IMPL(torchscience, SparseCsrCPU, module) {                      \
+    module.impl(                                                                \
+      "_" #SCHEMA_NAME,                                                         \
+      &SCHEMA_NAME##_forward_kernel                                             \
+    );                                                                          \
+  }
