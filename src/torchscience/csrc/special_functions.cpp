@@ -229,4 +229,6 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_tangent_number_t_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_trigamma(Tensor input) -> Tensor");
   module.def("_trigamma_backward(Tensor grad_output, Tensor input) -> Tensor");
+  module.def("_kelvin_ber(Tensor v, Tensor x) -> Tensor");
+  module.def("_kelvin_ber_backward(Tensor grad_output, Tensor v, Tensor x) -> (Tensor, Tensor)");
 }
