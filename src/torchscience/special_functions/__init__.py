@@ -7,6 +7,7 @@ from ._bulirsch_elliptic_integral_el1 import bulirsch_elliptic_integral_el1
 from ._carlson_elliptic_r_c import carlson_elliptic_r_c
 from ._complete_carlson_elliptic_r_f import complete_carlson_elliptic_r_f
 from ._complete_carlson_elliptic_r_g import complete_carlson_elliptic_r_g
+from ._complete_elliptic_integral_e import complete_elliptic_integral_e
 from ._confluent_hypergeometric_0_f_1 import confluent_hypergeometric_0_f_1
 from ._cos_pi import cos_pi
 from ._cosine_integral_ci import cosine_integral_ci
@@ -46,6 +47,7 @@ __all__ = [
     "carlson_elliptic_r_c",
     "complete_carlson_elliptic_r_f",
     "complete_carlson_elliptic_r_g",
+    "complete_elliptic_integral_e",
     "confluent_hypergeometric_0_f_1",
     "cos_pi",
     "cosine_integral_ci",
