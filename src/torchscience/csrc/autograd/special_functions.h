@@ -31,6 +31,7 @@
 #include <torchscience/csrc/autograd/special_functions/incomplete_legendre_elliptic_integral_d.h>
 #include <torchscience/csrc/autograd/special_functions/inverse_erf.h>
 #include <torchscience/csrc/autograd/special_functions/inverse_erfc.h>
+#include <torchscience/csrc/autograd/special_functions/jacobi_theta_1.h>
 #include <torchscience/csrc/autograd/special_functions/log_gamma.h>
 #include <torchscience/csrc/autograd/special_functions/modified_bessel_i.h>
 #include <torchscience/csrc/autograd/special_functions/modified_bessel_k.h>

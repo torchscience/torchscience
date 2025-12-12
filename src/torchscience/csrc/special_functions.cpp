@@ -71,6 +71,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_inverse_erf_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_inverse_erfc(Tensor input) -> Tensor");
   module.def("_inverse_erfc_backward(Tensor grad_output, Tensor input) -> Tensor");
+  module.def("_jacobi_theta_1(Tensor z, Tensor q) -> Tensor");
+  module.def("_jacobi_theta_1_backward(Tensor grad_output, Tensor z, Tensor q) -> (Tensor, Tensor)");
   module.def("_log_gamma(Tensor input) -> Tensor");
   module.def("_log_gamma_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_modified_bessel_i(Tensor nu, Tensor x) -> Tensor");

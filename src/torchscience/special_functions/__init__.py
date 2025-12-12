@@ -29,6 +29,7 @@ from ._incomplete_elliptic_integral_f import incomplete_elliptic_integral_f
 from ._incomplete_legendre_elliptic_integral_d import incomplete_legendre_elliptic_integral_d
 from ._inverse_erf import inverse_erf
 from ._inverse_erfc import inverse_erfc
+from ._jacobi_theta_1 import jacobi_theta_1
 from ._log_gamma import log_gamma
 from ._modified_bessel_i import modified_bessel_i
 from ._modified_bessel_k import modified_bessel_k
@@ -75,6 +76,7 @@ __all__ = [
     "incomplete_legendre_elliptic_integral_d",
     "inverse_erf",
     "inverse_erfc",
+    "jacobi_theta_1",
     "log_gamma",
     "modified_bessel_i",
     "modified_bessel_k",
