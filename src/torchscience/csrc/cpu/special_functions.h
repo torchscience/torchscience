@@ -41,6 +41,7 @@
 #include <torchscience/csrc/cpu/special_functions/neville_theta_c.h>
 #include <torchscience/csrc/cpu/special_functions/neville_theta_d.h>
 #include <torchscience/csrc/cpu/special_functions/neville_theta_n.h>
+#include <torchscience/csrc/cpu/special_functions/neville_theta_s.h>
 #include <torchscience/csrc/cpu/special_functions/sin_pi.h>
 #include <torchscience/csrc/cpu/special_functions/sinc_pi.h>
 #include <torchscience/csrc/cpu/special_functions/sinhc_pi.h>
