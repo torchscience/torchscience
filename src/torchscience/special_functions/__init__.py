@@ -42,8 +42,8 @@ from ._cosine_integral_ci import cosine_integral_ci
 from ._cosine_integral_cin import cosine_integral_cin
 from ._digamma import digamma
 from ._double_factorial import double_factorial
-from ._erf import erf
-from ._erfc import erfc
+from ._error_erf import error_erf
+from ._error_erfc import error_erfc
 from ._euler_number_e import euler_number_e
 from ._euler_polynomial_e import euler_polynomial_e
 from ._euler_totient_phi import euler_totient_phi
@@ -62,8 +62,8 @@ from ._incomplete_elliptic_integral_e import incomplete_elliptic_integral_e
 from ._incomplete_elliptic_integral_f import incomplete_elliptic_integral_f
 from ._incomplete_legendre_elliptic_integral_d import incomplete_legendre_elliptic_integral_d
 from ._legendre_elliptic_integral_pi import legendre_elliptic_integral_pi
-from ._inverse_erf import inverse_erf
-from ._inverse_erfc import inverse_erfc
+from ._error_inverse_erf import error_inverse_erf
+from ._error_inverse_erfc import error_inverse_erfc
 from ._jacobi_amplitude_am import jacobi_amplitude_am
 from ._jacobi_elliptic_cd import jacobi_elliptic_cd
 from ._jacobi_elliptic_cn import jacobi_elliptic_cn
@@ -165,8 +165,8 @@ __all__ = [
     "cosine_integral_cin",
     "digamma",
     "double_factorial",
-    "erf",
-    "erfc",
+    "error_erf",
+    "error_erfc",
     "euler_number_e",
     "euler_polynomial_e",
     "euler_totient_phi",
@@ -185,8 +185,8 @@ __all__ = [
     "incomplete_elliptic_integral_f",
     "incomplete_legendre_elliptic_integral_d",
     "legendre_elliptic_integral_pi",
-    "inverse_erf",
-    "inverse_erfc",
+    "error_inverse_erf",
+    "error_inverse_erfc",
     "jacobi_amplitude_am",
     "jacobi_elliptic_cd",
     "jacobi_elliptic_cn",

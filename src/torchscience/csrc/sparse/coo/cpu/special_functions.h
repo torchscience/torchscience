@@ -44,8 +44,8 @@
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/cosine_integral_cin.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/digamma.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/double_factorial.h>
-#include <torchscience/csrc/sparse/coo/cpu/special_functions/erf.h>
-#include <torchscience/csrc/sparse/coo/cpu/special_functions/erfc.h>
+#include <torchscience/csrc/sparse/coo/cpu/special_functions/error_erf.h>
+#include <torchscience/csrc/sparse/coo/cpu/special_functions/error_erfc.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/euler_number_e.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/euler_polynomial_e.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/euler_totient_phi.h>
@@ -64,8 +64,8 @@
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/incomplete_elliptic_integral_f.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/incomplete_legendre_elliptic_integral_d.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/legendre_elliptic_integral_pi.h>
-#include <torchscience/csrc/sparse/coo/cpu/special_functions/inverse_erf.h>
-#include <torchscience/csrc/sparse/coo/cpu/special_functions/inverse_erfc.h>
+#include <torchscience/csrc/sparse/coo/cpu/special_functions/error_inverse_erf.h>
+#include <torchscience/csrc/sparse/coo/cpu/special_functions/error_inverse_erfc.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/jacobi_amplitude_am.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/jacobi_elliptic_cd.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/jacobi_elliptic_cn.h>
