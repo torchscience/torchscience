@@ -45,6 +45,7 @@ from ._double_factorial import double_factorial
 from ._erf import erf
 from ._erfc import erfc
 from ._euler_number_e import euler_number_e
+from ._euler_polynomial_e import euler_polynomial_e
 from ._exponential_integral_e import exponential_integral_e
 from ._exponential_integral_e_1 import exponential_integral_e_1
 from ._exponential_integral_ei import exponential_integral_ei
@@ -164,6 +165,7 @@ __all__ = [
     "erf",
     "erfc",
     "euler_number_e",
+    "euler_polynomial_e",
     "exponential_integral_e",
     "exponential_integral_e_1",
     "exponential_integral_ei",

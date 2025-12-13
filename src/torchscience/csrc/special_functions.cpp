@@ -103,6 +103,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_erfc_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_euler_number_e(Tensor input) -> Tensor");
   module.def("_euler_number_e_backward(Tensor grad_output, Tensor input) -> Tensor");
+  module.def("_euler_polynomial_e(Tensor n, Tensor x) -> Tensor");
+  module.def("_euler_polynomial_e_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
   module.def("_exponential_integral_e(Tensor n, Tensor x) -> Tensor");
   module.def("_exponential_integral_e_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
   module.def("_exponential_integral_e_1(Tensor input) -> Tensor");
