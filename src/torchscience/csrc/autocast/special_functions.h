@@ -122,3 +122,4 @@
 #include <torchscience/csrc/autocast/special_functions/kelvin_kei.h>
 #include <torchscience/csrc/autocast/special_functions/polygamma.h>
 #include <torchscience/csrc/autocast/special_functions/parabolic_cylinder_d.h>
+#include <torchscience/csrc/autocast/special_functions/whittaker_m.h>
