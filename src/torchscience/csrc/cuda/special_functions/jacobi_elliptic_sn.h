@@ -11,9 +11,9 @@ __device__ scalar_t jacobi_elliptic_sn(scalar_t u, scalar_t k) {
 }
 
 template <typename scalar_t>
-__device__ thrust::tuple<scalar_t, scalar_t> jacobi_elliptic_sn_backward(scalar_t u, scalar_t k) {
+__device__ std::tuple<scalar_t, scalar_t> jacobi_elliptic_sn_backward(scalar_t u, scalar_t k) {
   auto [grad_u, grad_k] = torchscience::impl::special_functions::jacobi_elliptic_sn_backward(u, k);
-  return thrust::make_tuple(grad_u, grad_k);
+  return std::make_tuple(grad_u, grad_k);
 }
 
 TORCHSCIENCE_BINARY_CUDA_KERNEL(jacobi_elliptic_sn, u, k)

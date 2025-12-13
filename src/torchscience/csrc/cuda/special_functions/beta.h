@@ -11,9 +11,9 @@ __device__ scalar_t beta(scalar_t a, scalar_t b) {
 }
 
 template <typename scalar_t>
-__device__ thrust::tuple<scalar_t, scalar_t> beta_backward(scalar_t a, scalar_t b) {
+__device__ std::tuple<scalar_t, scalar_t> beta_backward(scalar_t a, scalar_t b) {
   auto [grad_a, grad_b] = torchscience::impl::special_functions::beta_backward(a, b);
-  return thrust::make_tuple(grad_a, grad_b);
+  return std::make_tuple(grad_a, grad_b);
 }
 
 TORCHSCIENCE_BINARY_CUDA_KERNEL(beta, a, b)

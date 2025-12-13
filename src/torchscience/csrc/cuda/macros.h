@@ -3,8 +3,9 @@
 #include <ATen/Dispatch.h>
 #include <ATen/native/cuda/Loops.cuh>
 #include <ATen/native/TensorIterator.h>
+#include <c10/cuda/CUDAMathCompat.h>
 #include <torch/torch.h>
-#include <thrust/tuple.h>
+#include <tuple>
 
 #define TORCHSCIENCE_UNARY_CUDA_KERNEL(SCHEMA_NAME)                             \
   at::Tensor SCHEMA_NAME##_forward_kernel(                                      \
@@ -174,12 +175,12 @@
             scalar_t gradient,                                                  \
             scalar_t ARG0,                                                      \
             scalar_t ARG1                                                       \
-          ) -> thrust::tuple<scalar_t, scalar_t> {                              \
+          ) -> std::tuple<scalar_t, scalar_t> {                                 \
             auto [grad_##ARG0, grad_##ARG1] = SCHEMA_NAME##_backward(           \
               ARG0,                                                             \
               ARG1                                                              \
             );                                                                  \
-            return thrust::make_tuple(                                          \
+            return std::make_tuple(                                             \
               gradient * grad_##ARG0,                                           \
               gradient * grad_##ARG1                                            \
             );                                                                  \
@@ -301,14 +302,14 @@
             scalar_t ARG0,                                                      \
             scalar_t ARG1,                                                      \
             scalar_t ARG2                                                       \
-          ) -> thrust::tuple<scalar_t, scalar_t, scalar_t> {                    \
+          ) -> std::tuple<scalar_t, scalar_t, scalar_t> {                       \
             auto [grad_##ARG0, grad_##ARG1, grad_##ARG2] =                       \
               SCHEMA_NAME##_backward(                                           \
                 ARG0,                                                           \
                 ARG1,                                                           \
                 ARG2                                                            \
               );                                                                \
-            return thrust::make_tuple(                                          \
+            return std::make_tuple(                                             \
               gradient * grad_##ARG0,                                           \
               gradient * grad_##ARG1,                                           \
               gradient * grad_##ARG2                                            \
