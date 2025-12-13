@@ -8,6 +8,7 @@ from ._bessel_j_derivative import bessel_j_derivative
 from ._bessel_y import bessel_y
 from ._bessel_y_derivative import bessel_y_derivative
 from ._bernoulli_number_b import bernoulli_number_b
+from ._bernoulli_polynomial_b import bernoulli_polynomial_b
 from ._beta import beta
 from ._binomial_coefficient import binomial_coefficient
 from ._bulirsch_elliptic_integral_el1 import bulirsch_elliptic_integral_el1
@@ -125,6 +126,7 @@ __all__ = [
     "bessel_y",
     "bessel_y_derivative",
     "bernoulli_number_b",
+    "bernoulli_polynomial_b",
     "beta",
     "binomial_coefficient",
     "bulirsch_elliptic_integral_el1",

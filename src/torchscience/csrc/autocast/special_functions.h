@@ -10,6 +10,7 @@
 #include <torchscience/csrc/autocast/special_functions/bessel_y.h>
 #include <torchscience/csrc/autocast/special_functions/bessel_y_derivative.h>
 #include <torchscience/csrc/autocast/special_functions/bernoulli_number_b.h>
+#include <torchscience/csrc/autocast/special_functions/bernoulli_polynomial_b.h>
 #include <torchscience/csrc/autocast/special_functions/beta.h>
 #include <torchscience/csrc/autocast/special_functions/binomial_coefficient.h>
 #include <torchscience/csrc/autocast/special_functions/bulirsch_elliptic_integral_el1.h>
