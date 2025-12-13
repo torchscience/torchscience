@@ -17,17 +17,68 @@
 
 // Bessel functions
 #include <torchscience/csrc/cuda/special_functions/bessel_j.h>
+#include <torchscience/csrc/cuda/special_functions/bessel_j_derivative.h>
 #include <torchscience/csrc/cuda/special_functions/bessel_y.h>
+#include <torchscience/csrc/cuda/special_functions/bessel_y_derivative.h>
 #include <torchscience/csrc/cuda/special_functions/modified_bessel_i.h>
+#include <torchscience/csrc/cuda/special_functions/modified_bessel_i_derivative.h>
 #include <torchscience/csrc/cuda/special_functions/modified_bessel_k.h>
+#include <torchscience/csrc/cuda/special_functions/modified_bessel_k_derivative.h>
 
-// Elliptic integrals
+// Airy functions
+#include <torchscience/csrc/cuda/special_functions/airy_ai.h>
+#include <torchscience/csrc/cuda/special_functions/airy_ai_derivative.h>
+#include <torchscience/csrc/cuda/special_functions/airy_bi.h>
+#include <torchscience/csrc/cuda/special_functions/airy_bi_derivative.h>
+
+// Elliptic integrals and functions
 #include <torchscience/csrc/cuda/special_functions/complete_elliptic_integral_k.h>
 #include <torchscience/csrc/cuda/special_functions/complete_elliptic_integral_e.h>
+#include <torchscience/csrc/cuda/special_functions/complete_legendre_elliptic_integral_d.h>
 #include <torchscience/csrc/cuda/special_functions/jacobi_elliptic_sn.h>
 #include <torchscience/csrc/cuda/special_functions/jacobi_elliptic_cn.h>
 #include <torchscience/csrc/cuda/special_functions/jacobi_elliptic_dn.h>
+#include <torchscience/csrc/cuda/special_functions/jacobi_elliptic_cd.h>
+#include <torchscience/csrc/cuda/special_functions/jacobi_elliptic_sc.h>
+#include <torchscience/csrc/cuda/special_functions/jacobi_elliptic_sd.h>
+#include <torchscience/csrc/cuda/special_functions/jacobi_amplitude_am.h>
+#include <torchscience/csrc/cuda/special_functions/inverse_jacobi_elliptic_sn.h>
+#include <torchscience/csrc/cuda/special_functions/inverse_jacobi_elliptic_cn.h>
+#include <torchscience/csrc/cuda/special_functions/inverse_jacobi_elliptic_dn.h>
+#include <torchscience/csrc/cuda/special_functions/inverse_jacobi_elliptic_cd.h>
+#include <torchscience/csrc/cuda/special_functions/inverse_jacobi_elliptic_sc.h>
+#include <torchscience/csrc/cuda/special_functions/inverse_jacobi_elliptic_sd.h>
 
 // Trigonometric functions
 #include <torchscience/csrc/cuda/special_functions/sin_pi.h>
 #include <torchscience/csrc/cuda/special_functions/cos_pi.h>
+#include <torchscience/csrc/cuda/special_functions/sinc_pi.h>
+#include <torchscience/csrc/cuda/special_functions/sinhc_pi.h>
+
+// Exponential and logarithmic integrals
+#include <torchscience/csrc/cuda/special_functions/exponential_integral_ei.h>
+#include <torchscience/csrc/cuda/special_functions/exponential_integral_e_1.h>
+#include <torchscience/csrc/cuda/special_functions/logarithmic_integral_li.h>
+
+// Trigonometric integrals
+#include <torchscience/csrc/cuda/special_functions/sine_integral_si.h>
+#include <torchscience/csrc/cuda/special_functions/sine_integral_sin.h>
+#include <torchscience/csrc/cuda/special_functions/cosine_integral_ci.h>
+#include <torchscience/csrc/cuda/special_functions/cosine_integral_cin.h>
+#include <torchscience/csrc/cuda/special_functions/hyperbolic_sine_integral_shi.h>
+#include <torchscience/csrc/cuda/special_functions/hyperbolic_cosine_integral_chi.h>
+
+// Factorial and combinatorial functions
+#include <torchscience/csrc/cuda/special_functions/factorial.h>
+#include <torchscience/csrc/cuda/special_functions/double_factorial.h>
+
+// Number theory functions
+#include <torchscience/csrc/cuda/special_functions/riemann_zeta.h>
+#include <torchscience/csrc/cuda/special_functions/bernoulli_number_b.h>
+#include <torchscience/csrc/cuda/special_functions/euler_number_e.h>
+#include <torchscience/csrc/cuda/special_functions/euler_totient_phi.h>
+#include <torchscience/csrc/cuda/special_functions/fibonacci_number_f.h>
+#include <torchscience/csrc/cuda/special_functions/prime_number_p.h>
+#include <torchscience/csrc/cuda/special_functions/mobius_mu.h>
+#include <torchscience/csrc/cuda/special_functions/liouville_lambda.h>
+#include <torchscience/csrc/cuda/special_functions/tangent_number_t_2.h>
