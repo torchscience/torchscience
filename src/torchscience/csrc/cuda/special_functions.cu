@@ -131,6 +131,7 @@
 #include <torchscience/csrc/cuda/special_functions/carlson_elliptic_integral_r_c.h>
 #include <torchscience/csrc/cuda/special_functions/carlson_elliptic_r_c.h>
 #include <torchscience/csrc/cuda/special_functions/carlson_elliptic_integral_r_d.h>
+#include <torchscience/csrc/cuda/special_functions/carlson_elliptic_integral_r_f.h>
 #include <torchscience/csrc/cuda/special_functions/carlson_elliptic_integral_r_e.h>
 #include <torchscience/csrc/cuda/special_functions/carlson_elliptic_integral_r_k.h>
 #include <torchscience/csrc/cuda/special_functions/carlson_elliptic_integral_r_m.h>
