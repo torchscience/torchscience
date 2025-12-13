@@ -48,6 +48,7 @@
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/erfc.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/euler_number_e.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/euler_polynomial_e.h>
+#include <torchscience/csrc/sparse/coo/cpu/special_functions/euler_totient_phi.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/exponential_integral_e.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/exponential_integral_e_1.h>
 #include <torchscience/csrc/sparse/coo/cpu/special_functions/exponential_integral_ei.h>
