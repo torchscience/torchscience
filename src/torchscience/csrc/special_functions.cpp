@@ -251,4 +251,6 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_kelvin_kei_backward(Tensor grad_output, Tensor v, Tensor x) -> (Tensor, Tensor)");
   module.def("_polygamma(Tensor n, Tensor x) -> Tensor");
   module.def("_polygamma_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
+  module.def("_parabolic_cylinder_d(Tensor nu, Tensor z) -> Tensor");
+  module.def("_parabolic_cylinder_d_backward(Tensor grad_output, Tensor nu, Tensor z) -> (Tensor, Tensor)");
 }
