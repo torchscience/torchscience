@@ -89,6 +89,7 @@
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/log_gamma.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/logarithmic_integral_li.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/mobius_mu.h>
+#include <torchscience/csrc/sparse/csr/cpu/special_functions/liouville_lambda.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/modified_bessel_i.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/modified_bessel_i_derivative.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/modified_bessel_k.h>

@@ -87,6 +87,7 @@ from ._log_beta import log_beta
 from ._log_gamma import log_gamma
 from ._logarithmic_integral_li import logarithmic_integral_li
 from ._mobius_mu import mobius_mu
+from ._liouville_lambda import liouville_lambda
 from ._modified_bessel_i import modified_bessel_i
 from ._modified_bessel_i_derivative import modified_bessel_i_derivative
 from ._modified_bessel_k import modified_bessel_k
@@ -209,6 +210,7 @@ __all__ = [
     "log_gamma",
     "logarithmic_integral_li",
     "mobius_mu",
+    "liouville_lambda",
     "modified_bessel_i",
     "modified_bessel_i_derivative",
     "modified_bessel_k",
