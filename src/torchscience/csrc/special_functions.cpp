@@ -185,6 +185,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_log_gamma_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_logarithmic_integral_li(Tensor input) -> Tensor");
   module.def("_logarithmic_integral_li_backward(Tensor grad_output, Tensor input) -> Tensor");
+  module.def("_mobius_mu(Tensor input) -> Tensor");
+  module.def("_mobius_mu_backward(Tensor grad_output, Tensor input) -> Tensor");
   module.def("_modified_bessel_i(Tensor nu, Tensor x) -> Tensor");
   module.def("_modified_bessel_i_backward(Tensor grad_output, Tensor nu, Tensor x) -> (Tensor, Tensor)");
   module.def("_modified_bessel_i_derivative(Tensor nu, Tensor x) -> Tensor");
