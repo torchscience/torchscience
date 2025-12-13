@@ -82,3 +82,85 @@
 #include <torchscience/csrc/cuda/special_functions/mobius_mu.h>
 #include <torchscience/csrc/cuda/special_functions/liouville_lambda.h>
 #include <torchscience/csrc/cuda/special_functions/tangent_number_t_2.h>
+
+// Polynomial functions
+#include <torchscience/csrc/cuda/special_functions/polygamma.h>
+#include <torchscience/csrc/cuda/special_functions/bernoulli_polynomial_b.h>
+#include <torchscience/csrc/cuda/special_functions/euler_polynomial_e.h>
+#include <torchscience/csrc/cuda/special_functions/chebyshev_polynomial_t.h>
+#include <torchscience/csrc/cuda/special_functions/chebyshev_polynomial_u.h>
+#include <torchscience/csrc/cuda/special_functions/chebyshev_polynomial_v.h>
+#include <torchscience/csrc/cuda/special_functions/chebyshev_polynomial_w.h>
+#include <torchscience/csrc/cuda/special_functions/shifted_chebyshev_polynomial_t.h>
+#include <torchscience/csrc/cuda/special_functions/shifted_chebyshev_polynomial_u.h>
+#include <torchscience/csrc/cuda/special_functions/shifted_chebyshev_polynomial_v.h>
+#include <torchscience/csrc/cuda/special_functions/shifted_chebyshev_polynomial_w.h>
+#include <torchscience/csrc/cuda/special_functions/hermite_polynomial_h.h>
+#include <torchscience/csrc/cuda/special_functions/hermite_polynomial_he.h>
+#include <torchscience/csrc/cuda/special_functions/legendre_p.h>
+#include <torchscience/csrc/cuda/special_functions/legendre_q.h>
+#include <torchscience/csrc/cuda/special_functions/associated_legendre_p.h>
+
+// Additional Bessel and Hankel functions
+#include <torchscience/csrc/cuda/special_functions/hankel_h_1.h>
+#include <torchscience/csrc/cuda/special_functions/hankel_h_2.h>
+#include <torchscience/csrc/cuda/special_functions/spherical_bessel_j.h>
+#include <torchscience/csrc/cuda/special_functions/spherical_bessel_y.h>
+#include <torchscience/csrc/cuda/special_functions/spherical_hankel_h_1.h>
+#include <torchscience/csrc/cuda/special_functions/spherical_hankel_h_2.h>
+#include <torchscience/csrc/cuda/special_functions/spherical_modified_bessel_i.h>
+#include <torchscience/csrc/cuda/special_functions/spherical_modified_bessel_k.h>
+
+// Kelvin functions
+#include <torchscience/csrc/cuda/special_functions/kelvin_ber.h>
+#include <torchscience/csrc/cuda/special_functions/kelvin_bei.h>
+#include <torchscience/csrc/cuda/special_functions/kelvin_ker.h>
+#include <torchscience/csrc/cuda/special_functions/kelvin_kei.h>
+
+// Jacobi theta functions
+#include <torchscience/csrc/cuda/special_functions/jacobi_theta_1.h>
+#include <torchscience/csrc/cuda/special_functions/jacobi_theta_2.h>
+#include <torchscience/csrc/cuda/special_functions/jacobi_theta_3.h>
+#include <torchscience/csrc/cuda/special_functions/jacobi_theta_4.h>
+#include <torchscience/csrc/cuda/special_functions/neville_theta_c.h>
+#include <torchscience/csrc/cuda/special_functions/neville_theta_d.h>
+#include <torchscience/csrc/cuda/special_functions/neville_theta_n.h>
+#include <torchscience/csrc/cuda/special_functions/neville_theta_s.h>
+
+// Carlson elliptic integrals
+#include <torchscience/csrc/cuda/special_functions/carlson_elliptic_integral_r_c.h>
+#include <torchscience/csrc/cuda/special_functions/carlson_elliptic_r_c.h>
+#include <torchscience/csrc/cuda/special_functions/carlson_elliptic_integral_r_d.h>
+#include <torchscience/csrc/cuda/special_functions/carlson_elliptic_integral_r_e.h>
+#include <torchscience/csrc/cuda/special_functions/carlson_elliptic_integral_r_k.h>
+#include <torchscience/csrc/cuda/special_functions/carlson_elliptic_integral_r_m.h>
+#include <torchscience/csrc/cuda/special_functions/carlson_elliptic_integral_r_j.h>
+#include <torchscience/csrc/cuda/special_functions/complete_carlson_elliptic_r_f.h>
+#include <torchscience/csrc/cuda/special_functions/complete_carlson_elliptic_r_g.h>
+#include <torchscience/csrc/cuda/special_functions/complete_elliptic_integral_pi.h>
+#include <torchscience/csrc/cuda/special_functions/legendre_elliptic_integral_pi.h>
+
+// Additional elliptic integrals
+#include <torchscience/csrc/cuda/special_functions/bulirsch_elliptic_integral_el1.h>
+#include <torchscience/csrc/cuda/special_functions/incomplete_elliptic_integral_e.h>
+#include <torchscience/csrc/cuda/special_functions/incomplete_elliptic_integral_f.h>
+#include <torchscience/csrc/cuda/special_functions/incomplete_legendre_elliptic_integral_d.h>
+
+// Hypergeometric functions
+#include <torchscience/csrc/cuda/special_functions/confluent_hypergeometric_0_f_1.h>
+#include <torchscience/csrc/cuda/special_functions/confluent_hypergeometric_1_f_1.h>
+
+// Special integrals
+#include <torchscience/csrc/cuda/special_functions/exponential_integral_e.h>
+#include <torchscience/csrc/cuda/special_functions/parabolic_cylinder_d.h>
+
+// Whittaker functions
+#include <torchscience/csrc/cuda/special_functions/whittaker_m.h>
+#include <torchscience/csrc/cuda/special_functions/whittaker_w.h>
+
+// Combinatorial functions
+#include <torchscience/csrc/cuda/special_functions/binomial_coefficient.h>
+#include <torchscience/csrc/cuda/special_functions/falling_factorial.h>
+#include <torchscience/csrc/cuda/special_functions/rising_factorial.h>
+#include <torchscience/csrc/cuda/special_functions/stirling_number_s_1.h>
+#include <torchscience/csrc/cuda/special_functions/stirling_number_s_2.h>
