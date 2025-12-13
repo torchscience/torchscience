@@ -121,6 +121,7 @@ from ._kelvin_kei import kelvin_kei
 from ._polygamma import polygamma
 from ._parabolic_cylinder_d import parabolic_cylinder_d
 from ._whittaker_m import whittaker_m
+from ._whittaker_w import whittaker_w
 
 __all__ = [
     "airy_ai",
@@ -246,4 +247,5 @@ __all__ = [
     "polygamma",
     "parabolic_cylinder_d",
     "whittaker_m",
+    "whittaker_w",
 ]

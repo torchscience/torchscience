@@ -255,4 +255,6 @@ TORCH_LIBRARY_FRAGMENT(torchscience, module) {
   module.def("_parabolic_cylinder_d_backward(Tensor grad_output, Tensor nu, Tensor z) -> (Tensor, Tensor)");
   module.def("_whittaker_m(Tensor kappa, Tensor mu, Tensor z) -> Tensor");
   module.def("_whittaker_m_backward(Tensor grad_output, Tensor kappa, Tensor mu, Tensor z) -> (Tensor, Tensor, Tensor)");
+  module.def("_whittaker_w(Tensor kappa, Tensor mu, Tensor z) -> Tensor");
+  module.def("_whittaker_w_backward(Tensor grad_output, Tensor kappa, Tensor mu, Tensor z) -> (Tensor, Tensor, Tensor)");
 }

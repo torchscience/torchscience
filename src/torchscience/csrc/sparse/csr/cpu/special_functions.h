@@ -123,3 +123,4 @@
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/polygamma.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/parabolic_cylinder_d.h>
 #include <torchscience/csrc/sparse/csr/cpu/special_functions/whittaker_m.h>
+#include <torchscience/csrc/sparse/csr/cpu/special_functions/whittaker_w.h>
