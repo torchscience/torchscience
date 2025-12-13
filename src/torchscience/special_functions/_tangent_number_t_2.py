@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 
 
-def tangent_number_t(input: Tensor, *, out: Tensor | None = None) -> Tensor:
+def tangent_number_t_2(input: Tensor, *, out: Tensor | None = None) -> Tensor:
     """
     Computes the tangent number T_2n for each element in the input tensor.
 
@@ -28,10 +28,10 @@ def tangent_number_t(input: Tensor, *, out: Tensor | None = None) -> Tensor:
 
     Examples
     --------
-    >>> tangent_number_t(torch.tensor([0.0, 1.0, 2.0, 3.0]))
+    >>> tangent_number_t_2(torch.tensor([0.0, 1.0, 2.0, 3.0]))
     tensor([1., 2., 16., 272.])
     """
-    output: Tensor = torch.ops.torchscience._tangent_number_t(input)
+    output: Tensor = torch.ops.torchscience._tangent_number_t_2(input)
 
     if out is not None:
         out.copy_(output)

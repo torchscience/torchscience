@@ -114,7 +114,7 @@
 #include <torchscience/csrc/cpu/special_functions/spherical_modified_bessel_k.h>
 #include <torchscience/csrc/cpu/special_functions/stirling_number_s_1.h>
 #include <torchscience/csrc/cpu/special_functions/stirling_number_s_2.h>
-#include <torchscience/csrc/cpu/special_functions/tangent_number_t.h>
+#include <torchscience/csrc/cpu/special_functions/tangent_number_t_2.h>
 #include <torchscience/csrc/cpu/special_functions/trigamma.h>
 #include <torchscience/csrc/cpu/special_functions/kelvin_ber.h>
 #include <torchscience/csrc/cpu/special_functions/kelvin_bei.h>

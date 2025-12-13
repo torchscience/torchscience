@@ -112,7 +112,7 @@ from ._spherical_modified_bessel_i import spherical_modified_bessel_i
 from ._spherical_modified_bessel_k import spherical_modified_bessel_k
 from ._stirling_number_s_1 import stirling_number_s_1
 from ._stirling_number_s_2 import stirling_number_s_2
-from ._tangent_number_t import tangent_number_t
+from ._tangent_number_t_2 import tangent_number_t_2
 from ._trigamma import trigamma
 from ._kelvin_ber import kelvin_ber
 from ._kelvin_bei import kelvin_bei
@@ -235,7 +235,7 @@ __all__ = [
     "spherical_modified_bessel_k",
     "stirling_number_s_1",
     "stirling_number_s_2",
-    "tangent_number_t",
+    "tangent_number_t_2",
     "trigamma",
     "kelvin_ber",
     "kelvin_bei",

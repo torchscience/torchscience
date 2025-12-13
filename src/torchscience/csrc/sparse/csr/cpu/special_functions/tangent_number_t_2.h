@@ -6,8 +6,8 @@ namespace torchscience::sparse::csr::cpu::special_functions {
 
 using namespace torchscience::impl::special_functions;
 
-TORCHSCIENCE_UNARY_SPARSE_CSR_CPU_KERNEL(tangent_number_t)
+TORCHSCIENCE_UNARY_SPARSE_CSR_CPU_KERNEL(tangent_number_t_2)
 
-TORCHSCIENCE_UNARY_SPARSE_CSR_CPU_KERNEL_IMPL(tangent_number_t)
+TORCHSCIENCE_UNARY_SPARSE_CSR_CPU_KERNEL_IMPL(tangent_number_t_2)
 
 } // namespace torchscience::sparse::csr::cpu::special_functions
