@@ -46,6 +46,7 @@
 #include <torchscience/csrc/autocast/special_functions/double_factorial.h>
 #include <torchscience/csrc/autocast/special_functions/erf.h>
 #include <torchscience/csrc/autocast/special_functions/erfc.h>
+#include <torchscience/csrc/autocast/special_functions/euler_number_e.h>
 #include <torchscience/csrc/autocast/special_functions/exponential_integral_e.h>
 #include <torchscience/csrc/autocast/special_functions/exponential_integral_e_1.h>
 #include <torchscience/csrc/autocast/special_functions/exponential_integral_ei.h>
