@@ -4,10 +4,27 @@ if(NOT DEFINED SKBUILD_PROJECT_NAME)
     set(SKBUILD_PROJECT_NAME "torchscience")
 endif()
 
-project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
+# Check for CUDA availability
+include(CheckLanguage)
+check_language(CUDA)
+
+if(CMAKE_CUDA_COMPILER)
+    project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX CUDA)
+    set(TORCHSCIENCE_CUDA_AVAILABLE ON)
+    message(STATUS "CUDA compiler found: ${CMAKE_CUDA_COMPILER}")
+else()
+    project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
+    set(TORCHSCIENCE_CUDA_AVAILABLE OFF)
+    message(STATUS "CUDA compiler not found, building CPU-only version")
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(TORCHSCIENCE_CUDA_AVAILABLE)
+    set(CMAKE_CUDA_STANDARD 17)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+endif()
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development)
 
@@ -42,11 +59,27 @@ set(BUILD_SHARED_LIBS OFF)
 
 FetchContent_MakeAvailable(Boost)
 
-file(GLOB_RECURSE SOURCES "src/torchscience/csrc/*.cpp")
+file(GLOB_RECURSE CPP_SOURCES "src/torchscience/csrc/*.cpp")
+
+if(TORCHSCIENCE_CUDA_AVAILABLE)
+    file(GLOB_RECURSE CUDA_SOURCES "src/torchscience/csrc/*.cu")
+    set(SOURCES ${CPP_SOURCES} ${CUDA_SOURCES})
+    message(STATUS "Found CUDA sources: ${CUDA_SOURCES}")
+else()
+    set(SOURCES ${CPP_SOURCES})
+endif()
 
 add_library(_csrc MODULE ${SOURCES})
 
 set_target_properties(_csrc PROPERTIES PREFIX "")
+
+if(TORCHSCIENCE_CUDA_AVAILABLE)
+    set_target_properties(_csrc PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+        CUDA_RESOLVE_DEVICE_SYMBOLS ON
+    )
+    target_compile_definitions(_csrc PRIVATE TORCHSCIENCE_CUDA_AVAILABLE)
+endif()
 
 target_include_directories(_csrc PRIVATE
   ${CMAKE_SOURCE_DIR}/include
@@ -54,6 +87,10 @@ target_include_directories(_csrc PRIVATE
 )
 
 target_link_libraries(_csrc PRIVATE Python::Python ${TORCH_LIBRARIES} nlohmann_json::nlohmann_json Boost::math)
+
+if(TORCHSCIENCE_CUDA_AVAILABLE)
+    target_link_libraries(_csrc PRIVATE ${TORCH_CUDA_LIBRARIES})
+endif()
 
 if(SKBUILD)
     install(TARGETS _csrc DESTINATION ${SKBUILD_PROJECT_NAME})
