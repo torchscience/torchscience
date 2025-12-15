@@ -1,5 +1,5 @@
-from torchscience._core import hello_from_bin
+from . import _csrc
 
-
-def hello() -> str:
-    return hello_from_bin()
+__all__ = [
+    "_csrc",
+]

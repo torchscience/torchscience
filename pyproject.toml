@@ -1,15 +1,17 @@
 [build-system]
 build-backend = "scikit_build_core.build"
 requires = [
-    "pybind11",
-    "scikit-build-core>=0.10"
+    "scikit-build-core>=0.11.6",
+    "torch"
 ]
 
 [project]
 authors = [
     { name = "Allen Goodman", email = "allen.goodman@icloud.com" }
 ]
-dependencies = []
+dependencies = [
+    "torch"
+]
 description = "PyTorch operators for mathematics, science, and engineering."
 name = "torchscience"
 readme = "README.md"
