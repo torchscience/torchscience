@@ -10,7 +10,7 @@ authors = [
     { name = "Allen Goodman", email = "allen.goodman@icloud.com" }
 ]
 dependencies = [
-    "torch"
+    "torch",
 ]
 description = "PyTorch operators for mathematics, science, and engineering."
 name = "torchscience"

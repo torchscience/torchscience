@@ -19,10 +19,22 @@ find_package(
   REQUIRED
 )
 
+set(TORCHSCIENCE_SOURCES
+  src/torchscience/csrc/torchscience.cpp
+)
+
+if(TORCH_CUDA_LIBRARIES)
+  enable_language(CUDA)
+  list(APPEND TORCHSCIENCE_SOURCES
+    src/torchscience/csrc/cuda/special_functions/chebyshev_polynomial_t.cu
+  )
+  add_definitions(-DTORCHSCIENCE_CUDA)
+endif()
+
 add_library(
   _csrc
   MODULE
-  src/torchscience/csrc/torchscience.cpp
+  ${TORCHSCIENCE_SOURCES}
 )
 
 target_include_directories(
