@@ -1,0 +1,19 @@
+[build-system]
+build-backend = "scikit_build_core.build"
+requires = ["pybind11", "scikit-build-core>=0.10"]
+
+[project]
+authors = [{ name = "Allen Goodman", email = "allen.goodman@icloud.com" }]
+dependencies = []
+description = "PyTorch operators for mathematics, science, and engineering."
+name = "torchscience"
+readme = "README.md"
+requires-python = ">=3.13"
+version = "0.1.0"
+
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+build-dir = "build/{wheel_tag}"
+
+[tool.uv]
+cache-keys = [{ file = "CMakeLists.txt" }, { file = "pyproject.toml" }, { file = "src/**/*.{h,c,hpp,cpp}" }]
