@@ -8,26 +8,49 @@ if TYPE_CHECKING:
 
 
 class BroadcastingMixin:
-    """Mixin providing broadcasting tests."""
+    """Mixin providing broadcasting tests for n-ary operators."""
 
     descriptor: "OperatorDescriptor"
 
     def test_broadcast_scalar_with_tensor(self):
-        """Test broadcasting scalar with tensor."""
+        """Test broadcasting scalar with tensor (first input scalar)."""
         if "test_broadcast_scalar_with_tensor" in self.descriptor.skip_tests:
             pytest.skip("Test skipped by descriptor")
 
         if self.descriptor.arity < 2:
-            pytest.skip("Broadcasting test requires binary operator")
+            pytest.skip("Broadcasting test requires arity >= 2")
 
-        # Create scalar and tensor inputs
-        spec0 = self.descriptor.input_specs[0]
-        spec1 = self.descriptor.input_specs[1]
+        # First input is scalar, rest are tensors
+        inputs = []
+        for i, spec in enumerate(self.descriptor.input_specs):
+            shape = () if i == 0 else (5,)
+            tensor = self._make_input_for_spec(
+                spec, torch.float64, "cpu", shape
+            )
+            inputs.append(tensor)
 
-        scalar = self._make_input_for_spec(spec0, torch.float64, "cpu", ())
-        tensor = self._make_input_for_spec(spec1, torch.float64, "cpu", (5,))
+        result = self.descriptor.func(*inputs)
+        assert result.shape == (5,)
 
-        result = self.descriptor.func(scalar, tensor)
+    def test_broadcast_tensor_with_scalar(self):
+        """Test broadcasting tensor with scalar (last input scalar)."""
+        if "test_broadcast_tensor_with_scalar" in self.descriptor.skip_tests:
+            pytest.skip("Test skipped by descriptor")
+
+        if self.descriptor.arity < 2:
+            pytest.skip("Broadcasting test requires arity >= 2")
+
+        # Last input is scalar, rest are tensors
+        inputs = []
+        n = len(self.descriptor.input_specs)
+        for i, spec in enumerate(self.descriptor.input_specs):
+            shape = () if i == n - 1 else (5,)
+            tensor = self._make_input_for_spec(
+                spec, torch.float64, "cpu", shape
+            )
+            inputs.append(tensor)
+
+        result = self.descriptor.func(*inputs)
         assert result.shape == (5,)
 
     def test_broadcast_different_shapes(self):
@@ -36,13 +59,66 @@ class BroadcastingMixin:
             pytest.skip("Test skipped by descriptor")
 
         if self.descriptor.arity < 2:
-            pytest.skip("Broadcasting test requires binary operator")
+            pytest.skip("Broadcasting test requires arity >= 2")
 
-        spec0 = self.descriptor.input_specs[0]
-        spec1 = self.descriptor.input_specs[1]
+        # Create inputs with shapes that broadcast: (3, 1), (1, 4), ...
+        inputs = []
+        shapes = [(3, 1), (1, 4), (1, 1), (1, 1)]  # Up to 4 inputs
+        expected_shape = (3, 4)
 
-        t1 = self._make_input_for_spec(spec0, torch.float64, "cpu", (3, 1))
-        t2 = self._make_input_for_spec(spec1, torch.float64, "cpu", (1, 4))
+        for i, spec in enumerate(self.descriptor.input_specs):
+            shape = shapes[i] if i < len(shapes) else (1, 1)
+            tensor = self._make_input_for_spec(
+                spec, torch.float64, "cpu", shape
+            )
+            inputs.append(tensor)
 
-        result = self.descriptor.func(t1, t2)
-        assert result.shape == (3, 4)
+        result = self.descriptor.func(*inputs)
+        assert result.shape == expected_shape
+
+    def test_broadcast_batch_dimensions(self):
+        """Test broadcasting with batch dimensions."""
+        if "test_broadcast_batch_dimensions" in self.descriptor.skip_tests:
+            pytest.skip("Test skipped by descriptor")
+
+        if self.descriptor.arity < 2:
+            pytest.skip("Broadcasting test requires arity >= 2")
+
+        # First input has batch dim, others are unbatched
+        inputs = []
+        for i, spec in enumerate(self.descriptor.input_specs):
+            shape = (4, 3) if i == 0 else (3,)
+            tensor = self._make_input_for_spec(
+                spec, torch.float64, "cpu", shape
+            )
+            inputs.append(tensor)
+
+        result = self.descriptor.func(*inputs)
+        assert result.shape == (4, 3)
+
+    def test_broadcast_all_different_shapes(self):
+        """Test broadcasting where all inputs have different shapes."""
+        if "test_broadcast_all_different_shapes" in self.descriptor.skip_tests:
+            pytest.skip("Test skipped by descriptor")
+
+        if self.descriptor.arity < 2:
+            pytest.skip("Broadcasting test requires arity >= 2")
+
+        # Each input has a unique expandable shape
+        shape_patterns = [
+            (2, 1, 1),
+            (1, 3, 1),
+            (1, 1, 4),
+            (1, 1, 1),
+        ]
+
+        inputs = []
+        for i, spec in enumerate(self.descriptor.input_specs):
+            shape = shape_patterns[i] if i < len(shape_patterns) else (1, 1, 1)
+            tensor = self._make_input_for_spec(
+                spec, torch.float64, "cpu", shape
+            )
+            inputs.append(tensor)
+
+        result = self.descriptor.func(*inputs)
+        assert result.shape == (2, 3, 4)
