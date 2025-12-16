@@ -23,7 +23,7 @@ at::Tensor chebyshev_polynomial_t(const at::Tensor& v, const at::Tensor& z) {
       "chebyshev_polynomial_t_cuda",
       [&]() {
         at::native::gpu_kernel_with_scalars(iterator, []GPU_LAMBDA(scalar_t v, scalar_t z) -> scalar_t {
-          return impl::special_functions::chebyshev_polynomial_t_forward<scalar_t>(v, z);
+          return impl::special_functions::chebyshev_polynomial_t<scalar_t>(v, z);
         });
       });
   return iterator.output();
@@ -44,10 +44,10 @@ __global__ void chebyshev_polynomial_t_backward_kernel(
 ) {
   int64_t idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < numel) {
-    auto result = impl::special_functions::chebyshev_polynomial_t_backward_fused<scalar_t>(
-        grad[idx], v[idx], z[idx], v_requires_grad);
-    grad_v[idx] = result.grad_v;
-    grad_z[idx] = result.grad_z;
+    auto result = impl::special_functions::chebyshev_polynomial_t_backward<scalar_t>(
+        grad[idx], v[idx], z[idx]);
+    grad_v[idx] = v_requires_grad ? std::get<0>(result) : scalar_t(0);
+    grad_z[idx] = std::get<1>(result);
   }
 }
 
@@ -121,12 +121,12 @@ __global__ void chebyshev_polynomial_t_backward_backward_kernel(
     scalar_t ggv_val = has_ggv ? ggv[idx] : scalar_t(0);
     scalar_t ggz_val = has_ggz ? ggz[idx] : scalar_t(0);
 
-    auto result = impl::special_functions::chebyshev_polynomial_t_backward_backward_fused<scalar_t>(
+    auto result = impl::special_functions::chebyshev_polynomial_t_backward_backward<scalar_t>(
         ggv_val, ggz_val, grad_output[idx], v[idx], z[idx], has_ggv, has_ggz);
 
-    grad_grad_output[idx] = result.grad_grad_output;
-    grad_v[idx] = result.grad_v;
-    grad_z[idx] = result.grad_z;
+    grad_grad_output[idx] = std::get<0>(result);
+    grad_v[idx] = std::get<1>(result);
+    grad_z[idx] = std::get<2>(result);
   }
 }
 
