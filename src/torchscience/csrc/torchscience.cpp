@@ -9,8 +9,6 @@
 #include "quantized/cpu/special_functions.h"
 
 #ifdef TORCHSCIENCE_CUDA
-#include "cuda/special_functions/chebyshev_polynomial_t.h"
-#include "cuda/special_functions/gamma.h"
 #include "sparse/coo/cuda/special_functions.h"
 #include "sparse/csr/cuda/special_functions.h"
 #include "quantized/cuda/special_functions.h"
