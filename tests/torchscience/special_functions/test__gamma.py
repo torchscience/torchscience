@@ -845,3 +845,90 @@ class TestGamma(OpTestCase):
                 f"Complex derivative mismatch at z={point}: "
                 f"got {actual}, expected {expected}"
             )
+
+    # =========================================================================
+    # Sparse tensor tests
+    # =========================================================================
+
+    def test_sparse_coo_positive_values(self):
+        """Test sparse COO tensor with positive values (avoiding poles)."""
+        # Create sparse COO tensor with positive values to avoid poles at 0
+        indices = torch.tensor([[0, 1, 2], [1, 2, 0]])
+        values = torch.tensor([1.5, 2.5, 3.5], dtype=torch.float64)
+        sparse = torch.sparse_coo_tensor(indices, values, (3, 3))
+
+        result = torchscience.special_functions.gamma(sparse)
+
+        # Verify sparsity is preserved
+        assert result.is_sparse
+        assert result.shape == sparse.shape
+
+        # Compare with dense computation on non-zero values
+        dense_result = torchscience.special_functions.gamma(sparse.to_dense())
+        torch.testing.assert_close(
+            result.to_dense(), dense_result, rtol=1e-10, atol=1e-10
+        )
+
+    def test_sparse_csr_positive_values(self):
+        """Test sparse CSR tensor with positive values (avoiding poles)."""
+        # Create sparse CSR tensor with positive values
+        crow_indices = torch.tensor([0, 1, 2, 3])
+        col_indices = torch.tensor([1, 2, 0])
+        values = torch.tensor([1.5, 2.5, 3.5], dtype=torch.float64)
+        sparse = torch.sparse_csr_tensor(
+            crow_indices, col_indices, values, (3, 3)
+        )
+
+        result = torchscience.special_functions.gamma(sparse)
+
+        # Verify sparsity is preserved
+        assert result.layout == torch.sparse_csr
+        assert result.shape == sparse.shape
+
+        # Compare with dense computation
+        dense_result = torchscience.special_functions.gamma(sparse.to_dense())
+        torch.testing.assert_close(
+            result.to_dense(), dense_result, rtol=1e-10, atol=1e-10
+        )
+
+    # =========================================================================
+    # Quantized tensor tests
+    # =========================================================================
+
+    @pytest.mark.parametrize("qtype", [torch.quint8, torch.qint8])
+    def test_quantized_basic(self, qtype):
+        """Test basic quantized tensor support."""
+        # Create quantized tensor with positive values
+        scale = 0.1
+        zero_point = 10 if qtype == torch.quint8 else 0
+        x = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32)
+        qx = torch.quantize_per_tensor(x, scale, zero_point, qtype)
+
+        result = torchscience.special_functions.gamma(qx)
+
+        # Verify result is quantized
+        assert result.is_quantized
+
+        # Compare with dequantized computation
+        expected = torchscience.special_functions.gamma(qx.dequantize())
+        torch.testing.assert_close(
+            result.dequantize(), expected, rtol=0.1, atol=0.1
+        )
+
+    def test_quantized_factorial_values(self):
+        """Test quantized gamma at factorial-producing values."""
+        scale = 0.1
+        zero_point = 10
+        # Values that produce factorial results: Gamma(n) = (n-1)!
+        x = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0], dtype=torch.float32)
+        qx = torch.quantize_per_tensor(x, scale, zero_point, torch.quint8)
+
+        result = torchscience.special_functions.gamma(qx)
+        expected_values = torch.tensor(
+            [1.0, 1.0, 2.0, 6.0, 24.0], dtype=torch.float32
+        )
+
+        # Quantization introduces some error
+        torch.testing.assert_close(
+            result.dequantize(), expected_values, rtol=0.15, atol=0.15
+        )
