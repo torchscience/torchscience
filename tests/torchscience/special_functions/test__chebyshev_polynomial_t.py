@@ -23,9 +23,9 @@ from sympy import I, N, symbols
 
 import torchscience.special_functions
 from torchscience.testing import (
-    BinaryOpTestCase,
     InputSpec,
     OperatorDescriptor,
+    OpTestCase,
     RecurrenceSpec,
     SpecialValue,
     SymbolicDerivativeVerifier,
@@ -90,7 +90,7 @@ def _check_recurrence(func) -> bool:
     return True
 
 
-class TestChebyshevPolynomialT(BinaryOpTestCase):
+class TestChebyshevPolynomialT(OpTestCase):
     """Tests for Chebyshev polynomial of the first kind."""
 
     @property

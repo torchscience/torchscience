@@ -33,12 +33,12 @@ from torchscience.testing import (
     IdentitySpec,
     InputSpec,
     OperatorDescriptor,
+    OpTestCase,
     RecurrenceSpec,
     SingularitySpec,
     SpecialValue,
     SymbolicDerivativeVerifier,
     ToleranceConfig,
-    UnaryOpTestCase,
 )
 
 
@@ -85,7 +85,7 @@ def _duplication_identity(func):
     return left, right
 
 
-class TestGamma(UnaryOpTestCase):
+class TestGamma(OpTestCase):
     """Tests for the gamma function."""
 
     @property

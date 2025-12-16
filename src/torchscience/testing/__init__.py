@@ -30,11 +30,7 @@ Example usage:
             )
 """
 
-from .base import (
-    BinaryOpTestCase,
-    OpTestCase,
-    UnaryOpTestCase,
-)
+from .base import OpTestCase
 from .descriptors import (
     IdentitySpec,
     InputSpec,
@@ -62,13 +58,13 @@ from .strategies import (
     hyperbolic_domain,
     integers_as_floats,
     low_precision_dtypes,
-    negative_reals,
-    non_integer_reals,
+    negative_real_numbers,
+    non_integer_real_numbers,
     # Numeric strategies
-    positive_reals,
+    positive_real_numbers,
     # Dtype strategies
-    real_dtypes,
-    reals,
+    real_number_dtypes,
+    real_numbers,
     recurrence_test_values,
     reflection_test_values,
     # Tensor strategies
@@ -83,8 +79,6 @@ from .sympy_utils import (
 __all__ = [
     # Base classes
     "OpTestCase",
-    "UnaryOpTestCase",
-    "BinaryOpTestCase",
     # Descriptors
     "OperatorDescriptor",
     "InputSpec",
@@ -94,10 +88,10 @@ __all__ = [
     "SingularitySpec",
     "SpecialValue",
     # Strategies - numeric
-    "positive_reals",
-    "negative_reals",
-    "reals",
-    "non_integer_reals",
+    "positive_real_numbers",
+    "negative_real_numbers",
+    "real_numbers",
+    "non_integer_real_numbers",
     "integers_as_floats",
     "chebyshev_domain",
     "hyperbolic_domain",
@@ -114,7 +108,7 @@ __all__ = [
     "recurrence_test_values",
     "reflection_test_values",
     # Strategies - dtype
-    "real_dtypes",
+    "real_number_dtypes",
     "complex_dtypes",
     "low_precision_dtypes",
     "all_floating_dtypes",
