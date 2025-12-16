@@ -1,10 +1,8 @@
-import warnings
-
 import torch
 from torch import Tensor
 
 
-def chebyshev_polynomial_t(v: Tensor, z: Tensor, *, out: Tensor | None = None) -> Tensor:
+def chebyshev_polynomial_t(v: Tensor, z: Tensor) -> Tensor:
     """
     Chebyshev polynomial of the first kind.
 
@@ -17,13 +15,23 @@ def chebyshev_polynomial_t(v: Tensor, z: Tensor, *, out: Tensor | None = None) -
             T_0(z) = 1
             T_1(z) = z
             T_n(z) = 2z * T_{n-1}(z) - T_{n-2}(z)
+        This works for all real z, not just z in [-1, 1].
 
-    For non-integer v (real or complex), or complex z:
+    For non-integer v with real z in [-1, 1], or complex z:
         Uses the analytic continuation:
             T_v(z) = cos(v * arccos(z))
 
         where arccos(z) uses the principal branch, consistent with PyTorch's
         complex acos.
+
+    For non-integer v with real z outside [-1, 1]:
+        Uses the hyperbolic continuation:
+            For z > 1:  T_v(z) = cosh(v * arccosh(z))
+            For z < -1: T_v(z) = cos(v * π) * cosh(v * arccosh(-z))
+
+        This is the analytic continuation of the Chebyshev polynomial to the
+        real line outside the standard domain, equivalent to evaluating the
+        complex formula cos(v * arccos(z)) on the real axis.
 
     Branch Conventions
     ------------------
@@ -37,7 +45,12 @@ def chebyshev_polynomial_t(v: Tensor, z: Tensor, *, out: Tensor | None = None) -
     --------------
     - Path A (Recurrence): v is integral AND z is real -> polynomial recurrence.
       Numerically stable for integer degrees, exact polynomial semantics.
-    - Path B (Analytic Continuation): non-integer v OR complex v OR complex z
+      Works for all real z, not just z in [-1, 1].
+    - Path B (Analytic Continuation): non-integer v AND real z in [-1, 1]
+      -> uses cos(v * acos(z)) with principal branch.
+    - Path C (Hyperbolic Continuation): non-integer v AND real z outside [-1, 1]
+      -> uses cosh(v * acosh(z)) for z > 1, or cos(v*π) * cosh(v * acosh(-z)) for z < -1.
+    - Path D (Complex): complex v OR complex z
       -> uses cos(v * acos(z)) with principal branch.
 
     Dtype Promotion
@@ -89,8 +102,6 @@ def chebyshev_polynomial_t(v: Tensor, z: Tensor, *, out: Tensor | None = None) -
     z : Tensor
         Input tensor. Can be floating-point or complex.
         Broadcasting with v is supported.
-    out : Tensor, optional
-        Output tensor to write the result to.
 
     Returns
     -------
@@ -121,6 +132,13 @@ def chebyshev_polynomial_t(v: Tensor, z: Tensor, *, out: Tensor | None = None) -
     >>> chebyshev_polynomial_t(v, z)  # Returns complex result
     tensor([1.0200-0.4000j])
 
+    Real z outside [-1, 1] with non-integer v (hyperbolic continuation):
+
+    >>> v = torch.tensor([2.5])
+    >>> z = torch.tensor([2.0])
+    >>> chebyshev_polynomial_t(v, z)  # cosh(2.5 * acosh(2))
+    tensor([18.6953])
+
     Autograd with floating v:
 
     >>> v = torch.tensor([2.0], requires_grad=True)
@@ -132,13 +150,4 @@ def chebyshev_polynomial_t(v: Tensor, z: Tensor, *, out: Tensor | None = None) -
     >>> z.grad  # Gradient w.r.t. input
     tensor([-2.0000])
     """
-    output = torch.ops.torchscience.chebyshev_polynomial_t(v, z)
-
-    if out is not None:
-        out.resize_as_(output)
-
-        out.copy_(output)
-
-        return out
-
-    return output
+    return torch.ops.torchscience.chebyshev_polynomial_t(v, z)
