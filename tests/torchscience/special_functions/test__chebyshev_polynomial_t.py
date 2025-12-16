@@ -1079,34 +1079,8 @@ class TestChebyshevPolynomialT(OpTestCase):
         torch.testing.assert_close(grad_grad_z, expected, rtol=1e-8, atol=1e-8)
 
     # =========================================================================
-    # Sparse tensor tests
+    # Sparse tensor tests (additional coverage beyond mixin tests)
     # =========================================================================
-
-    def test_sparse_coo_basic(self):
-        """Test sparse COO tensor support for binary operator."""
-        # Create sparse COO tensor for z with values in [-1, 1]
-        indices = torch.tensor([[0, 1, 2], [1, 2, 0]])
-        values = torch.tensor([0.3, 0.5, 0.7], dtype=torch.float64)
-        z_sparse = torch.sparse_coo_tensor(indices, values, (3, 3))
-
-        v = torch.tensor([2.0], dtype=torch.float64)
-
-        result = torchscience.special_functions.chebyshev_polynomial_t(
-            v, z_sparse
-        )
-
-        # Verify sparsity is preserved
-        assert result.is_sparse
-        assert result.shape == z_sparse.shape
-
-        # Compare with dense computation
-        z_dense = z_sparse.to_dense()
-        expected = torchscience.special_functions.chebyshev_polynomial_t(
-            v, z_dense
-        )
-        torch.testing.assert_close(
-            result.to_dense(), expected, rtol=1e-10, atol=1e-10
-        )
 
     def test_sparse_coo_various_degrees(self):
         """Test sparse COO with various polynomial degrees."""
@@ -1128,107 +1102,9 @@ class TestChebyshevPolynomialT(OpTestCase):
                 result.to_dense(), expected, rtol=1e-10, atol=1e-10
             )
 
-    def test_sparse_csr_basic(self):
-        """Test sparse CSR tensor support for binary operator."""
-        # Create sparse CSR tensor for z with values in [-1, 1]
-        crow_indices = torch.tensor([0, 1, 2, 3])
-        col_indices = torch.tensor([1, 2, 0])
-        values = torch.tensor([0.3, 0.5, -0.7], dtype=torch.float64)
-        z_sparse = torch.sparse_csr_tensor(
-            crow_indices, col_indices, values, (3, 3)
-        )
-
-        v = torch.tensor([2.0], dtype=torch.float64)
-
-        result = torchscience.special_functions.chebyshev_polynomial_t(
-            v, z_sparse
-        )
-
-        # Verify sparsity is preserved
-        assert result.layout == torch.sparse_csr
-        assert result.shape == z_sparse.shape
-
-        # Compare with dense computation
-        z_dense = z_sparse.to_dense()
-        expected = torchscience.special_functions.chebyshev_polynomial_t(
-            v, z_dense
-        )
-        torch.testing.assert_close(
-            result.to_dense(), expected, rtol=1e-10, atol=1e-10
-        )
-
-    def test_sparse_both_inputs(self):
-        """Test with both v and z as sparse tensors."""
-        # Create sparse tensors for both v and z
-        indices_v = torch.tensor([[0, 1], [0, 1]])
-        values_v = torch.tensor([2.0, 3.0], dtype=torch.float64)
-        v_sparse = torch.sparse_coo_tensor(indices_v, values_v, (2, 2))
-
-        indices_z = torch.tensor([[0, 1], [0, 1]])
-        values_z = torch.tensor([0.5, 0.7], dtype=torch.float64)
-        z_sparse = torch.sparse_coo_tensor(indices_z, values_z, (2, 2))
-
-        result = torchscience.special_functions.chebyshev_polynomial_t(
-            v_sparse, z_sparse
-        )
-
-        # Compare with dense computation
-        expected = torchscience.special_functions.chebyshev_polynomial_t(
-            v_sparse.to_dense(), z_sparse.to_dense()
-        )
-        torch.testing.assert_close(
-            result.to_dense(), expected, rtol=1e-10, atol=1e-10
-        )
-
     # =========================================================================
-    # Quantized tensor tests
+    # Quantized tensor tests (additional coverage beyond mixin tests)
     # =========================================================================
-
-    @pytest.mark.parametrize("qtype", [torch.quint8, torch.qint8])
-    def test_quantized_basic(self, qtype):
-        """Test basic quantized tensor support for binary operator."""
-        # Create quantized tensor for z with values in [-1, 1]
-        scale = 0.01
-        zero_point = 128 if qtype == torch.quint8 else 0
-        z = torch.tensor([-0.5, 0.0, 0.3, 0.7], dtype=torch.float32)
-        qz = torch.quantize_per_tensor(z, scale, zero_point, qtype)
-
-        # v as regular tensor
-        v = torch.tensor([2.0], dtype=torch.float32)
-
-        result = torchscience.special_functions.chebyshev_polynomial_t(v, qz)
-
-        # Verify result is quantized
-        assert result.is_quantized
-
-        # Compare with dequantized computation
-        expected = torchscience.special_functions.chebyshev_polynomial_t(
-            v, qz.dequantize()
-        )
-        torch.testing.assert_close(
-            result.dequantize(), expected, rtol=0.1, atol=0.1
-        )
-
-    def test_quantized_both_inputs(self):
-        """Test with both v and z as quantized tensors."""
-        scale = 0.01
-        zero_point = 128
-
-        v = torch.tensor([2.0, 3.0], dtype=torch.float32)
-        qv = torch.quantize_per_tensor(v, scale, zero_point, torch.quint8)
-
-        z = torch.tensor([0.3, 0.5], dtype=torch.float32)
-        qz = torch.quantize_per_tensor(z, scale, zero_point, torch.quint8)
-
-        result = torchscience.special_functions.chebyshev_polynomial_t(qv, qz)
-
-        # Compare with dequantized computation
-        expected = torchscience.special_functions.chebyshev_polynomial_t(
-            qv.dequantize(), qz.dequantize()
-        )
-        torch.testing.assert_close(
-            result.dequantize(), expected, rtol=0.1, atol=0.1
-        )
 
     def test_quantized_integer_degrees(self):
         """Test quantized tensors with integer polynomial degrees."""
