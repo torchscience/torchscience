@@ -27,6 +27,7 @@ if(TORCH_CUDA_LIBRARIES)
   enable_language(CUDA)
   list(APPEND TORCHSCIENCE_SOURCES
     src/torchscience/csrc/cuda/special_functions/chebyshev_polynomial_t.cu
+    src/torchscience/csrc/cuda/special_functions/gamma.cu
   )
   add_definitions(-DTORCHSCIENCE_CUDA)
 endif()

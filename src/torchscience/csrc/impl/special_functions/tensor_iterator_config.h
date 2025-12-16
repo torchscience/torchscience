@@ -7,6 +7,25 @@ namespace impl {
 namespace special_functions {
 
 /**
+ * Common TensorIterator configuration for unary special functions.
+ *
+ * This utility reduces code duplication between CPU and CUDA implementations
+ * by providing a consistent configuration for element-wise operations.
+ */
+inline at::TensorIterator make_unary_iterator(
+    at::Tensor& output,
+    const at::Tensor& input
+) {
+  return at::TensorIteratorConfig()
+    .add_output(output)
+    .add_const_input(input)
+    .promote_inputs_to_common_dtype(true)
+    .cast_common_dtype_to_outputs(true)
+    .enforce_safe_casting_to_output(false)
+    .build();
+}
+
+/**
  * Common TensorIterator configuration for binary special functions.
  *
  * This utility reduces code duplication between CPU and CUDA implementations

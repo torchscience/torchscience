@@ -6,3 +6,4 @@ PyTorch operators for mathematics, science, and engineering.
 
 - `special_functions`
   - `chebyshev_polynomial_t`
+  - `gamma`
