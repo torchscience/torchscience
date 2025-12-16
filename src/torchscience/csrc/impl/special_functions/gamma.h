@@ -19,7 +19,10 @@
  *    - Γ(z) has poles at z = 0, -1, -2, -3, ...
  *
  * 3. IMPLEMENTATION:
- *    - Uses Lanczos approximation (g=7, n=9) for all types
+ *    - Uses lookup tables (LUTs) for positive integer arguments
+ *      - Float32: Γ(1) to Γ(35) via 0! to 34! table
+ *      - Float64: Γ(1) to Γ(171) via 0! to 170! table
+ *    - Uses Lanczos approximation (g=7, n=9) for non-integer arguments
  *    - Loop-based Lanczos series computation for maintainability
  *    - Uses sin_pi() helper with range reduction for numerical stability
  *      at large negative arguments (e.g., z = -10^15)
@@ -48,6 +51,7 @@
 
 #include "digamma.h"
 #include "trigamma.h"
+#include "factorial.h"
 
 namespace torchscience::impl::special_functions {
 
@@ -79,6 +83,8 @@ constexpr double kLanczosCoeffs[kLanczosN] = {
 constexpr double kSqrt2Pi = 2.5066282746310005024157652848110452530069867406099;
 
 // Note: kPi, sin_pi, and cos_pi are defined in digamma.h
+// Note: Factorial LUTs (kFactorialTableFloat/Double, kGammaMaxIntFloat/Double)
+//       are defined in factorial.h
 
 // ============================================================================
 // Lanczos series computation
@@ -145,9 +151,13 @@ c10::complex<T> lanczos_series(c10::complex<T> z) {
 // ============================================================================
 
 /**
- * Gamma function for float and double using Lanczos approximation.
+ * Gamma function for float and double using LUT and Lanczos approximation.
  *
- * Uses the Lanczos approximation with g=7:
+ * For positive integers, uses lookup table: Γ(n) = (n-1)!
+ *   - Float: exact values for n = 1 to 35
+ *   - Double: exact values for n = 1 to 171
+ *
+ * For non-integers, uses the Lanczos approximation with g=7:
  *   Γ(z+1) = √(2π) * (z + g + 0.5)^(z + 0.5) * e^(-(z + g + 0.5)) * A_g(z)
  *
  * where A_g(z) is a series approximation computed by lanczos_series().
@@ -184,6 +194,23 @@ gamma(scalar_t z) {
     return std::numeric_limits<scalar_t>::infinity();
   }
 
+  // Fast path for positive integers: Γ(n) = (n-1)!
+  // Use LUT for exact results and better performance
+  if (z > scalar_t(0) && z == floor(z)) {
+    int n = static_cast<int>(z);
+    if constexpr (std::is_same_v<scalar_t, double>) {
+      if (n <= kGammaMaxIntDouble) {
+        return scalar_t(kFactorialTableDouble[n - 1]);
+      }
+    } else {
+      if (n <= kGammaMaxIntFloat) {
+        return scalar_t(kFactorialTableFloat[n - 1]);
+      }
+    }
+    // Beyond LUT range: overflow to infinity
+    return std::numeric_limits<scalar_t>::infinity();
+  }
+
   // Reflection formula for z < 0.5
   // Γ(z) = π / (sin(πz) * Γ(1-z))
   // Uses sin_pi() for numerical stability with large negative arguments
@@ -206,7 +233,7 @@ gamma(scalar_t z) {
     return pi / (sin_pi_z * gamma_1_minus_z);
   }
 
-  // Lanczos approximation for z >= 0.5
+  // Lanczos approximation for non-integer z >= 0.5
   const scalar_t g = scalar_t(kLanczosG);
   const scalar_t sqrt_2pi = scalar_t(kSqrt2Pi);
 
@@ -262,10 +289,7 @@ gamma(scalar_t z);
  * - Very large negative Re(z): returns zero (the mathematically correct limit)
  * - z on real axis: uses real gamma to avoid inf*0=nan issues in complex exp
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE
-std::enable_if_t<c10::is_complex<scalar_t>::value, scalar_t>
-gamma(scalar_t z) {
+template <typename scalar_t> C10_HOST_DEVICE C10_ALWAYS_INLINE std::enable_if_t<c10::is_complex<scalar_t>::value, scalar_t> gamma(scalar_t z) {
   using std::exp;
   using std::log;
   using std::abs;

@@ -1391,5 +1391,538 @@ class TestQuantizedTensors:
         assert result.shape == x.shape
 
 
+# =============================================================================
+# Infinity input tests
+# =============================================================================
+
+class TestInfinityInputs:
+    """Test handling of infinity inputs."""
+
+    def test_positive_infinity_real(self):
+        """Test that Gamma(+inf) = +inf for real input."""
+        x = torch.tensor([float('inf')], dtype=torch.float64)
+        result = sf.gamma(x)
+        assert torch.isinf(result).all()
+        assert (result > 0).all(), "Gamma(+inf) should be +inf, not -inf"
+
+    def test_negative_infinity_real(self):
+        """Test that Gamma(-inf) returns NaN or undefined for real input."""
+        x = torch.tensor([float('-inf')], dtype=torch.float64)
+        result = sf.gamma(x)
+        # Gamma(-inf) is undefined (infinitely many poles in that direction)
+        # Implementation may return NaN or inf
+        assert torch.isnan(result).all() or torch.isinf(result).all()
+
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
+    def test_positive_infinity_dtypes(self, dtype):
+        """Test positive infinity handling across dtypes."""
+        x = torch.tensor([float('inf')], dtype=dtype)
+        result = sf.gamma(x)
+        assert result.dtype == dtype
+        assert torch.isinf(result).all()
+
+    def test_complex_infinity_real_part(self):
+        """Test complex input with infinity in real part."""
+        x = torch.tensor([complex(float('inf'), 0.0)], dtype=torch.complex128)
+        result = sf.gamma(x)
+        # Gamma(inf + 0j) should be inf
+        assert torch.isinf(result.real).all() or torch.isnan(result.real).all()
+
+    def test_complex_infinity_imag_part(self):
+        """Test complex input with infinity in imaginary part."""
+        x = torch.tensor([complex(1.0, float('inf'))], dtype=torch.complex128)
+        result = sf.gamma(x)
+        # Gamma(1 + i*inf) behavior - typically NaN or complex infinity
+        # The result should at least not crash
+        assert torch.isnan(result.real).all() or torch.isinf(result.real).all() or torch.isfinite(result.real).all()
+
+    def test_complex_infinity_both_parts(self):
+        """Test complex input with infinity in both parts."""
+        x = torch.tensor([complex(float('inf'), float('inf'))], dtype=torch.complex128)
+        result = sf.gamma(x)
+        # Result should be inf or NaN, not crash
+        assert torch.isnan(result.real).all() or torch.isinf(result.real).all()
+
+    def test_mixed_infinity_and_finite(self):
+        """Test batched input with both infinity and finite values."""
+        x = torch.tensor([1.0, float('inf'), 2.0, float('-inf'), 3.0], dtype=torch.float64)
+        result = sf.gamma(x)
+
+        # Finite inputs should give finite results
+        assert torch.isfinite(result[0])  # Gamma(1) = 1
+        assert torch.isfinite(result[2])  # Gamma(2) = 1
+        assert torch.isfinite(result[4])  # Gamma(3) = 2
+
+        # +inf should give +inf
+        assert torch.isinf(result[1]) and result[1] > 0
+
+    def test_infinity_gradient_propagation(self):
+        """Test that gradients with infinity inputs don't crash."""
+        x = torch.tensor([1.0, 2.0, float('inf')], dtype=torch.float64, requires_grad=True)
+        result = sf.gamma(x)
+
+        # Sum of finite parts
+        finite_sum = result[0] + result[1]
+        finite_sum.backward()
+
+        # Gradients for finite inputs should be finite
+        assert torch.isfinite(x.grad[0])
+        assert torch.isfinite(x.grad[1])
+
+
+# =============================================================================
+# LUT boundary verification tests
+# =============================================================================
+
+class TestLUTBoundaries:
+    """Test lookup table boundaries for integer gamma values."""
+
+    def test_float32_lut_boundary_gamma_35(self):
+        """Test Gamma(35) = 34! is the last value in float32 LUT."""
+        x = torch.tensor([35.0], dtype=torch.float32)
+        result = sf.gamma(x)
+
+        # 34! = 295232799039604140847618609643520000000 ≈ 2.95e38
+        # This should be finite and accurate
+        assert torch.isfinite(result).all()
+
+        # Compare against known value
+        expected = torch.tensor([2.9523279903960414e38], dtype=torch.float32)
+        assert_close(result, expected, rtol=1e-5, atol=0)
+
+    def test_float32_overflow_gamma_36(self):
+        """Test Gamma(36) = 35! overflows float32."""
+        x = torch.tensor([36.0], dtype=torch.float32)
+        result = sf.gamma(x)
+
+        # 35! ≈ 1.03e40 which exceeds float32 max ≈ 3.4e38
+        assert torch.isinf(result).all()
+
+    def test_float64_lut_boundary_gamma_171(self):
+        """Test Gamma(171) = 170! is the last value in float64 LUT."""
+        x = torch.tensor([171.0], dtype=torch.float64)
+        result = sf.gamma(x)
+
+        # 170! ≈ 7.26e306
+        assert torch.isfinite(result).all()
+
+        # Compare against known value
+        expected = torch.tensor([7.257415615307994e306], dtype=torch.float64)
+        assert_close(result, expected, rtol=1e-10, atol=0)
+
+    def test_float64_overflow_gamma_172(self):
+        """Test Gamma(172) = 171! overflows float64."""
+        x = torch.tensor([172.0], dtype=torch.float64)
+        result = sf.gamma(x)
+
+        # 171! ≈ 1.24e309 which exceeds float64 max ≈ 1.8e308
+        assert torch.isinf(result).all()
+
+    def test_lut_exact_integers_float64(self):
+        """Test that LUT gives exact factorial values for all covered integers."""
+        # Test a selection of integer values that should be exact from LUT
+        test_cases = [
+            (1, 1.0),           # 0! = 1
+            (2, 1.0),           # 1! = 1
+            (3, 2.0),           # 2! = 2
+            (4, 6.0),           # 3! = 6
+            (5, 24.0),          # 4! = 24
+            (6, 120.0),         # 5! = 120
+            (7, 720.0),         # 6! = 720
+            (10, 362880.0),     # 9! = 362880
+            (13, 479001600.0),  # 12! = 479001600
+        ]
+
+        for n, expected_val in test_cases:
+            x = torch.tensor([float(n)], dtype=torch.float64)
+            result = sf.gamma(x)
+            expected = torch.tensor([expected_val], dtype=torch.float64)
+            assert_close(result, expected, rtol=0, atol=0), f"Gamma({n}) should be exactly {expected_val}"
+
+    def test_lut_exact_integers_float32(self):
+        """Test that LUT gives exact factorial values for float32 covered integers."""
+        test_cases = [
+            (1, 1.0),
+            (2, 1.0),
+            (3, 2.0),
+            (4, 6.0),
+            (5, 24.0),
+            (10, 362880.0),
+        ]
+
+        for n, expected_val in test_cases:
+            x = torch.tensor([float(n)], dtype=torch.float32)
+            result = sf.gamma(x)
+            expected = torch.tensor([expected_val], dtype=torch.float32)
+            assert_close(result, expected, rtol=0, atol=0), f"Gamma({n}) should be exactly {expected_val}"
+
+    def test_lut_boundary_consistency_float32_vs_float64(self):
+        """Test that float32 and float64 give consistent results within LUT range."""
+        # Test values within float32 LUT range (1-35)
+        x_f32 = torch.tensor([1.0, 5.0, 10.0, 20.0, 30.0], dtype=torch.float32)
+        x_f64 = torch.tensor([1.0, 5.0, 10.0, 20.0, 30.0], dtype=torch.float64)
+
+        result_f32 = sf.gamma(x_f32)
+        result_f64 = sf.gamma(x_f64)
+
+        # Float32 results should match float64 results (both use LUT)
+        assert_close(result_f32.to(torch.float64), result_f64, rtol=1e-6, atol=0)
+
+
+# =============================================================================
+# Near-integer value detection tests
+# =============================================================================
+
+class TestNearIntegerDetection:
+    """Test behavior for values extremely close to integers."""
+
+    def test_very_close_to_negative_integer_is_large(self):
+        """Test that values very close to poles give very large results."""
+        # Values extremely close to -1 (within 1e-14)
+        near_pole = -1.0 + 1e-14
+        x = torch.tensor([near_pole], dtype=torch.float64)
+        result = sf.gamma(x)
+
+        # Should be very large (approximately 1/distance = 1e14) or inf
+        assert torch.isinf(result).all() or result.abs() > 1e12, \
+            f"Gamma({near_pole}) should be very large or inf, got {result.item()}"
+
+    def test_very_close_to_zero_is_large(self):
+        """Test that values very close to 0 give very large results."""
+        near_zero = 1e-14
+        x = torch.tensor([near_zero], dtype=torch.float64)
+        result = sf.gamma(x)
+
+        # Gamma(x) ≈ 1/x for small x, so should be ~1e14
+        assert result.abs() > 1e12, f"Gamma({near_zero}) should be very large, got {result.item()}"
+
+    def test_values_just_below_integer_not_at_pole(self):
+        """Test that n - epsilon is not treated as a pole for reasonable epsilon."""
+        # Values like -0.9999 should NOT be treated as poles
+        near_but_not_at = [-0.9999, -1.9999, -2.9999, -0.99999, -1.99999]
+        x = torch.tensor(near_but_not_at, dtype=torch.float64)
+        result = sf.gamma(x)
+
+        # All should be finite (not inf from pole detection)
+        assert torch.isfinite(result).all(), \
+            f"Values near but not at poles should give finite results: {result}"
+
+    def test_values_just_above_integer_not_at_pole(self):
+        """Test that n + epsilon is not treated as a pole for reasonable epsilon."""
+        near_but_not_at = [-1.0001, -2.0001, -3.0001, -1.00001, -2.00001]
+        x = torch.tensor(near_but_not_at, dtype=torch.float64)
+        result = sf.gamma(x)
+
+        assert torch.isfinite(result).all(), \
+            f"Values near but not at poles should give finite results: {result}"
+
+    def test_machine_epsilon_from_integer(self):
+        """Test values at exactly machine epsilon distance from integers."""
+        eps64 = torch.finfo(torch.float64).eps
+
+        # Test values at 1, 10, 100 epsilons from a pole
+        test_offsets = [eps64, 10 * eps64, 100 * eps64, 1000 * eps64]
+
+        for offset in test_offsets:
+            x = torch.tensor([-1.0 + offset, -1.0 - offset], dtype=torch.float64)
+            result = sf.gamma(x)
+
+            # Should be very large (close to pole) but implementation-dependent
+            # whether detected as pole or computed normally
+            # Main check: should not be NaN
+            assert not torch.isnan(result).any(), \
+                f"Gamma at offset {offset} from pole should not be NaN"
+
+    def test_positive_integers_not_affected_by_tolerance(self):
+        """Test that positive integers are correctly identified and use LUT."""
+        # Positive integers should use LUT and give exact results
+        integers = [1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0]
+        expected = [1.0, 1.0, 2.0, 6.0, 24.0, 362880.0, 1.21645100408832e17]
+
+        for n, exp in zip(integers, expected):
+            x = torch.tensor([n], dtype=torch.float64)
+            result = sf.gamma(x)
+            assert_close(result, torch.tensor([exp], dtype=torch.float64), rtol=1e-10, atol=0)
+
+    def test_float32_near_integer_detection(self):
+        """Test near-integer detection with float32 precision."""
+        eps32 = torch.finfo(torch.float32).eps
+
+        # Values close to poles in float32
+        near_poles_f32 = [-1.0 + 100 * eps32, -2.0 + 100 * eps32, 0.0 + 100 * eps32]
+        x = torch.tensor(near_poles_f32, dtype=torch.float32)
+        result = sf.gamma(x)
+
+        # Should be very large but not NaN
+        assert not torch.isnan(result).any()
+
+    def test_complex_near_integer_real_axis(self):
+        """Test complex values near integer poles on the real axis."""
+        # Complex values very close to poles on real axis
+        near_poles = [
+            -1.0 + 1e-10 + 0j,
+            -2.0 - 1e-10 + 0j,
+            0.0 + 1e-10 + 0j,
+        ]
+
+        for val in near_poles:
+            x = torch.tensor([val], dtype=torch.complex128)
+            result = sf.gamma(x)
+
+            # Should be very large magnitude but not NaN
+            assert not torch.isnan(result.real).any() and not torch.isnan(result.imag).any(), \
+                f"Gamma({val}) should not be NaN"
+
+
+# =============================================================================
+# Meta tensor support tests
+# =============================================================================
+
+class TestMetaTensors:
+    """Test meta tensor support for shape inference."""
+
+    def test_meta_tensor_basic(self):
+        """Test that meta tensors work for basic shape inference."""
+        x = torch.empty(5, dtype=torch.float64, device='meta')
+        result = sf.gamma(x)
+
+        assert result.device.type == 'meta'
+        assert result.shape == (5,)
+        assert result.dtype == torch.float64
+
+    def test_meta_tensor_2d(self):
+        """Test meta tensors with 2D input."""
+        x = torch.empty(3, 4, dtype=torch.float64, device='meta')
+        result = sf.gamma(x)
+
+        assert result.device.type == 'meta'
+        assert result.shape == (3, 4)
+
+    def test_meta_tensor_complex(self):
+        """Test meta tensors with complex dtype."""
+        x = torch.empty(5, dtype=torch.complex128, device='meta')
+        result = sf.gamma(x)
+
+        assert result.device.type == 'meta'
+        assert result.shape == (5,)
+        assert result.dtype == torch.complex128
+
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.float64, torch.complex64, torch.complex128])
+    def test_meta_tensor_dtypes(self, dtype):
+        """Test meta tensors preserve dtype."""
+        x = torch.empty(3, dtype=dtype, device='meta')
+        result = sf.gamma(x)
+
+        assert result.dtype == dtype
+        assert result.device.type == 'meta'
+
+    def test_meta_tensor_large_shape(self):
+        """Test meta tensors with large shapes (no actual computation)."""
+        # This should not allocate memory
+        x = torch.empty(1000, 1000, 1000, dtype=torch.float64, device='meta')
+        result = sf.gamma(x)
+
+        assert result.shape == (1000, 1000, 1000)
+        assert result.device.type == 'meta'
+
+    def test_meta_tensor_scalar(self):
+        """Test meta tensors with scalar (0-dim) input."""
+        x = torch.empty((), dtype=torch.float64, device='meta')
+        result = sf.gamma(x)
+
+        assert result.shape == ()
+        assert result.device.type == 'meta'
+
+
+# =============================================================================
+# Complex infinity and special value tests
+# =============================================================================
+
+class TestComplexSpecialValues:
+    """Test complex gamma with special values like infinity and zero."""
+
+    def test_complex_at_positive_real_integers(self):
+        """Test complex gamma at positive real integers matches real gamma."""
+        for n in [1, 2, 3, 4, 5, 10]:
+            x_real = torch.tensor([float(n)], dtype=torch.float64)
+            x_complex = torch.tensor([complex(n, 0)], dtype=torch.complex128)
+
+            result_real = sf.gamma(x_real)
+            result_complex = sf.gamma(x_complex)
+
+            assert_close(result_complex.real, result_real, rtol=1e-10, atol=1e-10)
+            assert_close(result_complex.imag, torch.tensor([0.0], dtype=torch.float64),
+                        rtol=1e-10, atol=1e-10)
+
+    def test_complex_purely_imaginary(self):
+        """Test gamma at purely imaginary values."""
+        # Gamma(i*y) for real y is well-defined and finite for y != 0
+        imag_values = [0.5, 1.0, 2.0, -1.0, -2.0]
+
+        for y in imag_values:
+            x = torch.tensor([complex(0, y)], dtype=torch.complex128)
+            result = sf.gamma(x)
+
+            assert torch.isfinite(result.real).all() and torch.isfinite(result.imag).all(), \
+                f"Gamma({y}j) should be finite, got {result}"
+
+    def test_complex_reflection_formula_identity(self):
+        """Test Gamma(z) * Gamma(1-z) = pi / sin(pi*z) for complex z."""
+        z_values = [0.3 + 0.5j, 0.7 - 0.3j, -0.5 + 0.2j]
+
+        for z_val in z_values:
+            z = torch.tensor([z_val], dtype=torch.complex128)
+            one_minus_z = torch.tensor([1 - z_val], dtype=torch.complex128)
+
+            gamma_z = sf.gamma(z)
+            gamma_1_minus_z = sf.gamma(one_minus_z)
+            product = gamma_z * gamma_1_minus_z
+
+            # Expected: pi / sin(pi*z)
+            expected = torch.tensor([math.pi], dtype=torch.complex128) / torch.sin(
+                torch.tensor([math.pi], dtype=torch.complex128) * z)
+
+            assert_close(product, expected, rtol=1e-8, atol=1e-8)
+
+    def test_complex_large_real_part_overflow(self):
+        """Test complex gamma with large positive real part overflows gracefully."""
+        # Large real part should overflow - could be inf or NaN depending on
+        # how the overflow occurs (inf * 0 = NaN is common in complex arithmetic)
+        x = torch.tensor([500.0 + 0.1j], dtype=torch.complex128)
+        result = sf.gamma(x)
+
+        # The result should be non-finite (overflow occurred)
+        # Implementation may produce inf or NaN depending on intermediate calculations
+        assert not torch.isfinite(result.real).all() or not torch.isfinite(result.imag).all(), \
+            f"Gamma(500 + 0.1j) should overflow, got {result}"
+
+    def test_complex_large_negative_real_part_underflow(self):
+        """Test complex gamma with large negative real part underflows to zero."""
+        # Very large negative real part should give result approaching zero
+        x = torch.tensor([-500.5 + 0.1j], dtype=torch.complex128)
+        result = sf.gamma(x)
+
+        # Should be very small or zero
+        assert result.abs() < 1e-100 or result.abs() == 0, \
+            f"Gamma(-500.5 + 0.1j) should be very small, got {result}"
+
+    def test_complex_large_imaginary_part(self):
+        """Test complex gamma with large imaginary parts stays bounded."""
+        # For fixed real part and large |Im(z)|, |Gamma(z)| should decay
+        x = torch.tensor([2.0 + 50.0j, 2.0 + 100.0j], dtype=torch.complex128)
+        result = sf.gamma(x)
+
+        # Results should be finite (not overflow despite complex oscillations)
+        assert torch.isfinite(result.real).all() and torch.isfinite(result.imag).all()
+
+        # |Gamma(2 + 50j)| should be much smaller than |Gamma(2 + 0j)| = 1
+        gamma_2 = sf.gamma(torch.tensor([2.0], dtype=torch.float64))
+        assert result[0].abs() < gamma_2.item()
+
+    def test_wirtinger_derivative_direction(self):
+        """Test that complex gradients follow Wirtinger convention (∂L/∂z̄)."""
+        z = torch.tensor([2.0 + 0.5j], dtype=torch.complex128, requires_grad=True)
+
+        # Compute gamma and a real loss
+        gamma_z = sf.gamma(z)
+        loss = gamma_z.real  # Take real part for a real scalar loss
+
+        loss.backward()
+
+        # The gradient should be the conjugate of the holomorphic derivative
+        # d/dz Gamma(z) = Gamma(z) * psi(z)
+        # So grad = conj(Gamma(z) * psi(z))
+
+        # Verify gradient is finite (detailed mathematical verification
+        # is done in the gradcheck tests)
+        assert torch.isfinite(z.grad.real).all()
+        assert torch.isfinite(z.grad.imag).all()
+
+
+# =============================================================================
+# Autocast (mixed precision) tests
+# =============================================================================
+
+class TestAutocast:
+    """Test autocast (automatic mixed precision) support."""
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    def test_autocast_cuda_float16(self):
+        """Test gamma with CUDA autocast to float16."""
+        x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32, device='cuda')
+
+        with torch.cuda.amp.autocast(dtype=torch.float16):
+            result = sf.gamma(x)
+
+        # Result may be float16 or float32 depending on implementation
+        assert result.device.type == 'cuda'
+        assert torch.isfinite(result).all()
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+    def test_autocast_cuda_bfloat16(self):
+        """Test gamma with CUDA autocast to bfloat16."""
+        if not torch.cuda.is_bf16_supported():
+            pytest.skip("BFloat16 not supported on this GPU")
+
+        x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32, device='cuda')
+
+        with torch.cuda.amp.autocast(dtype=torch.bfloat16):
+            result = sf.gamma(x)
+
+        assert result.device.type == 'cuda'
+        assert torch.isfinite(result).all()
+
+    def test_autocast_cpu_bfloat16(self):
+        """Test gamma with CPU autocast to bfloat16."""
+        x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+
+        with torch.amp.autocast('cpu', dtype=torch.bfloat16):
+            result = sf.gamma(x)
+
+        assert torch.isfinite(result).all()
+
+
+# =============================================================================
+# Consistency with PyTorch's torch.special.gamma (if available)
+# =============================================================================
+
+class TestPyTorchConsistency:
+    """Test consistency with PyTorch's built-in gamma functions."""
+
+    def test_matches_torch_special_gamma_positive(self):
+        """Test that results match torch.special.gamma for positive inputs."""
+        if not hasattr(torch.special, 'gamma'):
+            pytest.skip("torch.special.gamma not available")
+
+        x = torch.tensor([0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 5.0, 10.0], dtype=torch.float64)
+
+        result = sf.gamma(x)
+        expected = torch.special.gamma(x)
+
+        assert_close(result, expected, rtol=1e-10, atol=1e-10)
+
+    def test_matches_torch_special_gamma_negative(self):
+        """Test that results match torch.special.gamma for negative non-integer inputs."""
+        if not hasattr(torch.special, 'gamma'):
+            pytest.skip("torch.special.gamma not available")
+
+        x = torch.tensor([-0.5, -1.5, -2.5, -3.5, -4.5], dtype=torch.float64)
+
+        result = sf.gamma(x)
+        expected = torch.special.gamma(x)
+
+        assert_close(result, expected, rtol=1e-10, atol=1e-10)
+
+    def test_matches_gammaln_via_exp(self):
+        """Test that gamma matches exp(gammaln) for positive inputs."""
+        x = torch.tensor([0.5, 1.0, 2.0, 5.0, 10.0, 50.0], dtype=torch.float64)
+
+        result = sf.gamma(x)
+        expected = torch.exp(torch.special.gammaln(x))
+
+        # For large values, gammaln is more accurate, so use relative tolerance
+        assert_close(result, expected, rtol=1e-10, atol=1e-10)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

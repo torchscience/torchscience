@@ -21,9 +21,9 @@ extern "C" {
     static struct PyModuleDef module_def = {
       PyModuleDef_HEAD_INIT,
       "_csrc",
-      NULL,
+      nullptr,
       -1,
-      NULL,
+      nullptr,
     };
 
     return PyModule_Create(&module_def);
@@ -32,10 +32,10 @@ extern "C" {
 
 TORCH_LIBRARY(torchscience, m) {
   m.def("chebyshev_polynomial_t(Tensor v, Tensor z) -> Tensor");
-  m.def("chebyshev_polynomial_t_backward(Tensor grad_output, Tensor v, Tensor z) -> (Tensor, Tensor)");
-  m.def("chebyshev_polynomial_t_backward_backward(Tensor ggv, Tensor ggz, Tensor grad_output, Tensor v, Tensor z) -> (Tensor, Tensor, Tensor)");
+  m.def("chebyshev_polynomial_t_backward(Tensor gradient_output, Tensor v, Tensor z) -> (Tensor, Tensor)");
+  m.def("chebyshev_polynomial_t_backward_backward(Tensor gradient_gradient_v, Tensor gradient_gradient_z, Tensor gradient_output, Tensor v, Tensor z) -> (Tensor, Tensor, Tensor)");
 
-  m.def("gamma(Tensor x) -> Tensor");
-  m.def("gamma_backward(Tensor grad_output, Tensor x) -> Tensor");
-  m.def("gamma_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+  m.def("gamma(Tensor z) -> Tensor");
+  m.def("gamma_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("gamma_backward_backward(Tensor gradient_gradient_z, Tensor gradient_output, Tensor z) -> (Tensor, Tensor)");
 }
