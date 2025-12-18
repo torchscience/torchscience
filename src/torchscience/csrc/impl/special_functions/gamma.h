@@ -261,8 +261,10 @@ template <typename scalar_t> C10_HOST_DEVICE C10_ALWAYS_INLINE std::enable_if_t<
  * For real types, conjugation is the identity, so no special handling needed.
  */
 template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t
-gamma_backward(scalar_t gradient_output, scalar_t z) {
+C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t gamma_backward(
+  scalar_t gradient_output,
+  scalar_t z
+) {
   if constexpr (c10::is_complex<scalar_t>::value) {
     return gradient_output * std::conj(gamma(z) * digamma(z));
   } else {
