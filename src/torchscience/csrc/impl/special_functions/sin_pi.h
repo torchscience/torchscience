@@ -152,15 +152,9 @@ c10::complex<T> sin_pi(c10::complex<T> z) {
     reduced_a = remainder(a, T(2));
   }
 
-  // sin(pi(a+bi)) = sin(pi*a)cosh(pi*b) + i*cos(pi*a)sinh(pi*b)
-  T sin_pi_a = sin(pi * reduced_a);
-  T cos_pi_a = cos(pi * reduced_a);
-  T sinh_pi_b = sinh(pi * b);
-  T cosh_pi_b = cosh(pi * b);
-
   return c10::complex<T>(
-    sin_pi_a * cosh_pi_b,
-    cos_pi_a * sinh_pi_b
+    sin(pi * reduced_a) * cosh(pi * b),
+    cos(pi * reduced_a) * sinh(pi * b)
   );
 }
 
