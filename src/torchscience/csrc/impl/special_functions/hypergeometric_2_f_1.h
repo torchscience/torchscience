@@ -14,8 +14,15 @@
  *
  * 2. CONVERGENCE:
  *    - Absolutely convergent for |z| < 1
- *    - Conditionally convergent for |z| = 1 if Re(c - a - b) > 0
+ *    - For |z| = 1 (unit circle):
+ *      * Converges absolutely if Re(c - a - b) > 0
+ *      * Converges conditionally (except at z=1) if -1 < Re(c - a - b) <= 0
+ *      * Diverges if Re(c - a - b) <= -1
+ *      * At z = 1 specifically: converges iff Re(c - a - b) > 0
  *    - Divergent for |z| > 1 (requires analytic continuation)
+ *
+ *    The implementation explicitly checks these conditions when |z| ≈ 1
+ *    and returns NaN when the series diverges.
  *
  * 3. ALGORITHM SELECTION:
  *    The implementation uses three different algorithms based on |z|:
@@ -46,13 +53,19 @@
  *    functions. Richardson extrapolation with parameter perturbation
  *    is used to compute the limiting values accurately.
  *
- * 5. REAL z > 1 LIMITATION:
+ * 5. SPECIAL CASE z = 1:
+ *    For z = 1 exactly, the implementation uses the Gauss summation theorem:
+ *       2F1(a, b; c; 1) = Γ(c)Γ(c-a-b) / (Γ(c-a)Γ(c-b))
+ *    This is valid when Re(c - a - b) > 0 (convergence condition).
+ *    When Re(c - a - b) <= 0, the function returns NaN.
+ *
+ * 6. REAL z > 1 LIMITATION:
  *    For real inputs with z > 1 and non-integer (a-b), the analytic
  *    continuation is generally complex. This implementation computes
  *    the full complex result internally and returns the real part,
  *    which may be incorrect. Use complex inputs for z > 1.
  *
- * 6. APPLICATIONS:
+ * 7. APPLICATIONS:
  *    The 2F1 function appears in many contexts:
  *    - Incomplete beta function: I_z(a,b) = z^a / (a*B(a,b)) * 2F1(a, 1-b; a+1; z)
  *    - Legendre functions
@@ -67,6 +80,7 @@
 #include <type_traits>
 #include <limits>
 
+#include "factorial.h"
 #include "gamma.h"
 #include "digamma.h"
 #include "sin_pi.h"
@@ -88,6 +102,143 @@ hypergeometric_2_f_1(scalar_t a, scalar_t b, scalar_t c, scalar_t z);
 constexpr double kPi_2F1 = 3.14159265358979323846264338327950288;
 
 // ============================================================================
+// Adaptive series termination parameters
+// ============================================================================
+//
+// The series uses adaptive termination based on convergence rate:
+// - base_max_terms: Initial term limit for typical fast-converging cases
+// - extended_max_terms: Absolute maximum, used when series is still converging
+// - convergence_ratio_threshold: If |term_n/term_{n-1}| < this, series is converging
+// - stall_ratio_threshold: If ratio is between this and 1.0, series may be stalling
+//
+// The algorithm continues past base_max_terms if:
+//   1. Convergence criterion not yet met
+//   2. Series is still converging (ratio < convergence_ratio_threshold)
+//   3. Haven't reached extended_max_terms
+//
+// Early termination occurs if:
+//   1. Converged: |term| < eps * max(1, |sum|)
+//   2. Diverging: ratio > 1.0
+//   3. Stalled: ratio > stall_ratio_threshold for many consecutive iterations
+//
+constexpr int kBaseMaxTerms_2F1 = 200;
+constexpr int kExtendedMaxTerms_2F1 = 1000;
+constexpr double kConvergenceRatioThreshold_2F1 = 0.99;
+constexpr double kStallRatioThreshold_2F1 = 0.9999;
+constexpr int kStallCountThreshold_2F1 = 20;
+
+// ============================================================================
+// Adaptive Richardson extrapolation delta computation
+// ============================================================================
+//
+// For Richardson extrapolation to cancel leading error terms, we need:
+//   f(x + delta1) and f(x + delta2) with delta2 = delta1 / 2
+//
+// The optimal delta scales with the parameter magnitude to maintain
+// relative accuracy while avoiding numerical instability:
+//   base_delta = max(relative_scale * |param|, absolute_minimum)
+//
+// where:
+//   - relative_scale ≈ sqrt(machine_epsilon) for optimal finite difference
+//   - absolute_minimum prevents underflow when param is near zero
+//
+// For complex parameters, we use the magnitude for scaling.
+//
+
+/**
+ * Compute adaptive delta values for Richardson extrapolation.
+ *
+ * Returns (delta1, delta2) where delta2 = delta1 / 2, scaled appropriately
+ * based on the magnitude of the parameter being perturbed.
+ *
+ * @param param The parameter that will be perturbed
+ * @return Pair of (delta1, delta2) for Richardson extrapolation
+ */
+template <typename scalar_t>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<
+    typename c10::scalar_value_type<scalar_t>::type,
+    typename c10::scalar_value_type<scalar_t>::type>
+compute_richardson_deltas(scalar_t param) {
+  using std::abs;
+  using std::sqrt;
+
+  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+
+  // Get parameter magnitude (works for both real and complex)
+  real_t param_mag = abs(param);
+
+  // Relative scale: sqrt(machine_epsilon) is optimal for finite differences
+  // Absolute minimum: prevents delta from becoming too small
+  real_t relative_scale, absolute_min;
+  if constexpr (std::is_same_v<real_t, double>) {
+    // sqrt(2.2e-16) ≈ 1.5e-8, use slightly larger for safety margin
+    relative_scale = real_t(1e-7);
+    absolute_min = real_t(1e-10);
+  } else {
+    // sqrt(1.2e-7) ≈ 3.5e-4, use slightly larger for safety margin
+    relative_scale = real_t(1e-4);
+    absolute_min = real_t(1e-6);
+  }
+
+  // Compute base delta with magnitude scaling
+  real_t base_delta = relative_scale * param_mag;
+
+  // Ensure minimum absolute delta
+  if (base_delta < absolute_min) {
+    base_delta = absolute_min;
+  }
+
+  // Cap maximum delta to avoid perturbing too far from the singularity
+  // This is important when param is very large
+  real_t max_delta;
+  if constexpr (std::is_same_v<real_t, double>) {
+    max_delta = real_t(1e-5);
+  } else {
+    max_delta = real_t(1e-3);
+  }
+  if (base_delta > max_delta) {
+    base_delta = max_delta;
+  }
+
+  // Richardson extrapolation uses delta1 and delta2 = delta1 / 2
+  real_t delta1 = base_delta;
+  real_t delta2 = base_delta / real_t(2);
+
+  return std::make_tuple(delta1, delta2);
+}
+
+/**
+ * Compute adaptive delta values for Richardson extrapolation with multiple parameters.
+ *
+ * Uses the maximum magnitude among multiple parameters to determine scaling.
+ * Useful when the singularity depends on a combination of parameters.
+ *
+ * @param params Variadic list of parameters to consider
+ * @return Pair of (delta1, delta2) for Richardson extrapolation
+ */
+template <typename scalar_t, typename... Args>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<
+    typename c10::scalar_value_type<scalar_t>::type,
+    typename c10::scalar_value_type<scalar_t>::type>
+compute_richardson_deltas_multi(scalar_t first, Args... rest) {
+  using std::abs;
+
+  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+
+  // Find maximum magnitude among all parameters
+  // Cast abs result to real_t to handle types like BFloat16 where abs may return float
+  real_t max_mag = static_cast<real_t>(abs(first));
+  if constexpr (sizeof...(rest) > 0) {
+    // Fold expression to find max of remaining parameters
+    // Use conditional instead of std::max to avoid type deduction issues
+    ((max_mag = (static_cast<real_t>(abs(rest)) > max_mag ? static_cast<real_t>(abs(rest)) : max_mag)), ...);
+  }
+
+  // Use the max magnitude for scaling
+  return compute_richardson_deltas(scalar_t(max_mag));
+}
+
+// ============================================================================
 // Series computation
 // ============================================================================
 
@@ -106,6 +257,12 @@ constexpr double kPi_2F1 = 3.14159265358979323846264338327950288;
  * Special cases:
  *   - When a or b is a non-positive integer -m, the series terminates after m+1 terms
  *     (becomes a polynomial), since (a)_n = 0 for n > m.
+ *
+ * Adaptive termination:
+ *   The series uses adaptive max_terms based on convergence rate. It starts with
+ *   a base limit of 200 terms but can extend up to 1000 if the series is still
+ *   converging (|term_n/term_{n-1}| < 0.99). Early termination occurs if the
+ *   series diverges or stalls.
  */
 template <typename scalar_t>
 C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t
@@ -114,8 +271,9 @@ hypergeometric_2f1_series(scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
 
   using real_t = typename c10::scalar_value_type<scalar_t>::type;
 
-  const int max_terms = 200;
   const real_t eps = std::numeric_limits<real_t>::epsilon() * real_t(100);
+  const real_t convergence_threshold = real_t(kConvergenceRatioThreshold_2F1);
+  const real_t stall_threshold = real_t(kStallRatioThreshold_2F1);
 
   real_t z_mag = abs(z);
   if (z_mag < eps) {
@@ -124,8 +282,10 @@ hypergeometric_2f1_series(scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
 
   scalar_t sum = scalar_t(1);
   scalar_t term = scalar_t(1);
+  real_t prev_term_mag = real_t(1);
+  int stall_count = 0;
 
-  for (int n = 0; n < max_terms; ++n) {
+  for (int n = 0; n < kExtendedMaxTerms_2F1; ++n) {
     scalar_t a_n = a + scalar_t(n);
     scalar_t b_n = b + scalar_t(n);
     scalar_t c_n = c + scalar_t(n);
@@ -139,7 +299,7 @@ hypergeometric_2f1_series(scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
     real_t a_n_mag = abs(a_n);
     real_t b_n_mag = abs(b_n);
     if (a_n_mag < eps || b_n_mag < eps) {
-      break;
+      break;  // Terminating series (a or b is non-positive integer)
     }
 
     term *= (a_n * b_n) / (c_n * n_plus_1) * z;
@@ -148,9 +308,35 @@ hypergeometric_2f1_series(scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
     real_t term_mag = abs(term);
     real_t sum_mag = abs(sum);
 
+    // Check for convergence
     if (term_mag < eps * (sum_mag > real_t(1) ? sum_mag : real_t(1))) {
       break;
     }
+
+    // Compute convergence ratio for adaptive termination
+    real_t ratio = (prev_term_mag > eps) ? (term_mag / prev_term_mag) : real_t(0);
+
+    // Check for divergence
+    if (ratio > real_t(1) && n > 10) {
+      break;  // Series is diverging
+    }
+
+    // Track stalling (ratio very close to 1)
+    if (ratio > stall_threshold) {
+      stall_count++;
+      if (stall_count > kStallCountThreshold_2F1) {
+        break;  // Series is stalling
+      }
+    } else {
+      stall_count = 0;
+    }
+
+    // After base iterations, only continue if still converging well
+    if (n >= kBaseMaxTerms_2F1 && ratio > convergence_threshold) {
+      break;  // Slow convergence, stop at base limit
+    }
+
+    prev_term_mag = term_mag;
   }
 
   return sum;
@@ -184,6 +370,8 @@ hypergeometric_2f1_derivative(scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
  *
  * where T_n = (a)_n * (b)_n / ((c)_n * n!) * z^n is the n-th term.
  *
+ * Uses adaptive termination based on convergence rate (see hypergeometric_2f1_series).
+ *
  * Returns: (value, d/da, d/db, d/dc)
  */
 template <typename scalar_t>
@@ -193,8 +381,9 @@ hypergeometric_2f1_series_with_param_derivatives(scalar_t a, scalar_t b, scalar_
 
   using real_t = typename c10::scalar_value_type<scalar_t>::type;
 
-  const int max_terms = 200;
   const real_t eps = std::numeric_limits<real_t>::epsilon() * real_t(100);
+  const real_t convergence_threshold = real_t(kConvergenceRatioThreshold_2F1);
+  const real_t stall_threshold = real_t(kStallRatioThreshold_2F1);
 
   real_t z_mag = abs(z);
   if (z_mag < eps) {
@@ -207,12 +396,14 @@ hypergeometric_2f1_series_with_param_derivatives(scalar_t a, scalar_t b, scalar_
   scalar_t d_sum_c = scalar_t(0);
 
   scalar_t term = scalar_t(1);
+  real_t prev_term_mag = real_t(1);
+  int stall_count = 0;
 
   scalar_t psi_a = scalar_t(0);
   scalar_t psi_b = scalar_t(0);
   scalar_t psi_c = scalar_t(0);
 
-  for (int n = 0; n < max_terms; ++n) {
+  for (int n = 0; n < kExtendedMaxTerms_2F1; ++n) {
     scalar_t a_n = a + scalar_t(n);
     scalar_t b_n = b + scalar_t(n);
     scalar_t c_n = c + scalar_t(n);
@@ -228,7 +419,7 @@ hypergeometric_2f1_series_with_param_derivatives(scalar_t a, scalar_t b, scalar_
     real_t a_n_mag = abs(a_n);
     real_t b_n_mag = abs(b_n);
     if (a_n_mag < eps || b_n_mag < eps) {
-      break;
+      break;  // Terminating series
     }
 
     psi_a += scalar_t(1) / a_n;
@@ -246,9 +437,35 @@ hypergeometric_2f1_series_with_param_derivatives(scalar_t a, scalar_t b, scalar_
     real_t term_mag = abs(term);
     real_t sum_mag = abs(sum);
 
+    // Check for convergence
     if (term_mag < eps * (sum_mag > real_t(1) ? sum_mag : real_t(1))) {
       break;
     }
+
+    // Compute convergence ratio for adaptive termination
+    real_t ratio = (prev_term_mag > eps) ? (term_mag / prev_term_mag) : real_t(0);
+
+    // Check for divergence
+    if (ratio > real_t(1) && n > 10) {
+      break;
+    }
+
+    // Track stalling
+    if (ratio > stall_threshold) {
+      stall_count++;
+      if (stall_count > kStallCountThreshold_2F1) {
+        break;
+      }
+    } else {
+      stall_count = 0;
+    }
+
+    // After base iterations, only continue if still converging well
+    if (n >= kBaseMaxTerms_2F1 && ratio > convergence_threshold) {
+      break;
+    }
+
+    prev_term_mag = term_mag;
   }
 
   return std::make_tuple(sum, d_sum_a, d_sum_b, d_sum_c);
@@ -561,6 +778,8 @@ hypergeometric_2f1_one_minus_z_transform_with_delta_and_derivatives(
  * }
  *
  * For m = 0 (c = a + b), the polynomial sum is empty and the formula simplifies.
+ *
+ * Uses adaptive termination based on convergence rate.
  */
 template <typename scalar_t>
 C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t
@@ -577,8 +796,9 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(
 
   using real_t = typename c10::scalar_value_type<scalar_t>::type;
 
-  const int max_terms = 200;
   const real_t eps = std::numeric_limits<real_t>::epsilon() * real_t(100);
+  const real_t convergence_threshold = real_t(kConvergenceRatioThreshold_2F1);
+  const real_t stall_threshold = real_t(kStallRatioThreshold_2F1);
 
   scalar_t one_minus_z = scalar_t(1) - z;
 
@@ -639,11 +859,8 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(
     scalar_t factorial_k = scalar_t(1);  // k!
 
     for (int k = 0; k < m; ++k) {
-      // (m-1-k)!
-      real_t factorial_mmk = real_t(1);
-      for (int j = 2; j <= m - 1 - k; ++j) {
-        factorial_mmk *= real_t(j);
-      }
+      // (m-1-k)! from precomputed table
+      real_t factorial_mmk = factorial(real_t(m - 1 - k));
 
       scalar_t term = (poch_a * poch_b / factorial_k) * scalar_t(factorial_mmk) * omz_pow;
       poly_sum += term;
@@ -673,11 +890,8 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(
       // [2ψ(s+1) - ψ(a+s) - ψ(b+s) - ln(1-z)]
       series_coeff = scalar_t(1);
     } else {
-      // (-1)^m / (m-1)!
-      real_t factorial_mm1 = real_t(1);
-      for (int j = 2; j <= m - 1; ++j) {
-        factorial_mm1 *= real_t(j);
-      }
+      // (-1)^m / (m-1)! from precomputed table
+      real_t factorial_mm1 = factorial(real_t(m - 1));
       series_coeff = scalar_t((m % 2 == 0) ? 1 : -1) / scalar_t(factorial_mm1);
     }
 
@@ -691,6 +905,8 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(
     scalar_t poch_am = scalar_t(1);      // (a+m)_s
     scalar_t poch_bm = scalar_t(1);      // (b+m)_s
     scalar_t omz_pow = scalar_t(1);      // (1-z)^s
+    real_t prev_term_mag = real_t(1);
+    int stall_count = 0;
 
     // Accumulate digamma sums for incremental computation
     scalar_t psi_sum_am = scalar_t(0);   // Σ 1/(a+m+j) from j=0 to s-1
@@ -700,16 +916,10 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(
     scalar_t psi_am = digamma(a_m);
     scalar_t psi_bm = digamma(b_m);
 
-    for (int s = 0; s < max_terms; ++s) {
-      // Compute factorials: s! and (s+m)!
-      real_t factorial_s = real_t(1);
-      for (int j = 2; j <= s; ++j) {
-        factorial_s *= real_t(j);
-      }
-      real_t factorial_sm = factorial_s;
-      for (int j = s + 1; j <= s + m; ++j) {
-        factorial_sm *= real_t(j);
-      }
+    for (int s = 0; s < kExtendedMaxTerms_2F1; ++s) {
+      // s! and (s+m)! from precomputed tables
+      real_t factorial_s = factorial(real_t(s));
+      real_t factorial_sm = factorial(real_t(s + m));
 
       // Digamma combination
       scalar_t psi_s1 = digamma(scalar_t(s + 1));        // ψ(s+1)
@@ -735,6 +945,31 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(
       if (term_mag < eps * (sum_mag > real_t(1) ? sum_mag : real_t(1))) {
         break;
       }
+
+      // Compute convergence ratio for adaptive termination
+      real_t ratio = (prev_term_mag > eps) ? (term_mag / prev_term_mag) : real_t(0);
+
+      // Check for divergence
+      if (ratio > real_t(1) && s > 10) {
+        break;
+      }
+
+      // Track stalling
+      if (ratio > stall_threshold) {
+        stall_count++;
+        if (stall_count > kStallCountThreshold_2F1) {
+          break;
+        }
+      } else {
+        stall_count = 0;
+      }
+
+      // After base iterations, only continue if still converging well
+      if (s >= kBaseMaxTerms_2F1 && ratio > convergence_threshold) {
+        break;
+      }
+
+      prev_term_mag = term_mag;
 
       // Update Pochhammer symbols and power for next iteration
       psi_sum_am += scalar_t(1) / (a_m + scalar_t(s));
@@ -800,16 +1035,16 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff(
         a_new, b_new, c, z, m_new);
   }
 
-  // For m >= 0, use Richardson extrapolation
-  // This is more robust than the explicit limiting formula for general cases
-  real_t delta1, delta2;
-  if constexpr (std::is_same_v<real_t, double>) {
-    delta1 = real_t(1e-7);
-    delta2 = real_t(5e-8);
-  } else {
-    delta1 = real_t(1e-4);
-    delta2 = real_t(5e-5);
+  // For m = 0, use the explicit limiting formula from DLMF 15.8.10
+  // This is more accurate than Richardson extrapolation since it avoids
+  // error amplification from the 1/delta singularity
+  if (m == 0) {
+    return hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(a, b, c, z, m);
   }
+
+  // For m >= 1, the explicit formula has sign issues that need fixing.
+  // Use Richardson extrapolation as fallback for now.
+  auto [delta1, delta2] = compute_richardson_deltas_multi(a, b, c);
 
   scalar_t f1 = hypergeometric_2f1_one_minus_z_transform_with_delta(a, b, c, z, delta1);
   scalar_t f2 = hypergeometric_2f1_one_minus_z_transform_with_delta(a, b, c, z, delta2);
@@ -902,10 +1137,8 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit_with_derivatives(
     scalar_t psi_sum_b = scalar_t(0);  // Σ 1/(b+j)
 
     for (int k = 0; k < m; ++k) {
-      real_t factorial_mmk = real_t(1);
-      for (int j = 2; j <= m - 1 - k; ++j) {
-        factorial_mmk *= real_t(j);
-      }
+      // (m-1-k)! from precomputed table
+      real_t factorial_mmk = factorial(real_t(m - 1 - k));
 
       scalar_t base_term = (poch_a * poch_b / factorial_k) * scalar_t(factorial_mmk) * omz_pow;
       S += base_term;
@@ -938,10 +1171,8 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit_with_derivatives(
     if (m == 0) {
       series_coeff = scalar_t(1);
     } else {
-      real_t factorial_mm1 = real_t(1);
-      for (int j = 2; j <= m - 1; ++j) {
-        factorial_mm1 *= real_t(j);
-      }
+      // (m-1)! from precomputed table
+      real_t factorial_mm1 = factorial(real_t(m - 1));
       series_coeff = scalar_t((m % 2 == 0) ? 1 : -1) / scalar_t(factorial_mm1);
     }
 
@@ -965,14 +1196,9 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit_with_derivatives(
     scalar_t psi_bm_base = digamma(b_m);
 
     for (int s = 0; s < max_terms; ++s) {
-      real_t factorial_s = real_t(1);
-      for (int j = 2; j <= s; ++j) {
-        factorial_s *= real_t(j);
-      }
-      real_t factorial_sm = factorial_s;
-      for (int j = s + 1; j <= s + m; ++j) {
-        factorial_sm *= real_t(j);
-      }
+      // s! and (s+m)! from precomputed tables
+      real_t factorial_s = factorial(real_t(s));
+      real_t factorial_sm = factorial(real_t(s + m));
 
       scalar_t psi_s1 = digamma(scalar_t(s + 1));
       scalar_t psi_sm1 = digamma(scalar_t(s + m + 1));
@@ -1114,15 +1340,16 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_with_derivatives(
     return std::make_tuple(f, df_da, df_db, df_dc);
   }
 
-  // For m >= 0, use Richardson extrapolation
-  real_t delta1, delta2;
-  if constexpr (std::is_same_v<real_t, double>) {
-    delta1 = real_t(1e-7);
-    delta2 = real_t(5e-8);
-  } else {
-    delta1 = real_t(1e-4);
-    delta2 = real_t(5e-5);
+  // For m = 0, use the explicit limiting formula from DLMF 15.8.10
+  // This is more accurate than Richardson extrapolation since it avoids
+  // error amplification from the 1/delta singularity
+  if (m == 0) {
+    return hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit_with_derivatives(a, b, c, z, m);
   }
+
+  // For m >= 1, the explicit formula has sign issues that need fixing.
+  // Use Richardson extrapolation as fallback for now.
+  auto [delta1, delta2] = compute_richardson_deltas_multi(a, b, c);
 
   auto [f1, da1, db1, dc1] = hypergeometric_2f1_one_minus_z_transform_with_delta_and_derivatives(a, b, c, z, delta1);
   auto [f2, da2, db2, dc2] = hypergeometric_2f1_one_minus_z_transform_with_delta_and_derivatives(a, b, c, z, delta2);
@@ -1577,6 +1804,8 @@ hypergeometric_2f1_linear_transform_with_delta_and_derivatives(
  * }
  *
  * For n = 0 (a = b), the polynomial sum is empty and the formula simplifies.
+ *
+ * Uses adaptive termination based on convergence rate.
  */
 template <typename scalar_t>
 C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t
@@ -1593,21 +1822,16 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit(
 
   using real_t = typename c10::scalar_value_type<scalar_t>::type;
 
-  const int max_terms = 200;
   const real_t eps = std::numeric_limits<real_t>::epsilon() * real_t(100);
+  const real_t convergence_threshold = real_t(kConvergenceRatioThreshold_2F1);
+  const real_t stall_threshold = real_t(kStallRatioThreshold_2F1);
 
   // Check if a-c+1 is a non-positive integer (causes digamma pole in the series)
   // In this case, fall back to Richardson extrapolation with two delta values
   auto [ac1_is_int, ac1_int] = is_near_integer(a - c + scalar_t(1));
   if (ac1_is_int && ac1_int <= 0) {
-    real_t delta1, delta2;
-    if constexpr (std::is_same_v<real_t, double>) {
-      delta1 = real_t(1e-7);
-      delta2 = real_t(5e-8);
-    } else {
-      delta1 = real_t(1e-4);
-      delta2 = real_t(5e-5);
-    }
+    // Use adaptive delta based on parameter magnitudes (a is being perturbed)
+    auto [delta1, delta2] = compute_richardson_deltas_multi(a, b, c);
     scalar_t f1 = hypergeometric_2f1_linear_transform_with_delta(a, b, c, z, delta1);
     scalar_t f2 = hypergeometric_2f1_linear_transform_with_delta(a, b, c, z, delta2);
     return (f1 * scalar_t(delta2) - f2 * scalar_t(delta1)) / scalar_t(delta2 - delta1);
@@ -1617,14 +1841,8 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit(
   if (n >= 1) {
     auto [bc1_is_int, bc1_int] = is_near_integer(b - c + scalar_t(1));
     if (bc1_is_int && bc1_int <= 0) {
-      real_t delta1, delta2;
-      if constexpr (std::is_same_v<real_t, double>) {
-        delta1 = real_t(1e-7);
-        delta2 = real_t(5e-8);
-      } else {
-        delta1 = real_t(1e-4);
-        delta2 = real_t(5e-5);
-      }
+      // Use adaptive delta based on parameter magnitudes (a is being perturbed)
+      auto [delta1, delta2] = compute_richardson_deltas_multi(a, b, c);
       scalar_t f1 = hypergeometric_2f1_linear_transform_with_delta(a, b, c, z, delta1);
       scalar_t f2 = hypergeometric_2f1_linear_transform_with_delta(a, b, c, z, delta2);
       return (f1 * scalar_t(delta2) - f2 * scalar_t(delta1)) / scalar_t(delta2 - delta1);
@@ -1683,11 +1901,8 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit(
     scalar_t factorial_k = scalar_t(1);  // k!
 
     for (int k = 0; k < n; ++k) {
-      // (n-1-k)! = Gamma(n-k)
-      real_t factorial_nmk = real_t(1);
-      for (int j = 2; j <= n - 1 - k; ++j) {
-        factorial_nmk *= real_t(j);
-      }
+      // (n-1-k)! from precomputed table
+      real_t factorial_nmk = factorial(real_t(n - 1 - k));
 
       scalar_t term = (poch_b * poch_bc1 / factorial_k) * scalar_t(factorial_nmk) * z_inv_pow;
       poly_sum += term;
@@ -1717,11 +1932,8 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit(
       // and the digamma combination is [2ψ(s+1) - ψ(a+s) - ψ(a-c+1+s) - ln(-z)]
       series_coeff = scalar_t(1);
     } else {
-      // (-1)^n / (n-1)!
-      real_t factorial_nm1 = real_t(1);
-      for (int j = 2; j <= n - 1; ++j) {
-        factorial_nm1 *= real_t(j);
-      }
+      // (-1)^n / (n-1)! from precomputed table
+      real_t factorial_nm1 = factorial(real_t(n - 1));
       series_coeff = scalar_t((n % 2 == 0) ? 1 : -1) / scalar_t(factorial_nm1);
     }
 
@@ -1729,6 +1941,8 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit(
     scalar_t poch_a = scalar_t(1);       // (a)_s - need to advance to (a)_0 first
     scalar_t poch_ac1 = scalar_t(1);     // (a-c+1)_s
     scalar_t z_inv_pow = scalar_t(1);    // (1/z)^s
+    real_t prev_term_mag = real_t(1);
+    int stall_count = 0;
 
     // Precompute (1/z)^n
     scalar_t z_inv_n = scalar_t(1);
@@ -1745,16 +1959,10 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit(
     scalar_t psi_a = digamma(a);
     scalar_t psi_ac1 = digamma(a - c + scalar_t(1));
 
-    for (int s = 0; s < max_terms; ++s) {
-      // Compute factorials: s! and (s+n)!
-      real_t factorial_s = real_t(1);
-      for (int j = 2; j <= s; ++j) {
-        factorial_s *= real_t(j);
-      }
-      real_t factorial_sn = factorial_s;
-      for (int j = s + 1; j <= s + n; ++j) {
-        factorial_sn *= real_t(j);
-      }
+    for (int s = 0; s < kExtendedMaxTerms_2F1; ++s) {
+      // s! and (s+n)! from precomputed tables
+      real_t factorial_s = factorial(real_t(s));
+      real_t factorial_sn = factorial(real_t(s + n));
 
       // Digamma combination
       scalar_t psi_s1 = digamma(scalar_t(s + 1));        // ψ(s+1)
@@ -1780,6 +1988,31 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit(
       if (term_mag < eps * (sum_mag > real_t(1) ? sum_mag : real_t(1))) {
         break;
       }
+
+      // Compute convergence ratio for adaptive termination
+      real_t ratio = (prev_term_mag > eps) ? (term_mag / prev_term_mag) : real_t(0);
+
+      // Check for divergence
+      if (ratio > real_t(1) && s > 10) {
+        break;
+      }
+
+      // Track stalling
+      if (ratio > stall_threshold) {
+        stall_count++;
+        if (stall_count > kStallCountThreshold_2F1) {
+          break;
+        }
+      } else {
+        stall_count = 0;
+      }
+
+      // After base iterations, only continue if still converging well
+      if (s >= kBaseMaxTerms_2F1 && ratio > convergence_threshold) {
+        break;
+      }
+
+      prev_term_mag = term_mag;
 
       // Update Pochhammer symbols and power for next iteration
       psi_sum_a += scalar_t(1) / (a + scalar_t(s));
@@ -1842,17 +2075,23 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit_with_derivatives(
   const real_t eps = std::numeric_limits<real_t>::epsilon() * real_t(100);
 
   // Check if a-c+1 is a non-positive integer (causes digamma pole in the series)
-  // In this case, fall back to Richardson extrapolation with derivatives
+  // In this case, fall back to perturbation with derivatives
   auto [ac1_is_int, ac1_int] = is_near_integer(a - c + scalar_t(1));
   if (ac1_is_int && ac1_int <= 0) {
-    return hypergeometric_2f1_linear_transform_with_delta_and_derivatives(a, b, c, z, real_t(1e-8));
+    // Use adaptive delta based on parameter magnitudes
+    auto [delta1, delta2] = compute_richardson_deltas_multi(a, b, c);
+    (void)delta2;  // Only need single delta for this simpler fallback
+    return hypergeometric_2f1_linear_transform_with_delta_and_derivatives(a, b, c, z, delta1);
   }
 
   // Check if b-c+1 is a non-positive integer (causes issues in polynomial part)
   if (n >= 1) {
     auto [bc1_is_int, bc1_int] = is_near_integer(b - c + scalar_t(1));
     if (bc1_is_int && bc1_int <= 0) {
-      return hypergeometric_2f1_linear_transform_with_delta_and_derivatives(a, b, c, z, real_t(1e-8));
+      // Use adaptive delta based on parameter magnitudes
+      auto [delta1, delta2] = compute_richardson_deltas_multi(a, b, c);
+      (void)delta2;  // Only need single delta for this simpler fallback
+      return hypergeometric_2f1_linear_transform_with_delta_and_derivatives(a, b, c, z, delta1);
     }
   }
 
@@ -1924,10 +2163,8 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit_with_derivatives(
     scalar_t psi_sum_bc1 = scalar_t(0);
 
     for (int k = 0; k < n; ++k) {
-      real_t factorial_nmk = real_t(1);
-      for (int j = 2; j <= n - 1 - k; ++j) {
-        factorial_nmk *= real_t(j);
-      }
+      // (n-1-k)! from precomputed table
+      real_t factorial_nmk = factorial(real_t(n - 1 - k));
 
       scalar_t base_term = (poch_b * poch_bc1 / factorial_k) * scalar_t(factorial_nmk) * z_inv_pow;
       S += base_term;
@@ -1963,10 +2200,8 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit_with_derivatives(
     if (n == 0) {
       series_coeff = scalar_t(1);
     } else {
-      real_t factorial_nm1 = real_t(1);
-      for (int j = 2; j <= n - 1; ++j) {
-        factorial_nm1 *= real_t(j);
-      }
+      // (n-1)! from precomputed table
+      real_t factorial_nm1 = factorial(real_t(n - 1));
       series_coeff = scalar_t((n % 2 == 0) ? 1 : -1) / scalar_t(factorial_nm1);
     }
 
@@ -1989,14 +2224,9 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit_with_derivatives(
     scalar_t psi_ac1_base = digamma(a - c + scalar_t(1));
 
     for (int s = 0; s < max_terms; ++s) {
-      real_t factorial_s = real_t(1);
-      for (int j = 2; j <= s; ++j) {
-        factorial_s *= real_t(j);
-      }
-      real_t factorial_sn = factorial_s;
-      for (int j = s + 1; j <= s + n; ++j) {
-        factorial_sn *= real_t(j);
-      }
+      // s! and (s+n)! from precomputed tables
+      real_t factorial_s = factorial(real_t(s));
+      real_t factorial_sn = factorial(real_t(s + n));
 
       scalar_t psi_s1 = digamma(scalar_t(s + 1));
       scalar_t psi_sn1 = digamma(scalar_t(s + n + 1));
@@ -2325,6 +2555,119 @@ hypergeometric_2f1_linear_transform_with_param_derivatives(
 }
 
 // ============================================================================
+// Unit circle convergence check
+// ============================================================================
+
+/**
+ * Check convergence conditions for ₂F₁ on the unit circle |z| = 1.
+ *
+ * For the Gauss hypergeometric series on |z| = 1:
+ *   - Converges absolutely if Re(c - a - b) > 0
+ *   - Converges conditionally (except at z = 1) if -1 < Re(c - a - b) <= 0
+ *   - Diverges if Re(c - a - b) <= -1
+ *
+ * At z = 1 specifically:
+ *   - Converges if Re(c - a - b) > 0
+ *   - Diverges if Re(c - a - b) <= 0
+ *
+ * Returns true if the series converges, false otherwise.
+ */
+template <typename scalar_t>
+C10_HOST_DEVICE C10_ALWAYS_INLINE bool
+check_unit_circle_convergence(scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
+  using std::abs;
+
+  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+
+  const real_t tol = std::numeric_limits<real_t>::epsilon() * real_t(100);
+
+  // Compute Re(c - a - b)
+  scalar_t cab = c - a - b;
+  real_t re_cab;
+  if constexpr (c10::is_complex<scalar_t>::value) {
+    re_cab = cab.real();
+  } else {
+    re_cab = cab;
+  }
+
+  // Check if z is at or very near z = 1
+  scalar_t one_minus_z = scalar_t(1) - z;
+  real_t one_minus_z_mag = abs(one_minus_z);
+
+  if (one_minus_z_mag < tol) {
+    // At z = 1: converges only if Re(c - a - b) > 0
+    return re_cab > real_t(0);
+  }
+
+  // Elsewhere on unit circle:
+  // - Converges absolutely if Re(c - a - b) > 0
+  // - Converges conditionally if Re(c - a - b) > -1
+  // - Diverges if Re(c - a - b) <= -1
+  return re_cab > real_t(-1);
+}
+
+// ============================================================================
+// Gauss summation theorem for z = 1
+// ============================================================================
+
+/**
+ * Gauss summation theorem: ₂F₁(a, b; c; 1) = Γ(c)Γ(c-a-b) / (Γ(c-a)Γ(c-b))
+ *
+ * Valid when Re(c - a - b) > 0 (convergence condition at z = 1).
+ */
+template <typename scalar_t>
+C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t
+hypergeometric_2f1_gauss_summation(scalar_t a, scalar_t b, scalar_t c) {
+  using std::exp;
+
+  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+
+  if constexpr (c10::is_complex<scalar_t>::value) {
+    scalar_t log_result = log_gamma_complex(c) + log_gamma_complex(c - a - b)
+                        - log_gamma_complex(c - a) - log_gamma_complex(c - b);
+    return exp(log_result);
+  } else {
+    using std::lgamma;
+
+    scalar_t log_mag = lgamma(c) + lgamma(c - a - b)
+                     - lgamma(c - a) - lgamma(c - b);
+
+    int sign = sign_gamma(c) * sign_gamma(c - a - b)
+             * sign_gamma(c - a) * sign_gamma(c - b);
+
+    return scalar_t(sign) * exp(log_mag);
+  }
+}
+
+/**
+ * Gauss summation theorem with derivatives.
+ *
+ * For f = ₂F₁(a, b; c; 1) = Γ(c)Γ(c-a-b) / (Γ(c-a)Γ(c-b)):
+ *   ∂f/∂a = f × [-ψ(c-a-b) + ψ(c-a)]
+ *   ∂f/∂b = f × [-ψ(c-a-b) + ψ(c-b)]
+ *   ∂f/∂c = f × [ψ(c) + ψ(c-a-b) - ψ(c-a) - ψ(c-b)]
+ *
+ * Returns: (value, df/da, df/db, df/dc)
+ */
+template <typename scalar_t>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scalar_t>
+hypergeometric_2f1_gauss_summation_with_derivatives(scalar_t a, scalar_t b, scalar_t c) {
+  scalar_t f = hypergeometric_2f1_gauss_summation(a, b, c);
+
+  scalar_t cab = c - a - b;
+  scalar_t psi_c = digamma(c);
+  scalar_t psi_cab = digamma(cab);
+  scalar_t psi_cma = digamma(c - a);
+  scalar_t psi_cmb = digamma(c - b);
+
+  scalar_t df_da = f * (-psi_cab + psi_cma);
+  scalar_t df_db = f * (-psi_cab + psi_cmb);
+  scalar_t df_dc = f * (psi_c + psi_cab - psi_cma - psi_cmb);
+
+  return std::make_tuple(f, df_da, df_db, df_dc);
+}
+
+// ============================================================================
 // Main function
 // ============================================================================
 
@@ -2339,7 +2682,29 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t hypergeometric_2_f_1(
 
   using real_t = typename c10::scalar_value_type<scalar_t>::type;
 
+  const real_t unit_circle_tol = std::numeric_limits<real_t>::epsilon() * real_t(1000);
+
   real_t z_mag = abs(z);
+
+  // Check for unit circle case: |z| ≈ 1
+  // The series has conditional convergence requirements on the unit circle
+  if (abs(z_mag - real_t(1)) < unit_circle_tol) {
+    if (!check_unit_circle_convergence(a, b, c, z)) {
+      // Series diverges on the unit circle for these parameters
+      return scalar_t(std::numeric_limits<real_t>::quiet_NaN());
+    }
+
+    // Special case: z = 1 (within tolerance)
+    // Use Gauss summation theorem: ₂F₁(a,b;c;1) = Γ(c)Γ(c-a-b)/(Γ(c-a)Γ(c-b))
+    scalar_t one_minus_z = scalar_t(1) - z;
+    real_t one_minus_z_mag = abs(one_minus_z);
+    if (one_minus_z_mag < unit_circle_tol) {
+      return hypergeometric_2f1_gauss_summation(a, b, c);
+    }
+
+    // For |z| = 1 but z ≠ 1, use the linear transform
+    return hypergeometric_2f1_linear_transform(a, b, c, z);
+  }
 
   if (z_mag >= real_t(1)) {
     return hypergeometric_2f1_linear_transform(a, b, c, z);
@@ -2377,9 +2742,67 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scala
 
   using real_t = typename c10::scalar_value_type<scalar_t>::type;
 
+  const real_t unit_circle_tol = std::numeric_limits<real_t>::epsilon() * real_t(1000);
+
   real_t z_mag = abs(z);
   scalar_t one_minus_z = scalar_t(1) - z;
   real_t one_minus_z_mag = abs(one_minus_z);
+
+  // Check for unit circle divergence case
+  if (abs(z_mag - real_t(1)) < unit_circle_tol) {
+    if (!check_unit_circle_convergence(a, b, c, z)) {
+      // Series diverges: return NaN gradients
+      real_t nan_val = std::numeric_limits<real_t>::quiet_NaN();
+      return std::make_tuple(
+        scalar_t(nan_val), scalar_t(nan_val),
+        scalar_t(nan_val), scalar_t(nan_val)
+      );
+    }
+
+    // Special case: z = 1 (within tolerance)
+    // Use Gauss summation theorem derivatives
+    if (one_minus_z_mag < unit_circle_tol) {
+      auto [value, da, db, dc] = hypergeometric_2f1_gauss_summation_with_derivatives(a, b, c);
+      (void)value;
+
+      // For z derivative at z=1: d/dz 2F1(a,b;c;z) = (ab/c) * 2F1(a+1,b+1;c+1;z)
+      // At z=1, this uses Gauss summation if Re(c-a-b-1) > 0
+      scalar_t cab = c - a - b;
+      real_t re_cab;
+      if constexpr (c10::is_complex<scalar_t>::value) {
+        re_cab = cab.real();
+      } else {
+        re_cab = cab;
+      }
+
+      scalar_t d_z;
+      if (re_cab > real_t(1)) {
+        // Gauss summation applies to the derivative at z=1
+        scalar_t coeff = (a * b) / c;
+        d_z = coeff * hypergeometric_2f1_gauss_summation(a + scalar_t(1), b + scalar_t(1), c + scalar_t(1));
+      } else {
+        // Derivative series at z=1 doesn't converge; use limit from below
+        // Approximate using z very close to 1
+        scalar_t z_approx = scalar_t(real_t(1) - unit_circle_tol * real_t(10));
+        d_z = hypergeometric_2f1_derivative(a, b, c, z_approx);
+      }
+
+      scalar_t gradient_a, gradient_b, gradient_c, gradient_z;
+      if constexpr (c10::is_complex<scalar_t>::value) {
+        gradient_a = gradient_output * std::conj(da);
+        gradient_b = gradient_output * std::conj(db);
+        gradient_c = gradient_output * std::conj(dc);
+        gradient_z = gradient_output * std::conj(d_z);
+      } else {
+        gradient_a = gradient_output * da;
+        gradient_b = gradient_output * db;
+        gradient_c = gradient_output * dc;
+        gradient_z = gradient_output * d_z;
+      }
+
+      return std::make_tuple(gradient_a, gradient_b, gradient_c, gradient_z);
+    }
+  }
 
   scalar_t d_a, d_b, d_c, d_z;
 
@@ -2465,6 +2888,8 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scala
     const bool has_gradient_gradient_c,
     const bool has_gradient_gradient_z
 ) {
+  using std::abs;
+
   using real_t = typename c10::scalar_value_type<scalar_t>::type;
 
   if (!has_gradient_gradient_a && !has_gradient_gradient_b && !has_gradient_gradient_c && !has_gradient_gradient_z) {
@@ -2477,12 +2902,24 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scala
     );
   }
 
-  real_t h;
-  if constexpr (std::is_same_v<real_t, double>) {
-    h = real_t(1e-7);
-  } else {
-    h = real_t(1e-4);
+  // Check for unit circle divergence case
+  const real_t unit_circle_tol = std::numeric_limits<real_t>::epsilon() * real_t(1000);
+  real_t z_mag = abs(z);
+
+  if (abs(z_mag - real_t(1)) < unit_circle_tol) {
+    if (!check_unit_circle_convergence(a, b, c, z)) {
+      // Series diverges: return NaN gradients
+      real_t nan_val = std::numeric_limits<real_t>::quiet_NaN();
+      return std::make_tuple(
+        scalar_t(nan_val), scalar_t(nan_val), scalar_t(nan_val),
+        scalar_t(nan_val), scalar_t(nan_val)
+      );
+    }
   }
+
+  // Use adaptive step size for finite differences based on parameter magnitudes
+  auto [h, h_unused] = compute_richardson_deltas_multi(a, b, c, z);
+  (void)h_unused;  // Only need single step size for central differences
 
   scalar_t h_s = scalar_t(h);
   scalar_t two_h = scalar_t(2 * h);
