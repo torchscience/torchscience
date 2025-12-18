@@ -36,4 +36,8 @@ TORCH_LIBRARY(torchscience, m) {
   m.def("gamma(Tensor z) -> Tensor");
   m.def("gamma_backward(Tensor grad_output, Tensor z) -> Tensor");
   m.def("gamma_backward_backward(Tensor gradient_gradient_z, Tensor gradient_output, Tensor z) -> (Tensor, Tensor)");
+
+  m.def("incomplete_beta(Tensor z, Tensor a, Tensor b) -> Tensor");
+  m.def("incomplete_beta_backward(Tensor gradient_output, Tensor z, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
+  m.def("incomplete_beta_backward_backward(Tensor gradient_gradient_z, Tensor gradient_gradient_a, Tensor gradient_gradient_b, Tensor gradient_output, Tensor z, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor, Tensor)");
 }
