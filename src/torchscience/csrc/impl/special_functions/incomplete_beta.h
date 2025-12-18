@@ -1020,14 +1020,9 @@ incomplete_beta_parameter_derivatives_cached(
     scalar_t inv_beta,
     const DiGammaCache<scalar_t>& cache
 ) {
-  // Compute log-weighted integrals
   auto [J_a, J_b] = log_weighted_beta_integrals(z, a, b);
 
-  // Apply the analytical formulas using cached digamma differences
-  scalar_t dIda = J_a * inv_beta - I_z * cache.psi_a_minus_ab;
-  scalar_t dIdb = J_b * inv_beta - I_z * cache.psi_b_minus_ab;
-
-  return std::make_tuple(dIda, dIdb);
+  return std::make_tuple(J_a * inv_beta - I_z * cache.psi_a_minus_ab, J_b * inv_beta - I_z * cache.psi_b_minus_ab);
 }
 
 /**
@@ -1052,10 +1047,7 @@ incomplete_beta_parameter_derivatives(scalar_t z, scalar_t a, scalar_t b, scalar
   // Create cache for digamma values
   DiGammaCache<scalar_t> cache(a, b);
 
-  // Compute 1/B(a,b) = exp(-log_beta(a,b))
-  scalar_t inv_beta = exp(-log_beta(a, b));
-
-  return incomplete_beta_parameter_derivatives_cached(z, a, b, I_z, inv_beta, cache);
+  return incomplete_beta_parameter_derivatives_cached(z, a, b, I_z, exp(-log_beta(a, b)), cache);
 }
 
 /**
@@ -1159,38 +1151,19 @@ incomplete_beta_extended_domain(scalar_t z, scalar_t a, scalar_t b) {
 
   using real_t = typename c10::scalar_value_type<scalar_t>::type;
 
-  // Compute |1-z|
-  scalar_t one_minus_z = scalar_t(1) - z;
   real_t one_minus_z_mag;
+
   if constexpr (c10::is_complex<scalar_t>::value) {
-    one_minus_z_mag = abs(one_minus_z);
+    one_minus_z_mag = abs(scalar_t(1) - z);
   } else {
-    one_minus_z_mag = abs(one_minus_z);
+    one_minus_z_mag = abs(scalar_t(1) - z);
   }
 
-  // Region B: |z| >= 1 but |1-z| < 1 - use symmetry relation
-  // I_z(a,b) = 1 - I_{1-z}(b,a)
-  // Since |1-z| < 1, we can use the standard incomplete_beta
   if (one_minus_z_mag < real_t(1)) {
-    return scalar_t(1) - incomplete_beta(one_minus_z, b, a);
+    return scalar_t(1) - incomplete_beta(scalar_t(1) - z, b, a);
   }
 
-  // Region C: Both |z| > 1 and |1-z| >= 1 - use hypergeometric continuation
-  // I_z(a,b) = z^a / (a * B(a,b)) * 2F1(a, 1-b; a+1; z)
-
-  // Compute the prefactor z^a / (a * B(a,b)) in log form for stability
-  scalar_t log_z = log(z);
-  scalar_t lb = log_beta(a, b);
-  scalar_t log_prefactor = a * log_z - log(a) - lb;
-  scalar_t prefactor = exp(log_prefactor);
-
-  // Compute 2F1(a, 1-b; a+1; z) using linear transformation (since |z| > 1)
-  scalar_t hyp_a = a;
-  scalar_t hyp_b = scalar_t(1) - b;
-  scalar_t hyp_c = a + scalar_t(1);
-  scalar_t hyp_value = hypergeometric_2f1_linear_transform(hyp_a, hyp_b, hyp_c, z);
-
-  return prefactor * hyp_value;
+  return exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z);
 }
 
 // ============================================================================
@@ -1333,13 +1306,12 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t incomplete_beta(
     if (z < threshold) {
       scalar_t cf = beta_continued_fraction(a, b, z);
       return exp(log_prefactor) * cf;
-    } else {
-      // Use symmetry: I_z(a, b) = 1 - I_{1-z}(b, a)
-      scalar_t z_comp = scalar_t(1) - z;
-      scalar_t log_prefactor_comp = b * log(z_comp) + a * log(z) - log_beta(b, a) - log(b);
-      scalar_t cf = beta_continued_fraction(b, a, z_comp);
-      return scalar_t(1) - exp(log_prefactor_comp) * cf;
     }
+    // Use symmetry: I_z(a, b) = 1 - I_{1-z}(b, a)
+    scalar_t z_comp = scalar_t(1) - z;
+    scalar_t log_prefactor_comp = b * log(z_comp) + a * log(z) - log_beta(b, a) - log(b);
+    scalar_t cf = beta_continued_fraction(b, a, z_comp);
+    return scalar_t(1) - exp(log_prefactor_comp) * cf;
   }
 }
 
@@ -1380,94 +1352,35 @@ incomplete_beta_backward_extended(scalar_t grad, scalar_t z, scalar_t a, scalar_
   scalar_t gradient_a = scalar_t(0);
   scalar_t gradient_b = scalar_t(0);
 
-  // Compute |1-z|
-  scalar_t one_minus_z = scalar_t(1) - z;
   real_t one_minus_z_mag;
+
   if constexpr (c10::is_complex<scalar_t>::value) {
-    one_minus_z_mag = abs(one_minus_z);
+    one_minus_z_mag = abs(scalar_t(1) - z);
   } else {
-    one_minus_z_mag = abs(one_minus_z);
+    one_minus_z_mag = abs(scalar_t(1) - z);
   }
 
-  // Region B: |z| >= 1 but |1-z| < 1 - use symmetry relation
   if (one_minus_z_mag < real_t(1)) {
-    // I_z(a,b) = 1 - I_{1-z}(b,a)
-    // Get gradients at (1-z, b, a)
-    auto [grad_w, grad_first, grad_second] = incomplete_beta_backward(grad, one_minus_z, b, a);
+    auto [grad_w, grad_first, grad_second] = incomplete_beta_backward(grad, scalar_t(1) - z, b, a);
 
-    // Apply chain rule through symmetry:
-    // dI/dz(z,a,b) = dI/dw(w,b,a) (w = 1-z, so dI/dz = dI/dw * dw/dz = dI/dw * (-1), but outer is 1 - I, so -1 * -1 = +1)
-    gradient_z = grad_w;
-
-    // dI/da(z,a,b) = -dI/d(third_param)(w,b,a) = -grad_second
-    gradient_a = -grad_second;
-
-    // dI/db(z,a,b) = -dI/d(second_param)(w,b,a) = -grad_first
-    gradient_b = -grad_first;
-
-    return std::make_tuple(gradient_z, gradient_a, gradient_b);
+    return std::make_tuple(grad_w, -grad_second, -grad_first);
   }
 
-  // Region C: Both |z| > 1 and |1-z| >= 1 - differentiate hypergeometric formula
-  // I_z(a,b) = z^a / (a * B(a,b)) * 2F1(a, 1-b; a+1; z)
-  //
-  // Let P = z^a / (a * B(a,b)) and H = 2F1(a, 1-b; a+1; z)
-  // Then I_z = P * H
-  //
-  // dI/dz = dP/dz * H + P * dH/dz
-  //       = (a/z) * P * H + P * (a*(1-b)/(a+1)) * 2F1(a+1, 2-b; a+2; z) [using 2F1 derivative identity]
-
-  scalar_t log_z = log(z);
-  scalar_t lb = log_beta(a, b);
-
-  // Prefactor P = z^a / (a * B(a,b))
-  scalar_t log_P = a * log_z - log(a) - lb;
-  scalar_t P = exp(log_P);
-
-  // Hypergeometric value and derivative
-  scalar_t hyp_a = a;
-  scalar_t hyp_b = scalar_t(1) - b;
-  scalar_t hyp_c = a + scalar_t(1);
-
-  // For |z| > 1, use linear transformation
-  scalar_t H = hypergeometric_2f1_linear_transform(hyp_a, hyp_b, hyp_c, z);
-
-  // dH/dz = (a * (1-b) / (a+1)) * 2F1(a+1, 2-b; a+2; z)
-  scalar_t dH_coeff = (hyp_a * hyp_b) / hyp_c;
-  scalar_t dH = dH_coeff * hypergeometric_2f1_linear_transform(
-      hyp_a + scalar_t(1), hyp_b + scalar_t(1), hyp_c + scalar_t(1), z);
-
-  // dI/dz = (a/z) * P * H + P * dH
-  scalar_t dIdz = (a / z) * P * H + P * dH;
-
-  // For dI/da and dI/db, we use the fact that I_z = incomplete_beta(z, a, b)
-  // and compute numerical derivatives or use the formula through digamma
-  // For now, use the function value and compute via chain rule
-  scalar_t I_z = P * H;
-
-  // dI/da involves derivative of P w.r.t. a and derivative of H w.r.t. a
-  // dP/da = P * [log(z) - 1/a - (psi(a) - psi(a+b))]
-  // dH/da is complex (involves parameter derivatives of 2F1)
-  // For simplicity, approximate with finite difference
-  real_t delta = real_t(1e-7);
-  scalar_t I_z_plus_a = incomplete_beta_extended_domain(z, a + scalar_t(delta), b);
-  scalar_t dIda = (I_z_plus_a - I_z) / scalar_t(delta);
-
-  scalar_t I_z_plus_b = incomplete_beta_extended_domain(z, a, b + scalar_t(delta));
-  scalar_t dIdb = (I_z_plus_b - I_z) / scalar_t(delta);
-
-  // Apply Wirtinger convention for complex
   if constexpr (c10::is_complex<scalar_t>::value) {
-    gradient_z = grad * conj(dIdz);
-    gradient_a = grad * conj(dIda);
-    gradient_b = grad * conj(dIdb);
+    gradient_z = grad * conj(a / z * exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z) + exp(a * log(z) - log(a) - log_beta(a, b)) * (a * (scalar_t(1) - b) / (a + scalar_t(1)) * hypergeometric_2f1_linear_transform( a + scalar_t(1), scalar_t(1) - b + scalar_t(1), a + scalar_t(1) + scalar_t(1), z)));
+    gradient_a = grad * conj((incomplete_beta_extended_domain(z, a + scalar_t(real_t(1e-7)), b) - exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z)) / scalar_t(real_t(1e-7)));
+    gradient_b = grad * conj((incomplete_beta_extended_domain(z, a, b + scalar_t(real_t(1e-7))) - exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z)) / scalar_t(real_t(1e-7)));
   } else {
-    gradient_z = grad * dIdz;
-    gradient_a = grad * dIda;
-    gradient_b = grad * dIdb;
+    gradient_z = grad * (a / z * exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z) + exp(a * log(z) - log(a) - log_beta(a, b)) * (a * (scalar_t(1) - b) / (a + scalar_t(1)) * hypergeometric_2f1_linear_transform( a + scalar_t(1), scalar_t(1) - b + scalar_t(1), a + scalar_t(1) + scalar_t(1), z)));
+    gradient_a = grad * ((incomplete_beta_extended_domain(z, a + scalar_t(real_t(1e-7)), b) - exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z)) / scalar_t(real_t(1e-7)));
+    gradient_b = grad * ((incomplete_beta_extended_domain(z, a, b + scalar_t(real_t(1e-7))) - exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z)) / scalar_t(real_t(1e-7)));
   }
 
-  return std::make_tuple(gradient_z, gradient_a, gradient_b);
+  return std::make_tuple(
+    gradient_z,
+    gradient_a,
+    gradient_b
+  );
 }
 
 // ============================================================================
@@ -1498,8 +1411,7 @@ incomplete_beta_backward_extended(scalar_t grad, scalar_t z, scalar_t a, scalar_
  * where df/dz is the holomorphic derivative.
  */
 template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t>
-incomplete_beta_backward(scalar_t grad, scalar_t z, scalar_t a, scalar_t b) {
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t> incomplete_beta_backward(scalar_t grad, scalar_t z, scalar_t a, scalar_t b) {
   using std::exp;
   using std::log;
   using std::abs;
@@ -1581,39 +1493,27 @@ incomplete_beta_backward(scalar_t grad, scalar_t z, scalar_t a, scalar_t b) {
     // Try asymptotic expansion for dI/dz near z=1
     auto [dIdz_one, valid_dz_one] = incomplete_beta_dz_asymptotic_one(z, a, b);
     if (valid_dz_one) {
-      gradient_z = grad * dIdz_one;
+      auto [
+        dIda,
+        dIdb
+      ] = incomplete_beta_parameter_derivatives(z, a, b, incomplete_beta(z, a, b));
 
-      // For parameter derivatives near z=1, use standard approach
-      // (the asymptotic formula for z=0 applied to w=1-z would need transformation)
-      scalar_t I_z = incomplete_beta(z, a, b);
-      auto [dIda, dIdb] = incomplete_beta_parameter_derivatives(z, a, b, I_z);
-      gradient_a = grad * dIda;
-      gradient_b = grad * dIdb;
-      return std::make_tuple(gradient_z, gradient_a, gradient_b);
+      return std::make_tuple(
+        grad * dIdz_one,
+        grad * dIda,
+        grad * dIdb
+      );
     }
 
-    // Standard computation for z not near boundaries
-    // Compute log_beta for reuse
-    scalar_t lb = log_beta(a, b);
+    auto [
+      dIda,
+      dIdb
+    ] = incomplete_beta_parameter_derivatives(z, a, b, incomplete_beta(z, a, b));
 
-    // dI/dz = z^(a-1) * (1-z)^(b-1) / B(a,b)
-    // In log form: log(dI/dz) = (a-1)*log(z) + (b-1)*log(1-z) - log_beta(a,b)
-    scalar_t log_dIdz = (a - scalar_t(1)) * log(z) +
-                        (b - scalar_t(1)) * log(scalar_t(1) - z) - lb;
-    scalar_t dIdz = exp(log_dIdz);
-
-    gradient_z = grad * dIdz;
-
-    // Compute the function value I_z(a, b) for use in parameter derivatives
-    scalar_t I_z = incomplete_beta(z, a, b);
-
-    // Compute analytical derivatives for a and b using digamma and quadrature
-    auto [dIda, dIdb] = incomplete_beta_parameter_derivatives(z, a, b, I_z);
-
-    gradient_a = grad * dIda;
-    gradient_b = grad * dIdb;
-
-    return std::make_tuple(gradient_z, gradient_a, gradient_b);
+    return std::make_tuple(
+      grad * exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)),
+      grad * dIda, grad * dIdb
+    );
   }
 }
 
@@ -1861,48 +1761,16 @@ incomplete_beta_backward_backward(
       return std::make_tuple(gradient_gradient_output, gradient_z, gradient_a, gradient_b);
     }
 
-    // Compute shared values
-    scalar_t lb = log_beta(a, b);
-    scalar_t inv_beta = exp(-lb);  // 1/B(a,b)
-    scalar_t log_z = log(z);
-    scalar_t log_1mz = log(scalar_t(1) - z);
-
-    // dI/dz (analytical)
-    scalar_t log_dIdz = (a - scalar_t(1)) * log_z + (b - scalar_t(1)) * log_1mz - lb;
-    scalar_t dIdz = exp(log_dIdz);
-
-    // I_z(a, b) for parameter derivatives
-    scalar_t I_z = incomplete_beta(z, a, b);
-
-    // Cache digamma values (computed once for reuse)
     DiGammaCache<scalar_t> psi_cache(a, b);
 
-    // Log-weighted integrals J_a, J_b (for first derivatives and second derivatives)
     auto [J_a, J_b] = log_weighted_beta_integrals(z, a, b);
-    scalar_t J_a_over_B = J_a * inv_beta;
-    scalar_t J_b_over_B = J_b * inv_beta;
 
-    // First derivatives (for gradient_gradient_output contributions)
-    scalar_t dIda = J_a_over_B - I_z * psi_cache.psi_a_minus_ab;
-    scalar_t dIdb = J_b_over_B - I_z * psi_cache.psi_b_minus_ab;
-
-    // Contribution from ggz
     if (has_ggz) {
-      // ∂L/∂(grad_output)* += gg_z * dI/dz (no conjugation - see derivation above)
-      gradient_gradient_output = gradient_gradient_output + ggz * dIdz;
+      gradient_gradient_output = gradient_gradient_output + ggz * exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b));
 
-      // d^2I/dz^2 = dI/dz * [(a-1)/z - (b-1)/(1-z)]
-      scalar_t d2Idz2 = dIdz * ((a - scalar_t(1)) / z - (b - scalar_t(1)) / (scalar_t(1) - z));
-      // ∂L/∂z* = conj(gg_z) * grad_output * conj(d²I/dz²)
-      gradient_z = gradient_z + conj(ggz) * gradient_output * conj(d2Idz2);
-
-      // d^2I/dzda = dI/dz * [log(z) - psi(a) + psi(a+b)]
-      scalar_t d2Idzda = dIdz * (log_z - psi_cache.psi_a_minus_ab);
-      gradient_a = gradient_a + conj(ggz) * gradient_output * conj(d2Idzda);
-
-      // d^2I/dzdb = dI/dz * [log(1-z) - psi(b) + psi(a+b)]
-      scalar_t d2Idzdb = dIdz * (log_1mz - psi_cache.psi_b_minus_ab);
-      gradient_b = gradient_b + conj(ggz) * gradient_output * conj(d2Idzdb);
+      gradient_z = gradient_z + conj(ggz) * gradient_output * conj(exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * ((a - scalar_t(1)) / z - (b - scalar_t(1)) / (scalar_t(1) - z)));
+      gradient_a = gradient_a + conj(ggz) * gradient_output * conj(exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(z) - psi_cache.psi_a_minus_ab));
+      gradient_b = gradient_b + conj(ggz) * gradient_output * conj(exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(scalar_t(1) - z) - psi_cache.psi_b_minus_ab));
     }
 
     // =======================================================================
@@ -1911,70 +1779,26 @@ incomplete_beta_backward_backward(
     // Only compute if needed (gga or ggb is present)
 
     if (has_gga || has_ggb) {
-      // Trigamma values for analytical second derivatives
-      scalar_t tri_a = trigamma(a);
-      scalar_t tri_b = trigamma(b);
-      scalar_t tri_ab = trigamma(a + b);
-
-      // Doubly log-weighted integrals K_aa, K_ab, K_bb
       auto [K_aa, K_ab, K_bb] = doubly_log_weighted_beta_integrals(z, a, b);
-      scalar_t K_aa_over_B = K_aa * inv_beta;
-      scalar_t K_ab_over_B = K_ab * inv_beta;
-      scalar_t K_bb_over_B = K_bb * inv_beta;
 
-      // Contribution from gga
+      scalar_t K_aa_over_B = K_aa * exp(-log_beta(a, b));
+      scalar_t K_ab_over_B = K_ab * exp(-log_beta(a, b));
+      scalar_t K_bb_over_B = K_bb * exp(-log_beta(a, b));
+
       if (has_gga) {
-        // ∂L/∂(grad_output)* += gg_a * dI/da
-        gradient_gradient_output = gradient_gradient_output + gga * dIda;
+        gradient_gradient_output = gradient_gradient_output + gga * (J_a * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab);
 
-        // d^2I/dadz = d^2I/dzda (use symmetry)
-        scalar_t d2Idadz = dIdz * (log_z - psi_cache.psi_a_minus_ab);
-        gradient_z = gradient_z + conj(gga) * gradient_output * conj(d2Idadz);
-
-        // d^2I/da^2 = K_aa/B - 2*(J_a/B)*(psi(a) - psi(a+b))
-        //         + I_z*(psi(a) - psi(a+b))^2 - I_z*(psi'(a) - psi'(a+b))
-        scalar_t psi_a_minus_ab_sq = psi_cache.psi_a_minus_ab * psi_cache.psi_a_minus_ab;
-        scalar_t d2Ida2 = K_aa_over_B
-                        - scalar_t(2) * J_a_over_B * psi_cache.psi_a_minus_ab
-                        + I_z * psi_a_minus_ab_sq
-                        - I_z * (tri_a - tri_ab);
-        gradient_a = gradient_a + conj(gga) * gradient_output * conj(d2Ida2);
-
-        // d^2I/dadb = K_ab/B - (J_a/B)*(psi(b) - psi(a+b)) - (J_b/B)*(psi(a) - psi(a+b))
-        //          + I_z*(psi(a) - psi(a+b))*(psi(b) - psi(a+b)) + I_z*psi'(a+b)
-        scalar_t d2Idadb = K_ab_over_B
-                         - J_a_over_B * psi_cache.psi_b_minus_ab
-                         - J_b_over_B * psi_cache.psi_a_minus_ab
-                         + I_z * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab
-                         + I_z * tri_ab;
-        gradient_b = gradient_b + conj(gga) * gradient_output * conj(d2Idadb);
+        gradient_z = gradient_z + conj(gga) * gradient_output * conj(exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(z) - psi_cache.psi_a_minus_ab));
+        gradient_a = gradient_a + conj(gga) * gradient_output * conj(K_aa_over_B - scalar_t(2) * (J_a * exp(-log_beta(a, b))) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * (psi_cache.psi_a_minus_ab * psi_cache.psi_a_minus_ab) - incomplete_beta(z, a, b) * (trigamma(a) - trigamma(a + b)));
+        gradient_b = gradient_b + conj(gga) * gradient_output * conj(K_ab_over_B - J_a * exp(-log_beta(a, b)) * psi_cache.psi_b_minus_ab - J_b * exp(-log_beta(a, b)) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * trigamma(a + b));
       }
 
-      // Contribution from ggb
       if (has_ggb) {
-        // ∂L/∂(grad_output)* += gg_b * dI/db
-        gradient_gradient_output = gradient_gradient_output + ggb * dIdb;
+        gradient_gradient_output = gradient_gradient_output + ggb * (J_b * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_b_minus_ab);
 
-        // d^2I/dbdz = d^2I/dzdb (use symmetry)
-        scalar_t d2Idbdz = dIdz * (log_1mz - psi_cache.psi_b_minus_ab);
-        gradient_z = gradient_z + conj(ggb) * gradient_output * conj(d2Idbdz);
-
-        // d^2I/dbda = d^2I/dadb (symmetric)
-        scalar_t d2Idbda = K_ab_over_B
-                         - J_a_over_B * psi_cache.psi_b_minus_ab
-                         - J_b_over_B * psi_cache.psi_a_minus_ab
-                         + I_z * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab
-                         + I_z * tri_ab;
-        gradient_a = gradient_a + conj(ggb) * gradient_output * conj(d2Idbda);
-
-        // d^2I/db^2 = K_bb/B - 2*(J_b/B)*(psi(b) - psi(a+b))
-        //         + I_z*(psi(b) - psi(a+b))^2 - I_z*(psi'(b) - psi'(a+b))
-        scalar_t psi_b_minus_ab_sq = psi_cache.psi_b_minus_ab * psi_cache.psi_b_minus_ab;
-        scalar_t d2Idb2 = K_bb_over_B
-                        - scalar_t(2) * J_b_over_B * psi_cache.psi_b_minus_ab
-                        + I_z * psi_b_minus_ab_sq
-                        - I_z * (tri_b - tri_ab);
-        gradient_b = gradient_b + conj(ggb) * gradient_output * conj(d2Idb2);
+        gradient_z = gradient_z + conj(ggb) * gradient_output * conj(exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(scalar_t(1) - z) - psi_cache.psi_b_minus_ab));
+        gradient_a = gradient_a + conj(ggb) * gradient_output * conj(K_ab_over_B - J_a * exp(-log_beta(a, b)) * psi_cache.psi_b_minus_ab - J_b * exp(-log_beta(a, b)) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * trigamma(a + b));
+        gradient_b = gradient_b + conj(ggb) * gradient_output * conj(K_bb_over_B - scalar_t(2) * (J_b * exp(-log_beta(a, b))) * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * (psi_cache.psi_b_minus_ab * psi_cache.psi_b_minus_ab) - incomplete_beta(z, a, b) * (trigamma(b) - trigamma(a + b)));
       }
     }
 
@@ -1989,121 +1813,44 @@ incomplete_beta_backward_backward(
       return std::make_tuple(gradient_gradient_output, gradient_z, gradient_a, gradient_b);
     }
 
-    // Compute shared values
-    scalar_t lb = log_beta(a, b);
-    scalar_t inv_beta = exp(-lb);  // 1/B(a,b)
-    scalar_t log_z = log(z);
-    scalar_t log_1mz = log(scalar_t(1) - z);
-
-    // dI/dz (analytical)
-    scalar_t log_dIdz = (a - scalar_t(1)) * log_z + (b - scalar_t(1)) * log_1mz - lb;
-    scalar_t dIdz = exp(log_dIdz);
-
-    // I_z(a, b) for parameter derivatives
-    scalar_t I_z = incomplete_beta(z, a, b);
-
-    // Cache digamma values (computed once for reuse)
     DiGammaCache<scalar_t> psi_cache(a, b);
 
-    // Log-weighted integrals J_a, J_b (for first derivatives and second derivatives)
     auto [J_a, J_b] = log_weighted_beta_integrals(z, a, b);
-    scalar_t J_a_over_B = J_a * inv_beta;
-    scalar_t J_b_over_B = J_b * inv_beta;
 
-    // First derivatives (for gradient_gradient_output contributions)
-    scalar_t dIda = J_a_over_B - I_z * psi_cache.psi_a_minus_ab;
-    scalar_t dIdb = J_b_over_B - I_z * psi_cache.psi_b_minus_ab;
-
-    // Contribution from ggz (d/dz of gradient_z = grad * dI/dz)
     if (has_ggz) {
-      // gradient_gradient_output += ggz * dI/dz
-      gradient_gradient_output = gradient_gradient_output + ggz * dIdz;
+      gradient_gradient_output = gradient_gradient_output + ggz * exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b));
 
-      // d^2I/dz^2 = dI/dz * [(a-1)/z - (b-1)/(1-z)]
-      scalar_t d2Idz2 = dIdz * ((a - scalar_t(1)) / z - (b - scalar_t(1)) / (scalar_t(1) - z));
-      gradient_z = gradient_z + ggz * gradient_output * d2Idz2;
-
-      // d^2I/dzda = dI/dz * [log(z) - psi(a) + psi(a+b)]
-      scalar_t d2Idzda = dIdz * (log_z - psi_cache.psi_a_minus_ab);
-      gradient_a = gradient_a + ggz * gradient_output * d2Idzda;
-
-      // d^2I/dzdb = dI/dz * [log(1-z) - psi(b) + psi(a+b)]
-      scalar_t d2Idzdb = dIdz * (log_1mz - psi_cache.psi_b_minus_ab);
-      gradient_b = gradient_b + ggz * gradient_output * d2Idzdb;
+      gradient_z = gradient_z + ggz * gradient_output * (exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * ((a - scalar_t(1)) / z - (b - scalar_t(1)) / (scalar_t(1) - z)));
+      gradient_a = gradient_a + ggz * gradient_output * (exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(z) - psi_cache.psi_a_minus_ab));
+      gradient_b = gradient_b + ggz * gradient_output * (exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(scalar_t(1) - z) - psi_cache.psi_b_minus_ab));
     }
-
-    // =======================================================================
-    // Analytical second-order parameter derivatives
-    // =======================================================================
-    // Only compute if needed (gga or ggb is present)
 
     if (has_gga || has_ggb) {
-      // Trigamma values for analytical second derivatives
-      scalar_t tri_a = trigamma(a);
-      scalar_t tri_b = trigamma(b);
-      scalar_t tri_ab = trigamma(a + b);
-
-      // Doubly log-weighted integrals K_aa, K_ab, K_bb
       auto [K_aa, K_ab, K_bb] = doubly_log_weighted_beta_integrals(z, a, b);
-      scalar_t K_aa_over_B = K_aa * inv_beta;
-      scalar_t K_ab_over_B = K_ab * inv_beta;
-      scalar_t K_bb_over_B = K_bb * inv_beta;
 
-      // Contribution from gga
       if (has_gga) {
-        gradient_gradient_output = gradient_gradient_output + gga * dIda;
+        gradient_gradient_output = gradient_gradient_output + gga * (J_a * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab);
 
-        // d^2I/dadz = d^2I/dzda (use symmetry)
-        scalar_t d2Idadz = dIdz * (log_z - psi_cache.psi_a_minus_ab);
-        gradient_z = gradient_z + gga * gradient_output * d2Idadz;
-
-        // d^2I/da^2 = K_aa/B - 2*(J_a/B)*(psi(a) - psi(a+b))
-        //         + I_z*(psi(a) - psi(a+b))^2 - I_z*(psi'(a) - psi'(a+b))
-        scalar_t psi_a_minus_ab_sq = psi_cache.psi_a_minus_ab * psi_cache.psi_a_minus_ab;
-        scalar_t d2Ida2 = K_aa_over_B
-                        - scalar_t(2) * J_a_over_B * psi_cache.psi_a_minus_ab
-                        + I_z * psi_a_minus_ab_sq
-                        - I_z * (tri_a - tri_ab);
-        gradient_a = gradient_a + gga * gradient_output * d2Ida2;
-
-        // d^2I/dadb = K_ab/B - (J_a/B)*(psi(b) - psi(a+b)) - (J_b/B)*(psi(a) - psi(a+b))
-        //          + I_z*(psi(a) - psi(a+b))*(psi(b) - psi(a+b)) + I_z*psi'(a+b)
-        scalar_t d2Idadb = K_ab_over_B
-                         - J_a_over_B * psi_cache.psi_b_minus_ab
-                         - J_b_over_B * psi_cache.psi_a_minus_ab
-                         + I_z * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab
-                         + I_z * tri_ab;
-        gradient_b = gradient_b + gga * gradient_output * d2Idadb;
+        gradient_z = gradient_z + gga * gradient_output * (exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(z) - psi_cache.psi_a_minus_ab));
+        gradient_a = gradient_a + gga * gradient_output * (K_aa * exp(-log_beta(a, b)) - scalar_t(2) * (J_a * exp(-log_beta(a, b))) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * (psi_cache.psi_a_minus_ab * psi_cache.psi_a_minus_ab) - incomplete_beta(z, a, b) * (trigamma(a) - trigamma(a + b)));
+        gradient_b = gradient_b + gga * gradient_output * (K_ab * exp(-log_beta(a, b)) - J_a * exp(-log_beta(a, b)) * psi_cache.psi_b_minus_ab - J_b * exp(-log_beta(a, b)) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * trigamma(a + b));
       }
 
-      // Contribution from ggb
       if (has_ggb) {
-        gradient_gradient_output = gradient_gradient_output + ggb * dIdb;
+        gradient_gradient_output = gradient_gradient_output + ggb * (J_b * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_b_minus_ab);
 
-        // d^2I/dbdz = d^2I/dzdb (use symmetry)
-        scalar_t d2Idbdz = dIdz * (log_1mz - psi_cache.psi_b_minus_ab);
-        gradient_z = gradient_z + ggb * gradient_output * d2Idbdz;
-
-        // d^2I/dbda = d^2I/dadb (symmetric)
-        scalar_t d2Idbda = K_ab_over_B
-                         - J_a_over_B * psi_cache.psi_b_minus_ab
-                         - J_b_over_B * psi_cache.psi_a_minus_ab
-                         + I_z * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab
-                         + I_z * tri_ab;
-        gradient_a = gradient_a + ggb * gradient_output * d2Idbda;
-
-        // d^2I/db^2 = K_bb/B - 2*(J_b/B)*(psi(b) - psi(a+b))
-        //         + I_z*(psi(b) - psi(a+b))^2 - I_z*(psi'(b) - psi'(a+b))
-        scalar_t psi_b_minus_ab_sq = psi_cache.psi_b_minus_ab * psi_cache.psi_b_minus_ab;
-        scalar_t d2Idb2 = K_bb_over_B
-                        - scalar_t(2) * J_b_over_B * psi_cache.psi_b_minus_ab
-                        + I_z * psi_b_minus_ab_sq
-                        - I_z * (tri_b - tri_ab);
-        gradient_b = gradient_b + ggb * gradient_output * d2Idb2;
+        gradient_z = gradient_z + ggb * gradient_output * (exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(scalar_t(1) - z) - psi_cache.psi_b_minus_ab));
+        gradient_a = gradient_a + ggb * gradient_output * (K_ab * exp(-log_beta(a, b)) - J_a * exp(-log_beta(a, b)) * psi_cache.psi_b_minus_ab - J_b * exp(-log_beta(a, b)) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * trigamma(a + b));
+        gradient_b = gradient_b + ggb * gradient_output * (K_bb * exp(-log_beta(a, b)) - scalar_t(2) * (J_b * exp(-log_beta(a, b))) * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * (psi_cache.psi_b_minus_ab * psi_cache.psi_b_minus_ab) - incomplete_beta(z, a, b) * (trigamma(b) - trigamma(a + b)));
       }
     }
 
-    return std::make_tuple(gradient_gradient_output, gradient_z, gradient_a, gradient_b);
+    return std::make_tuple(
+      gradient_gradient_output,
+      gradient_z,
+      gradient_a,
+      gradient_b
+    );
   }
 }
 

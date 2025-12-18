@@ -137,11 +137,9 @@ c10::complex<T> cos_pi(c10::complex<T> z) {
   using std::remainder;
   using std::abs;
 
-  const T pi = T(kPi);
   T a = z.real();
   T b = z.imag();
 
-  // Range reduce the real part for numerical stability
   T reduced_a;
   if (abs(a) < T(1e8)) {
     reduced_a = a;
@@ -149,15 +147,9 @@ c10::complex<T> cos_pi(c10::complex<T> z) {
     reduced_a = remainder(a, T(2));
   }
 
-  // cos(pi(a+bi)) = cos(pi*a)cosh(pi*b) - i*sin(pi*a)sinh(pi*b)
-  T sin_pi_a = sin(pi * reduced_a);
-  T cos_pi_a = cos(pi * reduced_a);
-  T sinh_pi_b = sinh(pi * b);
-  T cosh_pi_b = cosh(pi * b);
-
   return c10::complex<T>(
-    cos_pi_a * cosh_pi_b,
-    -sin_pi_a * sinh_pi_b
+    +cos(T(kPi) * reduced_a) * cosh(T(kPi) * b),
+    -sin(T(kPi) * reduced_a) * sinh(T(kPi) * b)
   );
 }
 

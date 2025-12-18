@@ -337,22 +337,7 @@ hypergeometric_2f1_linear_transform(scalar_t a, scalar_t b, scalar_t c, scalar_t
     log_G2 = lgamma(c) + lgamma(a - b) - lgamma(a) - lgamma(c - b);
   }
 
-  scalar_t G1 = exp(log_G1);
-  scalar_t G2 = exp(log_G2);
-
-  // Compute the two 2F1 terms at 1/z (which has |1/z| < 1 since |z| > 1)
-  // Term 1: 2F1(a, a-c+1; a-b+1; 1/z)
-  scalar_t hyp_a = a;
-  scalar_t hyp_b1 = a - c + scalar_t(1);
-  scalar_t hyp_c1 = a - b + scalar_t(1);
-  scalar_t hyp_1 = hypergeometric_2f1_series(hyp_a, hyp_b1, hyp_c1, z_inv);
-
-  // Term 2: 2F1(b, b-c+1; b-a+1; 1/z)
-  scalar_t hyp_b2 = b - c + scalar_t(1);
-  scalar_t hyp_c2 = b - a + scalar_t(1);
-  scalar_t hyp_2 = hypergeometric_2f1_series(b, hyp_b2, hyp_c2, z_inv);
-
-  return G1 * factor_a * hyp_1 + G2 * factor_b * hyp_2;
+  return exp(log_G1) * factor_a * hypergeometric_2f1_series(a, a - c + scalar_t(1), a - b + scalar_t(1), z_inv) + exp(log_G2) * factor_b * hypergeometric_2f1_series(b, b - c + scalar_t(1), b - a + scalar_t(1), z_inv);
 }
 
 /**
@@ -434,18 +419,11 @@ hypergeometric_2f1_linear_transform_integer_diff(
     log_G2 = lgamma(c) + lgamma(a_perturbed - b) - lgamma(a_perturbed) - lgamma(c - b);
   }
 
-  scalar_t G1 = exp(log_G1);
-  scalar_t G2 = exp(log_G2);
-
-  // 2F1 terms with perturbed parameters
-  scalar_t hyp_1 = hypergeometric_2f1_series(
-      a_perturbed, a_perturbed - c + scalar_t(1),
-      a_perturbed - b + scalar_t(1), z_inv);
-  scalar_t hyp_2 = hypergeometric_2f1_series(
-      b, b - c + scalar_t(1),
-      b - a_perturbed + scalar_t(1), z_inv);
-
-  return G1 * factor_a * hyp_1 + G2 * factor_b * hyp_2;
+  return exp(log_G1) * factor_a * hypergeometric_2f1_series(
+           a_perturbed, a_perturbed - c + scalar_t(1),
+           a_perturbed - b + scalar_t(1), z_inv) + exp(log_G2) * factor_b * hypergeometric_2f1_series(
+           b, b - c + scalar_t(1),
+           b - a_perturbed + scalar_t(1), z_inv);
 }
 
 }  // namespace torchscience::impl::special_functions

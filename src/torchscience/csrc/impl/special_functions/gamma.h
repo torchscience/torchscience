@@ -233,22 +233,7 @@ gamma(scalar_t z) {
     return pi / (sin_pi_z * gamma_1_minus_z);
   }
 
-  // Lanczos approximation for non-integer z >= 0.5
-  const scalar_t g = scalar_t(kLanczosG);
-  const scalar_t sqrt_2pi = scalar_t(kSqrt2Pi);
-
-  // Compute the Lanczos series using the loop-based helper
-  scalar_t A_g = lanczos_series(z);
-
-  // Compute t = z - 1 + g + 0.5 = z + g - 0.5
-  scalar_t t = z + g - scalar_t(0.5);
-
-  // Γ(z) = √(2π) * t^(z - 0.5) * e^(-t) * A_g(z)
-  // Use log form for numerical stability: exp((z - 0.5) * log(t) - t)
-  scalar_t log_t = log(t);
-  scalar_t result = sqrt_2pi * exp((z - scalar_t(0.5)) * log_t - t) * A_g;
-
-  return result;
+  return scalar_t(kSqrt2Pi) * exp((z - scalar_t(0.5)) * log(z + scalar_t(kLanczosG) - scalar_t(0.5)) - (z + scalar_t(kLanczosG) - scalar_t(0.5))) * lanczos_series(z);
 }
 
 /**
@@ -325,44 +310,19 @@ template <typename scalar_t> C10_HOST_DEVICE C10_ALWAYS_INLINE std::enable_if_t<
     );
   }
 
-  // Helper to create real-valued complex constants
   const auto real = [](T val) { return scalar_t(val, T(0)); };
 
-  // Reflection formula for Re(z) < 0.5
-  // Uses sin_pi() for numerical stability with large negative real parts
   if (z.real() < T(0.5)) {
-    // Γ(z) = π / (sin(πz) * Γ(1-z))
-    auto sin_pi_z = sin_pi(z);
     auto gamma_1_minus_z = gamma(scalar_t(1, 0) - z);
 
-    // Handle overflow/nan case: when Γ(1-z) is infinite or NaN,
-    // Γ(z) approaches zero. This happens for very large negative Re(z).
-    // Mathematically: Γ(-n-α) = π / (sin(π(-n-α)) * Γ(n+1+α)) → 0 as n → ∞
-    if (isinf(gamma_1_minus_z.real()) || isinf(gamma_1_minus_z.imag()) ||
-        isnan(gamma_1_minus_z.real()) || isnan(gamma_1_minus_z.imag())) {
-      // Return zero - the mathematically correct limit
+    if (isinf(gamma_1_minus_z.real()) || isinf(gamma_1_minus_z.imag()) || isnan(gamma_1_minus_z.real()) || isnan(gamma_1_minus_z.imag())) {
       return scalar_t(T(0), T(0));
     }
 
-    return real(pi) / (sin_pi_z * gamma_1_minus_z);
+    return real(pi) / (sin_pi(z) * gamma_1_minus_z);
   }
 
-  // Lanczos approximation for Re(z) >= 0.5
-  const T g = T(kLanczosG);
-  const T sqrt_2pi = T(kSqrt2Pi);
-
-  // Compute the Lanczos series using the loop-based helper
-  scalar_t A_g = lanczos_series(z);
-
-  // Compute t = z + g - 0.5
-  const auto t = z + real(g - T(0.5));
-
-  // Γ(z) = √(2π) * t^(z - 0.5) * e^(-t) * A_g(z)
-  // Use log form for numerical stability
-  const auto result = real(sqrt_2pi) *
-                      exp((z - real(T(0.5))) * log(t) - t) * A_g;
-
-  return result;
+  return real(T(kSqrt2Pi)) * exp((z - real(T(0.5))) * log(z + real(T(kLanczosG) - T(0.5))) - (z + real(T(kLanczosG) - T(0.5)))) * lanczos_series(z);
 }
 
 // ============================================================================
@@ -393,14 +353,10 @@ template <typename scalar_t> C10_HOST_DEVICE C10_ALWAYS_INLINE std::enable_if_t<
 template <typename scalar_t>
 C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t
 gamma_backward(scalar_t grad_output, scalar_t z) {
-  auto gamma_z = gamma(z);
-  auto psi_z = digamma(z);
-
   if constexpr (c10::is_complex<scalar_t>::value) {
-    // Wirtinger chain rule: conjugate the holomorphic derivative
-    return grad_output * std::conj(gamma_z * psi_z);
+    return grad_output * std::conj(gamma(z) * digamma(z));
   } else {
-    return grad_output * gamma_z * psi_z;
+    return grad_output * gamma(z) * digamma(z);
   }
 }
 
@@ -412,7 +368,7 @@ gamma_backward(scalar_t grad_output, scalar_t z) {
  * Double-backward pass for gamma function.
  *
  * Given:
- *   gg_z = gradient w.r.t. gradient_z from first backward
+ *   gradient_gradient_z = gradient w.r.t. gradient_z from first backward
  *   grad_output = original upstream gradient
  *   z = original input
  *
@@ -420,9 +376,9 @@ gamma_backward(scalar_t grad_output, scalar_t z) {
  *   gradient_z = grad_output * Γ(z) * ψ(z)
  *
  * Double backward computes:
- *   gradient_grad_output = gg_z * Γ(z) * ψ(z)  (derivative w.r.t grad_output)
- *   gradient_z = gg_z * grad_output * d/dz[Γ(z) * ψ(z)]
- *              = gg_z * grad_output * Γ(z) * (ψ(z)² + ψ'(z))
+ *   gradient_grad_output = gradient_gradient_z * Γ(z) * ψ(z)  (derivative w.r.t grad_output)
+ *   gradient_z = gradient_gradient_z * grad_output * d/dz[Γ(z) * ψ(z)]
+ *              = gradient_gradient_z * grad_output * Γ(z) * (ψ(z)² + ψ'(z))
  *
  * Returns: (gradient_grad_output, gradient_z)
  *
@@ -441,33 +397,24 @@ gamma_backward(scalar_t grad_output, scalar_t z) {
 template <typename scalar_t>
 C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t>
 gamma_backward_backward(
-    scalar_t gg_z,
+    scalar_t gradient_gradient_z,
     scalar_t grad_output,
     scalar_t z,
-    bool has_gg_z
+    const bool has_gradient_gradient_z
 ) {
-  scalar_t gradient_grad_output = scalar_t(0);
-  scalar_t gradient_z = scalar_t(0);
+  scalar_t gradient_grad_output;
+  scalar_t gradient_z;
 
-  if (!has_gg_z) {
-    return std::make_tuple(gradient_grad_output, gradient_z);
+  if (!has_gradient_gradient_z) {
+    return std::make_tuple(scalar_t(0), scalar_t(0));
   }
 
-  auto gamma_z = gamma(z);
-  auto psi_z = digamma(z);
-  auto psi_prime_z = trigamma(z);
-
-  // d/dz[Γ(z) * ψ(z)] = Γ(z) * ψ(z) * ψ(z) + Γ(z) * ψ'(z)
-  //                   = Γ(z) * (ψ(z)² + ψ'(z))
-  auto dGamma_psi_dz = gamma_z * (psi_z * psi_z + psi_prime_z);
-
   if constexpr (c10::is_complex<scalar_t>::value) {
-    // Wirtinger chain rule: conjugate each holomorphic derivative term
-    gradient_grad_output = gg_z * std::conj(gamma_z * psi_z);
-    gradient_z = gg_z * grad_output * std::conj(dGamma_psi_dz);
+    gradient_grad_output = gradient_gradient_z * std::conj(gamma(z) * digamma(z));
+    gradient_z = gradient_gradient_z * grad_output * std::conj(gamma(z) * (digamma(z) * digamma(z) + trigamma(z)));
   } else {
-    gradient_grad_output = gg_z * gamma_z * psi_z;
-    gradient_z = gg_z * grad_output * dGamma_psi_dz;
+    gradient_grad_output = gradient_gradient_z * gamma(z) * digamma(z);
+    gradient_z = gradient_gradient_z * grad_output * (gamma(z) * (digamma(z) * digamma(z) + trigamma(z)));
   }
 
   return std::make_tuple(gradient_grad_output, gradient_z);

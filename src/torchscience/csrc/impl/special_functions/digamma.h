@@ -147,10 +147,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE c10::complex<T> digamma(c10::complex<T> x) {
 
   // For Re(x) < 0.5, use reflection formula
   if (x.real() < T(0.5)) {
-    // ψ(x) = ψ(1-x) - π*cot(πx)
-    // Use range-reduced sin_pi/cos_pi for numerical stability with large negative Re(x)
-    auto cot_pi_x = cos_pi(x) / sin_pi(x);
-    return digamma(c10::complex<T>(1, 0) - x) - c10::complex<T>(pi, 0) * cot_pi_x;
+    return digamma(c10::complex<T>(1, 0) - x) - c10::complex<T>(pi, 0) * (cos_pi(x) / sin_pi(x));
   }
 
   // Use recurrence to shift x to Re(x) >= 6
@@ -159,26 +156,21 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE c10::complex<T> digamma(c10::complex<T> x) {
     x += c10::complex<T>(1, 0);
   }
 
-  // Asymptotic expansion
-  auto inv_x = c10::complex<T>(1, 0) / x;
-  auto inv_x2 = inv_x * inv_x;
+  result = result + log(x) - c10::complex<T>(1, 0) / x / c10::complex<T>(2, 0);
 
-  result = result + log(x) - inv_x / c10::complex<T>(2, 0);
-  result = result - inv_x2 * (
-    c10::complex<T>(T(1.0 / 12.0), 0) -
-    inv_x2 * (
-      c10::complex<T>(T(1.0 / 120.0), 0) -
-      inv_x2 * (
-        c10::complex<T>(T(1.0 / 252.0), 0) -
-        inv_x2 * (
-          c10::complex<T>(T(1.0 / 240.0), 0) -
-          inv_x2 * c10::complex<T>(T(5.0 / 660.0), 0)
-        )
-      )
-    )
-  );
-
-  return result;
+  return result - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (
+           c10::complex<T>(T(1.0 / 12.0), 0) -
+           c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (
+             c10::complex<T>(T(1.0 / 120.0), 0) -
+             c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (
+               c10::complex<T>(T(1.0 / 252.0), 0) -
+               c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (
+                 c10::complex<T>(T(1.0 / 240.0), 0) -
+                 c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * c10::complex<T>(T(5.0 / 660.0), 0)
+               )
+             )
+           )
+         );
 }
 
 }  // namespace torchscience::impl::special_functions
