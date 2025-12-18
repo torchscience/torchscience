@@ -27,9 +27,11 @@
 #include <c10/macros/Macros.h>
 #include <c10/util/complex.h>
 #include <cmath>
+#include <limits>
 #include <type_traits>
 
-#include "digamma.h"  // for is_nonpositive_integer
+#include "is_nonpositive_integer.h"
+#include "sin_pi.h"
 
 namespace torchscience::impl::special_functions {
 
