@@ -303,9 +303,12 @@ hypergeometric_2f1_linear_transform(scalar_t a, scalar_t b, scalar_t c, scalar_t
  *   Use symmetry to reduce to n >= 0 case.
  */
 template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t
-hypergeometric_2f1_linear_transform_integer_diff(
-    scalar_t a, scalar_t b, scalar_t c, scalar_t z, int n
+C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t hypergeometric_2f1_linear_transform_integer_diff(
+  scalar_t a,
+  scalar_t b,
+  scalar_t c,
+  scalar_t z,
+  int n
 ) {
   using std::exp;
   using std::log;

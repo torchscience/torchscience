@@ -32,9 +32,9 @@
 #include <limits>
 #include <type_traits>
 
-#include "gamma.h"    // for lanczos_series, kLanczosG
-#include "sin_pi.h"   // for sin_pi
-#include "digamma.h"  // for is_nonpositive_integer
+#include "lanczos_approximation.h"  // for lanczos_series, kLanczosG
+#include "sin_pi.h"                 // for sin_pi
+#include "digamma.h"                // for is_nonpositive_integer
 
 namespace torchscience::impl::special_functions {
 

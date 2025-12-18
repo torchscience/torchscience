@@ -52,99 +52,9 @@
 #include "digamma.h"
 #include "trigamma.h"
 #include "factorial.h"
+#include "lanczos_approximation.h"
 
 namespace torchscience::impl::special_functions {
-
-// ============================================================================
-// Lanczos coefficients (g=7, n=9)
-// ============================================================================
-
-// Lanczos approximation parameter
-constexpr double kLanczosG = 7.0;
-
-// Number of Lanczos coefficients
-constexpr int kLanczosN = 9;
-
-// Lanczos coefficients for g=7, n=9
-// These provide ~15 digits of precision for double
-constexpr double kLanczosCoeffs[kLanczosN] = {
-  0.99999999999980993227684700473478,
-  676.520368121885098567009190444019,
-  -1259.13921672240287047156078755283,
-  771.3234287776530788486528258894,
-  -176.61502916214059906584551354,
-  12.507343278686904814458936853,
-  -0.13857109526572011689554707,
-  9.984369578019570859563e-6,
-  1.50563273514931155834e-7
-};
-
-// sqrt(2 * pi)
-constexpr double kSqrt2Pi = 2.5066282746310005024157652848110452530069867406099;
-
-// Note: kPi, sin_pi, and cos_pi are defined in digamma.h
-// Note: Factorial LUTs (kFactorialTableFloat/Double, kGammaMaxIntFloat/Double)
-//       are defined in factorial.h
-
-// ============================================================================
-// Lanczos series computation
-// ============================================================================
-
-/**
- * Compute the Lanczos series A_g(z) for real types.
- *
- * A_g(z) = c_0 + Σ_{i=1}^{n-1} c_i / (z + i - 1)
- *
- * where z is the original argument (not z-1).
- *
- * For the Lanczos formula Γ(z+1) = √(2π) * t^(z+0.5) * e^(-t) * A_g(z),
- * the denominators in A_g are: z, z+1, z+2, ..., z+n-2
- * which corresponds to: (z-1)+1, (z-1)+2, ..., (z-1)+(n-1)
- *
- * This loop-based implementation improves maintainability over the
- * unrolled version while maintaining the same numerical accuracy.
- */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE
-std::enable_if_t<
-  !c10::is_complex<scalar_t>::value &&
-  (std::is_same_v<scalar_t, float> || std::is_same_v<scalar_t, double>),
-  scalar_t>
-lanczos_series(scalar_t z) {
-  // Start with c_0
-  scalar_t A_g = scalar_t(kLanczosCoeffs[0]);
-
-  // Add terms c_i / (z + i - 1) for i = 1 to n-1
-  // Denominators are: z, z+1, z+2, ..., z+n-2
-  for (int i = 1; i < kLanczosN; ++i) {
-    A_g += scalar_t(kLanczosCoeffs[i]) / (z + scalar_t(i - 1));
-  }
-
-  return A_g;
-}
-
-/**
- * Compute the Lanczos series A_g(z) for complex types.
- *
- * Same formula as the real version but for complex arguments.
- */
-template <typename T>
-C10_HOST_DEVICE C10_ALWAYS_INLINE
-c10::complex<T> lanczos_series(c10::complex<T> z) {
-  // Helper to create real-valued complex constants
-  const auto real = [](T val) { return c10::complex<T>(val, T(0)); };
-
-  // Start with c_0
-  c10::complex<T> A_g = real(T(kLanczosCoeffs[0]));
-
-  // Add terms c_i / (z + i - 1) for i = 1 to n-1
-  // Denominators are: z, z+1, z+2, ..., z+n-2
-  for (int i = 1; i < kLanczosN; ++i) {
-    A_g = A_g + real(T(kLanczosCoeffs[i])) / (z + real(T(i - 1)));
-  }
-
-  return A_g;
-}
 
 // ============================================================================
 // Gamma function forward implementation
@@ -346,17 +256,17 @@ template <typename scalar_t> C10_HOST_DEVICE C10_ALWAYS_INLINE std::enable_if_t<
  * where w = f(z).
  *
  * For Γ(z), the holomorphic derivative is dΓ/dz = Γ(z)·ψ(z), so:
- *     grad_z̄ = grad_w̄ · conj(Γ(z)·ψ(z))
+ *     gradient_z̄ = gradient_w̄ · conj(Γ(z)·ψ(z))
  *
  * For real types, conjugation is the identity, so no special handling needed.
  */
 template <typename scalar_t>
 C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t
-gamma_backward(scalar_t grad_output, scalar_t z) {
+gamma_backward(scalar_t gradient_output, scalar_t z) {
   if constexpr (c10::is_complex<scalar_t>::value) {
-    return grad_output * std::conj(gamma(z) * digamma(z));
+    return gradient_output * std::conj(gamma(z) * digamma(z));
   } else {
-    return grad_output * gamma(z) * digamma(z);
+    return gradient_output * gamma(z) * digamma(z);
   }
 }
 
@@ -369,40 +279,39 @@ gamma_backward(scalar_t grad_output, scalar_t z) {
  *
  * Given:
  *   gradient_gradient_z = gradient w.r.t. gradient_z from first backward
- *   grad_output = original upstream gradient
+ *   gradient_output = original upstream gradient
  *   z = original input
  *
  * The first backward computes:
- *   gradient_z = grad_output * Γ(z) * ψ(z)
+ *   gradient_z = gradient_output * Γ(z) * ψ(z)
  *
  * Double backward computes:
- *   gradient_grad_output = gradient_gradient_z * Γ(z) * ψ(z)  (derivative w.r.t grad_output)
- *   gradient_z = gradient_gradient_z * grad_output * d/dz[Γ(z) * ψ(z)]
- *              = gradient_gradient_z * grad_output * Γ(z) * (ψ(z)² + ψ'(z))
+ *   gradient_gradient_output = gradient_gradient_z * Γ(z) * ψ(z)  (derivative w.r.t gradient_output)
+ *   gradient_z = gradient_gradient_z * gradient_output * d/dz[Γ(z) * ψ(z)]
+ *              = gradient_gradient_z * gradient_output * Γ(z) * (ψ(z)² + ψ'(z))
  *
- * Returns: (gradient_grad_output, gradient_z)
+ * Returns: (gradient_gradient_output, gradient_z)
  *
  * Complex Gradient Convention (Wirtinger Calculus):
  * ------------------------------------------------
  * Same convention as gamma_backward applies here. For each term that involves
  * a holomorphic derivative, we conjugate when computing the Wirtinger gradient.
  *
- * gradient_grad_output: This is ∂L/∂(grad_output)̄, and since the first backward
- *   computed gradient_z = grad_output * [Γ(z)·ψ(z)], differentiating w.r.t.
- *   grad_output (treating it as a variable) gives conj(Γ(z)·ψ(z)).
+ * gradient_gradient_output: This is ∂L/∂(gradient_output)̄, and since the first backward
+ *   computed gradient_z = gradient_output * [Γ(z)·ψ(z)], differentiating w.r.t.
+ *   gradient_output (treating it as a variable) gives conj(Γ(z)·ψ(z)).
  *
  * gradient_z: This differentiates through the [Γ(z)·ψ(z)] term, giving
  *   conj(d/dz[Γ(z)·ψ(z)]) = conj(Γ(z)·(ψ(z)² + ψ'(z))).
  */
 template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t>
-gamma_backward_backward(
-    scalar_t gradient_gradient_z,
-    scalar_t grad_output,
-    scalar_t z,
-    const bool has_gradient_gradient_z
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t> gamma_backward_backward(
+  scalar_t gradient_gradient_z,
+  scalar_t gradient_output,
+  scalar_t z,
+  const bool has_gradient_gradient_z
 ) {
-  scalar_t gradient_grad_output;
+  scalar_t gradient_gradient_output;
   scalar_t gradient_z;
 
   if (!has_gradient_gradient_z) {
@@ -410,14 +319,19 @@ gamma_backward_backward(
   }
 
   if constexpr (c10::is_complex<scalar_t>::value) {
-    gradient_grad_output = gradient_gradient_z * std::conj(gamma(z) * digamma(z));
-    gradient_z = gradient_gradient_z * grad_output * std::conj(gamma(z) * (digamma(z) * digamma(z) + trigamma(z)));
+    gradient_gradient_output = gradient_gradient_z * std::conj(gamma(z) * digamma(z));
+
+    gradient_z = gradient_gradient_z * gradient_output * std::conj(gamma(z) * (digamma(z) * digamma(z) + trigamma(z)));
   } else {
-    gradient_grad_output = gradient_gradient_z * gamma(z) * digamma(z);
-    gradient_z = gradient_gradient_z * grad_output * (gamma(z) * (digamma(z) * digamma(z) + trigamma(z)));
+    gradient_gradient_output = gradient_gradient_z * gamma(z) * digamma(z);
+
+    gradient_z = gradient_gradient_z * gradient_output * (gamma(z) * (digamma(z) * digamma(z) + trigamma(z)));
   }
 
-  return std::make_tuple(gradient_grad_output, gradient_z);
+  return std::make_tuple(
+    gradient_gradient_output,
+    gradient_z
+  );
 }
 
 }  // namespace torchscience::impl::special_functions
