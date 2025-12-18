@@ -28,7 +28,6 @@
 #include <c10/util/complex.h>
 #include <cmath>
 #include <limits>
-#include <type_traits>
 
 #include "is_nonpositive_integer.h"
 #include "sin_pi.h"
@@ -63,7 +62,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t digamma(scalar_t x) {
     return x;
   }
 
-  scalar_t result = scalar_t(0);
+  scalar_t output = scalar_t(0);
 
   // For negative x, use reflection formula: ψ(1-x) - ψ(x) = π*cot(πx)
   // So: ψ(x) = ψ(1-x) - π*cot(πx)
@@ -80,47 +79,12 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t digamma(scalar_t x) {
     }
   }
 
-  // Use recurrence to shift x to x >= 6 for asymptotic expansion
-  const scalar_t shift_threshold = scalar_t(6);
-  while (x < shift_threshold) {
-    result -= scalar_t(1) / x;
+  while (x < scalar_t(6)) {
+    output -= scalar_t(1) / x;
     x += scalar_t(1);
   }
 
-  // Asymptotic expansion for large x
-  //
-  // ψ(x) ≈ ln(x) - 1/(2x) - Σ_{k=1}^∞ B_{2k}/(2k · x^{2k})
-  //
-  // where B_{2k} are Bernoulli numbers: B_2=1/6, B_4=-1/30, B_6=1/42, B_8=-1/30, B_10=5/66
-  //
-  // The coefficients used are |B_{2k}|/(2k):
-  //   k=1: |B_2|/2  = (1/6)/2   = 1/12
-  //   k=2: |B_4|/4  = (1/30)/4  = 1/120
-  //   k=3: |B_6|/6  = (1/42)/6  = 1/252
-  //   k=4: |B_8|/8  = (1/30)/8  = 1/240
-  //   k=5: |B_10|/10 = (5/66)/10 = 5/660
-  //
-  // The alternating signs of Bernoulli numbers (-, +, -, +, -) are handled by
-  // the nested subtraction structure combined with the leading minus sign.
-  scalar_t inv_x = scalar_t(1) / x;
-  scalar_t inv_x2 = inv_x * inv_x;
-
-  result += log(x) - inv_x / scalar_t(2);
-  result -= inv_x2 * (
-    scalar_t(1.0 / 12.0) -               // |B_2|/2 = 1/12
-    inv_x2 * (
-      scalar_t(1.0 / 120.0) -            // |B_4|/4 = 1/120
-      inv_x2 * (
-        scalar_t(1.0 / 252.0) -          // |B_6|/6 = 1/252
-        inv_x2 * (
-          scalar_t(1.0 / 240.0) -        // |B_8|/8 = 1/240
-          inv_x2 * scalar_t(5.0 / 660.0) // |B_10|/10 = 5/660
-        )
-      )
-    )
-  );
-
-  return result;
+  return output + (log(x) - scalar_t(1) / x / scalar_t(2)) - scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1.0 / 12.0) - scalar_t(1) / x * (scalar_t(1) / x) * ( scalar_t(1.0 / 120.0) - scalar_t(1) / x * (scalar_t(1) / x) * ( scalar_t(1.0 / 252.0) - scalar_t(1) / x * (scalar_t(1) / x) * ( scalar_t(1.0 / 240.0) - scalar_t(1) / x * (scalar_t(1) / x) * scalar_t(5.0 / 660.0)))));
 }
 
 /**
@@ -143,34 +107,18 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE c10::complex<T> digamma(c10::complex<T> x) {
     );
   }
 
-  c10::complex<T> result(0, 0);
+  c10::complex<T> output(0, 0);
 
-  // For Re(x) < 0.5, use reflection formula
   if (x.real() < T(0.5)) {
     return digamma(c10::complex<T>(1, 0) - x) - c10::complex<T>(pi, 0) * (cos_pi(x) / sin_pi(x));
   }
 
-  // Use recurrence to shift x to Re(x) >= 6
   while (x.real() < T(6)) {
-    result -= c10::complex<T>(1, 0) / x;
+    output -= c10::complex<T>(1, 0) / x;
     x += c10::complex<T>(1, 0);
   }
 
-  result = result + log(x) - c10::complex<T>(1, 0) / x / c10::complex<T>(2, 0);
-
-  return result - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (
-           c10::complex<T>(T(1.0 / 12.0), 0) -
-           c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (
-             c10::complex<T>(T(1.0 / 120.0), 0) -
-             c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (
-               c10::complex<T>(T(1.0 / 252.0), 0) -
-               c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (
-                 c10::complex<T>(T(1.0 / 240.0), 0) -
-                 c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * c10::complex<T>(T(5.0 / 660.0), 0)
-               )
-             )
-           )
-         );
+  return output + log(x) - c10::complex<T>(1, 0) / x / c10::complex<T>(2, 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 12.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 120.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 252.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 240.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * c10::complex<T>(T(5.0 / 660.0), 0)))));
 }
 
 }  // namespace torchscience::impl::special_functions
