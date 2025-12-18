@@ -836,20 +836,36 @@ log_weighted_beta_integrals(scalar_t z, scalar_t a, scalar_t b) {
     use_high_order = (a < scalar_t(0.1)) || (b < scalar_t(0.1));
   }
 
+  // Detect very small parameters that create extreme singularities
+  bool has_very_small_params;
+  if constexpr (c10::is_complex<scalar_t>::value) {
+    has_very_small_params = (a.real() < real_t(0.05)) || (b.real() < real_t(0.05));
+  } else {
+    has_very_small_params = (a < scalar_t(0.05)) || (b < scalar_t(0.05));
+  }
+
   // Set tolerance based on problem difficulty and dtype
   // Uses dtype-aware tolerance to avoid unachievable precision targets
-  scalar_t tolerance = use_high_order
-      ? scalar_t(adaptive_tolerance_difficult<scalar_t>())
-      : scalar_t(adaptive_tolerance<scalar_t>());
+  scalar_t tolerance;
+  if (has_very_small_params) {
+    tolerance = scalar_t(adaptive_tolerance_very_small_params<scalar_t>());
+  } else if (use_high_order) {
+    tolerance = scalar_t(adaptive_tolerance_difficult<scalar_t>());
+  } else {
+    tolerance = scalar_t(adaptive_tolerance<scalar_t>());
+  }
 
   // Check if we need dual-region integration for the t=1 singularity
   // When b < 1 and z > threshold, the (1-t)^(b-1) singularity at t=1
   // requires special handling with a complementary transformation
+  // Also force dual-region for very small parameters to improve accuracy
   bool need_dual_region;
   if constexpr (c10::is_complex<scalar_t>::value) {
-    need_dual_region = (b.real() < real_t(1)) && (abs(z) > real_t(kDualRegionThreshold));
+    need_dual_region = ((b.real() < real_t(1)) && (abs(z) > real_t(kDualRegionThreshold)))
+                       || has_very_small_params;
   } else {
-    need_dual_region = (b < scalar_t(1)) && (z > scalar_t(kDualRegionThreshold));
+    need_dual_region = ((b < scalar_t(1)) && (z > scalar_t(kDualRegionThreshold)))
+                       || has_very_small_params;
   }
 
   if (need_dual_region) {
@@ -917,16 +933,33 @@ doubly_log_weighted_beta_integrals(scalar_t z, scalar_t a, scalar_t b) {
     return std::make_tuple(scalar_t(0), scalar_t(0), scalar_t(0));
   }
 
-  // Set tolerance based on dtype - doubly log-weighted integrals need similar accuracy
-  // Uses dtype-aware tolerance to avoid unachievable precision targets
-  scalar_t tolerance = scalar_t(adaptive_tolerance<scalar_t>());
+  // Detect very small parameters that create strong singularities
+  // For a < 0.05 or b < 0.05, the ln^2 terms create extreme singularities
+  bool has_very_small_params;
+  if constexpr (c10::is_complex<scalar_t>::value) {
+    has_very_small_params = (a.real() < real_t(0.05)) || (b.real() < real_t(0.05));
+  } else {
+    has_very_small_params = (a < scalar_t(0.05)) || (b < scalar_t(0.05));
+  }
+
+  // Set tolerance based on parameter magnitude and dtype
+  // Very small parameters require relaxed tolerances as machine precision is not achievable
+  scalar_t tolerance;
+  if (has_very_small_params) {
+    tolerance = scalar_t(adaptive_tolerance_very_small_params<scalar_t>());
+  } else {
+    tolerance = scalar_t(adaptive_tolerance<scalar_t>());
+  }
 
   // Check if we need dual-region integration for the t=1 singularity
+  // Also force dual-region for very small parameters to improve accuracy
   bool need_dual_region;
   if constexpr (c10::is_complex<scalar_t>::value) {
-    need_dual_region = (b.real() < real_t(1)) && (abs(z) > real_t(kDualRegionThreshold));
+    need_dual_region = ((b.real() < real_t(1)) && (abs(z) > real_t(kDualRegionThreshold)))
+                       || has_very_small_params;
   } else {
-    need_dual_region = (b < scalar_t(1)) && (z > scalar_t(kDualRegionThreshold));
+    need_dual_region = ((b < scalar_t(1)) && (z > scalar_t(kDualRegionThreshold)))
+                       || has_very_small_params;
   }
 
   if (need_dual_region) {

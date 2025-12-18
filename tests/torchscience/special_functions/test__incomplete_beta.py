@@ -57,6 +57,8 @@ class TestIncompleteBeta(OpTestCase):
                     position=0,
                     default_real_range=(0.01, 0.99),
                     supports_grad=True,
+                    # For complex z, the standard algorithm requires |z| < 1
+                    complex_magnitude_max=1.0,
                 ),
                 InputSpec(
                     name="a",
@@ -87,9 +89,9 @@ class TestIncompleteBeta(OpTestCase):
             ),
             skip_tests={
                 "test_autocast_cpu_bfloat16",  # CPU autocast not supported
-                # Complex framework tests use random inputs that may fall outside
-                # the valid domain |z| < 1 for complex incomplete_beta
-                "test_gradcheck_complex",
+                # Complex second-order derivatives are numerically challenging
+                # due to Wirtinger derivative conventions and the interplay of
+                # multiple coordinate transformations in the quadrature
                 "test_gradgradcheck_complex",
                 # Mixed sparse/dense and mixed quantized/float tests are skipped
                 # because the ternary operator macros require all inputs to have
@@ -2711,4 +2713,120 @@ class TestIncompleteBeta(OpTestCase):
             )
             assert relative_diff < 0.01, (
                 f"Gradient discontinuity at z={base_z}+{pert}: rel_diff={relative_diff.item()}"
+            )
+
+    # =========================================================================
+    # Small parameter gradient tests (Improvement 3)
+    # =========================================================================
+    # Note: Parameter derivatives dI/da and dI/db for very small parameters
+    # (a, b < 0.05) involve near-cancellation of large terms:
+    #   dI/da = J_a/B - I_z * [psi(a) - psi(a+b)]
+    # When a is very small, both J_a/B and I_z * [psi(a) - psi(a+b)] are large
+    # (~30-40) and nearly cancel to a small value (~0.2). This makes accurate
+    # computation of parameter gradients challenging for extreme parameters.
+    # The gradient w.r.t. z remains accurate even for small parameters.
+
+    def test_small_a_gradcheck_z_only(self):
+        """Test gradient correctness w.r.t. z with small a parameter.
+
+        The gradient dI/dz = z^(a-1) * (1-z)^(b-1) / B(a,b) is analytically
+        computed and remains accurate even for small a.
+        """
+        z = torch.tensor(
+            [0.3, 0.5, 0.7], dtype=torch.float64, requires_grad=True
+        )
+        a = torch.tensor([0.1], dtype=torch.float64)  # Small but not extreme
+        b = torch.tensor([2.0], dtype=torch.float64)
+
+        def func(z):
+            return torchscience.special_functions.incomplete_beta(z, a, b)
+
+        assert torch.autograd.gradcheck(
+            func, (z,), eps=1e-6, atol=1e-4, rtol=1e-4
+        )
+
+    def test_small_b_gradcheck_z_only(self):
+        """Test gradient correctness w.r.t. z with small b parameter."""
+        z = torch.tensor(
+            [0.3, 0.5, 0.7], dtype=torch.float64, requires_grad=True
+        )
+        a = torch.tensor([2.0], dtype=torch.float64)
+        b = torch.tensor([0.1], dtype=torch.float64)
+
+        def func(z):
+            return torchscience.special_functions.incomplete_beta(z, a, b)
+
+        assert torch.autograd.gradcheck(
+            func, (z,), eps=1e-6, atol=1e-4, rtol=1e-4
+        )
+
+    def test_moderately_small_params_gradcheck(self):
+        """Test gradient correctness with moderately small parameters (0.2 < a,b < 0.5).
+
+        This tests the improved dual-region integration and adaptive tolerances
+        for parameters that are challenging but not extreme.
+        """
+        z = torch.tensor([0.5], dtype=torch.float64, requires_grad=True)
+        a = torch.tensor([0.3], dtype=torch.float64, requires_grad=True)
+        b = torch.tensor([0.3], dtype=torch.float64, requires_grad=True)
+
+        def func(z, a, b):
+            return torchscience.special_functions.incomplete_beta(z, a, b)
+
+        # Should pass with reasonable tolerances due to improved quadrature
+        assert torch.autograd.gradcheck(
+            func, (z, a, b), eps=1e-5, atol=5e-3, rtol=5e-3
+        )
+
+    def test_small_params_gradgradcheck(self):
+        """Test second-order gradient correctness with moderately small parameters."""
+        z = torch.tensor([0.5], dtype=torch.float64, requires_grad=True)
+        a = torch.tensor([0.5], dtype=torch.float64, requires_grad=True)
+        b = torch.tensor([2.0], dtype=torch.float64)
+
+        def func(z, a):
+            return torchscience.special_functions.incomplete_beta(z, a, b)
+
+        # Second-order gradients are more challenging; use relaxed tolerances
+        assert torch.autograd.gradgradcheck(
+            func, (z, a), eps=1e-5, atol=5e-2, rtol=5e-2
+        )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_small_params_scipy_reference_z_gradient(self):
+        """Verify z-gradients against numerical differences from SciPy.
+
+        The dI/dz gradient is analytically computed and should be accurate
+        even for small parameters.
+        """
+        test_cases = [
+            # (z, a, b)
+            (0.5, 0.1, 2.0),
+            (0.5, 2.0, 0.1),
+            (0.5, 0.2, 0.2),
+            (0.3, 0.1, 3.0),
+            (0.7, 3.0, 0.1),
+        ]
+
+        eps = 1e-7
+        for z_val, a_val, b_val in test_cases:
+            z = torch.tensor([z_val], dtype=torch.float64, requires_grad=True)
+            a = torch.tensor([a_val], dtype=torch.float64)
+            b = torch.tensor([b_val], dtype=torch.float64)
+
+            result = torchscience.special_functions.incomplete_beta(z, a, b)
+            result.backward()
+            our_grad_z = z.grad.item()
+
+            # Compute numerical gradient from SciPy
+            scipy_plus = scipy_incomplete_beta(z_val + eps, a_val, b_val)
+            scipy_minus = scipy_incomplete_beta(z_val - eps, a_val, b_val)
+            scipy_grad_z = (scipy_plus - scipy_minus) / (2 * eps)
+
+            rel_error = abs(our_grad_z - scipy_grad_z) / max(
+                abs(scipy_grad_z), 1e-10
+            )
+            assert rel_error < 1e-4, (
+                f"z-gradient mismatch at z={z_val}, a={a_val}, b={b_val}: "
+                f"ours={our_grad_z}, scipy={scipy_grad_z}, rel_err={rel_error}"
             )

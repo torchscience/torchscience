@@ -77,22 +77,50 @@ class OpTestCase(
         low, high = spec.default_real_range
 
         if dtype.is_complex:
-            # Generate complex tensor
-            real_dtype = (
-                torch.float32 if dtype == torch.complex64 else torch.float64
-            )
-            real = (
-                torch.rand(shape, dtype=real_dtype, device=device)
-                * (high - low)
-                + low
-            )
-            imag_low, imag_high = spec.default_imag_range
-            imag = (
-                torch.rand(shape, dtype=real_dtype, device=device)
-                * (imag_high - imag_low)
-                + imag_low
-            )
-            tensor = torch.complex(real, imag)
+            # Check if we have a magnitude constraint for complex inputs
+            if spec.complex_magnitude_max is not None:
+                # Generate complex values with |z| < complex_magnitude_max
+                # Use polar coordinates for uniform distribution in the disk
+                max_r = spec.complex_magnitude_max * 0.95  # Safety margin
+                real_dtype = (
+                    torch.float32
+                    if dtype == torch.complex64
+                    else torch.float64
+                )
+                # Generate radii with sqrt for uniform distribution in disk
+                r = (
+                    torch.sqrt(
+                        torch.rand(shape, dtype=real_dtype, device=device)
+                    )
+                    * max_r
+                )
+                theta = (
+                    torch.rand(shape, dtype=real_dtype, device=device)
+                    * 2
+                    * 3.141592653589793
+                )
+                real = r * torch.cos(theta)
+                imag = r * torch.sin(theta)
+                tensor = torch.complex(real, imag)
+            else:
+                # Generate complex tensor using rectangular coordinates
+                real_dtype = (
+                    torch.float32
+                    if dtype == torch.complex64
+                    else torch.float64
+                )
+                real = (
+                    torch.rand(shape, dtype=real_dtype, device=device)
+                    * (high - low)
+                    + low
+                )
+                imag_low, imag_high = spec.default_imag_range
+                imag = (
+                    torch.rand(shape, dtype=real_dtype, device=device)
+                    * (imag_high - imag_low)
+                    + imag_low
+                )
+                tensor = torch.complex(real, imag)
         else:
             tensor = (
                 torch.rand(shape, dtype=dtype, device=device) * (high - low)

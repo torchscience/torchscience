@@ -72,6 +72,10 @@ class InputSpec:
     default_imag_range: Tuple[float, float] = (-10.0, 10.0)
     excluded_values: Set[float] = field(default_factory=set)
 
+    # Complex domain constraint: if set, generates complex values with |z| < max
+    # This is useful for functions like incomplete_beta that require |z| < 1
+    complex_magnitude_max: Optional[float] = None
+
     # Gradient support
     supports_grad: bool = True
 

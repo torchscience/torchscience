@@ -286,6 +286,28 @@ typename c10::scalar_value_type<scalar_t>::type adaptive_tolerance_difficult() {
   return (base_tol > max_tol) ? base_tol : max_tol;
 }
 
+/**
+ * Compute dtype-appropriate tolerance for very small parameter cases.
+ *
+ * Used when parameters are extremely small (a < 0.05 or b < 0.05), creating
+ * very strong singularities in the doubly log-weighted integrals K_aa, K_ab, K_bb.
+ * These integrals have ln^2(t) or ln(t)*ln(1-t) terms that amplify errors.
+ *
+ * Uses a relaxed tolerance since achieving machine precision is not possible
+ * for these extreme cases, but we aim for better than 1e-3 relative error.
+ */
+template <typename scalar_t>
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+typename c10::scalar_value_type<scalar_t>::type adaptive_tolerance_very_small_params() {
+  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  const real_t eps = std::numeric_limits<real_t>::epsilon();
+  // Use 500x epsilon for very small parameters, capped at 1e-8 for double
+  // This balances accuracy vs computational cost for extreme singularities
+  const real_t base_tol = eps * real_t(500);
+  const real_t max_tol = real_t(1e-8);
+  return (base_tol > max_tol) ? base_tol : max_tol;
+}
+
 // ============================================================================
 // Diagnostic Tracking for Adaptive Quadrature
 // ============================================================================
