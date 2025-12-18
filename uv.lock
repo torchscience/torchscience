@@ -556,6 +556,7 @@ test = [
 [package.dev-dependencies]
 dev = [
     { name = "hypothesis" },
+    { name = "mpmath" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "sympy" },
@@ -575,6 +576,7 @@ provides-extras = ["test"]
 [package.metadata.requires-dev]
 dev = [
     { name = "hypothesis", specifier = ">=6.148.7" },
+    { name = "mpmath", specifier = ">=1.3.0" },
     { name = "pre-commit", specifier = ">=4.5.0" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "sympy", specifier = ">=1.14.0" },

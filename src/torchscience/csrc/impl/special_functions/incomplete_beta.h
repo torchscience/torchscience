@@ -1456,7 +1456,12 @@ incomplete_beta_backward_extended(scalar_t grad, scalar_t z, scalar_t a, scalar_
  * where df/dz is the holomorphic derivative.
  */
 template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t> incomplete_beta_backward(scalar_t grad, scalar_t z, scalar_t a, scalar_t b) {
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t> incomplete_beta_backward(
+  scalar_t grad,
+  scalar_t z,
+  scalar_t a,
+  scalar_t b
+) {
   using std::exp;
   using std::log;
   using std::abs;

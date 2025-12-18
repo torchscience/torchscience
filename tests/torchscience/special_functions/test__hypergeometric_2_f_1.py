@@ -1673,3 +1673,164 @@ class TestHypergeometric2F1(OpTestCase):
             )
 
         torch.autograd.gradcheck(func, (a, b, c, z), rtol=1e-4, atol=1e-4)
+
+    # =========================================================================
+    # Tests for unit circle convergence check
+    # =========================================================================
+
+    def test_unit_circle_convergence_at_z_equals_1(self):
+        """Test convergence check at z = 1.
+
+        At z = 1, the series converges iff Re(c - a - b) > 0.
+        """
+        # Case 1: Re(c - a - b) > 0 → should converge
+        a = torch.tensor([0.5], dtype=torch.float64)
+        b = torch.tensor([0.5], dtype=torch.float64)
+        c = torch.tensor([2.0], dtype=torch.float64)  # c - a - b = 1 > 0
+        z = torch.tensor([1.0], dtype=torch.float64)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+        assert torch.isfinite(result).all(), (
+            "Should converge when Re(c-a-b) > 0 at z=1"
+        )
+
+        # Gauss summation theorem: 2F1(a,b;c;1) = Γ(c)Γ(c-a-b)/(Γ(c-a)Γ(c-b))
+        # For a=b=0.5, c=2: = Γ(2)Γ(1)/(Γ(1.5)Γ(1.5)) = 1 * 1 / (π/4) = 4/π
+        expected = 4.0 / math.pi
+        torch.testing.assert_close(
+            result,
+            torch.tensor([expected], dtype=torch.float64),
+            rtol=1e-5,
+            atol=1e-5,
+        )
+
+    def test_unit_circle_divergence_at_z_equals_1(self):
+        """Test divergence check at z = 1.
+
+        At z = 1, the series diverges if Re(c - a - b) <= 0.
+        """
+        # Case: Re(c - a - b) = 0 → should diverge (return NaN)
+        a = torch.tensor([1.0], dtype=torch.float64)
+        b = torch.tensor([1.0], dtype=torch.float64)
+        c = torch.tensor([2.0], dtype=torch.float64)  # c - a - b = 0
+        z = torch.tensor([1.0], dtype=torch.float64)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+        assert torch.isnan(result).all(), (
+            "Should return NaN (diverge) when Re(c-a-b) = 0 at z=1"
+        )
+
+        # Case: Re(c - a - b) < 0 → should diverge (return NaN)
+        c_negative = torch.tensor(
+            [1.5], dtype=torch.float64
+        )  # c - a - b = -0.5
+        result_neg = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c_negative, z
+        )
+        assert torch.isnan(result_neg).all(), (
+            "Should return NaN (diverge) when Re(c-a-b) < 0 at z=1"
+        )
+
+    def test_unit_circle_convergence_not_at_z_equals_1(self):
+        """Test convergence on unit circle at z != 1.
+
+        For |z| = 1 but z != 1:
+        - Converges if Re(c - a - b) > -1
+        - Diverges if Re(c - a - b) <= -1
+        """
+        # z = -1 (on unit circle, but not z=1)
+        a = torch.tensor([0.5], dtype=torch.float64)
+        b = torch.tensor([0.5], dtype=torch.float64)
+        z = torch.tensor([-1.0], dtype=torch.float64)
+
+        # Case 1: Re(c - a - b) = 0 > -1 → should converge at z=-1
+        c_converge = torch.tensor([1.0], dtype=torch.float64)  # c - a - b = 0
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c_converge, z
+        )
+        assert torch.isfinite(result).all(), (
+            "Should converge when Re(c-a-b) = 0 > -1 at z=-1"
+        )
+
+        # Case 2: Re(c - a - b) = -0.5 > -1 → should converge at z=-1
+        c_converge2 = torch.tensor(
+            [0.5], dtype=torch.float64
+        )  # c - a - b = -0.5
+        result2 = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c_converge2, z
+        )
+        assert torch.isfinite(result2).all(), (
+            "Should converge when Re(c-a-b) = -0.5 > -1 at z=-1"
+        )
+
+    def test_unit_circle_divergence_not_at_z_equals_1(self):
+        """Test divergence on unit circle at z != 1.
+
+        For |z| = 1 but z != 1, diverges if Re(c - a - b) <= -1.
+        """
+        # z = -1 (on unit circle, but not z=1)
+        a = torch.tensor([1.5], dtype=torch.float64)
+        b = torch.tensor([1.5], dtype=torch.float64)
+        z = torch.tensor([-1.0], dtype=torch.float64)
+
+        # Re(c - a - b) = -1 → should diverge
+        c_diverge = torch.tensor([2.0], dtype=torch.float64)  # c - a - b = -1
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c_diverge, z
+        )
+        assert torch.isnan(result).all(), (
+            "Should return NaN (diverge) when Re(c-a-b) = -1 at z=-1"
+        )
+
+        # Re(c - a - b) = -1.5 < -1 → should diverge
+        c_diverge2 = torch.tensor(
+            [1.5], dtype=torch.float64
+        )  # c - a - b = -1.5
+        result2 = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c_diverge2, z
+        )
+        assert torch.isnan(result2).all(), (
+            "Should return NaN (diverge) when Re(c-a-b) < -1 at z=-1"
+        )
+
+    def test_unit_circle_complex_z(self):
+        """Test convergence check for complex z on the unit circle."""
+        # z = i (on unit circle)
+        a = torch.tensor([0.5], dtype=torch.float64)
+        b = torch.tensor([0.5], dtype=torch.float64)
+        c = torch.tensor([2.0], dtype=torch.float64)  # c - a - b = 1 > 0
+        z = torch.tensor([1j], dtype=torch.complex128)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+        # Should converge since Re(c-a-b) = 1 > -1 (and > 0)
+        assert (
+            torch.isfinite(result.real).all()
+            and torch.isfinite(result.imag).all()
+        ), "Should converge for complex z on unit circle when Re(c-a-b) > 0"
+
+    def test_unit_circle_gradient_divergence(self):
+        """Test that gradients are NaN when function diverges on unit circle."""
+        a = torch.tensor([1.0], dtype=torch.float64, requires_grad=True)
+        b = torch.tensor([1.0], dtype=torch.float64, requires_grad=True)
+        c = torch.tensor([2.0], dtype=torch.float64, requires_grad=True)
+        z = torch.tensor([1.0], dtype=torch.float64, requires_grad=True)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+
+        # Function should return NaN
+        assert torch.isnan(result).all()
+
+        # Backward pass should also produce NaN gradients
+        result.backward()
+        assert torch.isnan(a.grad).all(), "Gradient w.r.t. a should be NaN"
+        assert torch.isnan(b.grad).all(), "Gradient w.r.t. b should be NaN"
+        assert torch.isnan(c.grad).all(), "Gradient w.r.t. c should be NaN"
+        assert torch.isnan(z.grad).all(), "Gradient w.r.t. z should be NaN"
