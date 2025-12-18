@@ -647,32 +647,34 @@ chebyshev_polynomial_t_backward_backward(
   scalar_t d2Tdzdv = (sin_v_theta + v * theta * cos_v_theta) / sqrt_one_minus_z2;
 
   // Apply Wirtinger derivatives for complex types.
-  // The first backward returns grad * conj(∂f/∂z), so the double backward
-  // should return derivatives that match this convention.
-  //
-  // NOTE: Complex second-order derivatives (gradgradcheck) have a known sign
-  // incompatibility with PyTorch's numerical verification. The issue appears
-  // to be in how the Wirtinger chain rule interacts with PyTorch's complex
-  // autograd framework. Real-valued gradgradcheck and complex first-order
-  // gradcheck both work correctly.
+  // For backward_backward with complex inputs:
+  // - gradient_gradient_output = gg * dT/dx (no conjugate on first derivative)
+  // - gradient_x = conj(gg) * gradient_output * conj(d²T/dx²)
+  // This matches PyTorch's complex autograd conventions.
   if constexpr (c10::is_complex<scalar_t>::value) {
-    dTdz = std::conj(dTdz);
-    dTdv = std::conj(dTdv);
-    d2Tdz2 = std::conj(d2Tdz2);
-    d2Tdv2 = std::conj(d2Tdv2);
-    d2Tdzdv = std::conj(d2Tdzdv);
-  }
+    if (has_ggz) {
+      gradient_gradient_output = ggz * dTdz;
+      gradient_z = std::conj(ggz) * gradient_output * std::conj(d2Tdz2);
+      gradient_v = std::conj(ggz) * gradient_output * std::conj(d2Tdzdv);
+    }
 
-  if (has_ggz) {
-    gradient_gradient_output = ggz * dTdz;
-    gradient_z = ggz * gradient_output * d2Tdz2;
-    gradient_v = ggz * gradient_output * d2Tdzdv;
-  }
+    if (has_ggv) {
+      gradient_gradient_output = gradient_gradient_output + ggv * dTdv;
+      gradient_v = gradient_v + std::conj(ggv) * gradient_output * std::conj(d2Tdv2);
+      gradient_z = gradient_z + std::conj(ggv) * gradient_output * std::conj(d2Tdzdv);
+    }
+  } else {
+    if (has_ggz) {
+      gradient_gradient_output = ggz * dTdz;
+      gradient_z = ggz * gradient_output * d2Tdz2;
+      gradient_v = ggz * gradient_output * d2Tdzdv;
+    }
 
-  if (has_ggv) {
-    gradient_gradient_output = gradient_gradient_output + ggv * dTdv;
-    gradient_v = gradient_v + ggv * gradient_output * d2Tdv2;
-    gradient_z = gradient_z + ggv * gradient_output * d2Tdzdv;
+    if (has_ggv) {
+      gradient_gradient_output = gradient_gradient_output + ggv * dTdv;
+      gradient_v = gradient_v + ggv * gradient_output * d2Tdv2;
+      gradient_z = gradient_z + ggv * gradient_output * d2Tdzdv;
+    }
   }
 
   return std::make_tuple(gradient_gradient_output, gradient_v, gradient_z);

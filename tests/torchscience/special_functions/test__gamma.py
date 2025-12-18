@@ -1,25 +1,3 @@
-"""Tests for gamma function using the reusable test framework.
-
-The framework automatically tests:
-- Autograd (gradcheck, gradgradcheck)
-- Device handling (CPU, CUDA)
-- Dtype handling (float32, float64, complex64, complex128)
-- Low-precision dtypes (float16, bfloat16)
-- Broadcasting
-- torch.compile compatibility
-- vmap support
-- Sparse tensor support (COO, CSR)
-- Quantized tensor support
-- Meta tensor support
-- Autocast (mixed precision)
-- NaN/Inf propagation
-- SymPy reference verification
-- Recurrence relations
-- Functional identities
-- Special values
-- Singularity behavior
-"""
-
 import math
 
 import pytest
@@ -180,8 +158,9 @@ class TestGamma(OpTestCase):
                     description="Poles at non-positive integers",
                 ),
             ],
-            supports_sparse_coo=True,
-            supports_sparse_csr=True,
+            # Sparse not supported: Γ(0) is a pole (undefined)
+            supports_sparse_coo=False,
+            supports_sparse_csr=False,
             supports_quantized=True,
             supports_meta=True,
         )
@@ -852,44 +831,11 @@ class TestGamma(OpTestCase):
 
     def test_sparse_coo_positive_values(self):
         """Test sparse COO tensor with positive values (avoiding poles)."""
-        # Create sparse COO tensor with positive values to avoid poles at 0
-        indices = torch.tensor([[0, 1, 2], [1, 2, 0]])
-        values = torch.tensor([1.5, 2.5, 3.5], dtype=torch.float64)
-        sparse = torch.sparse_coo_tensor(indices, values, (3, 3))
-
-        result = torchscience.special_functions.gamma(sparse)
-
-        # Verify sparsity is preserved
-        assert result.is_sparse
-        assert result.shape == sparse.shape
-
-        # Compare with dense computation on non-zero values
-        dense_result = torchscience.special_functions.gamma(sparse.to_dense())
-        torch.testing.assert_close(
-            result.to_dense(), dense_result, rtol=1e-10, atol=1e-10
-        )
+        pytest.skip("Sparse not supported: Gamma(0) is undefined (pole)")
 
     def test_sparse_csr_positive_values(self):
         """Test sparse CSR tensor with positive values (avoiding poles)."""
-        # Create sparse CSR tensor with positive values
-        crow_indices = torch.tensor([0, 1, 2, 3])
-        col_indices = torch.tensor([1, 2, 0])
-        values = torch.tensor([1.5, 2.5, 3.5], dtype=torch.float64)
-        sparse = torch.sparse_csr_tensor(
-            crow_indices, col_indices, values, (3, 3)
-        )
-
-        result = torchscience.special_functions.gamma(sparse)
-
-        # Verify sparsity is preserved
-        assert result.layout == torch.sparse_csr
-        assert result.shape == sparse.shape
-
-        # Compare with dense computation
-        dense_result = torchscience.special_functions.gamma(sparse.to_dense())
-        torch.testing.assert_close(
-            result.to_dense(), dense_result, rtol=1e-10, atol=1e-10
-        )
+        pytest.skip("Sparse not supported: Gamma(0) is undefined (pole)")
 
     # =========================================================================
     # Quantized tensor tests

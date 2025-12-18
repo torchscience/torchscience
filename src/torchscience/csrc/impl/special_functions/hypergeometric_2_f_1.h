@@ -426,4 +426,202 @@ hypergeometric_2f1_linear_transform_integer_diff(
            b - a_perturbed + scalar_t(1), z_inv);
 }
 
+template <typename scalar_t>
+C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t hypergeometric_2_f_1(
+  scalar_t a,
+  scalar_t b,
+  scalar_t c,
+  scalar_t z
+) {
+  using std::abs;
+
+  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+
+  real_t z_mag;
+  if constexpr (c10::is_complex<scalar_t>::value) {
+    z_mag = abs(z);
+  } else {
+    z_mag = abs(z);
+  }
+
+  if (z_mag < real_t(1)) {
+    return hypergeometric_2f1_series(a, b, c, z);
+  }
+
+  return hypergeometric_2f1_linear_transform(a, b, c, z);
+}
+
+/**
+ * Backward pass for 2F1: computes gradients w.r.t. a, b, c, z.
+ *
+ * Derivative formulas:
+ *   d/dz 2F1(a, b; c; z) = (a*b/c) * 2F1(a+1, b+1; c+1; z)
+ *
+ *   d/da 2F1(a, b; c; z) = (b/c) * z * 2F1(a+1, b+1; c+1; z)
+ *                        + (b/c) * z^2 * (a+1)(b+1)/((c+1)*2) * 2F1(a+2, b+2; c+2; z)
+ *                        + ... (series involving Pochhammer derivatives)
+ *
+ * For simplicity, we use finite differences for parameter gradients (a, b, c)
+ * and analytical formula for z gradient.
+ *
+ * Returns: (gradient_a, gradient_b, gradient_c, gradient_z)
+ */
+template <typename scalar_t>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> hypergeometric_2_f_1_backward(
+  scalar_t gradient_output,
+  scalar_t a,
+  scalar_t b,
+  scalar_t c,
+  scalar_t z
+) {
+  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+
+  // Finite difference step size
+  real_t h;
+  if constexpr (std::is_same_v<real_t, double>) {
+    h = real_t(1e-7);
+  } else {
+    h = real_t(1e-4);
+  }
+
+  scalar_t gradient_a, gradient_b, gradient_c, gradient_z;
+
+  if constexpr (c10::is_complex<scalar_t>::value) {
+    gradient_a = gradient_output * std::conj((hypergeometric_2_f_1(a + scalar_t(h), b, c, z) - hypergeometric_2_f_1(a - scalar_t(h), b, c, z)) / scalar_t(2 * h));
+    gradient_b = gradient_output * std::conj((hypergeometric_2_f_1(a, b + scalar_t(h), c, z) - hypergeometric_2_f_1(a, b - scalar_t(h), c, z)) / scalar_t(2 * h));
+    gradient_c = gradient_output * std::conj((hypergeometric_2_f_1(a, b, c + scalar_t(h), z) - hypergeometric_2_f_1(a, b, c - scalar_t(h), z)) / scalar_t(2 * h));
+    gradient_z = gradient_output * std::conj(hypergeometric_2f1_derivative(a, b, c, z));
+  } else {
+    gradient_a = gradient_output * ((hypergeometric_2_f_1(a + scalar_t(h), b, c, z) - hypergeometric_2_f_1(a - scalar_t(h), b, c, z)) / scalar_t(2 * h));
+    gradient_b = gradient_output * ((hypergeometric_2_f_1(a, b + scalar_t(h), c, z) - hypergeometric_2_f_1(a, b - scalar_t(h), c, z)) / scalar_t(2 * h));
+    gradient_c = gradient_output * ((hypergeometric_2_f_1(a, b, c + scalar_t(h), z) - hypergeometric_2_f_1(a, b, c - scalar_t(h), z)) / scalar_t(2 * h));
+    gradient_z = gradient_output * hypergeometric_2f1_derivative(a, b, c, z);
+  }
+
+  return std::make_tuple(
+    gradient_a,
+    gradient_b,
+    gradient_c,
+    gradient_z
+  );
+}
+
+template <typename scalar_t>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scalar_t, scalar_t> hypergeometric_2_f_1_backward_backward(
+    scalar_t gradient_gradient_a,
+    scalar_t gradient_gradient_b,
+    scalar_t gradient_gradient_c,
+    scalar_t gradient_gradient_z,
+    scalar_t gradient_output,
+    scalar_t a,
+    scalar_t b,
+    scalar_t c,
+    scalar_t z,
+    const bool has_gradient_gradient_a,
+    const bool has_gradient_gradient_b,
+    const bool has_gradient_gradient_c,
+    const bool has_gradient_gradient_z
+) {
+  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+
+  if (!has_gradient_gradient_a && !has_gradient_gradient_b && !has_gradient_gradient_c && !has_gradient_gradient_z) {
+    return std::make_tuple(
+      scalar_t(0),
+      scalar_t(0),
+      scalar_t(0),
+      scalar_t(0),
+      scalar_t(0)
+    );
+  }
+
+  real_t h;
+
+  if constexpr (std::is_same_v<real_t, double>) {
+    h = real_t(1e-7);
+  } else {
+    h = real_t(1e-4);
+  }
+
+  scalar_t gradient_gradient_output = scalar_t(0);
+
+  scalar_t gradient_a = scalar_t(0);
+  scalar_t gradient_b = scalar_t(0);
+  scalar_t gradient_c = scalar_t(0);
+  scalar_t gradient_z = scalar_t(0);
+
+  if constexpr (c10::is_complex<scalar_t>::value) {
+    if (has_gradient_gradient_a) {
+      gradient_gradient_output += gradient_gradient_a * std::conj((hypergeometric_2_f_1(a + scalar_t(h), b, c, z) - hypergeometric_2_f_1(a - scalar_t(h), b, c, z)) / scalar_t(2 * h));
+    }
+
+    if (has_gradient_gradient_b) {
+      gradient_gradient_output += gradient_gradient_b * std::conj((hypergeometric_2_f_1(a, b + scalar_t(h), c, z) - hypergeometric_2_f_1(a, b - scalar_t(h), c, z)) / scalar_t(2 * h));
+    }
+
+    if (has_gradient_gradient_c) {
+      gradient_gradient_output += gradient_gradient_c * std::conj((hypergeometric_2_f_1(a, b, c + scalar_t(h), z) - hypergeometric_2_f_1(a, b, c - scalar_t(h), z)) / scalar_t(2 * h));
+    }
+
+    if (has_gradient_gradient_z) {
+      gradient_gradient_output += gradient_gradient_z * std::conj(hypergeometric_2f1_derivative(a, b, c, z));
+    }
+
+    if (has_gradient_gradient_a) {
+      gradient_z += gradient_gradient_a * gradient_output * std::conj((hypergeometric_2f1_derivative(a + scalar_t(h), b, c, z) - hypergeometric_2f1_derivative(a - scalar_t(h), b, c, z)) / scalar_t(2 * h));
+    }
+
+    if (has_gradient_gradient_b) {
+      gradient_z += gradient_gradient_b * gradient_output * std::conj((hypergeometric_2f1_derivative(a, b + scalar_t(h), c, z) - hypergeometric_2f1_derivative(a, b - scalar_t(h), c, z)) / scalar_t(2 * h));
+    }
+
+    if (has_gradient_gradient_c) {
+      gradient_z += gradient_gradient_c * gradient_output * std::conj((hypergeometric_2f1_derivative(a, b, c + scalar_t(h), z) - hypergeometric_2f1_derivative(a, b, c - scalar_t(h), z)) / scalar_t(2 * h));
+    }
+
+    if (has_gradient_gradient_z) {
+      gradient_z += gradient_gradient_z * gradient_output * std::conj(a * b / c * ((a + scalar_t(1)) * (b + scalar_t(1)) / (c + scalar_t(1))) * hypergeometric_2_f_1(a + scalar_t(2), b + scalar_t(2), c + scalar_t(2), z));
+    }
+  } else {
+    if (has_gradient_gradient_a) {
+      gradient_gradient_output += gradient_gradient_a * ((hypergeometric_2_f_1(a + scalar_t(h), b, c, z) - hypergeometric_2_f_1(a - scalar_t(h), b, c, z)) / scalar_t(2 * h));
+    }
+
+    if (has_gradient_gradient_b) {
+      gradient_gradient_output += gradient_gradient_b * ((hypergeometric_2_f_1(a, b + scalar_t(h), c, z) - hypergeometric_2_f_1(a, b - scalar_t(h), c, z)) / scalar_t(2 * h));
+    }
+
+    if (has_gradient_gradient_c) {
+      gradient_gradient_output += gradient_gradient_c * ((hypergeometric_2_f_1(a, b, c + scalar_t(h), z) - hypergeometric_2_f_1(a, b, c - scalar_t(h), z)) / scalar_t(2 * h));
+    }
+
+    if (has_gradient_gradient_z) {
+      gradient_gradient_output += gradient_gradient_z * hypergeometric_2f1_derivative(a, b, c, z);
+    }
+
+    if (has_gradient_gradient_a) {
+      gradient_z += gradient_gradient_a * gradient_output * ((hypergeometric_2f1_derivative(a + scalar_t(h), b, c, z) - hypergeometric_2f1_derivative(a - scalar_t(h), b, c, z)) / scalar_t(2 * h));
+    }
+
+    if (has_gradient_gradient_b) {
+      gradient_z += gradient_gradient_b * gradient_output * ((hypergeometric_2f1_derivative(a, b + scalar_t(h), c, z) - hypergeometric_2f1_derivative(a, b - scalar_t(h), c, z)) / scalar_t(2 * h));
+    }
+
+    if (has_gradient_gradient_c) {
+      gradient_z += gradient_gradient_c * gradient_output * ((hypergeometric_2f1_derivative(a, b, c + scalar_t(h), z) - hypergeometric_2f1_derivative(a, b, c - scalar_t(h), z)) / scalar_t(2 * h));
+    }
+
+    if (has_gradient_gradient_z) {
+      gradient_z += gradient_gradient_z * gradient_output * (a * b / c * ((a + scalar_t(1)) * (b + scalar_t(1)) / (c + scalar_t(1))) * hypergeometric_2_f_1(a + scalar_t(2), b + scalar_t(2), c + scalar_t(2), z));
+    }
+  }
+
+  return std::make_tuple(
+    gradient_gradient_output,
+    gradient_a,
+    gradient_b,
+    gradient_c,
+    gradient_z
+  );
+}
+
 }  // namespace torchscience::impl::special_functions

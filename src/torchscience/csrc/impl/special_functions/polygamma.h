@@ -166,7 +166,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t polygamma(int n, scalar_t x) {
     }
   }
 
-  scalar_t result = scalar_t(0);
+  scalar_t output = scalar_t(0);
 
   // Use recurrence to shift x to x >= 7
   // ψ^(n)(x+1) = ψ^(n)(x) + (-1)^n * n! / x^(n+1)
@@ -176,43 +176,19 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t polygamma(int n, scalar_t x) {
   scalar_t n_factorial = scalar_t(tgamma(real_t(n + 1)));
 
   while (x < shift_threshold) {
-    result -= sign * n_factorial / pow(x, scalar_t(n + 1));
+    output -= sign * n_factorial / pow(x, scalar_t(n + 1));
     x += scalar_t(1);
   }
 
-  // Asymptotic expansion for large x
-  // ψ^(n)(x) ~ (-1)^(n+1) * [(n-1)!/x^n + n!/(2x^(n+1)) + ...]
-  //
-  // We compute the leading terms of the asymptotic expansion
-  scalar_t asymp_sign = (n % 2 == 0) ? scalar_t(-1) : scalar_t(1);
-  scalar_t nm1_factorial = scalar_t(tgamma(real_t(n)));  // (n-1)!
+  scalar_t asymp_sign;
 
-  scalar_t inv_x = scalar_t(1) / x;
-  scalar_t inv_x_n = pow(inv_x, scalar_t(n));
-  scalar_t inv_x_np1 = inv_x_n * inv_x;
+  if (n % 2 == 0) {
+    asymp_sign = scalar_t(-1);
+  } else {
+    asymp_sign = scalar_t(1);
+  }
 
-  result += asymp_sign * (nm1_factorial * inv_x_n + n_factorial * inv_x_np1 / scalar_t(2));
-
-  // Add Bernoulli correction terms
-  // Coefficient for B_{2k} term: (2k+n-1)! / ((2k)! * (n-1)!)
-  scalar_t inv_x2 = inv_x * inv_x;
-  scalar_t inv_x_power = inv_x_np1 * inv_x;  // Start at x^(n+2)
-
-  // Only add a few correction terms for numerical stability
-  // Term for k=1 (B_2): coefficient = (n+1)! / (2! * (n-1)!) = n*(n+1)/2
-  result += asymp_sign * scalar_t(bernoulli::B2) * scalar_t(n) * scalar_t(n + 1) / scalar_t(2) * inv_x_power;
-
-  inv_x_power *= inv_x2;
-  // Term for k=2 (B_4): coefficient = (n+3)! / (4! * (n-1)!) = n*(n+1)*(n+2)*(n+3)/24
-  result += asymp_sign * scalar_t(bernoulli::B4) *
-            scalar_t(n) * scalar_t(n + 1) * scalar_t(n + 2) * scalar_t(n + 3) / scalar_t(24) * inv_x_power;
-
-  inv_x_power *= inv_x2;
-  // Term for k=3 (B_6): coefficient = (n+5)! / (6! * (n-1)!)
-  result += asymp_sign * scalar_t(bernoulli::B6) *
-            scalar_t(n) * scalar_t(n + 1) * scalar_t(n + 2) * scalar_t(n + 3) * scalar_t(n + 4) * scalar_t(n + 5) / scalar_t(720) * inv_x_power;
-
-  return result;
+  return output + asymp_sign * (scalar_t(tgamma(real_t(n))) * pow(scalar_t(1) / x, scalar_t(n)) + n_factorial * (pow(scalar_t(1) / x, scalar_t(n)) * (scalar_t(1) / x)) / scalar_t(2)) + asymp_sign * scalar_t(bernoulli::B2) * scalar_t(n) * scalar_t(n + 1) / scalar_t(2) * (pow(scalar_t(1) / x, scalar_t(n)) * (scalar_t(1) / x) * (scalar_t(1) / x)) + asymp_sign * scalar_t(bernoulli::B4) * scalar_t(n) * scalar_t(n + 1) * scalar_t(n + 2) * scalar_t(n + 3) / scalar_t(24) * (pow(scalar_t(1) / x, scalar_t(n)) * (scalar_t(1) / x) * (scalar_t(1) / x) * (scalar_t(1) / x * (scalar_t(1) / x))) + asymp_sign * scalar_t(bernoulli::B6) * scalar_t(n) * scalar_t(n + 1) * scalar_t(n + 2) * scalar_t(n + 3) * scalar_t(n + 4) * scalar_t(n + 5) / scalar_t(720) * (pow(scalar_t(1) / x, scalar_t(n)) * (scalar_t(1) / x) * (scalar_t(1) / x) * (scalar_t(1) / x * (scalar_t(1) / x)) * (scalar_t(1) / x * (scalar_t(1) / x)));
 }
 
 }  // namespace torchscience::impl::special_functions

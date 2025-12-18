@@ -236,8 +236,28 @@ inline void reset_quadrature_diagnostics() {
 // from templates defined earlier.
 // Note: log_gamma_complex is now defined in hypergeometric_2_f_1.h (included above)
 
+// Forward declarations for log_beta (three overloads for complex, float/double, and half types)
 template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t log_beta(scalar_t a, scalar_t b);
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+std::enable_if_t<c10::is_complex<scalar_t>::value, scalar_t>
+log_beta(scalar_t a, scalar_t b);
+
+template <typename scalar_t>
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+std::enable_if_t<
+  !c10::is_complex<scalar_t>::value &&
+  (std::is_same_v<scalar_t, float> || std::is_same_v<scalar_t, double>),
+  scalar_t>
+log_beta(scalar_t a, scalar_t b);
+
+template <typename scalar_t>
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+std::enable_if_t<
+  !c10::is_complex<scalar_t>::value &&
+  !std::is_same_v<scalar_t, float> &&
+  !std::is_same_v<scalar_t, double>,
+  scalar_t>
+log_beta(scalar_t a, scalar_t b);
 
 // ============================================================================
 // Dynamic Iteration Limit Computation
@@ -685,13 +705,35 @@ incomplete_beta_param_derivs_asymptotic_zero(
  * Supports both real and complex arguments.
  */
 template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t log_beta(scalar_t a, scalar_t b) {
-  if constexpr (c10::is_complex<scalar_t>::value) {
-    return log_gamma_complex(a) + log_gamma_complex(b) - log_gamma_complex(a + b);
-  } else {
-    using std::lgamma;
-    return lgamma(a) + lgamma(b) - lgamma(a + b);
-  }
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+std::enable_if_t<
+  c10::is_complex<scalar_t>::value,
+  scalar_t>
+log_beta(scalar_t a, scalar_t b) {
+  return log_gamma_complex(a) + log_gamma_complex(b) - log_gamma_complex(a + b);
+}
+
+template <typename scalar_t>
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+std::enable_if_t<
+  !c10::is_complex<scalar_t>::value &&
+  (std::is_same_v<scalar_t, float> || std::is_same_v<scalar_t, double>),
+  scalar_t>
+log_beta(scalar_t a, scalar_t b) {
+  using std::lgamma;
+  return lgamma(a) + lgamma(b) - lgamma(a + b);
+}
+
+template <typename scalar_t>
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+std::enable_if_t<
+  !c10::is_complex<scalar_t>::value &&
+  !std::is_same_v<scalar_t, float> &&
+  !std::is_same_v<scalar_t, double>,
+  scalar_t>
+log_beta(scalar_t a, scalar_t b) {
+  // Compute in float32 for half-precision types
+  return static_cast<scalar_t>(log_beta(static_cast<float>(a), static_cast<float>(b)));
 }
 
 /**
@@ -1047,7 +1089,10 @@ incomplete_beta_parameter_derivatives(scalar_t z, scalar_t a, scalar_t b, scalar
   // Create cache for digamma values
   DiGammaCache<scalar_t> cache(a, b);
 
-  return incomplete_beta_parameter_derivatives_cached(z, a, b, I_z, exp(-log_beta(a, b)), cache);
+  // Explicit cast needed for half-precision types since std::exp may return float
+  scalar_t inv_beta = static_cast<scalar_t>(exp(-log_beta(a, b)));
+
+  return incomplete_beta_parameter_derivatives_cached(z, a, b, I_z, inv_beta, cache);
 }
 
 /**
@@ -1600,7 +1645,12 @@ incomplete_beta_backward_backward_extended(
     // gradient_b transforms from the second argument
 
     // Call double-backward at transformed point
-    auto [gg_out_t, grad_w, grad_first, grad_second] = incomplete_beta_backward_backward(
+    auto [
+      gg_out_t,
+      grad_w,
+      grad_first,
+      grad_second
+    ] = incomplete_beta_backward_backward(
         ggz, ggb, gga,  // Note: swap gga and ggb since args are swapped
         gradient_output, one_minus_z, b, a,
         has_ggz, has_ggb, has_gga  // Note: swap has_gga and has_ggb
@@ -1608,7 +1658,7 @@ incomplete_beta_backward_backward_extended(
 
     // Transform gradients back
     gradient_gradient_output = gg_out_t;
-    gradient_z = grad_w;  // w = 1-z transformation
+    gradient_z = -grad_w;  // w = 1-z transformation, dw/dz = -1
     gradient_a = -grad_second;  // a is third arg in I(w,b,a)
     gradient_b = -grad_first;   // b is second arg in I(w,b,a)
 
@@ -1620,28 +1670,29 @@ incomplete_beta_backward_backward_extended(
   real_t delta = real_t(1e-6);
 
   // Get first derivatives via backward
-  auto [grad_z, grad_a, grad_b] = incomplete_beta_backward_extended(
-      scalar_t(1), z, a, b);
+  auto [
+    grad_z,
+    grad_a,
+    grad_b
+  ] = incomplete_beta_backward_extended(scalar_t(1), z, a, b);
 
-  // For each gg input, compute its contribution via finite differences
   if (has_ggz) {
     gradient_gradient_output = gradient_gradient_output + ggz * grad_z;
 
-    // d^2I/dz^2 via finite difference
-    auto [grad_z_plus, grad_a_plus, grad_b_plus] = incomplete_beta_backward_extended(
-        scalar_t(1), z + scalar_t(delta), a, b);
-    scalar_t d2Idz2 = (grad_z_plus - grad_z) / scalar_t(delta);
-    scalar_t d2Idzda = (grad_a_plus - grad_a) / scalar_t(delta);
-    scalar_t d2Idzdb = (grad_b_plus - grad_b) / scalar_t(delta);
+    auto [
+      grad_z_plus,
+      grad_a_plus,
+      grad_b_plus
+    ] = incomplete_beta_backward_extended(scalar_t(1), z + scalar_t(delta), a, b);
 
     if constexpr (c10::is_complex<scalar_t>::value) {
-      gradient_z = gradient_z + conj(ggz) * gradient_output * conj(d2Idz2);
-      gradient_a = gradient_a + conj(ggz) * gradient_output * conj(d2Idzda);
-      gradient_b = gradient_b + conj(ggz) * gradient_output * conj(d2Idzdb);
+      gradient_z = gradient_z + conj(ggz) * gradient_output * conj((grad_z_plus - grad_z) / scalar_t(delta));
+      gradient_a = gradient_a + conj(ggz) * gradient_output * conj((grad_a_plus - grad_a) / scalar_t(delta));
+      gradient_b = gradient_b + conj(ggz) * gradient_output * conj((grad_b_plus - grad_b) / scalar_t(delta));
     } else {
-      gradient_z = gradient_z + ggz * gradient_output * d2Idz2;
-      gradient_a = gradient_a + ggz * gradient_output * d2Idzda;
-      gradient_b = gradient_b + ggz * gradient_output * d2Idzdb;
+      gradient_z = gradient_z + ggz * gradient_output * ((grad_z_plus - grad_z) / scalar_t(delta));
+      gradient_a = gradient_a + ggz * gradient_output * ((grad_a_plus - grad_a) / scalar_t(delta));
+      gradient_b = gradient_b + ggz * gradient_output * ((grad_b_plus - grad_b) / scalar_t(delta));
     }
   }
 
@@ -1815,7 +1866,10 @@ incomplete_beta_backward_backward(
 
     DiGammaCache<scalar_t> psi_cache(a, b);
 
-    auto [J_a, J_b] = log_weighted_beta_integrals(z, a, b);
+    auto [
+      J_a,
+      J_b
+    ] = log_weighted_beta_integrals(z, a, b);
 
     if (has_ggz) {
       gradient_gradient_output = gradient_gradient_output + ggz * exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b));
@@ -1826,7 +1880,11 @@ incomplete_beta_backward_backward(
     }
 
     if (has_gga || has_ggb) {
-      auto [K_aa, K_ab, K_bb] = doubly_log_weighted_beta_integrals(z, a, b);
+      auto [
+        K_aa,
+        K_ab,
+        K_bb
+      ] = doubly_log_weighted_beta_integrals(z, a, b);
 
       if (has_gga) {
         gradient_gradient_output = gradient_gradient_output + gga * (J_a * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab);

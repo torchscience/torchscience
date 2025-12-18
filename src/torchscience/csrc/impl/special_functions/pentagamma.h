@@ -100,7 +100,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t pentagamma(scalar_t x) {
     return x;
   }
 
-  scalar_t result = scalar_t(0);
+  scalar_t output = scalar_t(0);
 
   // For negative x, use reflection formula
   // ψ'''(1-x) + ψ'''(x) = 2π⁴ (1 + 2cos²(πx)) / sin⁴(πx)
@@ -121,28 +121,11 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t pentagamma(scalar_t x) {
   const scalar_t shift_threshold = scalar_t(7);
   while (x < shift_threshold) {
     scalar_t x2 = x * x;
-    result += scalar_t(6) / (x2 * x2);
+    output += scalar_t(6) / (x2 * x2);
     x += scalar_t(1);
   }
 
-  result += -scalar_t(2) * (scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x)) - scalar_t(3) * (scalar_t(1) / x * (scalar_t(1) / x)) * (scalar_t(1) / x * (scalar_t(1) / x)) - scalar_t(2) * (scalar_t(1) / x * (scalar_t(1) / x)) * (scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x));
-
-  scalar_t inv_x5 = scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x));
-  result += inv_x5 * (
-    scalar_t(12.0 * pentagamma_detail::B2) +                 // 12 * (1/6) = 2 / x⁵
-    scalar_t(1) / x * (scalar_t(1) / x) * (
-      scalar_t(30.0 * pentagamma_detail::B4) +               // 30 * (-1/30) = -1 / x⁷
-      scalar_t(1) / x * (scalar_t(1) / x) * (
-        scalar_t(56.0 * pentagamma_detail::B6) +             // 56 * (1/42) = 4/3 / x⁹
-        scalar_t(1) / x * (scalar_t(1) / x) * (
-          scalar_t(90.0 * pentagamma_detail::B8) +           // 90 * (-1/30) = -3 / x¹¹
-          scalar_t(1) / x * (scalar_t(1) / x) * scalar_t(132.0 * pentagamma_detail::B10)  // 132 * (5/66) = 10 / x¹³
-        )
-      )
-    )
-  );
-
-  return result;
+  return output + (-scalar_t(2) * (scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x)) - scalar_t(3) * (scalar_t(1) / x * (scalar_t(1) / x)) * (scalar_t(1) / x * (scalar_t(1) / x)) - scalar_t(2) * (scalar_t(1) / x * (scalar_t(1) / x)) * (scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x))) + scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x)) * ( scalar_t(12.0 * pentagamma_detail::B2) + scalar_t(1) / x * (scalar_t(1) / x) * ( scalar_t(30.0 * pentagamma_detail::B4) + scalar_t(1) / x * (scalar_t(1) / x) * ( scalar_t(56.0 * pentagamma_detail::B6) + scalar_t(1) / x * (scalar_t(1) / x) * ( scalar_t(90.0 * pentagamma_detail::B8) + scalar_t(1) / x * (scalar_t(1) / x) * scalar_t(132.0 * pentagamma_detail::B10)))));
 }
 
 /**

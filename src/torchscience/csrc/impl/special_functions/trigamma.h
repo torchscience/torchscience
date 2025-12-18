@@ -67,16 +67,11 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t trigamma(scalar_t x) {
   // For negative x, use reflection formula
   if constexpr (!c10::is_complex<scalar_t>::value) {
     if (x <= scalar_t(0)) {
-      // Check if x is a non-positive integer (pole)
       if (x == floor(x)) {
         return std::numeric_limits<scalar_t>::quiet_NaN();
       }
-      // Reflection: ψ'(1-x) + ψ'(x) = π²/sin²(πx)
-      // So: ψ'(x) = π²/sin²(πx) - ψ'(1-x)
-      // Use range-reduced sin_pi for numerical stability with large negative x
-      scalar_t sin_pi_x = sin_pi(x);
-      scalar_t pi_csc_sq = (pi * pi) / (sin_pi_x * sin_pi_x);
-      return pi_csc_sq - trigamma(scalar_t(1) - x);
+
+      return pi * pi / (sin_pi(x) * sin_pi(x)) - trigamma(scalar_t(1) - x);
     }
   }
 
@@ -121,7 +116,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE c10::complex<T> trigamma(c10::complex<T> x) {
   // Use recurrence to shift x to Re(x) >= 6
   while (x.real() < T(6)) {
     output = output + c10::complex<T>(1, 0) / (x * x);
-    
+
     x = x + c10::complex<T>(1, 0);
   }
 

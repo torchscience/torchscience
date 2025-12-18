@@ -37,6 +37,10 @@ TORCH_LIBRARY(torchscience, m) {
   m.def("gamma_backward(Tensor grad_output, Tensor z) -> Tensor");
   m.def("gamma_backward_backward(Tensor gradient_gradient_z, Tensor gradient_output, Tensor z) -> (Tensor, Tensor)");
 
+  m.def("hypergeometric_2_f_1(Tensor a, Tensor b, Tensor c, Tensor z) -> Tensor");
+  m.def("hypergeometric_2_f_1_backward(Tensor gradient_output, Tensor a, Tensor b, Tensor c, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
+  m.def("hypergeometric_2_f_1_backward_backward(Tensor gradient_gradient_a, Tensor gradient_gradient_b, Tensor gradient_gradient_c, Tensor gradient_gradient_z, Tensor gradient_output, Tensor a, Tensor b, Tensor c, Tensor z) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+
   m.def("incomplete_beta(Tensor z, Tensor a, Tensor b) -> Tensor");
   m.def("incomplete_beta_backward(Tensor gradient_output, Tensor z, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
   m.def("incomplete_beta_backward_backward(Tensor gradient_gradient_z, Tensor gradient_gradient_a, Tensor gradient_gradient_b, Tensor gradient_output, Tensor z, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor, Tensor)");

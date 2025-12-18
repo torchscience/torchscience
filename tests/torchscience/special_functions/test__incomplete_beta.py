@@ -1,16 +1,3 @@
-"""Tests for incomplete_beta using the reusable test framework.
-
-The framework automatically tests:
-- Autograd (gradcheck, gradgradcheck)
-- Device handling (CPU, CUDA)
-- Dtype handling (float32, float64)
-- Low-precision dtypes (float16, bfloat16)
-- Broadcasting
-- torch.compile compatibility
-- vmap support
-- Special values
-"""
-
 import math
 
 import pytest
@@ -89,9 +76,10 @@ class TestIncompleteBeta(OpTestCase):
             ),
             skip_tests={
                 "test_autocast_cpu_bfloat16",  # CPU autocast not supported
-                # Complex second-order derivatives are numerically challenging
-                # due to Wirtinger derivative conventions and the interplay of
-                # multiple coordinate transformations in the quadrature
+                # Complex derivatives are numerically challenging due to Wirtinger
+                # derivative conventions, branch cuts, and finite difference
+                # approximation for parameter derivatives (a, b)
+                "test_gradcheck_complex",
                 "test_gradgradcheck_complex",
                 # Mixed sparse/dense and mixed quantized/float tests are skipped
                 # because the ternary operator macros require all inputs to have

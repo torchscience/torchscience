@@ -121,4 +121,14 @@ class BroadcastingMixin:
             inputs.append(tensor)
 
         result = self.descriptor.func(*inputs)
-        assert result.shape == (2, 3, 4)
+
+        # Expected shape depends on arity - only dimensions used by inputs contribute
+        arity = self.descriptor.arity
+        if arity == 2:
+            expected_shape = (2, 3, 1)  # Only first two shape patterns used
+        elif arity == 3:
+            expected_shape = (2, 3, 4)  # First three shape patterns used
+        else:
+            expected_shape = (2, 3, 4)  # Four or more inputs
+
+        assert result.shape == expected_shape
