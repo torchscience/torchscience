@@ -62,7 +62,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t trigamma(scalar_t x) {
     return x;
   }
 
-  scalar_t result = scalar_t(0);
+  scalar_t output = scalar_t(0);
 
   // For negative x, use reflection formula
   if constexpr (!c10::is_complex<scalar_t>::value) {
@@ -83,44 +83,11 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t trigamma(scalar_t x) {
   // Use recurrence to shift x to x >= 6 for asymptotic expansion
   const scalar_t shift_threshold = scalar_t(6);
   while (x < shift_threshold) {
-    result += scalar_t(1) / (x * x);
+    output += scalar_t(1) / (x * x);
     x += scalar_t(1);
   }
 
-  // Asymptotic expansion for large x
-  //
-  // ψ'(x) ≈ 1/x + 1/(2x²) + Σ_{k=1}^∞ B_{2k}/x^{2k+1}
-  //
-  // where B_{2k} are Bernoulli numbers: B_2=1/6, B_4=-1/30, B_6=1/42, B_8=-1/30, B_10=5/66
-  //
-  // The coefficients used are |B_{2k}|:
-  //   k=1: |B_2|  = 1/6
-  //   k=2: |B_4|  = 1/30
-  //   k=3: |B_6|  = 1/42
-  //   k=4: |B_8|  = 1/30
-  //   k=5: |B_10| = 5/66
-  //
-  // The alternating signs of Bernoulli numbers (+, -, +, -, +) are handled by
-  // the nested subtraction structure combined with the leading plus sign.
-  scalar_t inv_x = scalar_t(1) / x;
-  scalar_t inv_x2 = inv_x * inv_x;
-
-  result += inv_x + inv_x2 / scalar_t(2);
-  result += inv_x2 * inv_x * (
-    scalar_t(1.0 / 6.0) -                // |B_2| = 1/6
-    inv_x2 * (
-      scalar_t(1.0 / 30.0) -             // |B_4| = 1/30
-      inv_x2 * (
-        scalar_t(1.0 / 42.0) -           // |B_6| = 1/42
-        inv_x2 * (
-          scalar_t(1.0 / 30.0) -         // |B_8| = 1/30
-          inv_x2 * scalar_t(5.0 / 66.0)  // |B_10| = 5/66
-        )
-      )
-    )
-  );
-
-  return result;
+  return output + (scalar_t(1) / x + scalar_t(1) / x * (scalar_t(1) / x) / scalar_t(2)) + scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x) * (scalar_t(1.0 / 6.0) - scalar_t(1) / x * (scalar_t(1) / x) * ( scalar_t(1.0 / 30.0) - scalar_t(1) / x * (scalar_t(1) / x) * ( scalar_t(1.0 / 42.0) - scalar_t(1) / x * (scalar_t(1) / x) * ( scalar_t(1.0 / 30.0) - scalar_t(1) / x * (scalar_t(1) / x) * scalar_t(5.0 / 66.0)))));
 }
 
 /**
@@ -143,7 +110,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE c10::complex<T> trigamma(c10::complex<T> x) {
     );
   }
 
-  c10::complex<T> result(0, 0);
+  c10::complex<T> output(0, 0);
 
   // For Re(x) < 0.5, use reflection formula
   // Use range-reduced sin_pi for numerical stability with large negative Re(x)
@@ -153,11 +120,12 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE c10::complex<T> trigamma(c10::complex<T> x) {
 
   // Use recurrence to shift x to Re(x) >= 6
   while (x.real() < T(6)) {
-    result = result + c10::complex<T>(1, 0) / (x * x);
+    output = output + c10::complex<T>(1, 0) / (x * x);
+    
     x = x + c10::complex<T>(1, 0);
   }
 
-  return result + c10::complex<T>(1, 0) / x + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) / c10::complex<T>(2, 0) + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 6.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 30.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 42.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 30.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * c10::complex<T>(T(5.0 / 66.0), 0) ) ) ) );
+  return output + c10::complex<T>(1, 0) / x + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) / c10::complex<T>(2, 0) + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 6.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 30.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 42.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 30.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * c10::complex<T>(T(5.0 / 66.0), 0) ) ) ) );
 }
 
 }  // namespace torchscience::impl::special_functions

@@ -111,14 +111,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t pentagamma(scalar_t x) {
       if (x == floor(x)) {
         return std::numeric_limits<scalar_t>::quiet_NaN();
       }
-      // Use range-reduced sin_pi and cos_pi for numerical stability
-      scalar_t sin_pi_x = sin_pi(x);
-      scalar_t cos_pi_x = cos_pi(x);
-      scalar_t sin_sq = sin_pi_x * sin_pi_x;
-      scalar_t sin_fourth = sin_sq * sin_sq;
-      scalar_t cos_sq = cos_pi_x * cos_pi_x;
-      scalar_t reflection_term = scalar_t(2) * pi4 * (scalar_t(1) + scalar_t(2) * cos_sq) / sin_fourth;
-      return reflection_term - pentagamma(scalar_t(1) - x);
+      return scalar_t(2) * pi4 * (scalar_t(1) + scalar_t(2) * (cos_pi(x) * cos_pi(x))) / (sin_pi(x) * sin_pi(x) * (sin_pi(x) * sin_pi(x))) - pentagamma(scalar_t(1) - x);
     }
   }
 
@@ -134,8 +127,6 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t pentagamma(scalar_t x) {
 
   result += -scalar_t(2) * (scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x)) - scalar_t(3) * (scalar_t(1) / x * (scalar_t(1) / x)) * (scalar_t(1) / x * (scalar_t(1) / x)) - scalar_t(2) * (scalar_t(1) / x * (scalar_t(1) / x)) * (scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x));
 
-  // Add Bernoulli terms starting at 1/x⁵
-  // Coefficient for B_{2k} is (2k+2)(2k+1) * B_{2k}
   scalar_t inv_x5 = scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x * (scalar_t(1) / x) * (scalar_t(1) / x));
   result += inv_x5 * (
     scalar_t(12.0 * pentagamma_detail::B2) +                 // 12 * (1/6) = 2 / x⁵
@@ -173,7 +164,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE c10::complex<T> pentagamma(c10::complex<T> x) 
     );
   }
 
-  c10::complex<T> result(0, 0);
+  c10::complex<T> output(0, 0);
 
   if (x.real() < T(0.5)) {
     return c10::complex<T>(T(2) * pi4, 0) * (c10::complex<T>(1, 0) + c10::complex<T>(2, 0) * (cos_pi(x) * cos_pi(x))) / (sin_pi(x) * sin_pi(x) * (sin_pi(x) * sin_pi(x))) - pentagamma(c10::complex<T>(1, 0) - x);
@@ -182,13 +173,11 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE c10::complex<T> pentagamma(c10::complex<T> x) 
   // Use recurrence to shift x to Re(x) >= 7
   while (x.real() < T(7)) {
     auto x2 = x * x;
-    result = result + c10::complex<T>(6, 0) / (x2 * x2);
+    output = output + c10::complex<T>(6, 0) / (x2 * x2);
     x = x + c10::complex<T>(1, 0);
   }
 
-  result = result - c10::complex<T>(2, 0) * (c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (c10::complex<T>(1, 0) / x)) - c10::complex<T>(3, 0) * (c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x)) * (c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x)) - c10::complex<T>(2, 0) * (c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x)) * (c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (c10::complex<T>(1, 0) / x));
-
-  return result + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (c10::complex<T>(1, 0) / x)) * ( c10::complex<T>(T(12.0 * pentagamma_detail::B2), 0) + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(30.0 * pentagamma_detail::B4), 0) + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(56.0 * pentagamma_detail::B6), 0) + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(90.0 * pentagamma_detail::B8), 0) + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * c10::complex<T>(T(132.0 * pentagamma_detail::B10), 0) ) ) ) );
+  return output - c10::complex<T>(2, 0) * (c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (c10::complex<T>(1, 0) / x)) - c10::complex<T>(3, 0) * (c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x)) * (c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x)) - c10::complex<T>(2, 0) * (c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x)) * (c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (c10::complex<T>(1, 0) / x)) + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (c10::complex<T>(1, 0) / x)) * ( c10::complex<T>(T(12.0 * pentagamma_detail::B2), 0) + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(30.0 * pentagamma_detail::B4), 0) + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(56.0 * pentagamma_detail::B6), 0) + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(90.0 * pentagamma_detail::B8), 0) + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * c10::complex<T>(T(132.0 * pentagamma_detail::B10), 0) ) ) ) );
 }
 
 }  // namespace torchscience::impl::special_functions
