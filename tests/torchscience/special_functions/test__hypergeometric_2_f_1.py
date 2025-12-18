@@ -22,6 +22,14 @@ try:
 except ImportError:
     HAS_SCIPY = False
 
+# Optional sympy import for symbolic verification
+try:
+    import sympy  # noqa: F401
+
+    HAS_SYMPY = True
+except ImportError:
+    HAS_SYMPY = False
+
 
 def scipy_hyp2f1(a: float, b: float, c: float, z: float) -> float:
     """Reference implementation using SciPy's hyp2f1."""

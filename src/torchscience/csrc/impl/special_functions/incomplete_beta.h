@@ -234,7 +234,7 @@ inline void reset_quadrature_diagnostics() {
 // ============================================================================
 // These declarations enable functions defined later in this file to be called
 // from templates defined earlier.
-// Note: log_gamma_complex is now defined in hypergeometric_2_f_1.h (included above)
+// Note: log_gamma_complex is defined in log_gamma.h (included via hypergeometric_2_f_1.h)
 
 // Forward declarations for log_beta (three overloads for complex, float/double, and half types)
 template <typename scalar_t>
@@ -697,7 +697,7 @@ incomplete_beta_param_derivs_asymptotic_zero(
 // ============================================================================
 // Helper functions
 // ============================================================================
-// Note: log_gamma_complex is now defined in hypergeometric_2_f_1.h
+// Note: log_gamma_complex is defined in log_gamma.h
 
 /**
  * Log of the beta function: log(B(a, b)) = log(Gamma(a)) + log(Gamma(b)) - log(Gamma(a+b))
