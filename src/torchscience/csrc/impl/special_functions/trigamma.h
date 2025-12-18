@@ -148,9 +148,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE c10::complex<T> trigamma(c10::complex<T> x) {
   // For Re(x) < 0.5, use reflection formula
   // Use range-reduced sin_pi for numerical stability with large negative Re(x)
   if (x.real() < T(0.5)) {
-    auto sin_pi_x = sin_pi(x);
-    auto pi_csc_sq = c10::complex<T>(pi * pi, 0) / (sin_pi_x * sin_pi_x);
-    return pi_csc_sq - trigamma(c10::complex<T>(1, 0) - x);
+    return c10::complex<T>(pi * pi, 0) / (sin_pi(x) * sin_pi(x)) - trigamma(c10::complex<T>(1, 0) - x);
   }
 
   // Use recurrence to shift x to Re(x) >= 6
@@ -159,26 +157,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE c10::complex<T> trigamma(c10::complex<T> x) {
     x = x + c10::complex<T>(1, 0);
   }
 
-  // Asymptotic expansion
-  auto inv_x = c10::complex<T>(1, 0) / x;
-  auto inv_x2 = inv_x * inv_x;
-
-  result = result + inv_x + inv_x2 / c10::complex<T>(2, 0);
-  result = result + inv_x2 * inv_x * (
-    c10::complex<T>(T(1.0 / 6.0), 0) -
-    inv_x2 * (
-      c10::complex<T>(T(1.0 / 30.0), 0) -
-      inv_x2 * (
-        c10::complex<T>(T(1.0 / 42.0), 0) -
-        inv_x2 * (
-          c10::complex<T>(T(1.0 / 30.0), 0) -
-          inv_x2 * c10::complex<T>(T(5.0 / 66.0), 0)
-        )
-      )
-    )
-  );
-
-  return result;
+  return result + c10::complex<T>(1, 0) / x + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) / c10::complex<T>(2, 0) + c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 6.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 30.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 42.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * ( c10::complex<T>(T(1.0 / 30.0), 0) - c10::complex<T>(1, 0) / x * (c10::complex<T>(1, 0) / x) * c10::complex<T>(T(5.0 / 66.0), 0) ) ) ) );
 }
 
 }  // namespace torchscience::impl::special_functions
