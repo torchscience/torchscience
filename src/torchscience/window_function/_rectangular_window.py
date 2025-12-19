@@ -3,6 +3,8 @@ from typing import Optional
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def rectangular_window(
     m: int,
@@ -43,8 +45,7 @@ def rectangular_window(
     Parameters
     ----------
     m : int
-        Number of points in the output window. If M <= 0, an empty tensor
-        is returned.
+        Number of points in the output window. Must be positive.
     dtype : torch.dtype, optional
         The desired data type of the returned tensor. If None, uses the
         default floating point type (torch.float32).
@@ -72,10 +73,10 @@ def rectangular_window(
     >>> rectangular_window(4, dtype=torch.float64)
     tensor([1., 1., 1., 1.], dtype=torch.float64)
 
-    Empty window for M <= 0:
-
-    >>> rectangular_window(0)
-    tensor([])
+    Raises
+    ------
+    RuntimeError
+        If m <= 0.
 
     See Also
     --------

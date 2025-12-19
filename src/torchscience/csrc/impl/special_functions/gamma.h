@@ -187,48 +187,48 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::enable_if_t<c10::is_complex<T>::value, T>
   using std::isinf;
   using std::isnan;
 
-  using T = typename T::value_type;
-  const T pi = T(kPi);
+  using scalar_t = typename T::value_type;
+  const scalar_t pi = scalar_t(kPi);
 
   // Handle NaN propagation: if either component is NaN, return NaN
   if (isnan(z.real()) || isnan(z.imag())) {
     return T(
-      std::numeric_limits<T>::quiet_NaN(),
-      std::numeric_limits<T>::quiet_NaN()
+      std::numeric_limits<scalar_t>::quiet_NaN(),
+      std::numeric_limits<scalar_t>::quiet_NaN()
     );
   }
 
   // For z on or very close to the real axis, use real-valued computation
   // to avoid inf*0=nan issues that occur with complex exp when the result
   // overflows. This handles cases like gamma(1001.5 + 0j) correctly.
-  const T imag_tolerance = std::numeric_limits<T>::epsilon() * T(100);
+  const scalar_t imag_tolerance = std::numeric_limits<scalar_t>::epsilon() * scalar_t(100);
   if (abs(z.imag()) <= imag_tolerance) {
-    T real_result = gamma(z.real());
-    return T(real_result, T(0));
+    scalar_t real_result = gamma(z.real());
+    return T(real_result, scalar_t(0));
   }
 
   // Check for poles at non-positive integers (z = 0, -1, -2, ...)
   // Must check before reflection formula to avoid division by zero in sin(πz)
   if (is_nonpositive_integer(z)) {
     return T(
-      std::numeric_limits<T>::infinity(),
-      T(0)
+      std::numeric_limits<scalar_t>::infinity(),
+      scalar_t(0)
     );
   }
 
-  const auto real = [](T val) { return T(val, T(0)); };
+  const auto real = [](scalar_t val) { return T(val, scalar_t(0)); };
 
-  if (z.real() < T(0.5)) {
+  if (z.real() < scalar_t(0.5)) {
     auto gamma_1_minus_z = gamma(T(1, 0) - z);
 
     if (isinf(gamma_1_minus_z.real()) || isinf(gamma_1_minus_z.imag()) || isnan(gamma_1_minus_z.real()) || isnan(gamma_1_minus_z.imag())) {
-      return T(T(0), T(0));
+      return T(scalar_t(0), scalar_t(0));
     }
 
     return real(pi) / (sin_pi(z) * gamma_1_minus_z);
   }
 
-  return real(T(kSqrt2Pi)) * exp((z - real(T(0.5))) * log(z + real(T(kLanczosG) - T(0.5))) - (z + real(T(kLanczosG) - T(0.5)))) * lanczos_series(z);
+  return real(scalar_t(kSqrt2Pi)) * exp((z - real(scalar_t(0.5))) * log(z + real(scalar_t(kLanczosG) - scalar_t(0.5))) - (z + real(scalar_t(kLanczosG) - scalar_t(0.5)))) * lanczos_series(z);
 }
 
 // ============================================================================

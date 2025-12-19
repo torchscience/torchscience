@@ -115,31 +115,27 @@ class CreationOpTestCase(ABC):
 
     def test_output_shape(self):
         """Test that output has correct shape."""
-        for m in [0, 1, 5, 10, 100]:
+        for m in [1, 5, 10, 100]:
             result = self.descriptor.func(m)
-            expected_size = max(0, m)
-            assert result.shape == (expected_size,), (
-                f"Expected shape ({expected_size},), got {result.shape} for m={m}"
+            assert result.shape == (m,), (
+                f"Expected shape ({m},), got {result.shape} for m={m}"
             )
 
-    def test_empty_output_for_zero_size(self):
-        """Test that m=0 returns an empty tensor."""
-        result = self.descriptor.func(0)
-        assert result.numel() == 0, (
-            f"Expected empty tensor for m=0, got {result.numel()} elements"
-        )
-        assert result.shape == (0,), f"Expected shape (0,), got {result.shape}"
+    def test_error_for_zero_size(self):
+        """Test that m=0 raises an error."""
+        import pytest
 
-    def test_empty_output_for_negative_size(self):
-        """Test that m<0 returns an empty tensor."""
-        result = self.descriptor.func(-1)
-        assert result.numel() == 0, (
-            f"Expected empty tensor for m=-1, got {result.numel()} elements"
-        )
-        result = self.descriptor.func(-10)
-        assert result.numel() == 0, (
-            f"Expected empty tensor for m=-10, got {result.numel()} elements"
-        )
+        with pytest.raises(RuntimeError):
+            self.descriptor.func(0)
+
+    def test_error_for_negative_size(self):
+        """Test that m<0 raises an error."""
+        import pytest
+
+        with pytest.raises(RuntimeError):
+            self.descriptor.func(-1)
+        with pytest.raises(RuntimeError):
+            self.descriptor.func(-10)
 
     # =========================================================================
     # Dtype tests
@@ -259,11 +255,10 @@ class CreationOpTestCase(ABC):
             return
         if "test_meta_tensor" in self.descriptor.skip_tests:
             return
-        for m in [0, 1, 5, 10]:
+        for m in [1, 5, 10]:
             result = self.descriptor.func(m, device="meta")
-            expected_size = max(0, m)
-            assert result.shape == (expected_size,), (
-                f"Meta tensor shape mismatch: expected ({expected_size},), "
+            assert result.shape == (m,), (
+                f"Meta tensor shape mismatch: expected ({m},), "
                 f"got {result.shape}"
             )
             assert result.device.type == "meta", (

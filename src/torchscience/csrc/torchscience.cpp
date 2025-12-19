@@ -1,14 +1,38 @@
 #include <torch/extension.h>
 
 #include "cpu/special_functions.h"
-#include "cpu/window_function.h"
 #include "autograd/special_functions.h"
 #include "autocast/special_functions.h"
 #include "meta/special_functions.h"
-#include "meta/window_function.h"
 #include "sparse/coo/cpu/special_functions.h"
 #include "sparse/csr/cpu/special_functions.h"
 #include "quantized/cpu/special_functions.h"
+
+// Window function implementation (CompositeImplicitAutograd)
+namespace torchscience::window_function {
+
+at::Tensor rectangular_window(
+    int64_t m,
+    c10::optional<at::ScalarType> dtype,
+    c10::optional<at::Device> device,
+    bool requires_grad
+) {
+    TORCH_CHECK(m > 0, "rectangular_window: m must be positive, got ", m);
+
+    auto options = at::TensorOptions()
+        .dtype(dtype.value_or(at::kFloat))
+        .device(device.value_or(at::kCPU));
+
+    at::Tensor result = at::ones({m}, options);
+
+    if (requires_grad) {
+        result = result.set_requires_grad(true);
+    }
+
+    return result;
+}
+
+}  // namespace torchscience::window_function
 
 #ifdef TORCHSCIENCE_CUDA
 #include "sparse/coo/cuda/special_functions.h"
@@ -50,4 +74,8 @@ TORCH_LIBRARY(torchscience, m) {
 
   // Window functions (creation operators)
   m.def("rectangular_window(int m, *, ScalarType? dtype=None, Device? device=None, bool requires_grad=False) -> Tensor");
+}
+
+TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, m) {
+  m.impl("rectangular_window", &torchscience::window_function::rectangular_window);
 }

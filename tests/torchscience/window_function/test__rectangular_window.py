@@ -18,18 +18,15 @@ def reference_rectangular_window(
 ) -> torch.Tensor:
     """Reference implementation of rectangular window using torch.ones."""
     if m <= 0:
-        return torch.empty(
-            0,
-            dtype=dtype or torch.float32,
-            device=device or "cpu",
-            requires_grad=requires_grad,
-        )
-    return torch.ones(
+        raise ValueError("m must be positive")
+    result = torch.ones(
         m,
         dtype=dtype or torch.float32,
         device=device or "cpu",
-        requires_grad=requires_grad,
     )
+    if requires_grad:
+        result = result.requires_grad_(True)
+    return result
 
 
 class TestRectangularWindow(CreationOpTestCase):
