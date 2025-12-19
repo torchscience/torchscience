@@ -57,6 +57,7 @@ __pypackages__/
 activemq-data/
 build/
 build-bench/
+build-test/
 celerybeat-schedule
 celerybeat.pid
 cover/
