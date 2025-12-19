@@ -3,21 +3,25 @@ from torch import Tensor
 
 
 def gamma(z: Tensor) -> Tensor:
-    """
+    r"""
     Gamma function.
 
     Computes the gamma function evaluated at each element of the input tensor.
 
     Mathematical Definition
     -----------------------
-    For real z > 0:
-        The gamma function is defined as the integral:
-            Gamma(z) = integral from 0 to infinity of t^(z-1) * e^(-t) dt
+    For real z > 0, the gamma function is defined as the integral:
 
-    For other values (except non-positive integers):
-        The function is extended via analytic continuation using the
-        reflection formula:
-            Gamma(z) * Gamma(1-z) = pi / sin(pi*z)
+    .. math::
+
+       \Gamma(z) = \int_0^\infty t^{z-1} e^{-t} \, dt
+
+    For other values (except non-positive integers), the function is extended
+    via analytic continuation using the reflection formula:
+
+    .. math::
+
+       \Gamma(z) \Gamma(1-z) = \frac{\pi}{\sin(\pi z)}
 
     Special Values
     --------------
@@ -26,14 +30,30 @@ def gamma(z: Tensor) -> Tensor:
     - Gamma(1/2) = sqrt(pi)
     - Gamma(z) has poles (returns inf or nan) at z = 0, -1, -2, -3, ...
 
-    Implementation Details
-    ----------------------
+    Domain
+    ------
+    - z: any real or complex value except non-positive integers
+    - Poles at z = 0, -1, -2, -3, ... where the function returns inf
+    - For complex z, poles occur only when Im(z) = 0 and Re(z) is a
+      non-positive integer
+
+    Algorithm
+    ---------
     - Uses the Lanczos approximation (g=7, n=9) for all types
     - Provides consistent results across CPU and CUDA devices
     - Half-precision types (float16, bfloat16) compute in float32 for accuracy
 
-    Dtype Support
-    -------------
+    Applications
+    ------------
+    The gamma function appears in many mathematical and scientific contexts:
+    - Factorials and combinatorics: Gamma(n) = (n-1)! extends factorials to non-integers
+    - Probability distributions: normalization constants for gamma, beta, Student's t, F, and chi-squared distributions
+    - Bayesian inference: prior and posterior distributions
+    - Physics: solutions to differential equations, quantum mechanics, statistical mechanics
+    - Machine learning: regularization terms, loss functions, variational inference
+
+    Dtype Promotion
+    ---------------
     - Supports float16, bfloat16, float32, float64
     - Supports complex64, complex128
     - Integer inputs are promoted to floating-point types
@@ -42,14 +62,20 @@ def gamma(z: Tensor) -> Tensor:
     ----------------
     Gradients are fully supported when z.requires_grad is True.
     The gradient is computed using the digamma function:
-        d/dz Gamma(z) = Gamma(z) * digamma(z)
 
-    where digamma(z) = d/dz ln(Gamma(z)) is the logarithmic derivative
-    of the gamma function.
+    .. math::
+
+       \frac{d}{dz} \Gamma(z) = \Gamma(z) \psi(z)
+
+    where :math:`\psi(z) = \frac{d}{dz} \ln \Gamma(z)` is the digamma function
+    (logarithmic derivative of the gamma function).
 
     Second-order derivatives (gradgradcheck) are also supported, computed
     using the trigamma function:
-        d^2/dz^2 Gamma(z) = Gamma(z) * (digamma(z)^2 + trigamma(z))
+
+    .. math::
+
+       \frac{d^2}{dz^2} \Gamma(z) = \Gamma(z) \left[ \psi(z)^2 + \psi'(z) \right]
 
     Parameters
     ----------
@@ -82,7 +108,7 @@ def gamma(z: Tensor) -> Tensor:
     >>> gamma(z)
     tensor([0.4980-0.1549j, 0.8182-0.7633j])
 
-    Autograd example:
+    Autograd:
 
     >>> z = torch.tensor([2.0], requires_grad=True)
     >>> y = gamma(z)
@@ -90,32 +116,32 @@ def gamma(z: Tensor) -> Tensor:
     >>> z.grad  # Gamma(2) * digamma(2) = 1 * (1 - gamma_euler) approx 0.4228
     tensor([0.4228])
 
-    Warnings
-    --------
-    **Overflow for large arguments:**
-    The gamma function grows extremely fast - faster than exponential.
-    For reference:
+    .. warning:: Overflow for large arguments
 
-    - Gamma(20) ≈ 1.2e17
-    - Gamma(100) ≈ 9.3e155
-    - Gamma(171) > 1.7e308 (overflows float64)
-    - Gamma(35) > 6.5e37 (overflows float32)
+       The gamma function grows extremely fast - faster than exponential.
+       For reference:
 
-    For arguments where overflow is a concern, use ``torch.special.gammaln``
-    (log-gamma) instead and exponentiate only when needed:
+       - Gamma(20) ≈ 1.2e17
+       - Gamma(100) ≈ 9.3e155
+       - Gamma(171) > 1.7e308 (overflows float64)
+       - Gamma(35) > 6.5e37 (overflows float32)
 
-    >>> # Instead of: result = gamma(large_z)
-    >>> # Use: log_result = torch.special.gammaln(large_z)
-    >>> # Then: result = torch.exp(log_result)  # only if you need the actual value
+       For arguments where overflow is a concern, use ``torch.special.gammaln``
+       (log-gamma) instead and exponentiate only when needed:
 
-    For ratios of gamma functions, use the log-difference:
+       >>> # Instead of: result = gamma(large_z)
+       >>> # Use: log_result = torch.special.gammaln(large_z)
+       >>> # Then: result = torch.exp(log_result)  # only if you need the actual value
 
-    >>> # gamma(a) / gamma(b) = exp(gammaln(a) - gammaln(b))
+       For ratios of gamma functions, use the log-difference:
 
-    **Poles at non-positive integers:**
-    The function returns inf at z = 0, -1, -2, ... (poles of gamma).
-    Gradients at these points return NaN since the derivative (digamma)
-    is undefined there.
+       >>> # gamma(a) / gamma(b) = exp(gammaln(a) - gammaln(b))
+
+    .. warning:: Poles at non-positive integers
+
+       The function returns inf at z = 0, -1, -2, ... (poles of gamma).
+       Gradients at these points return NaN since the derivative (digamma)
+       is undefined there.
 
     Notes
     -----

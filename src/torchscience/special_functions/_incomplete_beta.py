@@ -3,7 +3,7 @@ from torch import Tensor
 
 
 def incomplete_beta(z: Tensor, a: Tensor, b: Tensor) -> Tensor:
-    """
+    r"""
     Regularized incomplete beta function.
 
     Computes the regularized incomplete beta function I_z(a, b).
@@ -12,15 +12,29 @@ def incomplete_beta(z: Tensor, a: Tensor, b: Tensor) -> Tensor:
     -----------------------
     The regularized incomplete beta function is defined as:
 
-        I_z(a, b) = B_z(a, b) / B(a, b)
+    .. math::
+
+       I_z(a, b) = \frac{B_z(a, b)}{B(a, b)}
 
     where:
-        - B_z(a, b) = integral from 0 to z of t^(a-1) * (1-t)^(b-1) dt
-          is the incomplete beta function
-        - B(a, b) = Gamma(a) * Gamma(b) / Gamma(a+b) is the beta function
+
+    .. math::
+
+       B_z(a, b) = \int_0^z t^{a-1} (1-t)^{b-1} \, dt
+
+    is the incomplete beta function, and:
+
+    .. math::
+
+       B(a, b) = \frac{\Gamma(a) \Gamma(b)}{\Gamma(a+b)}
+
+    is the beta function.
 
     The function satisfies the symmetry relation:
-        I_z(a, b) + I_{1-z}(b, a) = 1
+
+    .. math::
+
+       I_z(a, b) + I_{1-z}(b, a) = 1
 
     Domain
     ------
@@ -30,13 +44,17 @@ def incomplete_beta(z: Tensor, a: Tensor, b: Tensor) -> Tensor:
 
     For real z outside [0, 1] or non-positive a, b, the result is NaN.
 
-    For complex z with |z| >= 1, uses analytic continuation via the
+    For complex z with ``|z| >= 1``, uses analytic continuation via the
     hypergeometric 2F1 relation:
-        I_z(a, b) = z^a / (a * B(a,b)) * 2F1(a, 1-b; a+1; z)
+
+    .. math::
+
+       I_z(a, b) = \frac{z^a}{a \, B(a,b)} \, {}_2F_1(a, 1-b; a+1; z)
 
     Two regions are handled:
-    - Region B: |z| >= 1, |1-z| < 1 -- uses symmetry I_z(a,b) = 1 - I_{1-z}(b,a)
-    - Region C: |z| > 1, |1-z| >= 1 -- uses hypergeometric linear transformation
+
+    - Region B: ``|z| >= 1``, ``|1-z| < 1`` -- uses symmetry I_z(a,b) = 1 - I_{1-z}(b,a)
+    - Region C: ``|z| > 1``, ``|1-z| >= 1`` -- uses hypergeometric linear transformation
 
     Algorithm
     ---------
@@ -46,6 +64,9 @@ def incomplete_beta(z: Tensor, a: Tensor, b: Tensor) -> Tensor:
 
     The continued fraction is evaluated using a modified Lentz's algorithm
     for numerical stability.
+
+    - Provides consistent results across CPU and CUDA devices.
+    - Half-precision types (float16, bfloat16) compute in float32 for accuracy.
 
     Special Values
     --------------
@@ -74,35 +95,40 @@ def incomplete_beta(z: Tensor, a: Tensor, b: Tensor) -> Tensor:
     Autograd Support
     ----------------
     All first-order derivatives are computed analytically:
-    - dI/dz = z^(a-1) * (1-z)^(b-1) / B(a, b)
-    - dI/da = J_a / B(a,b) - I_z(a,b) * [psi(a) - psi(a+b)]
-    - dI/db = J_b / B(a,b) - I_z(a,b) * [psi(b) - psi(a+b)]
 
-    where psi is the digamma function and J_a, J_b are log-weighted
+    .. math::
+
+       \frac{\partial I}{\partial z} &= \frac{z^{a-1} (1-z)^{b-1}}{B(a, b)} \\
+       \frac{\partial I}{\partial a} &= \frac{J_a}{B(a,b)} - I_z(a,b) [\psi(a) - \psi(a+b)] \\
+       \frac{\partial I}{\partial b} &= \frac{J_b}{B(a,b)} - I_z(a,b) [\psi(b) - \psi(a+b)]
+
+    where :math:`\psi` is the digamma function and :math:`J_a, J_b` are log-weighted
     integrals computed using 32-point Gauss-Legendre quadrature.
 
     All second-order derivatives are also fully analytical using:
-    - Trigamma functions psi'(x) for parameter second derivatives
-    - Doubly log-weighted integrals K_aa, K_ab, K_bb via quadrature
+
+    - Trigamma functions :math:`\psi'(x)` for parameter second derivatives
+    - Doubly log-weighted integrals :math:`K_{aa}, K_{ab}, K_{bb}` via quadrature
 
     The analytical formulas for parameter second derivatives are:
-    - d²I/da² = K_aa/B - 2(J_a/B)(psi(a)-psi(a+b)) + I_z(psi(a)-psi(a+b))²
-              - I_z(psi'(a) - psi'(a+b))
-    - d²I/db² = K_bb/B - 2(J_b/B)(psi(b)-psi(a+b)) + I_z(psi(b)-psi(a+b))²
-              - I_z(psi'(b) - psi'(a+b))
-    - d²I/dadb = K_ab/B - (J_a/B)(psi(b)-psi(a+b)) - (J_b/B)(psi(a)-psi(a+b))
-               + I_z(psi(a)-psi(a+b))(psi(b)-psi(a+b)) + I_z*psi'(a+b)
+
+    .. math::
+
+       \frac{\partial^2 I}{\partial a^2} &= \frac{K_{aa}}{B} - \frac{2 J_a}{B}[\psi(a)-\psi(a+b)] + I_z[\psi(a)-\psi(a+b)]^2 - I_z[\psi'(a) - \psi'(a+b)] \\
+       \frac{\partial^2 I}{\partial b^2} &= \frac{K_{bb}}{B} - \frac{2 J_b}{B}[\psi(b)-\psi(a+b)] + I_z[\psi(b)-\psi(a+b)]^2 - I_z[\psi'(b) - \psi'(a+b)] \\
+       \frac{\partial^2 I}{\partial a \partial b} &= \frac{K_{ab}}{B} - \frac{J_a}{B}[\psi(b)-\psi(a+b)] - \frac{J_b}{B}[\psi(a)-\psi(a+b)] + I_z[\psi(a)-\psi(a+b)][\psi(b)-\psi(a+b)] + I_z \psi'(a+b)
 
     For complex inputs, Wirtinger derivative conventions are used:
-    - First backward: grad_x = grad_output * conj(∂f/∂x)
-    - Double backward: ∂(grad_x)/∂x̄ = grad_output * conj(∂²f/∂x²)
+
+    - First backward: grad_x = grad_output * conj(df/dx)
+    - Double backward: d(grad_x)/dx_bar = grad_output * conj(d2f/dx2)
 
     Parameters
     ----------
     z : Tensor
         Input tensor. For real dtypes, values should be in [0, 1].
         For complex dtypes, values can be anywhere in the complex plane
-        (analytic continuation is used for |z| >= 1).
+        (analytic continuation is used for ``|z| >= 1``).
         Broadcasting with a and b is supported.
     a : Tensor
         First shape parameter. Must be positive (a > 0 for real, Re(a) > 0 for complex).
@@ -143,7 +169,7 @@ def incomplete_beta(z: Tensor, a: Tensor, b: Tensor) -> Tensor:
     >>> incomplete_beta(z, a, b)  # Symmetric beta, CDF at 0.5 should be 0.5
     tensor([0.5000])
 
-    Autograd example:
+    Autograd:
 
     >>> z = torch.tensor([0.3], requires_grad=True)
     >>> a = torch.tensor([2.0])
@@ -153,17 +179,45 @@ def incomplete_beta(z: Tensor, a: Tensor, b: Tensor) -> Tensor:
     >>> z.grad  # Gradient w.r.t. z
     tensor([1.7640])
 
-    Warnings
+    .. warning:: Reduced precision near boundaries
+
+       For z very close to 0 or 1, numerical precision may be reduced.
+
+    .. warning:: Slow convergence for extreme parameters
+
+       For very large or very small values of a and b, the continued
+       fraction may converge slowly or lose precision.
+
+    .. warning:: Gradient accuracy for extreme parameters
+
+       For extreme parameter values (a or b near 0 or very large), the
+       log-weighted integrals used for gradients may lose accuracy.
+
+    .. warning:: Finite difference gradients in Region C
+
+       For complex z with ``|z| > 1`` in Region C (where ``|1-z| >= 1``),
+       gradients use finite differences and may have reduced accuracy
+       compared to the analytical gradients available in other regions.
+
+    .. warning:: Regularization for near-integer (a - b)
+
+       When a - b is close to an integer, the hypergeometric continuation
+       uses a regularization technique which may have slightly reduced accuracy.
+
+    Notes
+    -----
+    - The parameter order (z, a, b) matches the mathematical notation I_z(a, b)
+      with the integration limit first.
+    - For gradients with respect to a and b, the implementation uses 32-point
+      Gauss-Legendre quadrature to compute log-weighted integrals, providing
+      analytical (not finite-difference) gradients.
+    - The symmetry relation I_z(a, b) = 1 - I_{1-z}(b, a) is used both for
+      numerical stability and to extend the domain to complex z.
+
+    See Also
     --------
-    - For z very close to 0 or 1, numerical precision may be reduced
-    - For very large or very small values of a and b, the continued
-      fraction may converge slowly or lose precision
-    - For extreme parameter values (a or b near 0 or very large), the
-      log-weighted integrals used for gradients may lose accuracy
-    - For complex z with |z| > 1 in Region C (where |1-z| >= 1), gradients
-      use finite differences and may have reduced accuracy compared to
-      the analytical gradients available in other regions
-    - When a - b is close to an integer, the hypergeometric continuation
-      uses a regularization technique which may have slightly reduced accuracy
+    hypergeometric_2_f_1 : Gauss hypergeometric function (used internally for analytic continuation)
+    gamma : Gamma function (used in beta function computation)
+    torch.special.betaln : Natural logarithm of the beta function
     """
     return torch.ops.torchscience.incomplete_beta(z, a, b)

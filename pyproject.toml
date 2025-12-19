@@ -14,6 +14,9 @@ dev = [
     "pytest>=9.0.2",
     "sympy>=1.14.0",
 ]
+docs = [
+    "Sphinx>=9.0.4",
+]
 
 [project]
 authors = [

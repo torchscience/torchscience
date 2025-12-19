@@ -91,11 +91,12 @@ def rectangular_window(
 
     References
     ----------
-    .. [1] F.J. Harris, "On the use of windows for harmonic analysis with the
-           discrete Fourier transform," Proceedings of the IEEE, vol. 66,
-           no. 1, pp. 51-83, Jan. 1978.
-    .. [2] A.V. Oppenheim and R.W. Schafer, "Discrete-Time Signal Processing,"
-           3rd ed., Prentice Hall, 2009.
+    F.J. Harris, "On the use of windows for harmonic analysis with the
+    discrete Fourier transform," Proceedings of the IEEE, vol. 66,
+    no. 1, pp. 51-83, Jan. 1978.
+
+    A.V. Oppenheim and R.W. Schafer, "Discrete-Time Signal Processing,"
+    3rd ed., Prentice Hall, 2009.
     """
     return torch.ops.torchscience.rectangular_window(
         n,
