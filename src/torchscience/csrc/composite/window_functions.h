@@ -16,7 +16,7 @@ inline at::Tensor rectangular_window(
   return at::ones(
     {n},
     at::TensorOptions()
-      .dtype(dtype.value_or(at::get_default_dtype()))
+      .dtype(dtype.value_or(c10::typeMetaToScalarType(at::get_default_dtype())))
       .layout(layout.value_or(at::kStrided))
       .device(device.value_or(at::kCPU))
       .requires_grad(requires_grad)
