@@ -7,23 +7,24 @@ import torchscience._csrc  # noqa: F401 - Load C++ operators
 
 
 def rectangular_window(
-    m: int,
+    n: int,
     *,
     dtype: Optional[torch.dtype] = None,
+    layout: Optional[torch.layout] = None,
     device: Optional[torch.device] = None,
     requires_grad: bool = False,
 ) -> Tensor:
     """
     Rectangular window function.
 
-    Computes a rectangular (boxcar) window of length M. The rectangular window
+    Computes a rectangular (boxcar) window of length n. The rectangular window
     is the simplest window function, consisting of all ones.
 
     Mathematical Definition
     -----------------------
     The rectangular window is defined as:
 
-        w[n] = 1,  for n = 0, 1, ..., M-1
+        w[k] = 1,  for k = 0, 1, ..., n-1
 
     This window provides no tapering and is equivalent to no windowing at all.
     It has the narrowest main lobe but the highest side lobes (-13 dB) in the
@@ -31,9 +32,9 @@ def rectangular_window(
 
     Properties
     ----------
-    - Main lobe width: 4*pi/M (narrowest of all windows)
+    - Main lobe width: 4*pi/n (narrowest of all windows)
     - Side lobe level: -13 dB (highest of all windows)
-    - Coherent gain: M (highest possible)
+    - Coherent gain: n (highest possible)
     - Scalloping loss: 3.92 dB
 
     Use Cases
@@ -44,11 +45,15 @@ def rectangular_window(
 
     Parameters
     ----------
-    m : int
-        Number of points in the output window. Must be positive.
+    n : int
+        Number of points in the output window. Must be non-negative.
+        If n=0, an empty tensor is returned.
     dtype : torch.dtype, optional
         The desired data type of the returned tensor. If None, uses the
-        default floating point type (torch.float32).
+        default floating point type.
+    layout : torch.layout, optional
+        The desired layout of the returned tensor. If None, uses the
+        default layout (torch.strided).
     device : torch.device, optional
         The desired device of the returned tensor. If None, uses the
         default device.
@@ -59,7 +64,7 @@ def rectangular_window(
     Returns
     -------
     Tensor
-        A 1-D tensor of size (M,) containing the window values, all equal to 1.
+        A 1-D tensor of size (n,) containing the window values, all equal to 1.
 
     Examples
     --------
@@ -76,7 +81,7 @@ def rectangular_window(
     Raises
     ------
     RuntimeError
-        If m <= 0.
+        If n < 0.
 
     See Also
     --------
@@ -93,8 +98,9 @@ def rectangular_window(
            3rd ed., Prentice Hall, 2009.
     """
     return torch.ops.torchscience.rectangular_window(
-        m,
+        n,
         dtype=dtype,
+        layout=layout,
         device=device,
         requires_grad=requires_grad,
     )

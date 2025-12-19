@@ -47,7 +47,7 @@ class CreationOpToleranceConfig:
 class ExpectedValue:
     """A test case with expected values for a creation operator."""
 
-    m: int
+    n: int
     expected: Tensor
     rtol: float = 1e-10
     atol: float = 1e-10
@@ -115,21 +115,23 @@ class CreationOpTestCase(ABC):
 
     def test_output_shape(self):
         """Test that output has correct shape."""
-        for m in [1, 5, 10, 100]:
-            result = self.descriptor.func(m)
-            assert result.shape == (m,), (
-                f"Expected shape ({m},), got {result.shape} for m={m}"
+        for n in [1, 5, 10, 100]:
+            result = self.descriptor.func(n)
+            assert result.shape == (n,), (
+                f"Expected shape ({n},), got {result.shape} for n={n}"
             )
 
     def test_error_for_zero_size(self):
-        """Test that m=0 raises an error."""
+        """Test that n=0 raises an error."""
+        if "test_error_for_zero_size" in self.descriptor.skip_tests:
+            return
         import pytest
 
         with pytest.raises(RuntimeError):
             self.descriptor.func(0)
 
     def test_error_for_negative_size(self):
-        """Test that m<0 raises an error."""
+        """Test that n<0 raises an error."""
         import pytest
 
         with pytest.raises(RuntimeError):
@@ -188,6 +190,40 @@ class CreationOpTestCase(ABC):
         )
 
     # =========================================================================
+    # Layout tests
+    # =========================================================================
+
+    def test_default_layout(self):
+        """Test that default layout is strided."""
+        result = self.descriptor.func(5)
+        assert result.layout == torch.strided, (
+            f"Expected default layout strided, got {result.layout}"
+        )
+
+    def test_strided_layout(self):
+        """Test explicit strided layout."""
+        result = self.descriptor.func(5, layout=torch.strided)
+        assert result.layout == torch.strided, (
+            f"Expected layout strided, got {result.layout}"
+        )
+
+    # =========================================================================
+    # Memory format tests
+    # =========================================================================
+
+    def test_default_memory_format(self):
+        """Test that default memory format is contiguous."""
+        result = self.descriptor.func(5)
+        assert result.is_contiguous(), (
+            "Expected contiguous memory format by default"
+        )
+
+    def test_contiguous_format(self):
+        """Test explicit contiguous memory format."""
+        result = self.descriptor.func(5, memory_format=torch.contiguous_format)
+        assert result.is_contiguous(), "Expected contiguous memory format"
+
+    # =========================================================================
     # requires_grad tests
     # =========================================================================
 
@@ -215,13 +251,13 @@ class CreationOpTestCase(ABC):
     def test_expected_values(self):
         """Test against expected values specified in descriptor."""
         for ev in self.descriptor.expected_values:
-            result = self.descriptor.func(ev.m, dtype=ev.expected.dtype)
+            result = self.descriptor.func(ev.n, dtype=ev.expected.dtype)
             torch.testing.assert_close(
                 result,
                 ev.expected,
                 rtol=ev.rtol,
                 atol=ev.atol,
-                msg=f"Value mismatch for m={ev.m}: {ev.description}",
+                msg=f"Value mismatch for n={ev.n}: {ev.description}",
             )
 
     # =========================================================================
@@ -232,17 +268,17 @@ class CreationOpTestCase(ABC):
         """Test against reference implementation if provided."""
         if self.descriptor.reference_func is None:
             return
-        for m in [1, 5, 10, 20, 100]:
+        for n in [1, 5, 10, 20, 100]:
             for dtype in [torch.float32, torch.float64]:
-                result = self.descriptor.func(m, dtype=dtype)
-                expected = self.descriptor.reference_func(m, dtype=dtype)
+                result = self.descriptor.func(n, dtype=dtype)
+                expected = self.descriptor.reference_func(n, dtype=dtype)
                 rtol, atol = self.descriptor.tolerances.get_tolerances(dtype)
                 torch.testing.assert_close(
                     result,
                     expected,
                     rtol=rtol,
                     atol=atol,
-                    msg=f"Reference mismatch for m={m}, dtype={dtype}",
+                    msg=f"Reference mismatch for n={n}, dtype={dtype}",
                 )
 
     # =========================================================================
@@ -255,10 +291,10 @@ class CreationOpTestCase(ABC):
             return
         if "test_meta_tensor" in self.descriptor.skip_tests:
             return
-        for m in [1, 5, 10]:
-            result = self.descriptor.func(m, device="meta")
-            assert result.shape == (m,), (
-                f"Meta tensor shape mismatch: expected ({m},), "
+        for n in [1, 5, 10]:
+            result = self.descriptor.func(n, device="meta")
+            assert result.shape == (n,), (
+                f"Meta tensor shape mismatch: expected ({n},), "
                 f"got {result.shape}"
             )
             assert result.device.type == "meta", (
