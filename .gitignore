@@ -55,9 +55,9 @@ __marimo__/
 __pycache__/
 __pypackages__/
 activemq-data/
-build/
 build-bench/
 build-test/
+build/
 celerybeat-schedule
 celerybeat.pid
 cover/
