@@ -237,27 +237,27 @@ inline void reset_quadrature_diagnostics() {
 // Note: log_gamma_complex is defined in log_gamma.h (included via hypergeometric_2_f_1.h)
 
 // Forward declarations for log_beta (three overloads for complex, float/double, and half types)
-template <typename scalar_t>
+template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
-std::enable_if_t<c10::is_complex<scalar_t>::value, scalar_t>
-log_beta(scalar_t a, scalar_t b);
+std::enable_if_t<c10::is_complex<T>::value, T>
+log_beta(T a, T b);
 
-template <typename scalar_t>
+template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
 std::enable_if_t<
-  !c10::is_complex<scalar_t>::value &&
-  (std::is_same_v<scalar_t, float> || std::is_same_v<scalar_t, double>),
-  scalar_t>
-log_beta(scalar_t a, scalar_t b);
+  !c10::is_complex<T>::value &&
+  (std::is_same_v<T, float> || std::is_same_v<T, double>),
+  T>
+log_beta(T a, T b);
 
-template <typename scalar_t>
+template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
 std::enable_if_t<
-  !c10::is_complex<scalar_t>::value &&
-  !std::is_same_v<scalar_t, float> &&
-  !std::is_same_v<scalar_t, double>,
-  scalar_t>
-log_beta(scalar_t a, scalar_t b);
+  !c10::is_complex<T>::value &&
+  !std::is_same_v<T, float> &&
+  !std::is_same_v<T, double>,
+  T>
+log_beta(T a, T b);
 
 // ============================================================================
 // Dynamic Iteration Limit Computation
@@ -278,17 +278,17 @@ log_beta(scalar_t a, scalar_t b);
  * The scaling is based on empirical observation that convergence rate is
  * approximately O(1/sqrt(max(a,b))) for large parameters.
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE int compute_max_iterations(scalar_t a, scalar_t b) {
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE int compute_max_iterations(T a, T b) {
   using std::sqrt;
   using std::max;
   using std::min;
   using std::abs;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
   real_t a_real, b_real;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     a_real = a.real();
     b_real = b.real();
   } else {
@@ -381,20 +381,20 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE int compute_max_iterations(scalar_t a, scalar_
  * Accuracy was verified to be within 1e-4 relative tolerance for forward
  * values and 1e-3 for gradients in the most difficult cases.
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t compute_optimal_split_point(
-    scalar_t z, scalar_t a, scalar_t b
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE T compute_optimal_split_point(
+    T z, T a, T b
 ) {
   using std::abs;
   using std::log;
   using std::min;
   using std::max;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
   // Extract real parts for comparison
   real_t a_real, b_real, z_real;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     a_real = a.real();
     b_real = b.real();
     z_real = abs(z);  // Use magnitude for complex z
@@ -406,7 +406,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t compute_optimal_split_point(
 
   // Default to midpoint if both parameters are >= 1 (no strong singularities)
   if (a_real >= real_t(1) && b_real >= real_t(1)) {
-    return z / scalar_t(2);
+    return z / T(2);
   }
 
   // Compute singularity weights
@@ -441,7 +441,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t compute_optimal_split_point(
   if (split_ratio < min_ratio) split_ratio = min_ratio;
   if (split_ratio > max_ratio) split_ratio = max_ratio;
 
-  return z * scalar_t(split_ratio);
+  return z * T(split_ratio);
 }
 
 // ============================================================================
@@ -481,39 +481,39 @@ constexpr double kAsymptoticThresholdOne = 1e-8;
  *
  * Returns: (I_z, valid) where valid indicates the expansion is applicable.
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, bool>
-incomplete_beta_asymptotic_zero(scalar_t z, scalar_t a, scalar_t b) {
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, bool>
+incomplete_beta_asymptotic_zero(T z, T a, T b) {
   using std::exp;
   using std::log;
   using std::abs;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
   // Check if z is small enough for this expansion
   real_t z_mag;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     z_mag = abs(z);
   } else {
     z_mag = z;
   }
 
   if (z_mag >= real_t(kAsymptoticThresholdZero)) {
-    return std::make_tuple(scalar_t(0), false);
+    return std::make_tuple(T(0), false);
   }
 
   // Leading term: z^a / (a·B(a,b)) = z^a · exp(-log_beta(a,b)) / a
   // Computed in log space for numerical stability
-  scalar_t log_z = log(z);
-  scalar_t lb = log_beta(a, b);
-  scalar_t log_leading = a * log_z - lb - log(a);
-  scalar_t leading = exp(log_leading);
+  T log_z = log(z);
+  T lb = log_beta(a, b);
+  T log_leading = a * log_z - lb - log(a);
+  T leading = exp(log_leading);
 
   // First correction term: (a/(a+1))·(1-b)·z
   // This improves accuracy when b ≠ 1
-  scalar_t correction = (a / (a + scalar_t(1))) * (scalar_t(1) - b) * z;
+  T correction = (a / (a + T(1))) * (T(1) - b) * z;
 
-  scalar_t result = leading * (scalar_t(1) + correction);
+  T result = leading * (T(1) + correction);
 
   return std::make_tuple(result, true);
 }
@@ -530,34 +530,34 @@ incomplete_beta_asymptotic_zero(scalar_t z, scalar_t a, scalar_t b) {
  *
  * Returns: (I_z, valid) where valid indicates the expansion is applicable.
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, bool>
-incomplete_beta_asymptotic_one(scalar_t z, scalar_t a, scalar_t b) {
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, bool>
+incomplete_beta_asymptotic_one(T z, T a, T b) {
   using std::abs;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
   // Check if z is close enough to 1
-  scalar_t w = scalar_t(1) - z;  // Small quantity
+  T w = T(1) - z;  // Small quantity
   real_t w_mag;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     w_mag = abs(w);
   } else {
     w_mag = w;
   }
 
   if (w_mag >= real_t(kAsymptoticThresholdOne)) {
-    return std::make_tuple(scalar_t(0), false);
+    return std::make_tuple(T(0), false);
   }
 
   // Use symmetry: I_z(a,b) = 1 - I_w(b,a) where w = 1-z
   auto [I_w, valid] = incomplete_beta_asymptotic_zero(w, b, a);
 
   if (!valid) {
-    return std::make_tuple(scalar_t(0), false);
+    return std::make_tuple(T(0), false);
   }
 
-  return std::make_tuple(scalar_t(1) - I_w, true);
+  return std::make_tuple(T(1) - I_w, true);
 }
 
 /**
@@ -570,34 +570,34 @@ incomplete_beta_asymptotic_one(scalar_t z, scalar_t a, scalar_t b) {
  *
  * Returns: (dI/dz, valid)
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, bool>
-incomplete_beta_dz_asymptotic_zero(scalar_t z, scalar_t a, scalar_t b) {
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, bool>
+incomplete_beta_dz_asymptotic_zero(T z, T a, T b) {
   using std::exp;
   using std::log;
   using std::abs;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
   real_t z_mag;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     z_mag = abs(z);
   } else {
     z_mag = z;
   }
 
   if (z_mag >= real_t(kAsymptoticThresholdZero)) {
-    return std::make_tuple(scalar_t(0), false);
+    return std::make_tuple(T(0), false);
   }
 
   // Leading term: z^(a-1) / B(a,b)
-  scalar_t log_z = log(z);
-  scalar_t lb = log_beta(a, b);
-  scalar_t log_leading = (a - scalar_t(1)) * log_z - lb;
-  scalar_t leading = exp(log_leading);
+  T log_z = log(z);
+  T lb = log_beta(a, b);
+  T log_leading = (a - T(1)) * log_z - lb;
+  T leading = exp(log_leading);
 
   // Correction: (1-z)^(b-1) ≈ 1 - (b-1)·z for small z
-  scalar_t correction = scalar_t(1) - (b - scalar_t(1)) * z;
+  T correction = T(1) - (b - T(1)) * z;
 
   return std::make_tuple(leading * correction, true);
 }
@@ -611,35 +611,35 @@ incomplete_beta_dz_asymptotic_zero(scalar_t z, scalar_t a, scalar_t b) {
  *
  * Returns: (dI/dz, valid)
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, bool>
-incomplete_beta_dz_asymptotic_one(scalar_t z, scalar_t a, scalar_t b) {
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, bool>
+incomplete_beta_dz_asymptotic_one(T z, T a, T b) {
   using std::exp;
   using std::log;
   using std::abs;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
-  scalar_t w = scalar_t(1) - z;
+  T w = T(1) - z;
   real_t w_mag;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     w_mag = abs(w);
   } else {
     w_mag = w;
   }
 
   if (w_mag >= real_t(kAsymptoticThresholdOne)) {
-    return std::make_tuple(scalar_t(0), false);
+    return std::make_tuple(T(0), false);
   }
 
   // Leading term: w^(b-1) / B(a,b)
-  scalar_t log_w = log(w);
-  scalar_t lb = log_beta(a, b);
-  scalar_t log_leading = (b - scalar_t(1)) * log_w - lb;
-  scalar_t leading = exp(log_leading);
+  T log_w = log(w);
+  T lb = log_beta(a, b);
+  T log_leading = (b - T(1)) * log_w - lb;
+  T leading = exp(log_leading);
 
   // Correction: z^(a-1) ≈ 1 - (a-1)·w for z close to 1
-  scalar_t correction = scalar_t(1) - (a - scalar_t(1)) * w;
+  T correction = T(1) - (a - T(1)) * w;
 
   return std::make_tuple(leading * correction, true);
 }
@@ -655,41 +655,41 @@ incomplete_beta_dz_asymptotic_one(scalar_t z, scalar_t a, scalar_t b) {
  *
  * Returns: (dI/da, dI/db, valid)
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, bool>
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T, bool>
 incomplete_beta_param_derivs_asymptotic_zero(
-    scalar_t z, scalar_t a, scalar_t b, scalar_t I_z
+    T z, T a, T b, T I_z
 ) {
   using std::log;
   using std::abs;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
   real_t z_mag;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     z_mag = abs(z);
   } else {
     z_mag = z;
   }
 
   if (z_mag >= real_t(kAsymptoticThresholdZero)) {
-    return std::make_tuple(scalar_t(0), scalar_t(0), false);
+    return std::make_tuple(T(0), T(0), false);
   }
 
   // Digamma values
-  scalar_t psi_a = digamma(a);
-  scalar_t psi_b = digamma(b);
-  scalar_t psi_ab = digamma(a + b);
+  T psi_a = digamma(a);
+  T psi_b = digamma(b);
+  T psi_ab = digamma(a + b);
 
-  scalar_t log_z = log(z);
+  T log_z = log(z);
 
   // dI/da = I_z · [ln(z) - 1/a - (ψ(a) - ψ(a+b))]
   // This comes from differentiating z^a/(a·B(a,b)) with respect to a
-  scalar_t dIda = I_z * (log_z - scalar_t(1)/a - (psi_a - psi_ab));
+  T dIda = I_z * (log_z - T(1)/a - (psi_a - psi_ab));
 
   // dI/db = I_z · [-(ψ(b) - ψ(a+b))]
   // Only the B(a,b) term contributes since z^a/a doesn't depend on b
-  scalar_t dIdb = -I_z * (psi_b - psi_ab);
+  T dIdb = -I_z * (psi_b - psi_ab);
 
   return std::make_tuple(dIda, dIdb, true);
 }
@@ -704,36 +704,36 @@ incomplete_beta_param_derivs_asymptotic_zero(
  *
  * Supports both real and complex arguments.
  */
-template <typename scalar_t>
+template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
 std::enable_if_t<
-  c10::is_complex<scalar_t>::value,
-  scalar_t>
-log_beta(scalar_t a, scalar_t b) {
+  c10::is_complex<T>::value,
+  T>
+log_beta(T a, T b) {
   return log_gamma_complex(a) + log_gamma_complex(b) - log_gamma_complex(a + b);
 }
 
-template <typename scalar_t>
+template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
 std::enable_if_t<
-  !c10::is_complex<scalar_t>::value &&
-  (std::is_same_v<scalar_t, float> || std::is_same_v<scalar_t, double>),
-  scalar_t>
-log_beta(scalar_t a, scalar_t b) {
+  !c10::is_complex<T>::value &&
+  (std::is_same_v<T, float> || std::is_same_v<T, double>),
+  T>
+log_beta(T a, T b) {
   using std::lgamma;
   return lgamma(a) + lgamma(b) - lgamma(a + b);
 }
 
-template <typename scalar_t>
+template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
 std::enable_if_t<
-  !c10::is_complex<scalar_t>::value &&
-  !std::is_same_v<scalar_t, float> &&
-  !std::is_same_v<scalar_t, double>,
-  scalar_t>
-log_beta(scalar_t a, scalar_t b) {
+  !c10::is_complex<T>::value &&
+  !std::is_same_v<T, float> &&
+  !std::is_same_v<T, double>,
+  T>
+log_beta(T a, T b) {
   // Compute in float32 for half-precision types
-  return static_cast<scalar_t>(log_beta(static_cast<float>(a), static_cast<float>(b)));
+  return static_cast<T>(log_beta(static_cast<float>(a), static_cast<float>(b)));
 }
 
 /**
@@ -746,9 +746,9 @@ log_beta(scalar_t a, scalar_t b) {
  *   - |z| >= 1, |1-z| < 1: Use symmetry I_z(a,b) = 1 - I_{1-z}(b,a)
  *   - |z| > 1, |1-z| >= 1: Use hypergeometric linear transformation
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t
-incomplete_beta_extended_domain(scalar_t z, scalar_t a, scalar_t b);
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE T
+incomplete_beta_extended_domain(T z, T a, T b);
 
 // ============================================================================
 // Digamma/Trigamma Value Cache
@@ -767,16 +767,16 @@ incomplete_beta_extended_domain(scalar_t z, scalar_t a, scalar_t b);
  * Computing these once and storing them avoids 3 redundant digamma calls
  * when computing both dI/da and dI/db.
  */
-template <typename scalar_t>
+template <typename T>
 struct DiGammaCache {
-  scalar_t psi_a;           // ψ(a)
-  scalar_t psi_b;           // ψ(b)
-  scalar_t psi_ab;          // ψ(a+b)
-  scalar_t psi_a_minus_ab;  // ψ(a) - ψ(a+b)
-  scalar_t psi_b_minus_ab;  // ψ(b) - ψ(a+b)
+  T psi_a;           // ψ(a)
+  T psi_b;           // ψ(b)
+  T psi_ab;          // ψ(a+b)
+  T psi_a_minus_ab;  // ψ(a) - ψ(a+b)
+  T psi_b_minus_ab;  // ψ(b) - ψ(a+b)
 
   C10_HOST_DEVICE C10_ALWAYS_INLINE
-  DiGammaCache(scalar_t a, scalar_t b) {
+  DiGammaCache(T a, T b) {
     psi_a = digamma(a);
     psi_b = digamma(b);
     psi_ab = digamma(a + b);
@@ -794,15 +794,15 @@ struct DiGammaCache {
  *
  * Inherits from DiGammaCache and adds trigamma values.
  */
-template <typename scalar_t>
-struct TriGammaCache : public DiGammaCache<scalar_t> {
-  scalar_t trigamma_a;   // ψ'(a)
-  scalar_t trigamma_b;   // ψ'(b)
-  scalar_t trigamma_ab;  // ψ'(a+b)
+template <typename T>
+struct TriGammaCache : public DiGammaCache<T> {
+  T trigamma_a;   // ψ'(a)
+  T trigamma_b;   // ψ'(b)
+  T trigamma_ab;  // ψ'(a+b)
 
   C10_HOST_DEVICE C10_ALWAYS_INLINE
-  TriGammaCache(scalar_t a, scalar_t b)
-      : DiGammaCache<scalar_t>(a, b) {
+  TriGammaCache(T a, T b)
+      : DiGammaCache<T>(a, b) {
     trigamma_a = trigamma(a);
     trigamma_b = trigamma(b);
     trigamma_ab = trigamma(a + b);
@@ -849,52 +849,52 @@ struct TriGammaCache : public DiGammaCache<scalar_t> {
  *
  * Returns a tuple (J_a, J_b) computed simultaneously for efficiency.
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t>
-log_weighted_beta_integrals(scalar_t z, scalar_t a, scalar_t b) {
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T>
+log_weighted_beta_integrals(T z, T a, T b) {
   using std::abs;
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
   // Safety check for boundary cases
   // For complex z: check if |z| is near 0 or 1
   bool z_near_zero, z_near_one;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     z_near_zero = abs(z) < real_t(1e-10);
-    z_near_one = abs(z - scalar_t(1)) < real_t(1e-10) || abs(z) > real_t(1) - real_t(1e-10);
+    z_near_one = abs(z - T(1)) < real_t(1e-10) || abs(z) > real_t(1) - real_t(1e-10);
   } else {
-    z_near_zero = z <= scalar_t(0);
-    z_near_one = z >= scalar_t(1);
+    z_near_zero = z <= T(0);
+    z_near_one = z >= T(1);
   }
   if (z_near_zero || z_near_one) {
-    return std::make_tuple(scalar_t(0), scalar_t(0));
+    return std::make_tuple(T(0), T(0));
   }
 
   // Determine if this is a difficult case requiring higher precision
   // Small a or b creates strong singularities that need more quadrature points
   bool use_high_order;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     use_high_order = (a.real() < real_t(0.1)) || (b.real() < real_t(0.1));
   } else {
-    use_high_order = (a < scalar_t(0.1)) || (b < scalar_t(0.1));
+    use_high_order = (a < T(0.1)) || (b < T(0.1));
   }
 
   // Detect very small parameters that create extreme singularities
   bool has_very_small_params;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     has_very_small_params = (a.real() < real_t(0.05)) || (b.real() < real_t(0.05));
   } else {
-    has_very_small_params = (a < scalar_t(0.05)) || (b < scalar_t(0.05));
+    has_very_small_params = (a < T(0.05)) || (b < T(0.05));
   }
 
   // Set tolerance based on problem difficulty and dtype
   // Uses dtype-aware tolerance to avoid unachievable precision targets
-  scalar_t tolerance;
+  T tolerance;
   if (has_very_small_params) {
-    tolerance = scalar_t(adaptive_tolerance_very_small_params<scalar_t>());
+    tolerance = T(adaptive_tolerance_very_small_params<T>());
   } else if (use_high_order) {
-    tolerance = scalar_t(adaptive_tolerance_difficult<scalar_t>());
+    tolerance = T(adaptive_tolerance_difficult<T>());
   } else {
-    tolerance = scalar_t(adaptive_tolerance<scalar_t>());
+    tolerance = T(adaptive_tolerance<T>());
   }
 
   // Check if we need dual-region integration for the t=1 singularity
@@ -902,11 +902,11 @@ log_weighted_beta_integrals(scalar_t z, scalar_t a, scalar_t b) {
   // requires special handling with a complementary transformation
   // Also force dual-region for very small parameters to improve accuracy
   bool need_dual_region;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     need_dual_region = ((b.real() < real_t(1)) && (abs(z) > real_t(kDualRegionThreshold)))
                        || has_very_small_params;
   } else {
-    need_dual_region = ((b < scalar_t(1)) && (z > scalar_t(kDualRegionThreshold)))
+    need_dual_region = ((b < T(1)) && (z > T(kDualRegionThreshold)))
                        || has_very_small_params;
   }
 
@@ -916,7 +916,7 @@ log_weighted_beta_integrals(scalar_t z, scalar_t a, scalar_t b) {
     // - Stronger t=0 singularity (small a) -> split closer to 0
     // - Stronger t=1 singularity (small b) -> split closer to z
     // - Both singularities present -> weighted balance
-    scalar_t t_split = compute_optimal_split_point(z, a, b);
+    T t_split = compute_optimal_split_point(z, a, b);
 
     // Integrate lower region [0, t_split]
     // Uses t = t_split * u^2 transformation to handle t=0 singularity
@@ -955,59 +955,59 @@ log_weighted_beta_integrals(scalar_t z, scalar_t a, scalar_t b) {
  *
  * Returns a tuple (K_aa, K_ab, K_bb) computed simultaneously for efficiency.
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t>
-doubly_log_weighted_beta_integrals(scalar_t z, scalar_t a, scalar_t b) {
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T, T>
+doubly_log_weighted_beta_integrals(T z, T a, T b) {
   using std::abs;
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
   // Safety check for boundary cases
   // For complex z: check if |z| is near 0 or 1
   bool z_near_zero, z_near_one;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     z_near_zero = abs(z) < real_t(1e-10);
-    z_near_one = abs(z - scalar_t(1)) < real_t(1e-10) || abs(z) > real_t(1) - real_t(1e-10);
+    z_near_one = abs(z - T(1)) < real_t(1e-10) || abs(z) > real_t(1) - real_t(1e-10);
   } else {
-    z_near_zero = z <= scalar_t(0);
-    z_near_one = z >= scalar_t(1);
+    z_near_zero = z <= T(0);
+    z_near_one = z >= T(1);
   }
   if (z_near_zero || z_near_one) {
-    return std::make_tuple(scalar_t(0), scalar_t(0), scalar_t(0));
+    return std::make_tuple(T(0), T(0), T(0));
   }
 
   // Detect very small parameters that create strong singularities
   // For a < 0.05 or b < 0.05, the ln^2 terms create extreme singularities
   bool has_very_small_params;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     has_very_small_params = (a.real() < real_t(0.05)) || (b.real() < real_t(0.05));
   } else {
-    has_very_small_params = (a < scalar_t(0.05)) || (b < scalar_t(0.05));
+    has_very_small_params = (a < T(0.05)) || (b < T(0.05));
   }
 
   // Set tolerance based on parameter magnitude and dtype
   // Very small parameters require relaxed tolerances as machine precision is not achievable
-  scalar_t tolerance;
+  T tolerance;
   if (has_very_small_params) {
-    tolerance = scalar_t(adaptive_tolerance_very_small_params<scalar_t>());
+    tolerance = T(adaptive_tolerance_very_small_params<T>());
   } else {
-    tolerance = scalar_t(adaptive_tolerance<scalar_t>());
+    tolerance = T(adaptive_tolerance<T>());
   }
 
   // Check if we need dual-region integration for the t=1 singularity
   // Also force dual-region for very small parameters to improve accuracy
   bool need_dual_region;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     need_dual_region = ((b.real() < real_t(1)) && (abs(z) > real_t(kDualRegionThreshold)))
                        || has_very_small_params;
   } else {
-    need_dual_region = ((b < scalar_t(1)) && (z > scalar_t(kDualRegionThreshold)))
+    need_dual_region = ((b < T(1)) && (z > T(kDualRegionThreshold)))
                        || has_very_small_params;
   }
 
   if (need_dual_region) {
     // Compute optimized split point based on singularity strengths
     // See compute_optimal_split_point for detailed rationale
-    scalar_t t_split = compute_optimal_split_point(z, a, b);
+    T t_split = compute_optimal_split_point(z, a, b);
 
     // Integrate lower region [0, t_split]
     auto [K_aa_lower, K_ab_lower, K_bb_lower] =
@@ -1052,15 +1052,15 @@ doubly_log_weighted_beta_integrals(scalar_t z, scalar_t a, scalar_t b) {
  *
  * Returns: tuple (dI/da, dI/db)
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t>
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T>
 incomplete_beta_parameter_derivatives_cached(
-    scalar_t z,
-    scalar_t a,
-    scalar_t b,
-    scalar_t I_z,
-    scalar_t inv_beta,
-    const DiGammaCache<scalar_t>& cache
+    T z,
+    T a,
+    T b,
+    T I_z,
+    T inv_beta,
+    const DiGammaCache<T>& cache
 ) {
   auto [J_a, J_b] = log_weighted_beta_integrals(z, a, b);
 
@@ -1081,16 +1081,16 @@ incomplete_beta_parameter_derivatives_cached(
  *
  * Returns: tuple (dI/da, dI/db)
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t>
-incomplete_beta_parameter_derivatives(scalar_t z, scalar_t a, scalar_t b, scalar_t I_z) {
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T>
+incomplete_beta_parameter_derivatives(T z, T a, T b, T I_z) {
   using std::exp;
 
   // Create cache for digamma values
-  DiGammaCache<scalar_t> cache(a, b);
+  DiGammaCache<T> cache(a, b);
 
   // Explicit cast needed for half-precision types since std::exp may return float
-  scalar_t inv_beta = static_cast<scalar_t>(exp(-log_beta(a, b)));
+  T inv_beta = static_cast<T>(exp(-log_beta(a, b)));
 
   return incomplete_beta_parameter_derivatives_cached(z, a, b, I_z, inv_beta, cache);
 }
@@ -1105,57 +1105,57 @@ incomplete_beta_parameter_derivatives(scalar_t z, scalar_t a, scalar_t b, scalar
  * ensure convergence for large a, b while avoiding unnecessary iterations for
  * small parameters.
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t beta_continued_fraction(
-    scalar_t a, scalar_t b, scalar_t z
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE T beta_continued_fraction(
+    T a, T b, T z
 ) {
   using std::abs;
   using std::floor;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
   const real_t eps = std::numeric_limits<real_t>::epsilon();
   const real_t tiny = tiny_value<real_t>();
 
   // Compute adaptive iteration limit based on parameter magnitudes
   const int max_iterations = compute_max_iterations(a, b);
 
-  scalar_t qab = a + b;
-  scalar_t qap = a + scalar_t(1);
-  scalar_t qam = a - scalar_t(1);
+  T qab = a + b;
+  T qap = a + T(1);
+  T qam = a - T(1);
 
   // First term of continued fraction
-  scalar_t c = scalar_t(1);
-  scalar_t d = scalar_t(1) - qab * z / qap;
+  T c = T(1);
+  T d = T(1) - qab * z / qap;
 
   if (abs(d) < tiny) d = tiny;
-  d = scalar_t(1) / d;
-  scalar_t h = d;
+  d = T(1) / d;
+  T h = d;
 
   for (int m = 1; m <= max_iterations; m++) {
-    scalar_t m_real = scalar_t(m);
-    scalar_t m2 = scalar_t(2 * m);
+    T m_real = T(m);
+    T m2 = T(2 * m);
 
     // Even step
-    scalar_t aa = m_real * (b - m_real) * z / ((qam + m2) * (a + m2));
-    d = scalar_t(1) + aa * d;
+    T aa = m_real * (b - m_real) * z / ((qam + m2) * (a + m2));
+    d = T(1) + aa * d;
     if (abs(d) < tiny) d = tiny;
-    c = scalar_t(1) + aa / c;
+    c = T(1) + aa / c;
     if (abs(c) < tiny) c = tiny;
-    d = scalar_t(1) / d;
+    d = T(1) / d;
     h *= d * c;
 
     // Odd step
     aa = -(a + m_real) * (qab + m_real) * z / ((a + m2) * (qap + m2));
-    d = scalar_t(1) + aa * d;
+    d = T(1) + aa * d;
     if (abs(d) < tiny) d = tiny;
-    c = scalar_t(1) + aa / c;
+    c = T(1) + aa / c;
     if (abs(c) < tiny) c = tiny;
-    d = scalar_t(1) / d;
-    scalar_t delta = d * c;
+    d = T(1) / d;
+    T delta = d * c;
     h *= delta;
 
     // Check for convergence
-    if (abs(delta - scalar_t(1)) < eps) {
+    if (abs(delta - T(1)) < eps) {
       break;
     }
   }
@@ -1168,9 +1168,9 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t beta_continued_fraction(
 // ============================================================================
 
 // Forward declaration of incomplete_beta for use in extended domain
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t incomplete_beta(
-    scalar_t z, scalar_t a, scalar_t b
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE T incomplete_beta(
+    T z, T a, T b
 );
 
 /**
@@ -1187,28 +1187,28 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t incomplete_beta(
  * standard |z| < 1 computation. For the remaining cases, we use the DLMF 15.8.2
  * linear transformation formula for the hypergeometric function.
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t
-incomplete_beta_extended_domain(scalar_t z, scalar_t a, scalar_t b) {
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE T
+incomplete_beta_extended_domain(T z, T a, T b) {
   using std::abs;
   using std::exp;
   using std::log;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
   real_t one_minus_z_mag;
 
-  if constexpr (c10::is_complex<scalar_t>::value) {
-    one_minus_z_mag = abs(scalar_t(1) - z);
+  if constexpr (c10::is_complex<T>::value) {
+    one_minus_z_mag = abs(T(1) - z);
   } else {
-    one_minus_z_mag = abs(scalar_t(1) - z);
+    one_minus_z_mag = abs(T(1) - z);
   }
 
   if (one_minus_z_mag < real_t(1)) {
-    return scalar_t(1) - incomplete_beta(scalar_t(1) - z, b, a);
+    return T(1) - incomplete_beta(T(1) - z, b, a);
   }
 
-  return exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z);
+  return exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, T(1) - b, a + T(1), z);
 }
 
 // ============================================================================
@@ -1230,29 +1230,29 @@ incomplete_beta_extended_domain(scalar_t z, scalar_t a, scalar_t b) {
  *   - For |z| < 1, both are well-defined using principal branch
  *   - For |z| >= 1, uses analytic continuation formulas
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t incomplete_beta(
-    scalar_t z, scalar_t a, scalar_t b
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE T incomplete_beta(
+    T z, T a, T b
 ) {
   using std::exp;
   using std::log;
   using std::abs;
   using std::pow;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     // Complex implementation
     const real_t tol = real_t(1e-10);
 
     // Handle boundary cases for complex z
     // z near 0: return 0
     if (abs(z) < tol) {
-      return scalar_t(0);
+      return T(0);
     }
     // z near 1: return 1
-    if (abs(z - scalar_t(1)) < tol) {
-      return scalar_t(1);
+    if (abs(z - T(1)) < tol) {
+      return T(1);
     }
 
     // For |z| >= 1, use analytic continuation
@@ -1262,15 +1262,15 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t incomplete_beta(
 
     // Invalid parameters: Re(a) <= 0 or Re(b) <= 0
     if (a.real() <= real_t(0) || b.real() <= real_t(0)) {
-      return scalar_t(std::numeric_limits<real_t>::quiet_NaN(), real_t(0));
+      return T(std::numeric_limits<real_t>::quiet_NaN(), real_t(0));
     }
 
     // Special cases for a=1 or b=1 (check if close to 1)
-    if (abs(a - scalar_t(1)) < tol) {
+    if (abs(a - T(1)) < tol) {
       // I_z(1, b) = 1 - (1-z)^b
-      return scalar_t(1) - exp(b * log(scalar_t(1) - z));
+      return T(1) - exp(b * log(T(1) - z));
     }
-    if (abs(b - scalar_t(1)) < tol) {
+    if (abs(b - T(1)) < tol) {
       // I_z(a, 1) = z^a
       return exp(a * log(z));
     }
@@ -1288,41 +1288,41 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t incomplete_beta(
     }
 
     // Log of the prefactor: z^a * (1-z)^b / (a * B(a, b))
-    scalar_t log_prefactor = a * log(z) + b * log(scalar_t(1) - z) - log_beta(a, b) - log(a);
+    T log_prefactor = a * log(z) + b * log(T(1) - z) - log_beta(a, b) - log(a);
 
     // Use symmetry relation for numerical stability
     // For complex z, use |z| < 0.5 heuristic for direct computation
     if (abs(z) < real_t(0.5)) {
-      scalar_t cf = beta_continued_fraction(a, b, z);
+      T cf = beta_continued_fraction(a, b, z);
       return exp(log_prefactor) * cf;
     } else {
       // Use symmetry: I_z(a, b) = 1 - I_{1-z}(b, a)
-      scalar_t z_comp = scalar_t(1) - z;
-      scalar_t log_prefactor_comp = b * log(z_comp) + a * log(z) - log_beta(b, a) - log(b);
-      scalar_t cf = beta_continued_fraction(b, a, z_comp);
-      return scalar_t(1) - exp(log_prefactor_comp) * cf;
+      T z_comp = T(1) - z;
+      T log_prefactor_comp = b * log(z_comp) + a * log(z) - log_beta(b, a) - log(b);
+      T cf = beta_continued_fraction(b, a, z_comp);
+      return T(1) - exp(log_prefactor_comp) * cf;
     }
   } else {
     // Real implementation
     // Handle boundary cases
-    if (z <= scalar_t(0)) {
-      return scalar_t(0);
+    if (z <= T(0)) {
+      return T(0);
     }
-    if (z >= scalar_t(1)) {
-      return scalar_t(1);
+    if (z >= T(1)) {
+      return T(1);
     }
 
     // Invalid parameters
-    if (a <= scalar_t(0) || b <= scalar_t(0)) {
-      return std::numeric_limits<scalar_t>::quiet_NaN();
+    if (a <= T(0) || b <= T(0)) {
+      return std::numeric_limits<T>::quiet_NaN();
     }
 
     // Special cases for a=1 or b=1
-    if (a == scalar_t(1)) {
+    if (a == T(1)) {
       // I_z(1, b) = 1 - (1-z)^b
-      return scalar_t(1) - pow(scalar_t(1) - z, b);
+      return T(1) - pow(T(1) - z, b);
     }
-    if (b == scalar_t(1)) {
+    if (b == T(1)) {
       // I_z(a, 1) = z^a
       return pow(z, a);
     }
@@ -1341,22 +1341,22 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t incomplete_beta(
     }
 
     // Log of the prefactor: z^a * (1-z)^b / (a * B(a, b))
-    scalar_t log_prefactor = a * log(z) + b * log(scalar_t(1) - z) - log_beta(a, b) - log(a);
+    T log_prefactor = a * log(z) + b * log(T(1) - z) - log_beta(a, b) - log(a);
 
     // Use symmetry relation for numerical stability
     // When z < (a+1)/(a+b+2), use direct computation
     // Otherwise, use I_z(a,b) = 1 - I_{1-z}(b,a)
-    scalar_t threshold = (a + scalar_t(1)) / (a + b + scalar_t(2));
+    T threshold = (a + T(1)) / (a + b + T(2));
 
     if (z < threshold) {
-      scalar_t cf = beta_continued_fraction(a, b, z);
+      T cf = beta_continued_fraction(a, b, z);
       return exp(log_prefactor) * cf;
     }
     // Use symmetry: I_z(a, b) = 1 - I_{1-z}(b, a)
-    scalar_t z_comp = scalar_t(1) - z;
-    scalar_t log_prefactor_comp = b * log(z_comp) + a * log(z) - log_beta(b, a) - log(b);
-    scalar_t cf = beta_continued_fraction(b, a, z_comp);
-    return scalar_t(1) - exp(log_prefactor_comp) * cf;
+    T z_comp = T(1) - z;
+    T log_prefactor_comp = b * log(z_comp) + a * log(z) - log_beta(b, a) - log(b);
+    T cf = beta_continued_fraction(b, a, z_comp);
+    return T(1) - exp(log_prefactor_comp) * cf;
   }
 }
 
@@ -1365,9 +1365,9 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t incomplete_beta(
 // ============================================================================
 
 // Forward declaration of backward function for use in extended backward
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t>
-incomplete_beta_backward(scalar_t grad, scalar_t z, scalar_t a, scalar_t b);
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T, T>
+incomplete_beta_backward(T grad, T z, T a, T b);
 
 /**
  * Backward for analytic continuation region (|z| >= 1).
@@ -1383,42 +1383,42 @@ incomplete_beta_backward(scalar_t grad, scalar_t z, scalar_t a, scalar_t b);
  *
  * For Region C, we differentiate the hypergeometric representation directly.
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t>
-incomplete_beta_backward_extended(scalar_t grad, scalar_t z, scalar_t a, scalar_t b) {
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T, T>
+incomplete_beta_backward_extended(T grad, T z, T a, T b) {
   using std::abs;
   using std::exp;
   using std::log;
   using std::conj;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
-  scalar_t gradient_z = scalar_t(0);
-  scalar_t gradient_a = scalar_t(0);
-  scalar_t gradient_b = scalar_t(0);
+  T gradient_z = T(0);
+  T gradient_a = T(0);
+  T gradient_b = T(0);
 
   real_t one_minus_z_mag;
 
-  if constexpr (c10::is_complex<scalar_t>::value) {
-    one_minus_z_mag = abs(scalar_t(1) - z);
+  if constexpr (c10::is_complex<T>::value) {
+    one_minus_z_mag = abs(T(1) - z);
   } else {
-    one_minus_z_mag = abs(scalar_t(1) - z);
+    one_minus_z_mag = abs(T(1) - z);
   }
 
   if (one_minus_z_mag < real_t(1)) {
-    auto [grad_w, grad_first, grad_second] = incomplete_beta_backward(grad, scalar_t(1) - z, b, a);
+    auto [grad_w, grad_first, grad_second] = incomplete_beta_backward(grad, T(1) - z, b, a);
 
     return std::make_tuple(grad_w, -grad_second, -grad_first);
   }
 
-  if constexpr (c10::is_complex<scalar_t>::value) {
-    gradient_z = grad * conj(a / z * exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z) + exp(a * log(z) - log(a) - log_beta(a, b)) * (a * (scalar_t(1) - b) / (a + scalar_t(1)) * hypergeometric_2f1_linear_transform( a + scalar_t(1), scalar_t(1) - b + scalar_t(1), a + scalar_t(1) + scalar_t(1), z)));
-    gradient_a = grad * conj((incomplete_beta_extended_domain(z, a + scalar_t(real_t(1e-7)), b) - exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z)) / scalar_t(real_t(1e-7)));
-    gradient_b = grad * conj((incomplete_beta_extended_domain(z, a, b + scalar_t(real_t(1e-7))) - exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z)) / scalar_t(real_t(1e-7)));
+  if constexpr (c10::is_complex<T>::value) {
+    gradient_z = grad * conj(a / z * exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, T(1) - b, a + T(1), z) + exp(a * log(z) - log(a) - log_beta(a, b)) * (a * (T(1) - b) / (a + T(1)) * hypergeometric_2f1_linear_transform( a + T(1), T(1) - b + T(1), a + T(1) + T(1), z)));
+    gradient_a = grad * conj((incomplete_beta_extended_domain(z, a + T(real_t(1e-7)), b) - exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, T(1) - b, a + T(1), z)) / T(real_t(1e-7)));
+    gradient_b = grad * conj((incomplete_beta_extended_domain(z, a, b + T(real_t(1e-7))) - exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, T(1) - b, a + T(1), z)) / T(real_t(1e-7)));
   } else {
-    gradient_z = grad * (a / z * exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z) + exp(a * log(z) - log(a) - log_beta(a, b)) * (a * (scalar_t(1) - b) / (a + scalar_t(1)) * hypergeometric_2f1_linear_transform( a + scalar_t(1), scalar_t(1) - b + scalar_t(1), a + scalar_t(1) + scalar_t(1), z)));
-    gradient_a = grad * ((incomplete_beta_extended_domain(z, a + scalar_t(real_t(1e-7)), b) - exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z)) / scalar_t(real_t(1e-7)));
-    gradient_b = grad * ((incomplete_beta_extended_domain(z, a, b + scalar_t(real_t(1e-7))) - exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, scalar_t(1) - b, a + scalar_t(1), z)) / scalar_t(real_t(1e-7)));
+    gradient_z = grad * (a / z * exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, T(1) - b, a + T(1), z) + exp(a * log(z) - log(a) - log_beta(a, b)) * (a * (T(1) - b) / (a + T(1)) * hypergeometric_2f1_linear_transform( a + T(1), T(1) - b + T(1), a + T(1) + T(1), z)));
+    gradient_a = grad * ((incomplete_beta_extended_domain(z, a + T(real_t(1e-7)), b) - exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, T(1) - b, a + T(1), z)) / T(real_t(1e-7)));
+    gradient_b = grad * ((incomplete_beta_extended_domain(z, a, b + T(real_t(1e-7))) - exp(a * log(z) - log(a) - log_beta(a, b)) * hypergeometric_2f1_linear_transform(a, T(1) - b, a + T(1), z)) / T(real_t(1e-7)));
   }
 
   return std::make_tuple(
@@ -1455,30 +1455,30 @@ incomplete_beta_backward_extended(scalar_t grad, scalar_t z, scalar_t a, scalar_
  *   gradient = grad_output * conj(df/dz)
  * where df/dz is the holomorphic derivative.
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t> incomplete_beta_backward(
-  scalar_t grad,
-  scalar_t z,
-  scalar_t a,
-  scalar_t b
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T, T> incomplete_beta_backward(
+  T grad,
+  T z,
+  T a,
+  T b
 ) {
   using std::exp;
   using std::log;
   using std::abs;
   using std::conj;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
-  scalar_t gradient_z = scalar_t(0);
-  scalar_t gradient_a = scalar_t(0);
-  scalar_t gradient_b = scalar_t(0);
+  T gradient_z = T(0);
+  T gradient_a = T(0);
+  T gradient_b = T(0);
 
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     // Complex implementation with Wirtinger derivatives
     const real_t tol = real_t(1e-10);
 
     // Handle boundary cases
-    if (abs(z) < tol || abs(z - scalar_t(1)) < tol) {
+    if (abs(z) < tol || abs(z - T(1)) < tol) {
       return std::make_tuple(gradient_z, gradient_a, gradient_b);
     }
 
@@ -1493,15 +1493,15 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t> incom
     }
 
     // Compute log_beta for reuse
-    scalar_t lb = log_beta(a, b);
+    T lb = log_beta(a, b);
 
     // dI/dz = z^(a-1) * (1-z)^(b-1) / B(a,b)
-    scalar_t log_dIdz = (a - scalar_t(1)) * log(z) +
-                        (b - scalar_t(1)) * log(scalar_t(1) - z) - lb;
-    scalar_t dIdz = exp(log_dIdz);
+    T log_dIdz = (a - T(1)) * log(z) +
+                        (b - T(1)) * log(T(1) - z) - lb;
+    T dIdz = exp(log_dIdz);
 
     // Compute the function value I_z(a, b) for use in parameter derivatives
-    scalar_t I_z = incomplete_beta(z, a, b);
+    T I_z = incomplete_beta(z, a, b);
 
     // Compute analytical derivatives for a and b using digamma and quadrature
     auto [dIda, dIdb] = incomplete_beta_parameter_derivatives(z, a, b, I_z);
@@ -1515,7 +1515,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t> incom
   } else {
     // Real implementation
     // Handle boundary and invalid cases
-    if (z <= scalar_t(0) || z >= scalar_t(1) || a <= scalar_t(0) || b <= scalar_t(0)) {
+    if (z <= T(0) || z >= T(1) || a <= T(0) || b <= T(0)) {
       return std::make_tuple(gradient_z, gradient_a, gradient_b);
     }
 
@@ -1526,7 +1526,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t> incom
 
       // For parameter derivatives near z=0, use asymptotic formulas
       auto [result_zero, valid_I_zero] = incomplete_beta_asymptotic_zero(z, a, b);
-      scalar_t I_z = valid_I_zero ? result_zero : incomplete_beta(z, a, b);
+      T I_z = valid_I_zero ? result_zero : incomplete_beta(z, a, b);
       auto [dIda, dIdb, valid_params] = incomplete_beta_param_derivs_asymptotic_zero(z, a, b, I_z);
       if (valid_params) {
         gradient_a = grad * dIda;
@@ -1561,7 +1561,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t> incom
     ] = incomplete_beta_parameter_derivatives(z, a, b, incomplete_beta(z, a, b));
 
     return std::make_tuple(
-      grad * exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)),
+      grad * exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b)),
       grad * dIda, grad * dIdb
     );
   }
@@ -1597,12 +1597,12 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t> incom
  */
 
 // Forward declaration of double-backward for extended region
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scalar_t>
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T, T, T>
 incomplete_beta_backward_backward(
-    scalar_t ggz, scalar_t gga, scalar_t ggb,
-    scalar_t gradient_output, scalar_t z, scalar_t a, scalar_t b,
-    bool has_ggz, bool has_gga, bool has_ggb
+    T gradient_gradient_z, T gradient_gradient_a, T gradient_gradient_b,
+    T gradient_output, T z, T a, T b,
+    bool has_gradient_gradient_z, bool has_gradient_gradient_a, bool has_gradient_gradient_b
 );
 
 /**
@@ -1611,31 +1611,38 @@ incomplete_beta_backward_backward(
  * Region B (|1-z| < 1): Use chain rule through symmetry relation
  * Region C (|1-z| >= 1): Use finite differences (analytical formulas are very complex)
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scalar_t>
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T, T, T>
 incomplete_beta_backward_backward_extended(
-    scalar_t ggz, scalar_t gga, scalar_t ggb,
-    scalar_t gradient_output, scalar_t z, scalar_t a, scalar_t b,
-    bool has_ggz, bool has_gga, bool has_ggb
+    T gradient_gradient_z,
+    T gradient_gradient_a,
+    T gradient_gradient_b,
+    T gradient_output,
+    T z,
+    T a,
+    T b,
+    bool has_gradient_gradient_z,
+    bool has_gradient_gradient_a,
+    bool has_gradient_gradient_b
 ) {
   using std::abs;
   using std::conj;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using real_t = typename c10::scalar_value_type<T>::type;
 
-  scalar_t gradient_gradient_output = scalar_t(0);
-  scalar_t gradient_z = scalar_t(0);
-  scalar_t gradient_a = scalar_t(0);
-  scalar_t gradient_b = scalar_t(0);
+  T gradient_gradient_output = T(0);
+  T gradient_z = T(0);
+  T gradient_a = T(0);
+  T gradient_b = T(0);
 
-  if (!has_ggz && !has_gga && !has_ggb) {
+  if (!has_gradient_gradient_z && !has_gradient_gradient_a && !has_gradient_gradient_b) {
     return std::make_tuple(gradient_gradient_output, gradient_z, gradient_a, gradient_b);
   }
 
   // Compute |1-z|
-  scalar_t one_minus_z = scalar_t(1) - z;
+  T one_minus_z = T(1) - z;
   real_t one_minus_z_mag;
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     one_minus_z_mag = abs(one_minus_z);
   } else {
     one_minus_z_mag = abs(one_minus_z);
@@ -1656,9 +1663,9 @@ incomplete_beta_backward_backward_extended(
       grad_first,
       grad_second
     ] = incomplete_beta_backward_backward(
-        ggz, ggb, gga,  // Note: swap gga and ggb since args are swapped
+        gradient_gradient_z, gradient_gradient_b, gradient_gradient_a,  // Note: swap gradient_gradient_a and gradient_gradient_b since args are swapped
         gradient_output, one_minus_z, b, a,
-        has_ggz, has_ggb, has_gga  // Note: swap has_gga and has_ggb
+        has_gradient_gradient_z, has_gradient_gradient_b, has_gradient_gradient_a  // Note: swap has_gradient_gradient_a and has_gradient_gradient_b
     );
 
     // Transform gradients back
@@ -1679,100 +1686,107 @@ incomplete_beta_backward_backward_extended(
     grad_z,
     grad_a,
     grad_b
-  ] = incomplete_beta_backward_extended(scalar_t(1), z, a, b);
+  ] = incomplete_beta_backward_extended(T(1), z, a, b);
 
-  if (has_ggz) {
-    gradient_gradient_output = gradient_gradient_output + ggz * grad_z;
+  if (has_gradient_gradient_z) {
+    gradient_gradient_output = gradient_gradient_output + gradient_gradient_z * grad_z;
 
     auto [
       grad_z_plus,
       grad_a_plus,
       grad_b_plus
-    ] = incomplete_beta_backward_extended(scalar_t(1), z + scalar_t(delta), a, b);
+    ] = incomplete_beta_backward_extended(T(1), z + T(delta), a, b);
 
-    if constexpr (c10::is_complex<scalar_t>::value) {
-      gradient_z = gradient_z + conj(ggz) * gradient_output * conj((grad_z_plus - grad_z) / scalar_t(delta));
-      gradient_a = gradient_a + conj(ggz) * gradient_output * conj((grad_a_plus - grad_a) / scalar_t(delta));
-      gradient_b = gradient_b + conj(ggz) * gradient_output * conj((grad_b_plus - grad_b) / scalar_t(delta));
+    if constexpr (c10::is_complex<T>::value) {
+      gradient_z = gradient_z + conj(gradient_gradient_z) * gradient_output * conj((grad_z_plus - grad_z) / T(delta));
+      gradient_a = gradient_a + conj(gradient_gradient_z) * gradient_output * conj((grad_a_plus - grad_a) / T(delta));
+      gradient_b = gradient_b + conj(gradient_gradient_z) * gradient_output * conj((grad_b_plus - grad_b) / T(delta));
     } else {
-      gradient_z = gradient_z + ggz * gradient_output * ((grad_z_plus - grad_z) / scalar_t(delta));
-      gradient_a = gradient_a + ggz * gradient_output * ((grad_a_plus - grad_a) / scalar_t(delta));
-      gradient_b = gradient_b + ggz * gradient_output * ((grad_b_plus - grad_b) / scalar_t(delta));
+      gradient_z = gradient_z + gradient_gradient_z * gradient_output * ((grad_z_plus - grad_z) / T(delta));
+      gradient_a = gradient_a + gradient_gradient_z * gradient_output * ((grad_a_plus - grad_a) / T(delta));
+      gradient_b = gradient_b + gradient_gradient_z * gradient_output * ((grad_b_plus - grad_b) / T(delta));
     }
   }
 
-  if (has_gga) {
-    gradient_gradient_output = gradient_gradient_output + gga * grad_a;
+  if (has_gradient_gradient_a) {
+    gradient_gradient_output = gradient_gradient_output + gradient_gradient_a * grad_a;
 
     // d^2I/da^2 and d^2I/dadb via finite difference
     auto [grad_z_plus_a, grad_a_plus_a, grad_b_plus_a] = incomplete_beta_backward_extended(
-        scalar_t(1), z, a + scalar_t(delta), b);
-    scalar_t d2Idadz = (grad_z_plus_a - grad_z) / scalar_t(delta);
-    scalar_t d2Ida2 = (grad_a_plus_a - grad_a) / scalar_t(delta);
-    scalar_t d2Idadb = (grad_b_plus_a - grad_b) / scalar_t(delta);
+        T(1), z, a + T(delta), b);
+    T d2Idadz = (grad_z_plus_a - grad_z) / T(delta);
+    T d2Ida2 = (grad_a_plus_a - grad_a) / T(delta);
+    T d2Idadb = (grad_b_plus_a - grad_b) / T(delta);
 
-    if constexpr (c10::is_complex<scalar_t>::value) {
-      gradient_z = gradient_z + conj(gga) * gradient_output * conj(d2Idadz);
-      gradient_a = gradient_a + conj(gga) * gradient_output * conj(d2Ida2);
-      gradient_b = gradient_b + conj(gga) * gradient_output * conj(d2Idadb);
+    if constexpr (c10::is_complex<T>::value) {
+      gradient_z = gradient_z + conj(gradient_gradient_a) * gradient_output * conj(d2Idadz);
+      gradient_a = gradient_a + conj(gradient_gradient_a) * gradient_output * conj(d2Ida2);
+      gradient_b = gradient_b + conj(gradient_gradient_a) * gradient_output * conj(d2Idadb);
     } else {
-      gradient_z = gradient_z + gga * gradient_output * d2Idadz;
-      gradient_a = gradient_a + gga * gradient_output * d2Ida2;
-      gradient_b = gradient_b + gga * gradient_output * d2Idadb;
+      gradient_z = gradient_z + gradient_gradient_a * gradient_output * d2Idadz;
+      gradient_a = gradient_a + gradient_gradient_a * gradient_output * d2Ida2;
+      gradient_b = gradient_b + gradient_gradient_a * gradient_output * d2Idadb;
     }
   }
 
-  if (has_ggb) {
-    gradient_gradient_output = gradient_gradient_output + ggb * grad_b;
+  if (has_gradient_gradient_b) {
+    gradient_gradient_output = gradient_gradient_output + gradient_gradient_b * grad_b;
 
-    // d^2I/db^2 and d^2I/dbda via finite difference
-    auto [grad_z_plus_b, grad_a_plus_b, grad_b_plus_b] = incomplete_beta_backward_extended(
-        scalar_t(1), z, a, b + scalar_t(delta));
-    scalar_t d2Idbdz = (grad_z_plus_b - grad_z) / scalar_t(delta);
-    scalar_t d2Idbda = (grad_a_plus_b - grad_a) / scalar_t(delta);
-    scalar_t d2Idb2 = (grad_b_plus_b - grad_b) / scalar_t(delta);
+    auto [
+      grad_z_plus_b,
+      grad_a_plus_b,
+      grad_b_plus_b
+    ] = incomplete_beta_backward_extended( T(1), z, a, b + T(delta));
 
-    if constexpr (c10::is_complex<scalar_t>::value) {
-      gradient_z = gradient_z + conj(ggb) * gradient_output * conj(d2Idbdz);
-      gradient_a = gradient_a + conj(ggb) * gradient_output * conj(d2Idbda);
-      gradient_b = gradient_b + conj(ggb) * gradient_output * conj(d2Idb2);
+    T d2Idbdz = (grad_z_plus_b - grad_z) / T(delta);
+    T d2Idbda = (grad_a_plus_b - grad_a) / T(delta);
+    T d2Idb2 = (grad_b_plus_b - grad_b) / T(delta);
+
+    if constexpr (c10::is_complex<T>::value) {
+      gradient_z = gradient_z + conj(gradient_gradient_b) * gradient_output * conj(d2Idbdz);
+      gradient_a = gradient_a + conj(gradient_gradient_b) * gradient_output * conj(d2Idbda);
+      gradient_b = gradient_b + conj(gradient_gradient_b) * gradient_output * conj(d2Idb2);
     } else {
-      gradient_z = gradient_z + ggb * gradient_output * d2Idbdz;
-      gradient_a = gradient_a + ggb * gradient_output * d2Idbda;
-      gradient_b = gradient_b + ggb * gradient_output * d2Idb2;
+      gradient_z = gradient_z + gradient_gradient_b * gradient_output * d2Idbdz;
+      gradient_a = gradient_a + gradient_gradient_b * gradient_output * d2Idbda;
+      gradient_b = gradient_b + gradient_gradient_b * gradient_output * d2Idb2;
     }
   }
 
-  return std::make_tuple(gradient_gradient_output, gradient_z, gradient_a, gradient_b);
+  return std::make_tuple(
+    gradient_gradient_output,
+    gradient_z,
+    gradient_a,
+    gradient_b
+    );
 }
 
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scalar_t>
-incomplete_beta_backward_backward(
-    scalar_t ggz,
-    scalar_t gga,
-    scalar_t ggb,
-    scalar_t gradient_output,
-    scalar_t z,
-    scalar_t a,
-    scalar_t b,
-    bool has_ggz,
-    bool has_gga,
-    bool has_ggb
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T, T, T> incomplete_beta_backward_backward(
+    T gradient_gradient_z,
+    T gradient_gradient_a,
+    T gradient_gradient_b,
+    T gradient_output,
+    T z,
+    T a,
+    T b,
+    bool has_gradient_gradient_z,
+    bool has_gradient_gradient_a,
+    bool has_gradient_gradient_b
 ) {
   using std::exp;
   using std::log;
   using std::abs;
   using std::conj;
 
-  using real_t = typename c10::scalar_value_type<scalar_t>::type;
+  using R = typename c10::scalar_value_type<T>::type;
 
-  scalar_t gradient_gradient_output = scalar_t(0);
-  scalar_t gradient_z = scalar_t(0);
-  scalar_t gradient_a = scalar_t(0);
-  scalar_t gradient_b = scalar_t(0);
+  T gradient_gradient_output = T(0);
+  T gradient_z = T(0);
+  T gradient_a = T(0);
+  T gradient_b = T(0);
 
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     // Complex double-backward using Wirtinger derivative convention.
     //
     // For PyTorch's complex autograd, the first backward computes:
@@ -1795,116 +1809,140 @@ incomplete_beta_backward_backward(
     //    And ∂L/∂B_x = conj(gg_x)
     //    Thus: ∂L/∂x* = conj(gg_x) * grad_output * conj(∂²f/∂x²)
 
-    const real_t tol = real_t(1e-10);
+    const R tol = R(1e-10);
 
-    if (!has_ggz && !has_gga && !has_ggb) {
+    if (!has_gradient_gradient_z && !has_gradient_gradient_a && !has_gradient_gradient_b) {
       return std::make_tuple(gradient_gradient_output, gradient_z, gradient_a, gradient_b);
     }
 
-    // Handle boundary cases
-    if (abs(z) < tol || abs(z - scalar_t(1)) < tol) {
-      return std::make_tuple(gradient_gradient_output, gradient_z, gradient_a, gradient_b);
+    if (abs(z) < tol || abs(z - T(1)) < tol) {
+      return std::make_tuple(
+        gradient_gradient_output,
+        gradient_z,
+        gradient_a,
+        gradient_b
+      );
     }
 
-    // For |z| >= 1, use extended double-backward
-    if (abs(z) >= real_t(1)) {
+    if (abs(z) >= R(1)) {
       return incomplete_beta_backward_backward_extended(
-          ggz, gga, ggb, gradient_output, z, a, b, has_ggz, has_gga, has_ggb);
+        gradient_gradient_z,
+        gradient_gradient_a,
+        gradient_gradient_b,
+        gradient_output,
+        z,
+        a,
+        b,
+        has_gradient_gradient_z,
+        has_gradient_gradient_a,
+        has_gradient_gradient_b
+      );
     }
 
     // Invalid parameters
-    if (a.real() <= real_t(0) || b.real() <= real_t(0)) {
+    if (a.real() <= R(0) || b.real() <= R(0)) {
       return std::make_tuple(gradient_gradient_output, gradient_z, gradient_a, gradient_b);
     }
 
-    DiGammaCache<scalar_t> psi_cache(a, b);
-
-    auto [J_a, J_b] = log_weighted_beta_integrals(z, a, b);
-
-    if (has_ggz) {
-      gradient_gradient_output = gradient_gradient_output + ggz * exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b));
-
-      gradient_z = gradient_z + conj(ggz) * gradient_output * conj(exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * ((a - scalar_t(1)) / z - (b - scalar_t(1)) / (scalar_t(1) - z)));
-      gradient_a = gradient_a + conj(ggz) * gradient_output * conj(exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(z) - psi_cache.psi_a_minus_ab));
-      gradient_b = gradient_b + conj(ggz) * gradient_output * conj(exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(scalar_t(1) - z) - psi_cache.psi_b_minus_ab));
-    }
-
-    // =======================================================================
-    // Analytical second-order parameter derivatives
-    // =======================================================================
-    // Only compute if needed (gga or ggb is present)
-
-    if (has_gga || has_ggb) {
-      auto [K_aa, K_ab, K_bb] = doubly_log_weighted_beta_integrals(z, a, b);
-
-      scalar_t K_aa_over_B = K_aa * exp(-log_beta(a, b));
-      scalar_t K_ab_over_B = K_ab * exp(-log_beta(a, b));
-      scalar_t K_bb_over_B = K_bb * exp(-log_beta(a, b));
-
-      if (has_gga) {
-        gradient_gradient_output = gradient_gradient_output + gga * (J_a * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab);
-
-        gradient_z = gradient_z + conj(gga) * gradient_output * conj(exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(z) - psi_cache.psi_a_minus_ab));
-        gradient_a = gradient_a + conj(gga) * gradient_output * conj(K_aa_over_B - scalar_t(2) * (J_a * exp(-log_beta(a, b))) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * (psi_cache.psi_a_minus_ab * psi_cache.psi_a_minus_ab) - incomplete_beta(z, a, b) * (trigamma(a) - trigamma(a + b)));
-        gradient_b = gradient_b + conj(gga) * gradient_output * conj(K_ab_over_B - J_a * exp(-log_beta(a, b)) * psi_cache.psi_b_minus_ab - J_b * exp(-log_beta(a, b)) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * trigamma(a + b));
-      }
-
-      if (has_ggb) {
-        gradient_gradient_output = gradient_gradient_output + ggb * (J_b * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_b_minus_ab);
-
-        gradient_z = gradient_z + conj(ggb) * gradient_output * conj(exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(scalar_t(1) - z) - psi_cache.psi_b_minus_ab));
-        gradient_a = gradient_a + conj(ggb) * gradient_output * conj(K_ab_over_B - J_a * exp(-log_beta(a, b)) * psi_cache.psi_b_minus_ab - J_b * exp(-log_beta(a, b)) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * trigamma(a + b));
-        gradient_b = gradient_b + conj(ggb) * gradient_output * conj(K_bb_over_B - scalar_t(2) * (J_b * exp(-log_beta(a, b))) * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * (psi_cache.psi_b_minus_ab * psi_cache.psi_b_minus_ab) - incomplete_beta(z, a, b) * (trigamma(b) - trigamma(a + b)));
-      }
-    }
-
-    return std::make_tuple(gradient_gradient_output, gradient_z, gradient_a, gradient_b);
-  } else {
-    if (!has_ggz && !has_gga && !has_ggb) {
-      return std::make_tuple(gradient_gradient_output, gradient_z, gradient_a, gradient_b);
-    }
-
-    // Handle boundary and invalid cases
-    if (z <= scalar_t(0) || z >= scalar_t(1) || a <= scalar_t(0) || b <= scalar_t(0)) {
-      return std::make_tuple(gradient_gradient_output, gradient_z, gradient_a, gradient_b);
-    }
-
-    DiGammaCache<scalar_t> psi_cache(a, b);
+    DiGammaCache<T> psi_cache(a, b);
 
     auto [
       J_a,
       J_b
     ] = log_weighted_beta_integrals(z, a, b);
 
-    if (has_ggz) {
-      gradient_gradient_output = gradient_gradient_output + ggz * exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b));
+    if (has_gradient_gradient_z) {
+      gradient_gradient_output = gradient_gradient_output + gradient_gradient_z * exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b));
 
-      gradient_z = gradient_z + ggz * gradient_output * (exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * ((a - scalar_t(1)) / z - (b - scalar_t(1)) / (scalar_t(1) - z)));
-      gradient_a = gradient_a + ggz * gradient_output * (exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(z) - psi_cache.psi_a_minus_ab));
-      gradient_b = gradient_b + ggz * gradient_output * (exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(scalar_t(1) - z) - psi_cache.psi_b_minus_ab));
+      gradient_z = gradient_z + conj(gradient_gradient_z) * gradient_output * conj(exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b)) * ((a - T(1)) / z - (b - T(1)) / (T(1) - z)));
+      gradient_a = gradient_a + conj(gradient_gradient_z) * gradient_output * conj(exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b)) * (log(z) - psi_cache.psi_a_minus_ab));
+      gradient_b = gradient_b + conj(gradient_gradient_z) * gradient_output * conj(exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b)) * (log(T(1) - z) - psi_cache.psi_b_minus_ab));
     }
 
-    if (has_gga || has_ggb) {
+    if (has_gradient_gradient_a || has_gradient_gradient_b) {
       auto [
         K_aa,
         K_ab,
         K_bb
       ] = doubly_log_weighted_beta_integrals(z, a, b);
 
-      if (has_gga) {
-        gradient_gradient_output = gradient_gradient_output + gga * (J_a * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab);
+      T K_aa_over_B = K_aa * exp(-log_beta(a, b));
+      T K_ab_over_B = K_ab * exp(-log_beta(a, b));
+      T K_bb_over_B = K_bb * exp(-log_beta(a, b));
 
-        gradient_z = gradient_z + gga * gradient_output * (exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(z) - psi_cache.psi_a_minus_ab));
-        gradient_a = gradient_a + gga * gradient_output * (K_aa * exp(-log_beta(a, b)) - scalar_t(2) * (J_a * exp(-log_beta(a, b))) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * (psi_cache.psi_a_minus_ab * psi_cache.psi_a_minus_ab) - incomplete_beta(z, a, b) * (trigamma(a) - trigamma(a + b)));
-        gradient_b = gradient_b + gga * gradient_output * (K_ab * exp(-log_beta(a, b)) - J_a * exp(-log_beta(a, b)) * psi_cache.psi_b_minus_ab - J_b * exp(-log_beta(a, b)) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * trigamma(a + b));
+      if (has_gradient_gradient_a) {
+        gradient_gradient_output = gradient_gradient_output + gradient_gradient_a * (J_a * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab);
+
+        gradient_z = gradient_z + conj(gradient_gradient_a) * gradient_output * conj(exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b)) * (log(z) - psi_cache.psi_a_minus_ab));
+        gradient_a = gradient_a + conj(gradient_gradient_a) * gradient_output * conj(K_aa_over_B - T(2) * (J_a * exp(-log_beta(a, b))) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * (psi_cache.psi_a_minus_ab * psi_cache.psi_a_minus_ab) - incomplete_beta(z, a, b) * (trigamma(a) - trigamma(a + b)));
+        gradient_b = gradient_b + conj(gradient_gradient_a) * gradient_output * conj(K_ab_over_B - J_a * exp(-log_beta(a, b)) * psi_cache.psi_b_minus_ab - J_b * exp(-log_beta(a, b)) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * trigamma(a + b));
       }
 
-      if (has_ggb) {
-        gradient_gradient_output = gradient_gradient_output + ggb * (J_b * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_b_minus_ab);
+      if (has_gradient_gradient_b) {
+        gradient_gradient_output = gradient_gradient_output + gradient_gradient_b * (J_b * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_b_minus_ab);
 
-        gradient_z = gradient_z + ggb * gradient_output * (exp((a - scalar_t(1)) * log(z) + (b - scalar_t(1)) * log(scalar_t(1) - z) - log_beta(a, b)) * (log(scalar_t(1) - z) - psi_cache.psi_b_minus_ab));
-        gradient_a = gradient_a + ggb * gradient_output * (K_ab * exp(-log_beta(a, b)) - J_a * exp(-log_beta(a, b)) * psi_cache.psi_b_minus_ab - J_b * exp(-log_beta(a, b)) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * trigamma(a + b));
-        gradient_b = gradient_b + ggb * gradient_output * (K_bb * exp(-log_beta(a, b)) - scalar_t(2) * (J_b * exp(-log_beta(a, b))) * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * (psi_cache.psi_b_minus_ab * psi_cache.psi_b_minus_ab) - incomplete_beta(z, a, b) * (trigamma(b) - trigamma(a + b)));
+        gradient_z = gradient_z + conj(gradient_gradient_b) * gradient_output * conj(exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b)) * (log(T(1) - z) - psi_cache.psi_b_minus_ab));
+        gradient_a = gradient_a + conj(gradient_gradient_b) * gradient_output * conj(K_ab_over_B - J_a * exp(-log_beta(a, b)) * psi_cache.psi_b_minus_ab - J_b * exp(-log_beta(a, b)) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * trigamma(a + b));
+        gradient_b = gradient_b + conj(gradient_gradient_b) * gradient_output * conj(K_bb_over_B - T(2) * (J_b * exp(-log_beta(a, b))) * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * (psi_cache.psi_b_minus_ab * psi_cache.psi_b_minus_ab) - incomplete_beta(z, a, b) * (trigamma(b) - trigamma(a + b)));
+      }
+    }
+
+    return std::make_tuple(gradient_gradient_output, gradient_z, gradient_a, gradient_b);
+  } else {
+    if (!has_gradient_gradient_z && !has_gradient_gradient_a && !has_gradient_gradient_b) {
+      return std::make_tuple(
+        gradient_gradient_output,
+        gradient_z,
+        gradient_a,
+        gradient_b
+      );
+    }
+
+    if (z <= T(0) || z >= T(1) || a <= T(0) || b <= T(0)) {
+      return std::make_tuple(
+        gradient_gradient_output,
+        gradient_z,
+        gradient_a,
+        gradient_b
+      );
+    }
+
+    DiGammaCache<T> psi_cache(a, b);
+
+    auto [
+      J_a,
+      J_b
+    ] = log_weighted_beta_integrals(z, a, b);
+
+    if (has_gradient_gradient_z) {
+      gradient_gradient_output = gradient_gradient_output + gradient_gradient_z * exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b));
+
+      gradient_z = gradient_z + gradient_gradient_z * gradient_output * (exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b)) * ((a - T(1)) / z - (b - T(1)) / (T(1) - z)));
+      gradient_a = gradient_a + gradient_gradient_z * gradient_output * (exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b)) * (log(z) - psi_cache.psi_a_minus_ab));
+      gradient_b = gradient_b + gradient_gradient_z * gradient_output * (exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b)) * (log(T(1) - z) - psi_cache.psi_b_minus_ab));
+    }
+
+    if (has_gradient_gradient_a || has_gradient_gradient_b) {
+      auto [
+        K_aa,
+        K_ab,
+        K_bb
+      ] = doubly_log_weighted_beta_integrals(z, a, b);
+
+      if (has_gradient_gradient_a) {
+        gradient_gradient_output = gradient_gradient_output + gradient_gradient_a * (J_a * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab);
+
+        gradient_z = gradient_z + gradient_gradient_a * gradient_output * (exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b)) * (log(z) - psi_cache.psi_a_minus_ab));
+        gradient_a = gradient_a + gradient_gradient_a * gradient_output * (K_aa * exp(-log_beta(a, b)) - T(2) * (J_a * exp(-log_beta(a, b))) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * (psi_cache.psi_a_minus_ab * psi_cache.psi_a_minus_ab) - incomplete_beta(z, a, b) * (trigamma(a) - trigamma(a + b)));
+        gradient_b = gradient_b + gradient_gradient_a * gradient_output * (K_ab * exp(-log_beta(a, b)) - J_a * exp(-log_beta(a, b)) * psi_cache.psi_b_minus_ab - J_b * exp(-log_beta(a, b)) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * trigamma(a + b));
+      }
+
+      if (has_gradient_gradient_b) {
+        gradient_gradient_output = gradient_gradient_output + gradient_gradient_b * (J_b * exp(-log_beta(a, b)) - incomplete_beta(z, a, b) * psi_cache.psi_b_minus_ab);
+
+        gradient_z = gradient_z + gradient_gradient_b * gradient_output * (exp((a - T(1)) * log(z) + (b - T(1)) * log(T(1) - z) - log_beta(a, b)) * (log(T(1) - z) - psi_cache.psi_b_minus_ab));
+        gradient_a = gradient_a + gradient_gradient_b * gradient_output * (K_ab * exp(-log_beta(a, b)) - J_a * exp(-log_beta(a, b)) * psi_cache.psi_b_minus_ab - J_b * exp(-log_beta(a, b)) * psi_cache.psi_a_minus_ab + incomplete_beta(z, a, b) * psi_cache.psi_a_minus_ab * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * trigamma(a + b));
+        gradient_b = gradient_b + gradient_gradient_b * gradient_output * (K_bb * exp(-log_beta(a, b)) - T(2) * (J_b * exp(-log_beta(a, b))) * psi_cache.psi_b_minus_ab + incomplete_beta(z, a, b) * (psi_cache.psi_b_minus_ab * psi_cache.psi_b_minus_ab) - incomplete_beta(z, a, b) * (trigamma(b) - trigamma(a + b)));
       }
     }
 

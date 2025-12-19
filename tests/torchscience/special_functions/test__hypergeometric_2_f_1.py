@@ -1834,3 +1834,713 @@ class TestHypergeometric2F1(OpTestCase):
         assert torch.isnan(b.grad).all(), "Gradient w.r.t. b should be NaN"
         assert torch.isnan(c.grad).all(), "Gradient w.r.t. c should be NaN"
         assert torch.isnan(z.grad).all(), "Gradient w.r.t. z should be NaN"
+
+    # =========================================================================
+    # Extensive edge case tests
+    # =========================================================================
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_very_small_z(self):
+        """Test with very small z values where series converges rapidly."""
+        a = torch.tensor([1.5], dtype=torch.float64)
+        b = torch.tensor([2.5], dtype=torch.float64)
+        c = torch.tensor([3.5], dtype=torch.float64)
+        z_values = [1e-10, 1e-8, 1e-6, 1e-4, 1e-2]
+
+        for z_val in z_values:
+            z = torch.tensor([z_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+            expected = torch.tensor(
+                [scipy_hyp2f1(1.5, 2.5, 3.5, z_val)], dtype=torch.float64
+            )
+
+            # For very small z, result should be very close to 1
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-10,
+                atol=1e-10,
+                msg=f"Failed for very small z={z_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_z_close_to_half(self):
+        """Test z values very close to 0.5 (algorithm transition boundary)."""
+        a = torch.tensor([1.5], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+        c = torch.tensor([3.5], dtype=torch.float64)
+        # Values very close to 0.5 from both sides
+        z_values = [0.4999, 0.49999, 0.5, 0.50001, 0.5001]
+
+        for z_val in z_values:
+            z = torch.tensor([z_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+            expected = torch.tensor(
+                [scipy_hyp2f1(1.5, 2.0, 3.5, z_val)], dtype=torch.float64
+            )
+
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-5,
+                atol=1e-5,
+                msg=f"Failed near algorithm boundary z={z_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_z_close_to_one(self):
+        """Test z values very close to 1 (convergence boundary)."""
+        # Need c - a - b > 0 for convergence at z = 1
+        a = torch.tensor([0.3], dtype=torch.float64)
+        b = torch.tensor([0.4], dtype=torch.float64)
+        c = torch.tensor([2.0], dtype=torch.float64)  # c - a - b = 1.3 > 0
+        z_values = [0.99, 0.999, 0.9999, 0.99999]
+
+        for z_val in z_values:
+            z = torch.tensor([z_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+            expected = torch.tensor(
+                [scipy_hyp2f1(0.3, 0.4, 2.0, z_val)], dtype=torch.float64
+            )
+
+            # Allow larger tolerance near z=1 as convergence is slow
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-4,
+                atol=1e-4,
+                msg=f"Failed near z=1 at z={z_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_z_close_to_minus_one(self):
+        """Test z values very close to -1.
+
+        Note: Convergence is slower near the unit circle, so we test with
+        values not too close to -1 with tighter tolerance, and values
+        closer to -1 with relaxed tolerance.
+        """
+        a = torch.tensor([0.5], dtype=torch.float64)
+        b = torch.tensor([0.5], dtype=torch.float64)
+        c = torch.tensor([1.5], dtype=torch.float64)  # c - a - b = 0.5 > -1
+
+        # Values with different tolerances based on distance from -1
+        z_tol_pairs = [
+            (-0.9, 1e-6),  # Further from -1, tighter tolerance
+            (-0.95, 1e-5),  # Moderate
+            (-0.99, 1e-5),  # Close to -1
+            (-0.999, 1e-4),  # Very close, relaxed tolerance
+        ]
+
+        for z_val, tol in z_tol_pairs:
+            z = torch.tensor([z_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+            expected = torch.tensor(
+                [scipy_hyp2f1(0.5, 0.5, 1.5, z_val)], dtype=torch.float64
+            )
+
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=tol,
+                atol=tol,
+                msg=f"Failed near z=-1 at z={z_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_near_integer_a_minus_b(self):
+        """Test a-b very close to an integer (tests Richardson extrapolation trigger)."""
+        # a - b = 1.0001 (very close to 1)
+        a = torch.tensor([2.5001], dtype=torch.float64)
+        b = torch.tensor([1.5], dtype=torch.float64)
+        c = torch.tensor([4.0], dtype=torch.float64)
+        z_values = [-1.5, -2.0, -3.0]
+
+        for z_val in z_values:
+            z = torch.tensor([z_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+            expected = torch.tensor(
+                [scipy_hyp2f1(2.5001, 1.5, 4.0, z_val)], dtype=torch.float64
+            )
+
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-4,
+                atol=1e-4,
+                msg=f"Failed near integer a-b at z={z_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_near_integer_c_minus_a_minus_b(self):
+        """Test c-a-b very close to an integer (tests Richardson extrapolation in 1-z transform)."""
+        # c - a - b = 1.0001 (very close to 1)
+        a = torch.tensor([1.5], dtype=torch.float64)
+        b = torch.tensor([1.5], dtype=torch.float64)
+        c = torch.tensor([4.0001], dtype=torch.float64)
+        z_values = [0.6, 0.7, 0.8, 0.9]
+
+        for z_val in z_values:
+            z = torch.tensor([z_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+            expected = torch.tensor(
+                [scipy_hyp2f1(1.5, 1.5, 4.0001, z_val)], dtype=torch.float64
+            )
+
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-4,
+                atol=1e-4,
+                msg=f"Failed near integer c-a-b at z={z_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_large_a(self):
+        """Test with large a parameter."""
+        a_values = [20.0, 30.0, 50.0]
+        b = torch.tensor([1.0], dtype=torch.float64)
+        c = torch.tensor([25.0], dtype=torch.float64)
+        z = torch.tensor([0.1], dtype=torch.float64)
+
+        for a_val in a_values:
+            a = torch.tensor([a_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+
+            # Should be finite
+            assert torch.isfinite(result).all(), (
+                f"Non-finite result for large a={a_val}"
+            )
+
+            # Compare with scipy
+            expected = torch.tensor(
+                [scipy_hyp2f1(a_val, 1.0, 25.0, 0.1)], dtype=torch.float64
+            )
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-5,
+                atol=1e-5,
+                msg=f"Failed for large a={a_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_large_b(self):
+        """Test with large b parameter."""
+        a = torch.tensor([1.0], dtype=torch.float64)
+        b_values = [20.0, 30.0, 50.0]
+        c = torch.tensor([25.0], dtype=torch.float64)
+        z = torch.tensor([0.1], dtype=torch.float64)
+
+        for b_val in b_values:
+            b = torch.tensor([b_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+
+            assert torch.isfinite(result).all(), (
+                f"Non-finite result for large b={b_val}"
+            )
+
+            expected = torch.tensor(
+                [scipy_hyp2f1(1.0, b_val, 25.0, 0.1)], dtype=torch.float64
+            )
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-5,
+                atol=1e-5,
+                msg=f"Failed for large b={b_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_large_c(self):
+        """Test with large c parameter."""
+        a = torch.tensor([1.0], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+        c_values = [50.0, 100.0, 200.0]
+        z = torch.tensor([0.5], dtype=torch.float64)
+
+        for c_val in c_values:
+            c = torch.tensor([c_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+
+            assert torch.isfinite(result).all(), (
+                f"Non-finite result for large c={c_val}"
+            )
+
+            expected = torch.tensor(
+                [scipy_hyp2f1(1.0, 2.0, c_val, 0.5)], dtype=torch.float64
+            )
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-6,
+                atol=1e-6,
+                msg=f"Failed for large c={c_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_very_small_parameters(self):
+        """Test with very small (but positive) parameters."""
+        small_vals = [0.01, 0.001, 0.0001]
+        z = torch.tensor([0.5], dtype=torch.float64)
+
+        for val in small_vals:
+            a = torch.tensor([val], dtype=torch.float64)
+            b = torch.tensor([val], dtype=torch.float64)
+            c = torch.tensor([1.0], dtype=torch.float64)
+
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+
+            assert torch.isfinite(result).all(), (
+                f"Non-finite result for small params a=b={val}"
+            )
+
+            expected = torch.tensor(
+                [scipy_hyp2f1(val, val, 1.0, 0.5)], dtype=torch.float64
+            )
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-6,
+                atol=1e-6,
+                msg=f"Failed for small params a=b={val}",
+            )
+
+    def test_edge_case_c_close_to_pole(self):
+        """Test c very close to a non-positive integer (near pole)."""
+        a = torch.tensor([1.0], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+        z = torch.tensor([0.3], dtype=torch.float64)
+
+        # c very close to 0 (pole)
+        c_near_zero = torch.tensor([0.001], dtype=torch.float64)
+        result_near_zero = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c_near_zero, z
+        )
+        # Should be very large but finite
+        assert torch.isfinite(result_near_zero).all(), (
+            "Result should be finite for c near 0"
+        )
+        assert result_near_zero.abs() > 100, (
+            "Result should be large for c near 0"
+        )
+
+        # c very close to -1 (pole)
+        c_near_minus1 = torch.tensor([-0.999], dtype=torch.float64)
+        result_near_minus1 = (
+            torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c_near_minus1, z
+            )
+        )
+        # Should be very large but finite
+        assert torch.isfinite(result_near_minus1).all(), (
+            "Result should be finite for c near -1"
+        )
+
+    def test_edge_case_c_equals_a_or_b(self):
+        """Test when c equals one of the parameters (reduces to simpler function)."""
+        z = torch.tensor([0.5], dtype=torch.float64)
+
+        # c = a: 2F1(a, b; a; z) = (1-z)^(-b)
+        a = torch.tensor([2.0], dtype=torch.float64)
+        b = torch.tensor([3.0], dtype=torch.float64)
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, a, z
+        )
+        expected = torch.pow(1 - z, -b)
+        torch.testing.assert_close(
+            result,
+            expected,
+            rtol=1e-6,
+            atol=1e-6,
+            msg="Failed for c=a identity",
+        )
+
+        # c = b: 2F1(a, b; b; z) = (1-z)^(-a)
+        result2 = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, b, z
+        )
+        expected2 = torch.pow(1 - z, -a)
+        torch.testing.assert_close(
+            result2,
+            expected2,
+            rtol=1e-6,
+            atol=1e-6,
+            msg="Failed for c=b identity",
+        )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_a_plus_one_equals_c(self):
+        """Test a + 1 = c (parameter reduction case)."""
+        # When a + 1 = c: 2F1(a, b; a+1; z) has a known form
+        a = torch.tensor([2.0], dtype=torch.float64)
+        b = torch.tensor([1.5], dtype=torch.float64)
+        c = torch.tensor([3.0], dtype=torch.float64)  # a + 1 = 3
+        z = torch.tensor([0.5], dtype=torch.float64)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+        expected = torch.tensor(
+            [scipy_hyp2f1(2.0, 1.5, 3.0, 0.5)], dtype=torch.float64
+        )
+
+        torch.testing.assert_close(
+            result,
+            expected,
+            rtol=1e-6,
+            atol=1e-6,
+            msg="Failed for a+1=c case",
+        )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_extreme_negative_z(self):
+        """Test with extreme negative z values (|z| >> 1)."""
+        a = torch.tensor([1.5], dtype=torch.float64)
+        b = torch.tensor([2.3], dtype=torch.float64)  # Non-integer a-b
+        c = torch.tensor([4.0], dtype=torch.float64)
+        z_values = [-5.0, -10.0, -20.0, -50.0]
+
+        for z_val in z_values:
+            z = torch.tensor([z_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+
+            assert torch.isfinite(result).all(), (
+                f"Non-finite result at extreme z={z_val}"
+            )
+
+            expected = torch.tensor(
+                [scipy_hyp2f1(1.5, 2.3, 4.0, z_val)], dtype=torch.float64
+            )
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-4,
+                atol=1e-4,
+                msg=f"Failed for extreme negative z={z_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_pfaff_transformation(self):
+        """Test Pfaff transformation: 2F1(a,b;c;z) = (1-z)^(-a) * 2F1(a, c-b; c; z/(z-1))."""
+        a = torch.tensor([1.5], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+        c = torch.tensor([4.0], dtype=torch.float64)
+        z = torch.tensor([0.3], dtype=torch.float64)
+
+        # Direct computation
+        result_direct = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+
+        # Via Pfaff transformation
+        z_transformed = z / (z - 1)  # z/(z-1) = 0.3/(-0.7) ≈ -0.4286
+        result_pfaff = torch.pow(1 - z, -a) * (
+            torchscience.special_functions.hypergeometric_2_f_1(
+                a, c - b, c, z_transformed
+            )
+        )
+
+        torch.testing.assert_close(
+            result_direct,
+            result_pfaff,
+            rtol=1e-5,
+            atol=1e-5,
+            msg="Pfaff transformation identity failed",
+        )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_euler_transformation(self):
+        """Test Euler transformation: 2F1(a,b;c;z) = (1-z)^(c-a-b) * 2F1(c-a, c-b; c; z)."""
+        a = torch.tensor([1.5], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+        c = torch.tensor(
+            [5.0], dtype=torch.float64
+        )  # c > a + b for convergence
+        z = torch.tensor([0.4], dtype=torch.float64)
+
+        # Direct computation
+        result_direct = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+
+        # Via Euler transformation
+        result_euler = torch.pow(1 - z, c - a - b) * (
+            torchscience.special_functions.hypergeometric_2_f_1(
+                c - a, c - b, c, z
+            )
+        )
+
+        torch.testing.assert_close(
+            result_direct,
+            result_euler,
+            rtol=1e-5,
+            atol=1e-5,
+            msg="Euler transformation identity failed",
+        )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_negative_integer_b_terminates(self):
+        """Test that 2F1(a, -n; c; z) is a polynomial when n is non-negative integer."""
+        # 2F1(1, -2; 1; z) = 1 - 2z + z^2 = (1-z)^2
+        a = torch.tensor([1.0], dtype=torch.float64)
+        b = torch.tensor([-2.0], dtype=torch.float64)
+        c = torch.tensor([1.0], dtype=torch.float64)
+        z = torch.tensor([0.0, 0.25, 0.5, 0.75], dtype=torch.float64)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+        expected = (1 - z) ** 2
+
+        torch.testing.assert_close(result, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_equal_parameters_a_b(self):
+        """Test when a = b."""
+        a = torch.tensor([2.5], dtype=torch.float64)
+        b = torch.tensor([2.5], dtype=torch.float64)  # a = b
+        c = torch.tensor([5.0], dtype=torch.float64)
+        z_values = [0.3, 0.5, 0.7, -1.5, -2.0]
+
+        for z_val in z_values:
+            z = torch.tensor([z_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+
+            assert torch.isfinite(result).all(), (
+                f"Non-finite result for a=b at z={z_val}"
+            )
+
+            expected = torch.tensor(
+                [scipy_hyp2f1(2.5, 2.5, 5.0, z_val)], dtype=torch.float64
+            )
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-5,
+                atol=1e-5,
+                msg=f"Failed for a=b at z={z_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_a_equals_c(self):
+        """Test when a = c (reduces to geometric series type)."""
+        a = torch.tensor([3.0], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+        c = torch.tensor([3.0], dtype=torch.float64)  # a = c
+        z = torch.tensor([0.5], dtype=torch.float64)
+
+        # 2F1(a, b; a; z) = (1-z)^(-b)
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+        expected = torch.pow(1 - z, -b)
+
+        torch.testing.assert_close(
+            result,
+            expected,
+            rtol=1e-6,
+            atol=1e-6,
+            msg="Failed for a=c identity",
+        )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_integer_diff_m_equals_3(self):
+        """Test DLMF 15.8.10 explicit formula for m = 3 (larger integer difference)."""
+        a = torch.tensor([5.0], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)  # m = a - b = 3
+        c = torch.tensor([7.0], dtype=torch.float64)
+        z_values = [-1.5, -2.0, -3.0]
+
+        for z_val in z_values:
+            z = torch.tensor([z_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+
+            assert torch.isfinite(result).all(), (
+                f"Non-finite result at z={z_val}"
+            )
+
+            expected = torch.tensor(
+                [scipy_hyp2f1(5.0, 2.0, 7.0, z_val)], dtype=torch.float64
+            )
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-5,
+                atol=1e-5,
+                msg=f"Failed for integer diff m=3 at z={z_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_integer_diff_m_equals_5(self):
+        """Test DLMF 15.8.10 explicit formula for m = 5 (even larger integer difference)."""
+        a = torch.tensor([7.0], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)  # m = a - b = 5
+        c = torch.tensor([9.0], dtype=torch.float64)
+        z_values = [-1.5, -2.0]
+
+        for z_val in z_values:
+            z = torch.tensor([z_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+
+            assert torch.isfinite(result).all(), (
+                f"Non-finite result at z={z_val}"
+            )
+
+            expected = torch.tensor(
+                [scipy_hyp2f1(7.0, 2.0, 9.0, z_val)], dtype=torch.float64
+            )
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-4,
+                atol=1e-4,
+                msg=f"Failed for integer diff m=5 at z={z_val}",
+            )
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_1_minus_z_transform_integer_diff_m_equals_2(self):
+        """Test 1-z transform with c-a-b = 2 (DLMF 15.8.10 case)."""
+        a = torch.tensor([0.5], dtype=torch.float64)
+        b = torch.tensor([0.5], dtype=torch.float64)
+        c = torch.tensor([3.0], dtype=torch.float64)  # m = c - a - b = 2
+        z_values = [0.6, 0.7, 0.8, 0.9]
+
+        for z_val in z_values:
+            z = torch.tensor([z_val], dtype=torch.float64)
+            result = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c, z
+            )
+
+            assert torch.isfinite(result).all(), (
+                f"Non-finite result at z={z_val}"
+            )
+
+            expected = torch.tensor(
+                [scipy_hyp2f1(0.5, 0.5, 3.0, z_val)], dtype=torch.float64
+            )
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=1e-5,
+                atol=1e-5,
+                msg=f"Failed for 1-z transform with m=2 at z={z_val}",
+            )
+
+    def test_edge_case_batch_computation(self):
+        """Test batch computation with mixed algorithm paths."""
+        # Different z values should trigger different algorithm branches
+        a = torch.tensor([1.5], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+        c = torch.tensor([3.5], dtype=torch.float64)
+        z = torch.tensor(
+            [0.1, 0.3, 0.5, 0.7, 0.9, -0.5, -1.5, -2.0], dtype=torch.float64
+        )
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+
+        # All results should be finite
+        assert torch.isfinite(result).all(), (
+            "Batch computation produced non-finite results"
+        )
+
+        # Verify each individually
+        for i, z_val in enumerate(z.tolist()):
+            z_single = torch.tensor([z_val], dtype=torch.float64)
+            result_single = (
+                torchscience.special_functions.hypergeometric_2_f_1(
+                    a, b, c, z_single
+                )
+            )
+            torch.testing.assert_close(
+                result[i : i + 1],
+                result_single,
+                rtol=1e-10,
+                atol=1e-10,
+                msg=f"Batch vs single mismatch at z={z_val}",
+            )
+
+    def test_edge_case_gradient_at_boundary(self):
+        """Test gradient computation at algorithm transition boundaries."""
+        a = torch.tensor([1.5], dtype=torch.float64, requires_grad=True)
+        b = torch.tensor([2.0], dtype=torch.float64, requires_grad=True)
+        c = torch.tensor([3.5], dtype=torch.float64, requires_grad=True)
+
+        # z = 0.5 is exactly at the boundary between direct series and 1-z transform
+        z = torch.tensor([0.5], dtype=torch.float64, requires_grad=True)
+
+        y = torchscience.special_functions.hypergeometric_2_f_1(a, b, c, z)
+        y.backward()
+
+        # All gradients should be finite
+        assert torch.isfinite(a.grad).all(), "a.grad not finite at boundary"
+        assert torch.isfinite(b.grad).all(), "b.grad not finite at boundary"
+        assert torch.isfinite(c.grad).all(), "c.grad not finite at boundary"
+        assert torch.isfinite(z.grad).all(), "z.grad not finite at boundary"
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+    def test_edge_case_contiguous_z_constraint(self):
+        """Test that contiguous z constraint is properly enforced for special case."""
+        # This tests z values exactly where the constraint on Re(z) < 0.5
+        # for 1/z transformation should be handled
+        a = torch.tensor([1.5], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+        c = torch.tensor([3.5], dtype=torch.float64)
+
+        # z = 1.5 has Re(z) > 0.5, |z| > 1, 1/z = 0.6667
+        z = torch.tensor([1.5], dtype=torch.complex128)
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+
+        assert torch.isfinite(result.real).all(), (
+            "Real part should be finite for complex z > 1"
+        )
+        assert torch.isfinite(result.imag).all(), (
+            "Imag part should be finite for complex z > 1"
+        )
+
+        # Compare with scipy
+        scipy_result = scipy.special.hyp2f1(1.5, 2.0, 3.5, complex(1.5))
+        torch.testing.assert_close(
+            result[0].real,
+            torch.tensor(scipy_result.real, dtype=torch.float64),
+            rtol=1e-4,
+            atol=1e-4,
+        )
+        torch.testing.assert_close(
+            result[0].imag,
+            torch.tensor(scipy_result.imag, dtype=torch.float64),
+            rtol=1e-4,
+            atol=1e-4,
+        )

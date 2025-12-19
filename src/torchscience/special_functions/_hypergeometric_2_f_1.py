@@ -151,10 +151,19 @@ def hypergeometric_2_f_1(a: Tensor, b: Tensor, c: Tensor, z: Tensor) -> Tensor:
 
     Warnings
     --------
+    **Real z > 1 Limitation**: For real-valued inputs with z > 1 and non-integer
+    (a - b), the mathematically correct result is generally complex. This
+    implementation computes the full complex result internally but returns only
+    the real part, which may be incorrect. To get accurate results for z > 1,
+    use complex dtypes:
+
+        >>> z_real = torch.tensor([2.0])  # May give incorrect real part
+        >>> z_complex = torch.tensor([2.0 + 0j])  # Gives correct complex result
+
+    Other warnings:
     - For c close to a non-positive integer, the result may be NaN
     - For |z| close to 1, convergence may be slow
-    - For |z| > 1, the linear transformation may have reduced accuracy
-      when a-b is close to an integer
+    - For |z| > 1 with near-integer (a - b), numerical precision may be reduced
     - For very large parameters, numerical overflow may occur
     - Parameter gradients (a, b, c) use finite differences and may
       have reduced accuracy compared to the analytical z gradient

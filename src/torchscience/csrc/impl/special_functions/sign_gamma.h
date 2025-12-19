@@ -39,7 +39,6 @@
 #include <c10/util/BFloat16.h>
 #include <c10/util/Half.h>
 #include <cmath>
-#include <type_traits>
 
 namespace torchscience::impl::special_functions {
 
@@ -104,10 +103,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE T signed_exp_lgamma(T x) {
   using std::exp;
   using std::lgamma;
 
-  // Convert to float for Half/BFloat16 types
-  float x_f = static_cast<float>(x);
-  float result = static_cast<float>(sign_gamma(x)) * exp(lgamma(x_f));
-  return T(result);
+  return T(static_cast<float>(sign_gamma(x)) * exp(lgamma(static_cast<float>(x))));
 }
 
 /**
@@ -122,13 +118,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE T gamma_ratio(T a, T b) {
   using std::exp;
   using std::lgamma;
 
-  // Convert to float for Half/BFloat16 types
-  float a_f = static_cast<float>(a);
-  float b_f = static_cast<float>(b);
-
-  int sign = sign_gamma(a) * sign_gamma(b);  // Division: same signs = +1, different = -1
-  float result = static_cast<float>(sign) * exp(lgamma(a_f) - lgamma(b_f));
-  return T(result);
+  return T(static_cast<float>(sign_gamma(a) * sign_gamma(b)) * exp(lgamma(static_cast<float>(a)) - lgamma(static_cast<float>(b))));
 }
 
 /**
@@ -143,16 +133,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE T gamma_ratio_4(T a1, T a2, T b1, T b2) {
   using std::exp;
   using std::lgamma;
 
-  // Convert to float for Half/BFloat16 types
-  float a1_f = static_cast<float>(a1);
-  float a2_f = static_cast<float>(a2);
-  float b1_f = static_cast<float>(b1);
-  float b2_f = static_cast<float>(b2);
-
-  int sign = sign_gamma(a1) * sign_gamma(a2) * sign_gamma(b1) * sign_gamma(b2);
-  float log_ratio = lgamma(a1_f) + lgamma(a2_f) - lgamma(b1_f) - lgamma(b2_f);
-  float result = static_cast<float>(sign) * exp(log_ratio);
-  return T(result);
+  return T(static_cast<float>(sign_gamma(a1) * sign_gamma(a2) * sign_gamma(b1) * sign_gamma(b2)) * exp(lgamma(static_cast<float>(a1)) + lgamma(static_cast<float>(a2)) - lgamma(static_cast<float>(b1)) - lgamma(static_cast<float>(b2))));
 }
 
 }  // namespace torchscience::impl::special_functions

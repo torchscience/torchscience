@@ -47,7 +47,6 @@
 #include <c10/util/complex.h>
 #include <cmath>
 #include <tuple>
-#include <type_traits>
 
 #include "digamma.h"
 #include "trigamma.h"
@@ -80,19 +79,17 @@ namespace torchscience::impl::special_functions {
  *
  * This implementation is device-portable (works on both CPU and CUDA).
  */
-template <typename scalar_t>
+template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
-std::enable_if_t<
-  !c10::is_complex<scalar_t>::value &&
-  (std::is_same_v<scalar_t, float> || std::is_same_v<scalar_t, double>),
-  scalar_t>
-gamma(scalar_t z) {
+std::enable_if_t<!c10::is_complex<T>::value && (std::is_same_v<T, float> || std::is_same_v<T, double>), T> gamma(
+  T z
+) {
   using std::exp;
   using std::log;
   using std::floor;
   using std::isinf;
 
-  const scalar_t pi = scalar_t(kPi);
+  const T pi = T(kPi);
 
   // Handle NaN
   if (z != z) {
@@ -100,66 +97,62 @@ gamma(scalar_t z) {
   }
 
   // Handle poles at non-positive integers
-  if (z <= scalar_t(0) && z == floor(z)) {
-    return std::numeric_limits<scalar_t>::infinity();
+  if (z <= T(0) && z == floor(z)) {
+    return std::numeric_limits<T>::infinity();
   }
 
   // Fast path for positive integers: Γ(n) = (n-1)!
   // Use LUT for exact results and better performance
-  if (z > scalar_t(0) && z == floor(z)) {
+  if (z > T(0) && z == floor(z)) {
     int n = static_cast<int>(z);
-    if constexpr (std::is_same_v<scalar_t, double>) {
+    if constexpr (std::is_same_v<T, double>) {
       if (n <= kGammaMaxIntDouble) {
-        return scalar_t(kFactorialTableDouble[n - 1]);
+        return T(kFactorialTableDouble[n - 1]);
       }
     } else {
       if (n <= kGammaMaxIntFloat) {
-        return scalar_t(kFactorialTableFloat[n - 1]);
+        return T(kFactorialTableFloat[n - 1]);
       }
     }
     // Beyond LUT range: overflow to infinity
-    return std::numeric_limits<scalar_t>::infinity();
+    return std::numeric_limits<T>::infinity();
   }
 
   // Reflection formula for z < 0.5
   // Γ(z) = π / (sin(πz) * Γ(1-z))
   // Uses sin_pi() for numerical stability with large negative arguments
-  if (z < scalar_t(0.5)) {
-    scalar_t sin_pi_z = sin_pi(z);
+  if (z < T(0.5)) {
+    T sin_pi_z = sin_pi(z);
     // Handle sin(pi*z) = 0 case (shouldn't happen after pole check, but be safe)
-    if (sin_pi_z == scalar_t(0)) {
-      return std::numeric_limits<scalar_t>::infinity();
+    if (sin_pi_z == T(0)) {
+      return std::numeric_limits<T>::infinity();
     }
 
-    scalar_t gamma_1_minus_z = gamma(scalar_t(1) - z);
+    T gamma_1_minus_z = gamma(T(1) - z);
 
     // Handle overflow case: when Γ(1-z) overflows to infinity,
     // Γ(z) approaches zero. This happens for very large negative z.
     // Mathematically: Γ(-n-α) = π / (sin(π(-n-α)) * Γ(n+1+α)) → 0 as n → ∞
     if (isinf(gamma_1_minus_z)) {
-      return scalar_t(0);
+      return T(0);
     }
 
     return pi / (sin_pi_z * gamma_1_minus_z);
   }
 
-  return scalar_t(kSqrt2Pi) * exp((z - scalar_t(0.5)) * log(z + scalar_t(kLanczosG) - scalar_t(0.5)) - (z + scalar_t(kLanczosG) - scalar_t(0.5))) * lanczos_series(z);
+  return T(kSqrt2Pi) * exp((z - T(0.5)) * log(z + T(kLanczosG) - T(0.5)) - (z + T(kLanczosG) - T(0.5))) * lanczos_series(z);
 }
 
 /**
  * Gamma function for half-precision types.
  * Computes in float32 for accuracy, then converts back.
  */
-template <typename scalar_t>
+template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
-std::enable_if_t<
-  !c10::is_complex<scalar_t>::value &&
-  !std::is_same_v<scalar_t, float> &&
-  !std::is_same_v<scalar_t, double>,
-  scalar_t>
-gamma(scalar_t z) {
-  // Compute in float32 for better accuracy
-  return static_cast<scalar_t>(gamma(static_cast<float>(z)));
+std::enable_if_t< !c10::is_complex<T>::value && !std::is_same_v<T, float> && !std::is_same_v<T, double>, T> gamma(
+  T z
+) {
+  return static_cast<T>(gamma(static_cast<float>(z)));
 }
 
 // Forward declaration for complex gamma.
@@ -167,10 +160,10 @@ gamma(scalar_t z) {
 // formula Γ(z) = π / (sin(πz) * Γ(1-z)) for Re(z) < 0.5, which recursively
 // calls gamma() with a transformed argument. Without this forward declaration,
 // the compiler cannot resolve the recursive call within the template.
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE
-std::enable_if_t<c10::is_complex<scalar_t>::value, scalar_t>
-gamma(scalar_t z);
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::enable_if_t<c10::is_complex<T>::value, T> gamma(
+  T z
+);
 
 /**
  * Gamma function for complex types using Lanczos approximation.
@@ -184,19 +177,22 @@ gamma(scalar_t z);
  * - Very large negative Re(z): returns zero (the mathematically correct limit)
  * - z on real axis: uses real gamma to avoid inf*0=nan issues in complex exp
  */
-template <typename scalar_t> C10_HOST_DEVICE C10_ALWAYS_INLINE std::enable_if_t<c10::is_complex<scalar_t>::value, scalar_t> gamma(scalar_t z) {
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::enable_if_t<c10::is_complex<T>::value, T> gamma(
+  T z
+) {
   using std::exp;
   using std::log;
   using std::abs;
   using std::isinf;
   using std::isnan;
 
-  using T = typename scalar_t::value_type;
+  using T = typename T::value_type;
   const T pi = T(kPi);
 
   // Handle NaN propagation: if either component is NaN, return NaN
   if (isnan(z.real()) || isnan(z.imag())) {
-    return scalar_t(
+    return T(
       std::numeric_limits<T>::quiet_NaN(),
       std::numeric_limits<T>::quiet_NaN()
     );
@@ -208,25 +204,25 @@ template <typename scalar_t> C10_HOST_DEVICE C10_ALWAYS_INLINE std::enable_if_t<
   const T imag_tolerance = std::numeric_limits<T>::epsilon() * T(100);
   if (abs(z.imag()) <= imag_tolerance) {
     T real_result = gamma(z.real());
-    return scalar_t(real_result, T(0));
+    return T(real_result, T(0));
   }
 
   // Check for poles at non-positive integers (z = 0, -1, -2, ...)
   // Must check before reflection formula to avoid division by zero in sin(πz)
   if (is_nonpositive_integer(z)) {
-    return scalar_t(
+    return T(
       std::numeric_limits<T>::infinity(),
       T(0)
     );
   }
 
-  const auto real = [](T val) { return scalar_t(val, T(0)); };
+  const auto real = [](T val) { return T(val, T(0)); };
 
   if (z.real() < T(0.5)) {
-    auto gamma_1_minus_z = gamma(scalar_t(1, 0) - z);
+    auto gamma_1_minus_z = gamma(T(1, 0) - z);
 
     if (isinf(gamma_1_minus_z.real()) || isinf(gamma_1_minus_z.imag()) || isnan(gamma_1_minus_z.real()) || isnan(gamma_1_minus_z.imag())) {
-      return scalar_t(T(0), T(0));
+      return T(T(0), T(0));
     }
 
     return real(pi) / (sin_pi(z) * gamma_1_minus_z);
@@ -260,16 +256,16 @@ template <typename scalar_t> C10_HOST_DEVICE C10_ALWAYS_INLINE std::enable_if_t<
  *
  * For real types, conjugation is the identity, so no special handling needed.
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t gamma_backward(
-  scalar_t gradient_output,
-  scalar_t z
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE T gamma_backward(
+  T gradient_output,
+  T z
 ) {
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     return gradient_output * std::conj(gamma(z) * digamma(z));
-  } else {
-    return gradient_output * gamma(z) * digamma(z);
   }
+
+  return gradient_output * gamma(z) * digamma(z);
 }
 
 // ============================================================================
@@ -306,21 +302,21 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t gamma_backward(
  * gradient_z: This differentiates through the [Γ(z)·ψ(z)] term, giving
  *   conj(d/dz[Γ(z)·ψ(z)]) = conj(Γ(z)·(ψ(z)² + ψ'(z))).
  */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t> gamma_backward_backward(
-  scalar_t gradient_gradient_z,
-  scalar_t gradient_output,
-  scalar_t z,
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T> gamma_backward_backward(
+  T gradient_gradient_z,
+  T gradient_output,
+  T z,
   const bool has_gradient_gradient_z
 ) {
-  scalar_t gradient_gradient_output;
-  scalar_t gradient_z;
+  T gradient_gradient_output;
+  T gradient_z;
 
   if (!has_gradient_gradient_z) {
-    return std::make_tuple(scalar_t(0), scalar_t(0));
+    return std::make_tuple(T(0), T(0));
   }
 
-  if constexpr (c10::is_complex<scalar_t>::value) {
+  if constexpr (c10::is_complex<T>::value) {
     gradient_gradient_output = gradient_gradient_z * std::conj(gamma(z) * digamma(z));
 
     gradient_z = gradient_gradient_z * gradient_output * std::conj(gamma(z) * (digamma(z) * digamma(z) + trigamma(z)));

@@ -83,6 +83,7 @@
 #include "factorial.h"
 #include "gamma.h"
 #include "digamma.h"
+#include "trigamma.h"
 #include "sin_pi.h"
 #include "cos_pi.h"
 #include "log_gamma.h"
@@ -771,11 +772,20 @@ hypergeometric_2f1_one_minus_z_transform_with_delta_and_derivatives(
  *
  * For c = a + b + m (equivalently c - a - b = m >= 0), |1-z| < 1:
  *
- * ₂F₁(a, b; a+b+m; z) = [Γ(a+b+m)/(Γ(a+m)Γ(b+m))] × {
- *   Σ_{k=0}^{m-1} [(a)_k (b)_k / k!] × (m-1-k)! × (1-z)^k
- *   + [(-1)^m (1-z)^m / (m-1)!] × Σ_{s=0}^∞ [(a+m)_s (b+m)_s / (s!(s+m)!)] × (1-z)^s
- *     × [ψ(s+1) + ψ(s+m+1) - ψ(a+m+s) - ψ(b+m+s) - ln(1-z)]
- * }
+ * The DLMF 15.8.10 formula for the REGULARIZED function 𝐅 = ₂F₁/Γ(c) is:
+ *
+ * 𝐅(a, b; a+b+m; z) =
+ *   [1/(Γ(a+m)Γ(b+m))] × Σ_{k=0}^{m-1} [(a)_k (b)_k / k!] × (m-1-k)! × (z-1)^k
+ *   - [(z-1)^m/(Γ(a)Γ(b))] × Σ_{s=0}^∞ [(a+m)_s (b+m)_s / (s!(s+m)!)] × (1-z)^s
+ *       × [ln(1-z) - ψ(s+1) - ψ(s+m+1) + ψ(a+m+s) + ψ(b+m+s)]
+ *
+ * To get ₂F₁, multiply by Γ(c) = Γ(a+b+m):
+ *
+ * ₂F₁(a, b; a+b+m; z) =
+ *   [Γ(c)/(Γ(a+m)Γ(b+m))] × poly_sum
+ *   - [Γ(c)(z-1)^m/(Γ(a)Γ(b))] × log_series
+ *
+ * Note: (z-1)^k = (-1)^k (1-z)^k, so we include the alternating sign factor.
  *
  * For m = 0 (c = a + b), the polynomial sum is empty and the formula simplifies.
  *
@@ -804,13 +814,9 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(
 
   // Special case: if a or b is zero (or negative integer), the series terminates
   // In this case, the standard limiting formula isn't needed - just use the series directly
-  // Note: ₂F₁(a, b; c; z) with b=0 equals 1, with b=-n equals a polynomial
   auto [a_is_int, a_int] = is_near_integer(a);
   auto [b_is_int, b_int] = is_near_integer(b);
   if ((a_is_int && a_int <= 0) || (b_is_int && b_int <= 0)) {
-    // For terminating series, use the regular series formula
-    // The explicit formula here computes ₂F₁(a, b; c; z) where c = a + b + m
-    // and the series argument is z (not 1-z)
     return hypergeometric_2f1_series(a, b, c, z);
   }
 
@@ -823,33 +829,47 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(
     if (omz_val > real_t(0)) {
       log_one_minus_z = log(omz_val);
     } else {
-      // 1-z < 0: log(1-z) = log|1-z| + i*pi
-      // For real inputs, we use the real part
       log_one_minus_z = log(abs(omz_val));
     }
   }
 
-  // Compute Gamma ratio: Γ(a+b+m) / (Γ(a+m)Γ(b+m))
-  // Note: c = a + b + m, so Γ(c) / (Γ(a+m)Γ(b+m)) = Γ(a+b+m) / (Γ(a+m)Γ(b+m))
   scalar_t a_m = a + scalar_t(m);
   scalar_t b_m = b + scalar_t(m);
 
-  scalar_t gamma_ratio_coeff;
+  // =========================================================================
+  // Gamma ratios for the two terms (DLMF 15.8.10):
+  // Polynomial term: Γ(c) / (Γ(a+m) × Γ(b+m))
+  // Series term: Γ(c) / (Γ(a) × Γ(b)) = Γ(c) × (a)_m × (b)_m / (Γ(a+m) × Γ(b+m))
+  // =========================================================================
+  scalar_t poly_gamma_coeff;  // Γ(c) / (Γ(a+m) × Γ(b+m))
   if constexpr (c10::is_complex<scalar_t>::value) {
     scalar_t log_ratio = log_gamma_complex(c) - log_gamma_complex(a_m) - log_gamma_complex(b_m);
-    gamma_ratio_coeff = exp(log_ratio);
+    poly_gamma_coeff = exp(log_ratio);
   } else {
     using std::lgamma;
     scalar_t log_mag = lgamma(c) - lgamma(a_m) - lgamma(b_m);
     int sign = sign_gamma(c) * sign_gamma(a_m) * sign_gamma(b_m);
-    gamma_ratio_coeff = scalar_t(sign) * exp(log_mag);
+    poly_gamma_coeff = scalar_t(sign) * exp(log_mag);
   }
+
+  // Compute (a)_m and (b)_m for the series gamma ratio
+  scalar_t poch_a_m = scalar_t(1);  // (a)_m = a(a+1)...(a+m-1)
+  scalar_t poch_b_m = scalar_t(1);  // (b)_m
+  for (int j = 0; j < m; ++j) {
+    poch_a_m *= (a + scalar_t(j));
+    poch_b_m *= (b + scalar_t(j));
+  }
+
+  // Series gamma ratio: Γ(c)/(Γ(a)Γ(b)) = poly_gamma_coeff × (a)_m × (b)_m
+  scalar_t series_gamma_coeff = poly_gamma_coeff * poch_a_m * poch_b_m;
 
   scalar_t result = scalar_t(0);
 
   // =========================================================================
   // Part 1: Finite polynomial sum (only for m >= 1)
-  // Σ_{k=0}^{m-1} [(a)_k (b)_k / k!] × (m-1-k)! × (1-z)^k
+  // DLMF 15.8.10: [1/(Γ(a+m)Γ(b+m))] × Σ_{k=0}^{m-1} [(a)_k(b)_k/k!] × (m-1-k)! × (z-1)^k
+  // Multiply by Γ(c) to get: poly_gamma_coeff × poly_sum
+  // Note: (z-1)^k = (-1)^k × (1-z)^k
   // =========================================================================
   if (m >= 1) {
     scalar_t poly_sum = scalar_t(0);
@@ -857,49 +877,44 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(
     scalar_t poch_b = scalar_t(1);       // (b)_k
     scalar_t omz_pow = scalar_t(1);      // (1-z)^k
     scalar_t factorial_k = scalar_t(1);  // k!
+    int sign_k = 1;                      // (-1)^k for (z-1)^k
 
     for (int k = 0; k < m; ++k) {
-      // (m-1-k)! from precomputed table
       real_t factorial_mmk = factorial(real_t(m - 1 - k));
 
-      scalar_t term = (poch_a * poch_b / factorial_k) * scalar_t(factorial_mmk) * omz_pow;
+      scalar_t term = scalar_t(sign_k) * (poch_a * poch_b / factorial_k) * scalar_t(factorial_mmk) * omz_pow;
       poly_sum += term;
 
-      // Update for next iteration
       if (k < m - 1) {
         poch_a *= (a + scalar_t(k));
         poch_b *= (b + scalar_t(k));
         omz_pow *= one_minus_z;
         factorial_k *= scalar_t(k + 1);
+        sign_k = -sign_k;
       }
     }
 
-    result += poly_sum;
+    result += poly_gamma_coeff * poly_sum;
   }
 
   // =========================================================================
   // Part 2: Infinite series with logarithmic terms
-  // [(-1)^m (1-z)^m / (m-1)!] × Σ_{s=0}^∞ [(a+m)_s (b+m)_s / (s!(s+m)!)] × (1-z)^s
-  //   × [ψ(s+1) + ψ(s+m+1) - ψ(a+m+s) - ψ(b+m+s) - ln(1-z)]
+  // DLMF 15.8.10: -[(z-1)^m/(Γ(a)Γ(b))] × Σ_{s=0}^∞ [(a+m)_s(b+m)_s/(s!(s+m)!)] × (1-z)^s
+  //     × [ln(1-z) - ψ(s+1) - ψ(s+m+1) + ψ(a+m+s) + ψ(b+m+s)]
+  //
+  // Multiply by Γ(c) and use (z-1)^m = (-1)^m (1-z)^m:
+  //   -Γ(c)(-1)^m(1-z)^m/(Γ(a)Γ(b)) × series
+  //   = (-1)^(m+1) × series_gamma_coeff × (1-z)^m × series
   // =========================================================================
   {
-    // Compute (-1)^m / (m-1)! for m >= 1, or handle m = 0 specially
-    scalar_t series_coeff;
-    if (m == 0) {
-      // For m = 0, coefficient is 1 and digamma combination is
-      // [2ψ(s+1) - ψ(a+s) - ψ(b+s) - ln(1-z)]
-      series_coeff = scalar_t(1);
-    } else {
-      // (-1)^m / (m-1)! from precomputed table
-      real_t factorial_mm1 = factorial(real_t(m - 1));
-      series_coeff = scalar_t((m % 2 == 0) ? 1 : -1) / scalar_t(factorial_mm1);
-    }
-
     // Compute (1-z)^m
     scalar_t omz_m = scalar_t(1);
     for (int j = 0; j < m; ++j) {
       omz_m *= one_minus_z;
     }
+
+    // Series coefficient: (-1)^(m+1) = (-1)^m × (-1) = -((-1)^m)
+    int series_sign = (m % 2 == 0) ? -1 : 1;  // (-1)^(m+1)
 
     scalar_t log_series = scalar_t(0);
     scalar_t poch_am = scalar_t(1);      // (a+m)_s
@@ -908,53 +923,46 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(
     real_t prev_term_mag = real_t(1);
     int stall_count = 0;
 
-    // Accumulate digamma sums for incremental computation
-    scalar_t psi_sum_am = scalar_t(0);   // Σ 1/(a+m+j) from j=0 to s-1
-    scalar_t psi_sum_bm = scalar_t(0);   // Σ 1/(b+m+j) from j=0 to s-1
-
-    // Base digamma values
+    // Incremental digamma computation using recurrence: ψ(x+1) = ψ(x) + 1/x
+    scalar_t psi_sum_am = scalar_t(0);
+    scalar_t psi_sum_bm = scalar_t(0);
     scalar_t psi_am = digamma(a_m);
     scalar_t psi_bm = digamma(b_m);
 
+    // Cache digamma values and update via recurrence instead of recomputing
+    scalar_t psi_s1 = digamma(scalar_t(1));        // ψ(1), will become ψ(s+1)
+    scalar_t psi_sm1 = digamma(scalar_t(m + 1));   // ψ(m+1), will become ψ(s+m+1)
+
     for (int s = 0; s < kExtendedMaxTerms_2F1; ++s) {
-      // s! and (s+m)! from precomputed tables
       real_t factorial_s = factorial(real_t(s));
       real_t factorial_sm = factorial(real_t(s + m));
 
-      // Digamma combination
-      scalar_t psi_s1 = digamma(scalar_t(s + 1));        // ψ(s+1)
-      scalar_t psi_sm1 = digamma(scalar_t(s + m + 1));   // ψ(s+m+1)
-      scalar_t psi_ams = psi_am + psi_sum_am;            // ψ(a+m+s)
-      scalar_t psi_bms = psi_bm + psi_sum_bm;            // ψ(b+m+s)
+      scalar_t psi_ams = psi_am + psi_sum_am;
+      scalar_t psi_bms = psi_bm + psi_sum_bm;
 
+      // DLMF H expression: ln(1-z) - ψ(s+1) - ψ(s+m+1) + ψ(a+m+s) + ψ(b+m+s)
       scalar_t H;
       if (m == 0) {
-        // For m = 0: [2ψ(s+1) - ψ(a+s) - ψ(b+s) - ln(1-z)]
-        H = scalar_t(2) * psi_s1 - psi_ams - psi_bms - log_one_minus_z;
+        // For m = 0: H = ln(1-z) - 2ψ(s+1) + ψ(a+s) + ψ(b+s)
+        H = log_one_minus_z - scalar_t(2) * psi_s1 + psi_ams + psi_bms;
       } else {
-        // For m >= 1: [ψ(s+1) + ψ(s+m+1) - ψ(a+m+s) - ψ(b+m+s) - ln(1-z)]
-        H = psi_s1 + psi_sm1 - psi_ams - psi_bms - log_one_minus_z;
+        H = log_one_minus_z - psi_s1 - psi_sm1 + psi_ams + psi_bms;
       }
 
       scalar_t term = (poch_am * poch_bm) / scalar_t(factorial_s * factorial_sm) * omz_pow * H;
       log_series += term;
 
-      // Check convergence
       real_t term_mag = abs(term);
       real_t sum_mag = abs(log_series);
       if (term_mag < eps * (sum_mag > real_t(1) ? sum_mag : real_t(1))) {
         break;
       }
 
-      // Compute convergence ratio for adaptive termination
       real_t ratio = (prev_term_mag > eps) ? (term_mag / prev_term_mag) : real_t(0);
-
-      // Check for divergence
       if (ratio > real_t(1) && s > 10) {
         break;
       }
 
-      // Track stalling
       if (ratio > stall_threshold) {
         stall_count++;
         if (stall_count > kStallCountThreshold_2F1) {
@@ -964,25 +972,26 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(
         stall_count = 0;
       }
 
-      // After base iterations, only continue if still converging well
       if (s >= kBaseMaxTerms_2F1 && ratio > convergence_threshold) {
         break;
       }
 
       prev_term_mag = term_mag;
-
-      // Update Pochhammer symbols and power for next iteration
       psi_sum_am += scalar_t(1) / (a_m + scalar_t(s));
       psi_sum_bm += scalar_t(1) / (b_m + scalar_t(s));
       poch_am *= (a_m + scalar_t(s));
       poch_bm *= (b_m + scalar_t(s));
       omz_pow *= one_minus_z;
+
+      // Update cached digamma values via recurrence: ψ(x+1) = ψ(x) + 1/x
+      psi_s1 += scalar_t(1) / scalar_t(s + 1);
+      psi_sm1 += scalar_t(1) / scalar_t(s + m + 1);
     }
 
-    result += series_coeff * omz_m * log_series;
+    result += scalar_t(series_sign) * series_gamma_coeff * omz_m * log_series;
   }
 
-  return gamma_ratio_coeff * result;
+  return result;
 }
 
 /**
@@ -1035,28 +1044,21 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff(
         a_new, b_new, c, z, m_new);
   }
 
-  // For m = 0, use the explicit limiting formula from DLMF 15.8.10
+  // For m >= 0, use the explicit limiting formula from DLMF 15.8.10
   // This is more accurate than Richardson extrapolation since it avoids
   // error amplification from the 1/delta singularity
-  if (m == 0) {
-    return hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(a, b, c, z, m);
-  }
-
-  // For m >= 1, the explicit formula has sign issues that need fixing.
-  // Use Richardson extrapolation as fallback for now.
-  auto [delta1, delta2] = compute_richardson_deltas_multi(a, b, c);
-
-  scalar_t f1 = hypergeometric_2f1_one_minus_z_transform_with_delta(a, b, c, z, delta1);
-  scalar_t f2 = hypergeometric_2f1_one_minus_z_transform_with_delta(a, b, c, z, delta2);
-
-  return (f1 * scalar_t(delta2) - f2 * scalar_t(delta1)) / scalar_t(delta2 - delta1);
+  return hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit(a, b, c, z, m);
 }
 
 /**
  * Explicit derivative of 1-z transformation when c-a-b is a non-negative integer m.
  *
  * Computes the value and derivatives with respect to a, b, c analytically
- * using the DLMF 15.8.10 formula structure.
+ * using the DLMF 15.8.10 formula structure:
+ *
+ * ₂F₁(a, b; a+b+m; z) =
+ *   [Γ(c)/(Γ(a+m)Γ(b+m))] × poly_sum
+ *   + (-1)^(m+1) × [Γ(c)/(Γ(a)Γ(b))] × (1-z)^m × log_series
  */
 template <typename scalar_t>
 C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scalar_t>
@@ -1091,65 +1093,103 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit_with_derivatives(
     }
   }
 
-  // Parameters for the formula
   scalar_t a_m = a + scalar_t(m);
   scalar_t b_m = b + scalar_t(m);
 
-  // Gamma ratio: G = Γ(c) / (Γ(a+m)Γ(b+m))
-  // dlogG/da = -ψ(a+m), dlogG/db = -ψ(b+m), dlogG/dc = ψ(c)
+  // =========================================================================
+  // Gamma coefficients and their derivatives
+  // =========================================================================
+
+  // poly_gamma_coeff = Γ(c) / (Γ(a+m) × Γ(b+m))
+  // d(log poly_gamma_coeff)/da = -ψ(a+m)
+  // d(log poly_gamma_coeff)/db = -ψ(b+m)
+  // d(log poly_gamma_coeff)/dc = ψ(c)
   scalar_t psi_c = digamma(c);
   scalar_t psi_am = digamma(a_m);
   scalar_t psi_bm = digamma(b_m);
 
-  scalar_t gamma_ratio;
+  scalar_t poly_gamma_coeff;
   if constexpr (c10::is_complex<scalar_t>::value) {
     scalar_t log_ratio = log_gamma_complex(c) - log_gamma_complex(a_m) - log_gamma_complex(b_m);
-    gamma_ratio = exp(log_ratio);
+    poly_gamma_coeff = exp(log_ratio);
   } else {
     using std::lgamma;
     scalar_t log_mag = lgamma(c) - lgamma(a_m) - lgamma(b_m);
     int sign = sign_gamma(c) * sign_gamma(a_m) * sign_gamma(b_m);
-    gamma_ratio = scalar_t(sign) * exp(log_mag);
+    poly_gamma_coeff = scalar_t(sign) * exp(log_mag);
   }
 
-  scalar_t dlogG_da = -psi_am;
-  scalar_t dlogG_db = -psi_bm;
-  scalar_t dlogG_dc = psi_c;
+  scalar_t dlog_poly_gamma_da = -psi_am;
+  scalar_t dlog_poly_gamma_db = -psi_bm;
+  scalar_t dlog_poly_gamma_dc = psi_c;
 
-  // Initialize sums for value and derivatives
-  scalar_t S = scalar_t(0);      // The bracketed expression
-  scalar_t dS_da = scalar_t(0);
-  scalar_t dS_db = scalar_t(0);
-  scalar_t dS_dc = scalar_t(0);  // Will be 0 since polynomial/series don't depend on c directly
+  // Compute (a)_m, (b)_m and their log-derivatives for series_gamma_coeff
+  // (a)_m = a(a+1)...(a+m-1)
+  // d(log (a)_m)/da = Σ_{j=0}^{m-1} 1/(a+j)
+  scalar_t poch_a_m = scalar_t(1);
+  scalar_t poch_b_m = scalar_t(1);
+  scalar_t dlog_poch_a_m_da = scalar_t(0);
+  scalar_t dlog_poch_b_m_db = scalar_t(0);
+
+  for (int j = 0; j < m; ++j) {
+    scalar_t aj = a + scalar_t(j);
+    scalar_t bj = b + scalar_t(j);
+    poch_a_m *= aj;
+    poch_b_m *= bj;
+    dlog_poch_a_m_da += scalar_t(1) / aj;
+    dlog_poch_b_m_db += scalar_t(1) / bj;
+  }
+
+  // series_gamma_coeff = Γ(c)/(Γ(a)Γ(b)) = poly_gamma_coeff × (a)_m × (b)_m
+  scalar_t series_gamma_coeff = poly_gamma_coeff * poch_a_m * poch_b_m;
+
+  // d(log series_gamma_coeff)/da = d(log poly_gamma_coeff)/da + d(log (a)_m)/da
+  //                              = -ψ(a+m) + Σ 1/(a+j) = -ψ(a+m) + [ψ(a+m) - ψ(a)] = -ψ(a)
+  // Similarly for b, c
+  scalar_t psi_a = digamma(a);
+  scalar_t psi_b = digamma(b);
+  scalar_t dlog_series_gamma_da = -psi_a;
+  scalar_t dlog_series_gamma_db = -psi_b;
+  scalar_t dlog_series_gamma_dc = psi_c;
+
+  // Series sign: (-1)^(m+1)
+  int series_sign = (m % 2 == 0) ? -1 : 1;
+
+  // Initialize results
+  scalar_t f = scalar_t(0);
+  scalar_t df_da = scalar_t(0);
+  scalar_t df_db = scalar_t(0);
+  scalar_t df_dc = scalar_t(0);
 
   // =========================================================================
   // Part 1: Finite polynomial sum (only for m >= 1)
-  // P = Σ_{k=0}^{m-1} [(a)_k (b)_k / k!] × (m-1-k)! × (1-z)^k
-  // dP/da = Σ_{k=0}^{m-1} [d(a)_k/da × (b)_k / k!] × (m-1-k)! × (1-z)^k
-  //       where d(a)_k/da = (a)_k × Σ_{j=0}^{k-1} 1/(a+j)
+  // term1 = poly_gamma_coeff × poly_sum
+  // d(term1)/da = poly_gamma_coeff × [dlog_poly_gamma_da × poly_sum + d(poly_sum)/da]
   // =========================================================================
   if (m >= 1) {
+    scalar_t poly_sum = scalar_t(0);
+    scalar_t dpoly_da = scalar_t(0);
+    scalar_t dpoly_db = scalar_t(0);
+
     scalar_t poch_a = scalar_t(1);
     scalar_t poch_b = scalar_t(1);
     scalar_t omz_pow = scalar_t(1);
     scalar_t factorial_k = scalar_t(1);
-    scalar_t psi_sum_a = scalar_t(0);  // Σ 1/(a+j)
-    scalar_t psi_sum_b = scalar_t(0);  // Σ 1/(b+j)
+    scalar_t psi_sum_a = scalar_t(0);
+    scalar_t psi_sum_b = scalar_t(0);
+    int sign_k = 1;
 
     for (int k = 0; k < m; ++k) {
-      // (m-1-k)! from precomputed table
       real_t factorial_mmk = factorial(real_t(m - 1 - k));
+      scalar_t base_term = scalar_t(sign_k) * (poch_a * poch_b / factorial_k) * scalar_t(factorial_mmk) * omz_pow;
+      poly_sum += base_term;
 
-      scalar_t base_term = (poch_a * poch_b / factorial_k) * scalar_t(factorial_mmk) * omz_pow;
-      S += base_term;
-
-      // Derivatives: d[(a)_k]/da = (a)_k × psi_sum_a, similarly for b
+      // d(base_term)/da = base_term × psi_sum_a (for k > 0)
       if (k > 0) {
-        dS_da += base_term * psi_sum_a;
-        dS_db += base_term * psi_sum_b;
+        dpoly_da += base_term * psi_sum_a;
+        dpoly_db += base_term * psi_sum_b;
       }
 
-      // Update for next iteration
       if (k < m - 1) {
         psi_sum_a += scalar_t(1) / (a + scalar_t(k));
         psi_sum_b += scalar_t(1) / (b + scalar_t(k));
@@ -1157,33 +1197,31 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit_with_derivatives(
         poch_b *= (b + scalar_t(k));
         omz_pow *= one_minus_z;
         factorial_k *= scalar_t(k + 1);
+        sign_k = -sign_k;
       }
     }
+
+    scalar_t term1 = poly_gamma_coeff * poly_sum;
+    f += term1;
+    df_da += poly_gamma_coeff * (dlog_poly_gamma_da * poly_sum + dpoly_da);
+    df_db += poly_gamma_coeff * (dlog_poly_gamma_db * poly_sum + dpoly_db);
+    df_dc += poly_gamma_coeff * dlog_poly_gamma_dc * poly_sum;
   }
 
   // =========================================================================
   // Part 2: Infinite series with logarithmic terms
-  // L = coeff × (1-z)^m × Σ_{s=0}^∞ [(a+m)_s (b+m)_s / (s!(s+m)!)] × (1-z)^s × H_s
-  // where H_s = ψ(s+1) + ψ(s+m+1) - ψ(a+m+s) - ψ(b+m+s) - ln(1-z)
+  // term2 = series_sign × series_gamma_coeff × omz_m × log_series
+  // H = ln(1-z) - ψ(s+1) - ψ(s+m+1) + ψ(a+m+s) + ψ(b+m+s)
   // =========================================================================
   {
-    scalar_t series_coeff;
-    if (m == 0) {
-      series_coeff = scalar_t(1);
-    } else {
-      // (m-1)! from precomputed table
-      real_t factorial_mm1 = factorial(real_t(m - 1));
-      series_coeff = scalar_t((m % 2 == 0) ? 1 : -1) / scalar_t(factorial_mm1);
-    }
-
     scalar_t omz_m = scalar_t(1);
     for (int j = 0; j < m; ++j) {
       omz_m *= one_minus_z;
     }
 
-    scalar_t L = scalar_t(0);
-    scalar_t dL_da = scalar_t(0);
-    scalar_t dL_db = scalar_t(0);
+    scalar_t log_series = scalar_t(0);
+    scalar_t dlog_series_da = scalar_t(0);
+    scalar_t dlog_series_db = scalar_t(0);
 
     scalar_t poch_am = scalar_t(1);
     scalar_t poch_bm = scalar_t(1);
@@ -1191,85 +1229,67 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit_with_derivatives(
     scalar_t psi_sum_am = scalar_t(0);
     scalar_t psi_sum_bm = scalar_t(0);
 
-    // Base digamma values
     scalar_t psi_am_base = digamma(a_m);
     scalar_t psi_bm_base = digamma(b_m);
 
+    // Cache digamma values and update via recurrence: ψ(x+1) = ψ(x) + 1/x
+    scalar_t psi_s1 = digamma(scalar_t(1));        // ψ(1), will become ψ(s+1)
+    scalar_t psi_sm1 = digamma(scalar_t(m + 1));   // ψ(m+1), will become ψ(s+m+1)
+
     for (int s = 0; s < max_terms; ++s) {
-      // s! and (s+m)! from precomputed tables
       real_t factorial_s = factorial(real_t(s));
       real_t factorial_sm = factorial(real_t(s + m));
 
-      scalar_t psi_s1 = digamma(scalar_t(s + 1));
-      scalar_t psi_sm1 = digamma(scalar_t(s + m + 1));
       scalar_t psi_ams = psi_am_base + psi_sum_am;
       scalar_t psi_bms = psi_bm_base + psi_sum_bm;
 
+      // DLMF H: ln(1-z) - ψ(s+1) - ψ(s+m+1) + ψ(a+m+s) + ψ(b+m+s)
       scalar_t H;
       if (m == 0) {
-        H = scalar_t(2) * psi_s1 - psi_ams - psi_bms - log_one_minus_z;
+        H = log_one_minus_z - scalar_t(2) * psi_s1 + psi_ams + psi_bms;
       } else {
-        H = psi_s1 + psi_sm1 - psi_ams - psi_bms - log_one_minus_z;
+        H = log_one_minus_z - psi_s1 - psi_sm1 + psi_ams + psi_bms;
       }
 
       scalar_t coeff_term = (poch_am * poch_bm) / scalar_t(factorial_s * factorial_sm) * omz_pow;
       scalar_t term = coeff_term * H;
-      L += term;
+      log_series += term;
 
-      // Derivatives of the series term
-      // d/da of coeff_term = coeff_term × psi_sum_am (from d(a+m)_s/da)
-      // d/da of H = -d(psi(a+m+s))/da = -trigamma(a+m+s) (but we approximate via psi_sum)
-      // Simplified: d/da [coeff_term × H] ≈ coeff_term × (H × psi_sum_am - 1/(a+m+s) sum)
+      // dH/da = dψ(a+m+s)/da = ψ'(a+m+s) (trigamma)
+      // dH/db = dψ(b+m+s)/db = ψ'(b+m+s) (trigamma)
+      // Use dedicated trigamma function for accuracy
+      scalar_t dH_da = trigamma(a_m + scalar_t(s));
+      scalar_t dH_db = trigamma(b_m + scalar_t(s));
 
-      // For simplicity, we use the chain rule:
-      // dL/da = Σ [d(poch_am)/da × rest + poch_am × d(H)/da]
-      // d(poch_am)/da = poch_am × psi_sum_am
-      // dH/da = -dψ(a+m+s)/da ≈ contribution handled via recurrence
+      // d(coeff_term)/da = coeff_term × psi_sum_am
+      dlog_series_da += coeff_term * (H * psi_sum_am + dH_da);
+      dlog_series_db += coeff_term * (H * psi_sum_bm + dH_db);
 
-      // Approximate analytical derivative using partial derivatives
-      scalar_t trigamma_ams = scalar_t(0);  // Second derivative of lgamma
-      for (int j = 0; j <= s; ++j) {
-        trigamma_ams += scalar_t(1) / ((a_m + scalar_t(j)) * (a_m + scalar_t(j)));
-      }
-      scalar_t trigamma_bms = scalar_t(0);
-      for (int j = 0; j <= s; ++j) {
-        trigamma_bms += scalar_t(1) / ((b_m + scalar_t(j)) * (b_m + scalar_t(j)));
-      }
-
-      scalar_t dH_da = -trigamma_ams;  // Approximate: -ψ'(a+m+s) ≈ -Σ 1/(a+m+j)²
-      scalar_t dH_db = -trigamma_bms;
-
-      dL_da += coeff_term * (H * psi_sum_am + dH_da);
-      dL_db += coeff_term * (H * psi_sum_bm + dH_db);
-
-      // Convergence check
       real_t term_mag = abs(term);
-      real_t sum_mag = abs(L);
+      real_t sum_mag = abs(log_series);
       if (term_mag < eps * (sum_mag > real_t(1) ? sum_mag : real_t(1))) {
         break;
       }
 
-      // Update for next iteration
       psi_sum_am += scalar_t(1) / (a_m + scalar_t(s));
       psi_sum_bm += scalar_t(1) / (b_m + scalar_t(s));
       poch_am *= (a_m + scalar_t(s));
       poch_bm *= (b_m + scalar_t(s));
       omz_pow *= one_minus_z;
+
+      // Update cached digamma values via recurrence: ψ(x+1) = ψ(x) + 1/x
+      psi_s1 += scalar_t(1) / scalar_t(s + 1);
+      psi_sm1 += scalar_t(1) / scalar_t(s + m + 1);
     }
 
-    S += series_coeff * omz_m * L;
-    dS_da += series_coeff * omz_m * dL_da;
-    dS_db += series_coeff * omz_m * dL_db;
-  }
+    scalar_t term2 = scalar_t(series_sign) * series_gamma_coeff * omz_m * log_series;
+    f += term2;
 
-  // Final result: f = G × S
-  // df/da = G × dS/da + S × G × dlogG/da
-  // df/db = G × dS/db + S × G × dlogG/db
-  // df/dc = S × G × dlogG/dc
-  scalar_t f = gamma_ratio * S;
-  scalar_t df_da = gamma_ratio * (dS_da + S * dlogG_da);
-  scalar_t df_db = gamma_ratio * (dS_db + S * dlogG_db);
-  scalar_t df_dc = gamma_ratio * (S * dlogG_dc);
+    // d(term2)/da = series_sign × series_gamma_coeff × omz_m × [dlog_series_gamma_da × log_series + dlog_series_da]
+    df_da += scalar_t(series_sign) * series_gamma_coeff * omz_m * (dlog_series_gamma_da * log_series + dlog_series_da);
+    df_db += scalar_t(series_sign) * series_gamma_coeff * omz_m * (dlog_series_gamma_db * log_series + dlog_series_db);
+    df_dc += scalar_t(series_sign) * series_gamma_coeff * omz_m * dlog_series_gamma_dc * log_series;
+  }
 
   return std::make_tuple(f, df_da, df_db, df_dc);
 }
@@ -1341,14 +1361,13 @@ hypergeometric_2f1_one_minus_z_transform_integer_diff_with_derivatives(
   }
 
   // For m = 0, use the explicit limiting formula from DLMF 15.8.10
-  // This is more accurate than Richardson extrapolation since it avoids
-  // error amplification from the 1/delta singularity
   if (m == 0) {
     return hypergeometric_2f1_one_minus_z_transform_integer_diff_explicit_with_derivatives(a, b, c, z, m);
   }
 
-  // For m >= 1, the explicit formula has sign issues that need fixing.
-  // Use Richardson extrapolation as fallback for now.
+  // For m >= 1, the derivative calculation in the explicit formula is complex and
+  // prone to numerical issues. Use Richardson extrapolation with the non-integer
+  // formula, which gives accurate derivatives in the limit.
   auto [delta1, delta2] = compute_richardson_deltas_multi(a, b, c);
 
   auto [f1, da1, db1, dc1] = hypergeometric_2f1_one_minus_z_transform_with_delta_and_derivatives(a, b, c, z, delta1);
@@ -1959,14 +1978,16 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit(
     scalar_t psi_a = digamma(a);
     scalar_t psi_ac1 = digamma(a - c + scalar_t(1));
 
+    // Cache digamma values and update via recurrence: ψ(x+1) = ψ(x) + 1/x
+    scalar_t psi_s1 = digamma(scalar_t(1));        // ψ(1), will become ψ(s+1)
+    scalar_t psi_sn1 = digamma(scalar_t(n + 1));   // ψ(n+1), will become ψ(s+n+1)
+
     for (int s = 0; s < kExtendedMaxTerms_2F1; ++s) {
       // s! and (s+n)! from precomputed tables
       real_t factorial_s = factorial(real_t(s));
       real_t factorial_sn = factorial(real_t(s + n));
 
-      // Digamma combination
-      scalar_t psi_s1 = digamma(scalar_t(s + 1));        // ψ(s+1)
-      scalar_t psi_sn1 = digamma(scalar_t(s + n + 1));   // ψ(s+n+1)
+      // Digamma combination (using cached values)
       scalar_t psi_as = psi_a + psi_sum_a;               // ψ(a+s)
       scalar_t psi_ac1s = psi_ac1 + psi_sum_ac1;         // ψ(a-c+1+s)
 
@@ -2020,6 +2041,10 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit(
       poch_a *= (a + scalar_t(s));
       poch_ac1 *= (a - c + scalar_t(1 + s));
       z_inv_pow *= z_inv;
+
+      // Update cached digamma values via recurrence: ψ(x+1) = ψ(x) + 1/x
+      psi_s1 += scalar_t(1) / scalar_t(s + 1);
+      psi_sn1 += scalar_t(1) / scalar_t(s + n + 1);
     }
 
     result += series_coeff * log_series;
@@ -2223,13 +2248,15 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit_with_derivatives(
     scalar_t psi_a_base = digamma(a);
     scalar_t psi_ac1_base = digamma(a - c + scalar_t(1));
 
+    // Cache digamma values and update via recurrence: ψ(x+1) = ψ(x) + 1/x
+    scalar_t psi_s1 = digamma(scalar_t(1));        // ψ(1), will become ψ(s+1)
+    scalar_t psi_sn1 = digamma(scalar_t(n + 1));   // ψ(n+1), will become ψ(s+n+1)
+
     for (int s = 0; s < max_terms; ++s) {
       // s! and (s+n)! from precomputed tables
       real_t factorial_s = factorial(real_t(s));
       real_t factorial_sn = factorial(real_t(s + n));
 
-      scalar_t psi_s1 = digamma(scalar_t(s + 1));
-      scalar_t psi_sn1 = digamma(scalar_t(s + n + 1));
       scalar_t psi_as = psi_a_base + psi_sum_a;
       scalar_t psi_ac1s = psi_ac1_base + psi_sum_ac1;
 
@@ -2244,16 +2271,15 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit_with_derivatives(
       scalar_t term = coeff_term * H;
       L += term;
 
-      // Derivatives
-      scalar_t trigamma_as = scalar_t(0);
-      scalar_t trigamma_ac1s = scalar_t(0);
-      for (int j = 0; j <= s; ++j) {
-        trigamma_as += scalar_t(1) / ((a + scalar_t(j)) * (a + scalar_t(j)));
-        trigamma_ac1s += scalar_t(1) / ((a - c + scalar_t(1 + j)) * (a - c + scalar_t(1 + j)));
-      }
+      // Derivatives using dedicated trigamma function for accuracy
+      // H = ... - ψ(a+s) - ψ(a-c+1+s) - ln(-z)
+      // dH/da = -ψ'(a+s) - ψ'(a-c+1+s)
+      // dH/dc = ψ'(a-c+1+s)  (derivative of -ψ(a-c+1+s) w.r.t. c)
+      scalar_t trigamma_as = trigamma(a + scalar_t(s));
+      scalar_t trigamma_ac1s = trigamma(a - c + scalar_t(1 + s));
 
       scalar_t dH_da = -trigamma_as - trigamma_ac1s;
-      scalar_t dH_dc = trigamma_ac1s;  // d/dc of -ψ(a-c+1+s) = ψ'(a-c+1+s)
+      scalar_t dH_dc = trigamma_ac1s;
 
       // d(poch_a)/da = poch_a × psi_sum_a
       // d(poch_ac1)/da = poch_ac1 × psi_sum_ac1
@@ -2274,6 +2300,10 @@ hypergeometric_2f1_linear_transform_integer_diff_explicit_with_derivatives(
       poch_a *= (a + scalar_t(s));
       poch_ac1 *= (a - c + scalar_t(1 + s));
       z_inv_pow *= z_inv;
+
+      // Update cached digamma values via recurrence: ψ(x+1) = ψ(x) + 1/x
+      psi_s1 += scalar_t(1) / scalar_t(s + 1);
+      psi_sn1 += scalar_t(1) / scalar_t(s + n + 1);
     }
 
     S += series_coeff * L;
