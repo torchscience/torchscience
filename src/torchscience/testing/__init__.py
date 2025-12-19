@@ -31,6 +31,12 @@ Example usage:
 """
 
 from .base import OpTestCase
+from .creation_op_base import (
+    CreationOpDescriptor,
+    CreationOpTestCase,
+    CreationOpToleranceConfig,
+    ExpectedValue,
+)
 from .descriptors import (
     IdentitySpec,
     InputSpec,
@@ -79,6 +85,7 @@ from .sympy_utils import (
 __all__ = [
     # Base classes
     "OpTestCase",
+    "CreationOpTestCase",
     # Descriptors
     "OperatorDescriptor",
     "InputSpec",
@@ -87,6 +94,10 @@ __all__ = [
     "IdentitySpec",
     "SingularitySpec",
     "SpecialValue",
+    # Creation operator descriptors
+    "CreationOpDescriptor",
+    "CreationOpToleranceConfig",
+    "ExpectedValue",
     # Strategies - numeric
     "positive_real_numbers",
     "negative_real_numbers",
