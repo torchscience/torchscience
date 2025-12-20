@@ -1,7 +1,7 @@
 Window Functions
 ================
 
-.. automodule:: torchscience.window_function
+.. automodule:: torchscience.signal_processing.window_function
    :members:
    :undoc-members:
    :show-inheritance:

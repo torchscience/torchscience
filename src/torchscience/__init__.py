@@ -1,6 +1,6 @@
-from . import _csrc, window_function
+from . import _csrc, signal_processing
 
 __all__ = [
     "_csrc",
-    "window_function",
+    "signal_processing",
 ]

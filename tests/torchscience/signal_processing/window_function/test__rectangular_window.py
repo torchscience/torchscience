@@ -1,7 +1,7 @@
 import torch
 import torch.testing
 
-import torchscience.window_function
+import torchscience.signal_processing.window_function
 from torchscience.testing import (
     CreationOpDescriptor,
     CreationOpTestCase,
@@ -40,7 +40,7 @@ class TestRectangularWindow(CreationOpTestCase):
     def descriptor(self) -> CreationOpDescriptor:
         return CreationOpDescriptor(
             name="rectangular_window",
-            func=torchscience.window_function.rectangular_window,
+            func=torchscience.signal_processing.window_function.rectangular_window,
             expected_values=[
                 ExpectedValue(
                     n=1,
@@ -81,14 +81,16 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_all_ones(self):
         """Test that all elements are exactly 1.0."""
         for n in [1, 5, 10, 100]:
-            result = torchscience.window_function.rectangular_window(n)
+            result = torchscience.signal_processing.window_function.rectangular_window(
+                n
+            )
             expected = torch.ones(n, dtype=torch.float32)
             torch.testing.assert_close(result, expected)
 
     def test_all_ones_float64(self):
         """Test that all elements are exactly 1.0 for float64."""
         for n in [1, 5, 10, 100]:
-            result = torchscience.window_function.rectangular_window(
+            result = torchscience.signal_processing.window_function.rectangular_window(
                 n, dtype=torch.float64
             )
             expected = torch.ones(n, dtype=torch.float64)
@@ -97,7 +99,7 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_sum_equals_length(self):
         """Test that sum of window equals window length (coherent gain = n)."""
         for n in [1, 5, 10, 50]:
-            result = torchscience.window_function.rectangular_window(
+            result = torchscience.signal_processing.window_function.rectangular_window(
                 n, dtype=torch.float64
             )
             assert result.sum().item() == float(n), (
@@ -107,7 +109,7 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_normalization_property(self):
         """Test that mean of rectangular window is 1.0."""
         for n in [1, 5, 10, 100]:
-            result = torchscience.window_function.rectangular_window(
+            result = torchscience.signal_processing.window_function.rectangular_window(
                 n, dtype=torch.float64
             )
             assert result.mean().item() == 1.0, (
@@ -117,7 +119,7 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_symmetry(self):
         """Test that rectangular window is symmetric."""
         for n in [1, 5, 10, 11]:
-            result = torchscience.window_function.rectangular_window(
+            result = torchscience.signal_processing.window_function.rectangular_window(
                 n, dtype=torch.float64
             )
             flipped = torch.flip(result, dims=[0])
@@ -126,7 +128,7 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_max_and_min(self):
         """Test that max and min are both 1.0."""
         for n in [1, 5, 10, 100]:
-            result = torchscience.window_function.rectangular_window(
+            result = torchscience.signal_processing.window_function.rectangular_window(
                 n, dtype=torch.float64
             )
             assert result.max().item() == 1.0, (
@@ -139,14 +141,20 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_large_window(self):
         """Test with large window size."""
         n = 10000
-        result = torchscience.window_function.rectangular_window(n)
+        result = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                n
+            )
+        )
         assert result.shape == (n,)
         assert result.sum().item() == float(n)
 
     def test_gradient_flow(self):
         """Test that gradients flow through when requires_grad=True."""
-        result = torchscience.window_function.rectangular_window(
-            5, dtype=torch.float64, requires_grad=True
+        result = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                5, dtype=torch.float64, requires_grad=True
+            )
         )
         loss = result.sum()
         loss.backward()
@@ -156,8 +164,10 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_multiply_with_signal(self):
         """Test typical use case of multiplying window with a signal."""
         n = 10
-        window = torchscience.window_function.rectangular_window(
-            n, dtype=torch.float64
+        window = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                n, dtype=torch.float64
+            )
         )
         signal = torch.randn(n, dtype=torch.float64)
         windowed = window * signal
@@ -170,7 +180,7 @@ class TestRectangularWindow(CreationOpTestCase):
             import torch.signal.windows
 
             for n in [5, 10, 20]:
-                result = torchscience.window_function.rectangular_window(
+                result = torchscience.signal_processing.window_function.rectangular_window(
                     n, dtype=torch.float64
                 )
                 # torch.signal.windows might not have rectangular, but if it does:
@@ -187,28 +197,42 @@ class TestRectangularWindow(CreationOpTestCase):
 
     def test_n_equals_zero(self):
         """Test edge case where n=0 returns an empty tensor."""
-        result = torchscience.window_function.rectangular_window(0)
+        result = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                0
+            )
+        )
         assert result.shape == (0,)
         assert result.numel() == 0
         assert result.dtype == torch.float32
 
     def test_n_equals_zero_float64(self):
         """Test n=0 with explicit dtype."""
-        result = torchscience.window_function.rectangular_window(
-            0, dtype=torch.float64
+        result = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                0, dtype=torch.float64
+            )
         )
         assert result.shape == (0,)
         assert result.dtype == torch.float64
 
     def test_n_equals_one(self):
         """Test edge case where n=1."""
-        result = torchscience.window_function.rectangular_window(1)
+        result = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                1
+            )
+        )
         assert result.shape == (1,)
         assert result[0].item() == 1.0
 
     def test_n_equals_two(self):
         """Test edge case where n=2."""
-        result = torchscience.window_function.rectangular_window(2)
+        result = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                2
+            )
+        )
         assert result.shape == (2,)
         torch.testing.assert_close(
             result, torch.tensor([1.0, 1.0], dtype=torch.float32)
@@ -220,8 +244,10 @@ class TestRectangularWindow(CreationOpTestCase):
 
     def test_half_precision(self):
         """Test float16 dtype."""
-        result = torchscience.window_function.rectangular_window(
-            5, dtype=torch.float16
+        result = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                5, dtype=torch.float16
+            )
         )
         assert result.dtype == torch.float16
         expected = torch.ones(5, dtype=torch.float16)
@@ -229,8 +255,10 @@ class TestRectangularWindow(CreationOpTestCase):
 
     def test_bfloat16_precision(self):
         """Test bfloat16 dtype."""
-        result = torchscience.window_function.rectangular_window(
-            5, dtype=torch.bfloat16
+        result = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                5, dtype=torch.bfloat16
+            )
         )
         assert result.dtype == torch.bfloat16
         expected = torch.ones(5, dtype=torch.bfloat16)
@@ -243,7 +271,7 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_complex64_not_supported_or_works(self):
         """Test behavior with complex64 dtype."""
         try:
-            result = torchscience.window_function.rectangular_window(
+            result = torchscience.signal_processing.window_function.rectangular_window(
                 5, dtype=torch.complex64
             )
             # If it works, verify it's all ones
@@ -260,8 +288,10 @@ class TestRectangularWindow(CreationOpTestCase):
 
     def test_strided_layout_explicit(self):
         """Test explicit strided layout."""
-        result = torchscience.window_function.rectangular_window(
-            5, layout=torch.strided
+        result = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                5, layout=torch.strided
+            )
         )
         assert result.layout == torch.strided
         torch.testing.assert_close(
@@ -272,7 +302,7 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_sparse_coo_layout(self):
         """Test sparse_coo layout if supported."""
         try:
-            result = torchscience.window_function.rectangular_window(
+            result = torchscience.signal_processing.window_function.rectangular_window(
                 5, layout=torch.sparse_coo
             )
             assert result.layout == torch.sparse_coo
@@ -290,13 +320,19 @@ class TestRectangularWindow(CreationOpTestCase):
 
     def test_contiguous_output(self):
         """Test that output tensor is contiguous."""
-        result = torchscience.window_function.rectangular_window(10)
+        result = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                10
+            )
+        )
         assert result.is_contiguous(), "Output should be contiguous"
 
     def test_no_memory_leak_large_allocations(self):
         """Test that repeated large allocations don't leak memory."""
         for _ in range(10):
-            _ = torchscience.window_function.rectangular_window(10000)
+            _ = torchscience.signal_processing.window_function.rectangular_window(
+                10000
+            )
 
     # =========================================================================
     # Integration tests
@@ -309,8 +345,10 @@ class TestRectangularWindow(CreationOpTestCase):
         signal = torch.randn(n, dtype=torch.float64)
 
         # Apply rectangular window
-        window = torchscience.window_function.rectangular_window(
-            n, dtype=torch.float64
+        window = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                n, dtype=torch.float64
+            )
         )
         windowed_signal = signal * window
 
@@ -330,8 +368,10 @@ class TestRectangularWindow(CreationOpTestCase):
         signals = torch.randn(batch_size, n, dtype=torch.float64)
 
         # Create window and broadcast
-        window = torchscience.window_function.rectangular_window(
-            n, dtype=torch.float64
+        window = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                n, dtype=torch.float64
+            )
         )
         windowed = signals * window  # Broadcasting: [batch, time] * [time]
 
@@ -348,8 +388,10 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_frequency_response_main_lobe_width(self):
         """Test that main lobe width is approximately 4*pi/n."""
         n = 64
-        window = torchscience.window_function.rectangular_window(
-            n, dtype=torch.float64
+        window = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                n, dtype=torch.float64
+            )
         )
 
         # Zero-pad for better frequency resolution
@@ -381,8 +423,10 @@ class TestRectangularWindow(CreationOpTestCase):
         with the discrete Fourier transform," Proc. IEEE, 1978.
         """
         n = 128
-        window = torchscience.window_function.rectangular_window(
-            n, dtype=torch.float64
+        window = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                n, dtype=torch.float64
+            )
         )
 
         # Zero-pad for better frequency resolution
@@ -420,8 +464,10 @@ class TestRectangularWindow(CreationOpTestCase):
         corresponds to 6 dB per octave (20 dB per decade).
         """
         n = 128
-        window = torchscience.window_function.rectangular_window(
-            n, dtype=torch.float64
+        window = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                n, dtype=torch.float64
+            )
         )
 
         nfft = 16384
@@ -456,7 +502,7 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_coherent_gain_frequency_domain(self):
         """Test that DC component equals window sum (coherent gain = n)."""
         for n in [32, 64, 128]:
-            window = torchscience.window_function.rectangular_window(
+            window = torchscience.signal_processing.window_function.rectangular_window(
                 n, dtype=torch.float64
             )
             spectrum = torch.fft.fft(window)
@@ -475,8 +521,10 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_parseval_energy_conservation(self):
         """Test Parseval's theorem: energy in time domain equals energy in frequency domain."""
         n = 64
-        window = torchscience.window_function.rectangular_window(
-            n, dtype=torch.float64
+        window = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                n, dtype=torch.float64
+            )
         )
 
         # Time domain energy
@@ -509,8 +557,10 @@ class TestRectangularWindow(CreationOpTestCase):
         # = 20 * log10(1 / (pi/2)) = 20 * log10(2/pi) ≈ -3.92 dB
 
         n = 256
-        window = torchscience.window_function.rectangular_window(
-            n, dtype=torch.float64
+        window = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                n, dtype=torch.float64
+            )
         )
 
         # Create a tone exactly at a bin frequency
@@ -547,20 +597,24 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_torch_compile_basic(self):
         """Test basic torch.compile compatibility."""
         compiled_func = torch.compile(
-            torchscience.window_function.rectangular_window
+            torchscience.signal_processing.window_function.rectangular_window
         )
         result = compiled_func(10)
-        expected = torchscience.window_function.rectangular_window(10)
+        expected = (
+            torchscience.signal_processing.window_function.rectangular_window(
+                10
+            )
+        )
         torch.testing.assert_close(result, expected)
 
     def test_torch_compile_with_dtype(self):
         """Test torch.compile with explicit dtype."""
         compiled_func = torch.compile(
-            torchscience.window_function.rectangular_window
+            torchscience.signal_processing.window_function.rectangular_window
         )
         for dtype in [torch.float32, torch.float64]:
             result = compiled_func(10, dtype=dtype)
-            expected = torchscience.window_function.rectangular_window(
+            expected = torchscience.signal_processing.window_function.rectangular_window(
                 10, dtype=dtype
             )
             torch.testing.assert_close(result, expected)
@@ -571,7 +625,7 @@ class TestRectangularWindow(CreationOpTestCase):
 
         def windowed_fft(signal: torch.Tensor) -> torch.Tensor:
             n = signal.shape[-1]
-            window = torchscience.window_function.rectangular_window(
+            window = torchscience.signal_processing.window_function.rectangular_window(
                 n, dtype=signal.dtype, device=signal.device
             )
             return torch.fft.fft(signal * window)
@@ -587,12 +641,14 @@ class TestRectangularWindow(CreationOpTestCase):
     def test_torch_compile_dynamic_shapes(self):
         """Test torch.compile with dynamic shapes."""
         compiled_func = torch.compile(
-            torchscience.window_function.rectangular_window,
+            torchscience.signal_processing.window_function.rectangular_window,
             dynamic=True,
         )
 
         for n in [16, 32, 64, 128]:
             result = compiled_func(n)
-            expected = torchscience.window_function.rectangular_window(n)
+            expected = torchscience.signal_processing.window_function.rectangular_window(
+                n
+            )
             torch.testing.assert_close(result, expected)
             assert result.shape == (n,)
