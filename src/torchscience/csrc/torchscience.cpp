@@ -11,6 +11,11 @@
 #include "composite/window_functions.h"
 #include "composite/waveform.h"
 
+#include "cpu/filter.h"
+#include "autograd/filter.h"
+#include "meta/filter.h"
+#include "autocast/filter.h"
+
 #ifdef TORCHSCIENCE_CUDA
 #include "sparse/coo/cuda/special_functions.h"
 #include "sparse/csr/cuda/special_functions.h"
@@ -54,4 +59,9 @@ TORCH_LIBRARY(torchscience, module) {
 
   // `torchscience.waveform`
   module.def("sine_wave(int n, float frequency=1.0, float sample_rate=1.0, float amplitude=1.0, float phase=0.0, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False) -> Tensor");
+
+  // `torchscience.signal_processing.filter`
+  module.def("butterworth_analog_bandpass_filter(int n, Tensor omega_p1, Tensor omega_p2) -> Tensor");
+  module.def("butterworth_analog_bandpass_filter_backward(Tensor grad_output, int n, Tensor omega_p1, Tensor omega_p2) -> (Tensor, Tensor)");
+  module.def("butterworth_analog_bandpass_filter_backward_backward(Tensor grad_grad_omega_p1, Tensor grad_grad_omega_p2, Tensor grad_output, int n, Tensor omega_p1, Tensor omega_p2) -> (Tensor, Tensor, Tensor)");
 }

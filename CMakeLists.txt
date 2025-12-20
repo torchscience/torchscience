@@ -39,6 +39,7 @@ if(TORCH_CUDA_LIBRARIES)
   list(APPEND TORCHSCIENCE_SOURCES
     src/torchscience/csrc/cuda/special_functions/chebyshev_polynomial_t.cu
     src/torchscience/csrc/cuda/special_functions/gamma.cu
+    src/torchscience/csrc/cuda/filter.cu
   )
   add_definitions(-DTORCHSCIENCE_CUDA)
 endif()
