@@ -582,24 +582,27 @@ void butterworth_analog_bandpass_filter_backward(
  * Double-backward pass for butterworth_analog_bandpass_filter.
  *
  * Computes second-order gradients for Hessian-vector products.
- * Currently returns zeros - full implementation would require
+ * Currently, returns zeros - full implementation would require
  * computing second derivatives of all the intermediate quantities.
  */
 template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
 std::tuple<T, T, T, T> butterworth_analog_bandpass_filter_backward_backward(
-    T grad_grad_omega_p1,
-    T grad_grad_omega_p2,
-    const T* grad_sos,
-    int64_t n,
-    T omega_p1,
-    T omega_p2,
-    bool has_grad_grad_omega_p1,
-    bool has_grad_grad_omega_p2
+    [[maybe_unused]] T grad_grad_omega_p1,
+    [[maybe_unused]] T grad_grad_omega_p2,
+    [[maybe_unused]] const T* grad_sos,
+    [[maybe_unused]] int64_t n,
+    [[maybe_unused]] T omega_p1,
+    [[maybe_unused]] T omega_p2,
+    [[maybe_unused]] bool has_grad_grad_omega_p1,
+    [[maybe_unused]] bool has_grad_grad_omega_p2
 ) {
-    // Second-order derivatives are complex - for now return zeros
-    // This can be implemented using symbolic differentiation if needed
-    return std::make_tuple(T(0), T(0), T(0), T(0));
+    return std::make_tuple(
+        T(0),
+        T(0),
+        T(0),
+        T(0)
+    );
 }
 
 }  // namespace torchscience::impl::filter

@@ -1,6 +1,6 @@
 # torchscience
 
-Scientific computing operators for PyTorch with full autograd, torch.compile, and vmap support.
+PyTorch operators for mathematics, science, and engineering.
 
 ## Installation
 
@@ -11,7 +11,7 @@ pip install torchscience
 For development:
 
 ```bash
-git clone https://github.com/0x00b1/torchscience.git
+git clone https://github.com/torchscience/torchscience.git
 cd torchscience
 pip install -e ".[dev]"
 ```
