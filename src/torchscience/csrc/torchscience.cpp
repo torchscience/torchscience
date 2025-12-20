@@ -9,6 +9,7 @@
 #include "quantized/cpu/special_functions.h"
 
 #include "composite/window_functions.h"
+#include "composite/waveform.h"
 
 #ifdef TORCHSCIENCE_CUDA
 #include "sparse/coo/cuda/special_functions.h"
@@ -50,4 +51,7 @@ TORCH_LIBRARY(torchscience, module) {
 
   // `torchscience.window_function`
   module.def("rectangular_window(int n, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False) -> Tensor");
+
+  // `torchscience.waveform`
+  module.def("sine_wave(int n, float frequency=1.0, float sample_rate=1.0, float amplitude=1.0, float phase=0.0, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False) -> Tensor");
 }
