@@ -13,14 +13,19 @@ inline at::Tensor rectangular_window(
 ) {
   TORCH_CHECK(n >= 0, "rectangular_window: n must be non-negative, got ", n);
 
-  return at::ones(
-    {n},
-    at::TensorOptions()
-      .dtype(dtype.value_or(c10::typeMetaToScalarType(at::get_default_dtype())))
-      .layout(layout.value_or(at::kStrided))
-      .device(device.value_or(at::kCPU))
-      .requires_grad(requires_grad)
-  );
+  auto options = at::TensorOptions()
+    .dtype(dtype.value_or(c10::typeMetaToScalarType(at::get_default_dtype())))
+    .layout(layout.value_or(at::kStrided))
+    .device(device.value_or(at::kCPU))
+    .requires_grad(false);
+
+  at::Tensor result = at::ones({n}, options);
+
+  if (requires_grad) {
+    result = result.requires_grad_(true);
+  }
+
+  return result;
 }
 
 } // namespace torchscience::window_function

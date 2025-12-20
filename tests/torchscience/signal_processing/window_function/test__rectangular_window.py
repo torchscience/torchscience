@@ -69,10 +69,18 @@ class TestRectangularWindow(CreationOpTestCase):
                 torch.float64,
             ],
             tolerances=CreationOpToleranceConfig(),
-            skip_tests={"test_error_for_zero_size"},
+            skip_tests={"test_error_for_zero_size", "test_contiguous_format"},
             supports_meta=True,
             reference_func=reference_rectangular_window,
         )
+
+    # =========================================================================
+    # Override base class tests that don't apply
+    # =========================================================================
+
+    def test_contiguous_format(self):
+        """Skip: rectangular_window doesn't support memory_format parameter."""
+        pass
 
     # =========================================================================
     # Rectangular window specific tests
