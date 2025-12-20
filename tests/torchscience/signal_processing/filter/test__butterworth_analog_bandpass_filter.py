@@ -322,6 +322,101 @@ class TestButterworthAnalogBandpassFilter:
         assert omega_p2.grad.shape == omega_p2.shape
 
     # =========================================================================
+    # Gradient Correctness Tests (gradcheck)
+    # =========================================================================
+
+    @pytest.mark.parametrize("n", [1, 2, 3, 4])
+    def test_gradcheck_scalar_inputs(self, n):
+        """Test gradient correctness with torch.autograd.gradcheck for scalar inputs."""
+        omega_p1 = torch.tensor(0.2, requires_grad=True, dtype=torch.float64)
+        omega_p2 = torch.tensor(0.5, requires_grad=True, dtype=torch.float64)
+
+        def fn(w1, w2):
+            return torchscience.signal_processing.filter.butterworth_analog_bandpass_filter(
+                n, (w1, w2)
+            )
+
+        # Use gradcheck to verify analytical gradients match numerical gradients
+        # eps=1e-5 works better for this function due to complex chain rule through sqrt
+        # rtol=0.03 and atol=1e-3 account for complex arithmetic precision and small values
+        assert torch.autograd.gradcheck(
+            fn, (omega_p1, omega_p2), eps=1e-5, atol=1e-3, rtol=0.03
+        )
+
+    def test_gradcheck_different_frequency_ranges(self):
+        """Test gradient correctness across different frequency ranges."""
+        test_cases = [
+            (0.2, 0.5),  # Standard case
+            (0.3, 0.7),  # Mid frequencies
+            (0.4, 0.6),  # Narrow band
+        ]
+
+        for omega_p1_val, omega_p2_val in test_cases:
+            omega_p1 = torch.tensor(
+                omega_p1_val, requires_grad=True, dtype=torch.float64
+            )
+            omega_p2 = torch.tensor(
+                omega_p2_val, requires_grad=True, dtype=torch.float64
+            )
+
+            def fn(w1, w2):
+                return torchscience.signal_processing.filter.butterworth_analog_bandpass_filter(
+                    2, (w1, w2)
+                )
+
+            assert torch.autograd.gradcheck(
+                fn, (omega_p1, omega_p2), eps=1e-5, atol=1e-3, rtol=0.03
+            ), (
+                f"gradcheck failed for omega_p1={omega_p1_val}, omega_p2={omega_p2_val}"
+            )
+
+    def test_gradcheck_batched_inputs(self):
+        """Test gradient correctness with batched inputs."""
+        omega_p1 = torch.tensor(
+            [0.2, 0.3], requires_grad=True, dtype=torch.float64
+        )
+        omega_p2 = torch.tensor(
+            [0.5, 0.6], requires_grad=True, dtype=torch.float64
+        )
+
+        def fn(w1, w2):
+            return torchscience.signal_processing.filter.butterworth_analog_bandpass_filter(
+                2, (w1, w2)
+            )
+
+        assert torch.autograd.gradcheck(
+            fn, (omega_p1, omega_p2), eps=1e-5, atol=1e-3, rtol=0.03
+        )
+
+    def test_gradcheck_only_omega_p1(self):
+        """Test gradient correctness when only omega_p1 requires grad."""
+        omega_p1 = torch.tensor(0.2, requires_grad=True, dtype=torch.float64)
+        omega_p2 = torch.tensor(0.5, requires_grad=False, dtype=torch.float64)
+
+        def fn(w1):
+            return torchscience.signal_processing.filter.butterworth_analog_bandpass_filter(
+                3, (w1, omega_p2)
+            )
+
+        assert torch.autograd.gradcheck(
+            fn, (omega_p1,), eps=1e-5, atol=1e-3, rtol=0.03
+        )
+
+    def test_gradcheck_only_omega_p2(self):
+        """Test gradient correctness when only omega_p2 requires grad."""
+        omega_p1 = torch.tensor(0.2, requires_grad=False, dtype=torch.float64)
+        omega_p2 = torch.tensor(0.5, requires_grad=True, dtype=torch.float64)
+
+        def fn(w2):
+            return torchscience.signal_processing.filter.butterworth_analog_bandpass_filter(
+                3, (omega_p1, w2)
+            )
+
+        assert torch.autograd.gradcheck(
+            fn, (omega_p2,), eps=1e-5, atol=1e-3, rtol=0.03
+        )
+
+    # =========================================================================
     # torch.compile Compatibility Tests
     # =========================================================================
 

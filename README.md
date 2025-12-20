@@ -10,6 +10,8 @@ PyTorch operators for mathematics, science, and engineering.
   - `hypergeometric_2_f_1`
   - `incomplete_beta`
 - `signal_processing`
+  - `filter`
+    - `butterworth_analog_bandpass_filter`
   - `waveform`
     - `sine_wave`
   - `window_function`
