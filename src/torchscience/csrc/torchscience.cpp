@@ -5,21 +5,33 @@
 #include "autocast/special_functions.h"
 #include "meta/special_functions.h"
 #include "sparse/coo/cpu/special_functions.h"
+#include "sparse/coo/cpu/optimization/test_functions.h"
 #include "sparse/csr/cpu/special_functions.h"
+#include "sparse/csr/cpu/optimization/test_functions.h"
 #include "quantized/cpu/special_functions.h"
+#include "quantized/cpu/optimization/test_functions.h"
 
 #include "composite/window_functions.h"
 #include "composite/waveform.h"
+#include "composite/optimization/test_functions.h"
+#include "batching/optimization/test_functions.h"
 
 #include "cpu/filter.h"
+#include "cpu/optimization/test_functions.h"
 #include "autograd/filter.h"
+#include "autograd/optimization/test_functions.h"
 #include "meta/filter.h"
+#include "meta/optimization/test_functions.h"
 #include "autocast/filter.h"
 
 #ifdef TORCHSCIENCE_CUDA
+#include "cuda/optimization/test_functions.cu"
 #include "sparse/coo/cuda/special_functions.h"
+#include "sparse/coo/cuda/optimization/test_functions.h"
 #include "sparse/csr/cuda/special_functions.h"
+#include "sparse/csr/cuda/optimization/test_functions.h"
 #include "quantized/cuda/special_functions.h"
+#include "quantized/cuda/optimization/test_functions.h"
 #endif
 
 extern "C" {
@@ -37,6 +49,22 @@ extern "C" {
 }
 
 TORCH_LIBRARY(torchscience, module) {
+  // `torchscience.optimization.test_functions`
+  module.def("rosenbrock(Tensor x, Tensor a, Tensor b) -> Tensor");
+  module.def("rosenbrock_backward(Tensor grad_output, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
+  module.def("rosenbrock_backward_backward(Tensor grad_grad_x, Tensor grad_grad_a, Tensor grad_grad_b, Tensor grad_output, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // `torchscience.signal_processing.filter`
+  module.def("butterworth_analog_bandpass_filter(int n, Tensor omega_p1, Tensor omega_p2) -> Tensor");
+  module.def("butterworth_analog_bandpass_filter_backward(Tensor grad_output, int n, Tensor omega_p1, Tensor omega_p2) -> (Tensor, Tensor)");
+  module.def("butterworth_analog_bandpass_filter_backward_backward(Tensor grad_grad_omega_p1, Tensor grad_grad_omega_p2, Tensor grad_output, int n, Tensor omega_p1, Tensor omega_p2) -> (Tensor, Tensor, Tensor)");
+
+  // `torchscience.signal_processing.waveform`
+  module.def("sine_wave(int n, float frequency=1.0, float sample_rate=1.0, float amplitude=1.0, float phase=0.0, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False) -> Tensor");
+
+  // `torchscience.signal_processing.window_function`
+  module.def("rectangular_window(int n, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False) -> Tensor");
+
   // `torchscience.special_functions`
   module.def("chebyshev_polynomial_t(Tensor v, Tensor z) -> Tensor");
   module.def("chebyshev_polynomial_t_backward(Tensor gradient_output, Tensor v, Tensor z) -> (Tensor, Tensor)");
@@ -53,15 +81,4 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("incomplete_beta(Tensor z, Tensor a, Tensor b) -> Tensor");
   module.def("incomplete_beta_backward(Tensor gradient_output, Tensor z, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
   module.def("incomplete_beta_backward_backward(Tensor gradient_gradient_z, Tensor gradient_gradient_a, Tensor gradient_gradient_b, Tensor gradient_output, Tensor z, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor, Tensor)");
-
-  // `torchscience.window_function`
-  module.def("rectangular_window(int n, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False) -> Tensor");
-
-  // `torchscience.waveform`
-  module.def("sine_wave(int n, float frequency=1.0, float sample_rate=1.0, float amplitude=1.0, float phase=0.0, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False) -> Tensor");
-
-  // `torchscience.signal_processing.filter`
-  module.def("butterworth_analog_bandpass_filter(int n, Tensor omega_p1, Tensor omega_p2) -> Tensor");
-  module.def("butterworth_analog_bandpass_filter_backward(Tensor grad_output, int n, Tensor omega_p1, Tensor omega_p2) -> (Tensor, Tensor)");
-  module.def("butterworth_analog_bandpass_filter_backward_backward(Tensor grad_grad_omega_p1, Tensor grad_grad_omega_p2, Tensor grad_output, int n, Tensor omega_p1, Tensor omega_p2) -> (Tensor, Tensor, Tensor)");
 }
