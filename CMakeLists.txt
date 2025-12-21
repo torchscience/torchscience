@@ -40,6 +40,7 @@ if(TORCH_CUDA_LIBRARIES)
     src/torchscience/csrc/cuda/special_functions/chebyshev_polynomial_t.cu
     src/torchscience/csrc/cuda/special_functions/gamma.cu
     src/torchscience/csrc/cuda/filter.cu
+    src/torchscience/csrc/cuda/descriptive/kurtosis.cu
   )
   add_definitions(-DTORCHSCIENCE_CUDA)
 endif()

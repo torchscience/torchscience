@@ -18,14 +18,19 @@
 
 #include "cpu/filter.h"
 #include "cpu/optimization/test_functions.h"
+#include "cpu/descriptive/kurtosis.h"
 #include "autograd/filter.h"
 #include "autograd/optimization/test_functions.h"
+#include "autograd/descriptive/kurtosis.h"
 #include "meta/filter.h"
 #include "meta/optimization/test_functions.h"
+#include "meta/descriptive/kurtosis.h"
 #include "autocast/filter.h"
+#include "autocast/descriptive/kurtosis.h"
 
 #ifdef TORCHSCIENCE_CUDA
 #include "cuda/optimization/test_functions.cu"
+#include "cuda/descriptive/kurtosis.cu"
 #include "sparse/coo/cuda/special_functions.h"
 #include "sparse/coo/cuda/optimization/test_functions.h"
 #include "sparse/csr/cuda/special_functions.h"
@@ -81,4 +86,9 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("incomplete_beta(Tensor z, Tensor a, Tensor b) -> Tensor");
   module.def("incomplete_beta_backward(Tensor gradient_output, Tensor z, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
   module.def("incomplete_beta_backward_backward(Tensor gradient_gradient_z, Tensor gradient_gradient_a, Tensor gradient_gradient_b, Tensor gradient_output, Tensor z, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // `torchscience.statistics.descriptive`
+  module.def("kurtosis(Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");
+  module.def("kurtosis_backward(Tensor grad_output, Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");
+  module.def("kurtosis_backward_backward(Tensor grad_grad_input, Tensor grad_output, Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> (Tensor, Tensor)");
 }
