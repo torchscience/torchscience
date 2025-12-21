@@ -152,13 +152,27 @@ def rosenbrock(
 
     Consider using float64 for better numerical stability with large ``b``.
     """
+    # For quantized tensors, use float32 for parameters
+    param_dtype = x.dtype
+    if x.dtype in (
+        torch.qint8,
+        torch.quint8,
+        torch.qint32,
+        torch.quint4x2,
+        torch.quint2x4,
+    ):
+        param_dtype = torch.float32
+
     if not isinstance(a, Tensor):
-        a = torch.as_tensor(a, dtype=x.dtype, device=x.device)
+        a = torch.as_tensor(a, dtype=param_dtype, device=x.device)
     if not isinstance(b, Tensor):
-        b = torch.as_tensor(b, dtype=x.dtype, device=x.device)
+        b = torch.as_tensor(b, dtype=param_dtype, device=x.device)
 
     # Check for potential numerical instability with large b values
-    b_scalar = b.item() if b.numel() == 1 else None
+    # Skip check for meta tensors and during torch.compile (can't call .item())
+    b_scalar = None
+    if b.numel() == 1 and not b.is_meta and not torch.compiler.is_compiling():
+        b_scalar = b.item()
     if b_scalar is not None:
         if x.dtype in (torch.float16, torch.bfloat16):
             if b_scalar > _LARGE_B_THRESHOLD_FLOAT16:

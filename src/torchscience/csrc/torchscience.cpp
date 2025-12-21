@@ -14,7 +14,8 @@
 #include "composite/window_functions.h"
 #include "composite/waveform.h"
 #include "composite/optimization/test_functions.h"
-#include "batching/optimization/test_functions.h"
+// Note: batching/optimization/test_functions.h disabled - functorch batch rules
+// require different registration for custom ops (not TORCH_LIBRARY_IMPL)
 
 #include "cpu/filter.h"
 #include "cpu/optimization/test_functions.h"

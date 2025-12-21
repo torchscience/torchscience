@@ -260,14 +260,22 @@ void kurtosis_backward_1d(
     }
 
     T m2_sq = m2 * m2;
-    T g2 = m4 / m2_sq;  // Pearson kurtosis
-    T g2_excess = g2 - T(3);  // excess kurtosis
+    T g2 = m4 / m2_sq;  // Pearson kurtosis (m4/m2^2)
 
-    // Gradient for biased Pearson kurtosis:
-    // dk/dx_i = (4/(n*m_2^2)) * [d_i^3 - m_3 - 2*k*m_2*d_i]
-    // where k = g2 for Pearson, k = g2_excess for Fisher
+    // Gradient derivation:
+    // k = m_4/m_2^2 - 3 (for fisher=true) or k = m_4/m_2^2 (for fisher=false)
+    //
+    // Using chain rule:
+    // dk/dx_j = d(m_4)/dx_j / m_2^2 - 2*m_4/m_2^3 * d(m_2)/dx_j
+    //
+    // where d(m_2)/dx_j = (2/n)*d_j and d(m_4)/dx_j = (4/n)*(d_j^3 - m_3)
+    //
+    // dk/dx_j = (4/n)*(d_j^3 - m_3)/m_2^2 - 2*m_4/m_2^3 * (2/n)*d_j
+    //         = (4/(n*m_2^2)) * [(d_j^3 - m_3) - m_4*d_j/m_2]
+    //         = (4/(n*m_2^2)) * [d_j^3 - m_3 - g2*m_2*d_j]
+    //
+    // Note: The gradient is the same for fisher and non-fisher (the -3 is constant)
 
-    T k_for_grad = fisher ? g2_excess : g2;
     T coeff = T(4) / (T(n) * m2_sq);
 
     if (bias) {
@@ -275,7 +283,7 @@ void kurtosis_backward_1d(
         for (int64_t i = 0; i < n; ++i) {
             T d = data[i] - mean;
             T d3 = d * d * d;
-            grad_input[i] = grad_output * coeff * (d3 - m3 - T(2) * k_for_grad * m2 * d);
+            grad_input[i] = grad_output * coeff * (d3 - m3 - g2 * m2 * d);
         }
     } else {
         // Unbiased case: chain rule through correction formula
@@ -288,7 +296,7 @@ void kurtosis_backward_1d(
             T d = data[i] - mean;
             T d3 = d * d * d;
             // Gradient of biased kurtosis
-            T dg2_dxi = coeff * (d3 - m3 - T(2) * k_for_grad * m2 * d);
+            T dg2_dxi = coeff * (d3 - m3 - g2 * m2 * d);
             // Chain rule
             grad_input[i] = grad_output * dG2_dg2 * dg2_dxi;
         }

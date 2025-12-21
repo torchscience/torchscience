@@ -50,61 +50,63 @@ std::vector<int64_t> compute_output_shape(
 
 }  // namespace
 
-/**
- * Meta kernel for kurtosis.
- * Computes output shape without actual computation.
- */
 inline at::Tensor kurtosis(
     const at::Tensor& input,
     at::OptionalIntArrayRef dim,
     bool keepdim,
-    bool fisher,
-    bool bias
+    [[maybe_unused]] bool fisher,
+    [[maybe_unused]] bool bias
 ) {
-    auto output_shape = compute_output_shape(input, dim, keepdim);
+    const std::vector<int64_t> output_shape = compute_output_shape(input, dim, keepdim);
 
-    // Output dtype is real type for complex inputs
-    auto output_dtype = at::isComplexType(input.scalar_type())
-        ? c10::toRealValueType(input.scalar_type())
-        : input.scalar_type();
+    c10::ScalarType output_dtype;
 
-    auto options = input.options().dtype(output_dtype);
+    if (isComplexType(input.scalar_type())) {
+        output_dtype = toRealValueType(input.scalar_type());
+    } else {
+        output_dtype = input.scalar_type();
+    }
 
-    return output_shape.empty()
-        ? at::empty({}, options)
-        : at::empty(output_shape, options);
+    if (output_shape.empty()) {
+        return at::empty(
+            {},
+            input.options().dtype(output_dtype)
+        );
+    }
+
+    return at::empty(
+        output_shape,
+        input.options().dtype(output_dtype)
+    );
 }
 
-/**
- * Meta kernel for backward pass.
- */
 inline at::Tensor kurtosis_backward(
-    const at::Tensor& gradientient_output,
+    [[maybe_unused]] const at::Tensor& gradientient_output,
     const at::Tensor& input,
-    at::OptionalIntArrayRef dim,
-    bool keepdim,
-    bool fisher,
-    bool bias
+    [[maybe_unused]] at::OptionalIntArrayRef dim,
+    [[maybe_unused]] bool keepdim,
+    [[maybe_unused]] bool fisher,
+    [[maybe_unused]] bool bias
 ) {
-    return at::empty_like(input);
+    return empty_like(input);
 }
 
-/**
- * Meta kernel for double-backward pass.
- */
 inline std::tuple<at::Tensor, at::Tensor> kurtosis_backward_backward(
-    const at::Tensor& gradient_gradient_input,
+    [[maybe_unused]] const at::Tensor& gradient_gradient_input,
     const at::Tensor& gradient_output,
     const at::Tensor& input,
-    at::OptionalIntArrayRef dim,
-    bool keepdim,
-    bool fisher,
-    bool bias
+    [[maybe_unused]] at::OptionalIntArrayRef dim,
+    [[maybe_unused]] bool keepdim,
+    [[maybe_unused]] bool fisher,
+    [[maybe_unused]] bool bias
 ) {
-    at::Tensor gradient_gradient_output = at::empty_like(gradient_output);
-    at::Tensor new_gradient_input = at::empty_like(input);
+    at::Tensor gradient_gradient_output = empty_like(gradient_output);
+    at::Tensor new_gradient_input = empty_like(input);
 
-    return std::make_tuple(gradient_gradient_output, new_gradient_input);
+    return std::make_tuple(
+        gradient_gradient_output,
+        new_gradient_input
+    );
 }
 
 }  // namespace torchscience::meta::descriptive

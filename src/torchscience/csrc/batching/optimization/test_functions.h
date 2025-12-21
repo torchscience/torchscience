@@ -1,9 +1,28 @@
 #pragma once
 
-#include <ATen/functorch/BatchRulesHelper.h>
-#include <ATen/functorch/PlumbingHelper.h>
+#include <ATen/ATen.h>
+#include <torch/library.h>
 
 namespace torchscience::batching::optimization::test_functions {
+
+namespace {
+
+/**
+ * Move a batch dimension to the front of the tensor.
+ * If batch_dim is nullopt, the tensor is returned unchanged.
+ */
+inline at::Tensor moveBatchDimToFront(const at::Tensor& tensor, std::optional<int64_t> batch_dim) {
+    if (!batch_dim.has_value()) {
+        return tensor;
+    }
+    int64_t bdim = batch_dim.value();
+    if (bdim == 0) {
+        return tensor;
+    }
+    return tensor.movedim(bdim, 0);
+}
+
+}  // namespace
 
 /**
  * Batching rule for the Rosenbrock function.
@@ -26,9 +45,9 @@ inline std::tuple<at::Tensor, std::optional<int64_t>> rosenbrock_batch_rule(
     std::optional<int64_t> b_bdim
 ) {
     // Move batch dimensions to the front for uniform handling
-    auto x_ = at::functorch::moveBatchDimToFront(x, x_bdim);
-    auto a_ = at::functorch::moveBatchDimToFront(a, a_bdim);
-    auto b_ = at::functorch::moveBatchDimToFront(b, b_bdim);
+    auto x_ = moveBatchDimToFront(x, x_bdim);
+    auto a_ = moveBatchDimToFront(a, a_bdim);
+    auto b_ = moveBatchDimToFront(b, b_bdim);
 
     // Call the underlying implementation through the dispatcher
     // The function already handles batch dimensions naturally

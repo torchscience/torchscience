@@ -134,14 +134,13 @@ inline at::Tensor kurtosis(
 
     // Handle scalar reduction case (all dimensions)
     if (!dim.has_value() || dim->empty()) {
-        AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
-            at::kBFloat16, at::kHalf,
-            input_contig.scalar_type(),
-            "kurtosis_cpu_all",
-            [&]() {
-                using real_t = typename c10::scalar_value_type<scalar_t>::type;
-
-                if constexpr (c10::is_complex<scalar_t>::value) {
+        if (at::isComplexType(input_contig.scalar_type())) {
+            // Handle complex types separately
+            AT_DISPATCH_COMPLEX_TYPES(
+                input_contig.scalar_type(),
+                "kurtosis_cpu_all_complex",
+                [&]() {
+                    using real_t = typename c10::scalar_value_type<scalar_t>::type;
                     const c10::complex<real_t>* data_ptr =
                         reinterpret_cast<const c10::complex<real_t>*>(
                             input_contig.data_ptr<scalar_t>()
@@ -150,7 +149,15 @@ inline at::Tensor kurtosis(
                         data_ptr, input_contig.numel(), fisher, bias
                     );
                     output.fill_(result);
-                } else {
+                }
+            );
+        } else {
+            // Handle real types
+            AT_DISPATCH_FLOATING_TYPES_AND2(
+                at::kBFloat16, at::kHalf,
+                input_contig.scalar_type(),
+                "kurtosis_cpu_all_real",
+                [&]() {
                     // Handle half precision by computing in float
                     if constexpr (std::is_same_v<scalar_t, at::Half> ||
                                   std::is_same_v<scalar_t, at::BFloat16>) {
@@ -171,8 +178,8 @@ inline at::Tensor kurtosis(
                         output.fill_(result);
                     }
                 }
-            }
-        );
+            );
+        }
         return output;
     }
 
@@ -204,14 +211,13 @@ inline at::Tensor kurtosis(
     at::Tensor permuted = input_contig.permute(permutation).contiguous();
     at::Tensor permuted_view = permuted.view({batch_size, reduce_size});
 
-    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
-        at::kBFloat16, at::kHalf,
-        input_contig.scalar_type(),
-        "kurtosis_cpu_dim",
-        [&]() {
-            using real_t = typename c10::scalar_value_type<scalar_t>::type;
-
-            if constexpr (c10::is_complex<scalar_t>::value) {
+    if (at::isComplexType(input_contig.scalar_type())) {
+        // Handle complex types separately
+        AT_DISPATCH_COMPLEX_TYPES(
+            input_contig.scalar_type(),
+            "kurtosis_cpu_dim_complex",
+            [&]() {
+                using real_t = typename c10::scalar_value_type<scalar_t>::type;
                 const c10::complex<real_t>* data_ptr =
                     reinterpret_cast<const c10::complex<real_t>*>(
                         permuted_view.data_ptr<scalar_t>()
@@ -228,7 +234,15 @@ inline at::Tensor kurtosis(
                         );
                     }
                 });
-            } else {
+            }
+        );
+    } else {
+        // Handle real types
+        AT_DISPATCH_FLOATING_TYPES_AND2(
+            at::kBFloat16, at::kHalf,
+            input_contig.scalar_type(),
+            "kurtosis_cpu_dim_real",
+            [&]() {
                 if constexpr (std::is_same_v<scalar_t, at::Half> ||
                               std::is_same_v<scalar_t, at::BFloat16>) {
                     const scalar_t* data_ptr = permuted_view.data_ptr<scalar_t>();
@@ -262,8 +276,8 @@ inline at::Tensor kurtosis(
                     });
                 }
             }
-        }
-    );
+        );
+    }
 
     return output;
 }
