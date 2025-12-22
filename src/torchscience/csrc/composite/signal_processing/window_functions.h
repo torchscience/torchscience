@@ -1,6 +1,7 @@
 #pragma once
 
 #include <torch/extension.h>
+#include "../../impl/signal_processing/window_function/rectangular_window.h"
 
 namespace torchscience::window_function {
 
@@ -19,18 +20,34 @@ inline at::Tensor rectangular_window(
     .device(device.value_or(at::kCPU))
     .requires_grad(false);
 
-  at::Tensor result = at::ones({n}, options);
+  at::Tensor output = at::empty({n}, options);
 
-  if (requires_grad) {
-    result = result.requires_grad_(true);
+  if (n > 0) {
+    AT_DISPATCH_FLOATING_TYPES_AND2(
+      at::kBFloat16,
+      at::kHalf,
+      output.scalar_type(),
+      "rectangular_window",
+      [&]() {
+        impl::window_function::rectangular_window_kernel<scalar_t>(
+          output.data_ptr<scalar_t>(),
+          n,
+          n
+        );
+      }
+    );
   }
 
-  return result;
+  if (requires_grad) {
+    output = output.requires_grad_(true);
+  }
+
+  return output;
 }
 
 } // namespace torchscience::window_function
 
-TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
+TORCH_LIBRARY_IMPL(torchscience, CompositeExplicitAutograd, module) {
   module.impl(
     "rectangular_window",
     &torchscience::window_function::rectangular_window

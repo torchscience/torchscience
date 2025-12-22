@@ -13,8 +13,8 @@
 #define TORCHSCIENCE_UNPACK_IMPL(...) __VA_ARGS__
 #define TORCHSCIENCE_UNPACK(X) TORCHSCIENCE_UNPACK_IMPL X
 
-// Add comma prefix if non-empty: (n, f) -> , n, f  |  () -> (empty)
-#define TORCHSCIENCE_COMMA_IF_IMPL(...) __VA_OPT__(, __VA_ARGS__)
+// Add comma if non-empty: (n, f) -> ,  |  () -> (empty)
+#define TORCHSCIENCE_COMMA_IF_IMPL(...) __VA_OPT__(,)
 #define TORCHSCIENCE_COMMA_IF(X) TORCHSCIENCE_COMMA_IF_IMPL(TORCHSCIENCE_UNPACK(X))
 
 // =============================================================================
