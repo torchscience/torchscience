@@ -39,8 +39,10 @@ if(TORCH_CUDA_LIBRARIES)
   list(APPEND TORCHSCIENCE_SOURCES
     src/torchscience/csrc/cuda/special_functions/chebyshev_polynomial_t.cu
     src/torchscience/csrc/cuda/special_functions/gamma.cu
-          src/torchscience/csrc/cuda/signal_processing/filter.cu
-          src/torchscience/csrc/cuda/statistics/descriptive/kurtosis.cu
+    src/torchscience/csrc/cuda/signal_processing/filter.cu
+    src/torchscience/csrc/cuda/statistics/descriptive/kurtosis.cu
+    src/torchscience/csrc/cuda/integral_transform/hilbert_transform.cu
+    src/torchscience/csrc/cuda/integral_transform/inverse_hilbert_transform.cu
   )
   add_definitions(-DTORCHSCIENCE_CUDA)
 endif()

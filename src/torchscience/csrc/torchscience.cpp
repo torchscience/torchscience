@@ -20,24 +20,47 @@
 #include "cpu/signal_processing/filter.h"
 #include "cpu/optimization/test_functions.h"
 #include "cpu/statistics/descriptive/kurtosis.h"
+#include "cpu/integral_transform/hilbert_transform.h"
+#include "cpu/integral_transform/inverse_hilbert_transform.h"
 #include "autograd/signal_processing/filter.h"
 #include "autograd/optimization/test_functions.h"
 #include "autograd/statistics/descriptive/kurtosis.h"
+#include "autograd/integral_transform/hilbert_transform.h"
+#include "autograd/integral_transform/inverse_hilbert_transform.h"
 #include "meta/signal_processing/filter.h"
 #include "meta/optimization/test_functions.h"
 #include "meta/statistics/descriptive/kurtosis.h"
+#include "meta/integral_transform/hilbert_transform.h"
+#include "meta/integral_transform/inverse_hilbert_transform.h"
 #include "autocast/signal_processing/filter.h"
 #include "autocast/statistics/descriptive/kurtosis.h"
+#include "autocast/integral_transform/hilbert_transform.h"
+#include "autocast/integral_transform/inverse_hilbert_transform.h"
+
+#include "sparse/coo/cpu/integral_transform/hilbert_transform.h"
+#include "sparse/coo/cpu/integral_transform/inverse_hilbert_transform.h"
+#include "sparse/csr/cpu/integral_transform/hilbert_transform.h"
+#include "sparse/csr/cpu/integral_transform/inverse_hilbert_transform.h"
+#include "quantized/cpu/integral_transform/hilbert_transform.h"
+#include "quantized/cpu/integral_transform/inverse_hilbert_transform.h"
 
 #ifdef TORCHSCIENCE_CUDA
 #include "cuda/optimization/test_functions.cu"
 #include "cuda/statistics/descriptive/kurtosis.cu"
+#include "cuda/integral_transform/hilbert_transform.cu"
+#include "cuda/integral_transform/inverse_hilbert_transform.cu"
 #include "sparse/coo/cuda/special_functions.h"
 #include "sparse/coo/cuda/optimization/test_functions.h"
+#include "sparse/coo/cuda/integral_transform/hilbert_transform.h"
+#include "sparse/coo/cuda/integral_transform/inverse_hilbert_transform.h"
 #include "sparse/csr/cuda/special_functions.h"
 #include "sparse/csr/cuda/optimization/test_functions.h"
+#include "sparse/csr/cuda/integral_transform/hilbert_transform.h"
+#include "sparse/csr/cuda/integral_transform/inverse_hilbert_transform.h"
 #include "quantized/cuda/special_functions.h"
 #include "quantized/cuda/optimization/test_functions.h"
+#include "quantized/cuda/integral_transform/hilbert_transform.h"
+#include "quantized/cuda/integral_transform/inverse_hilbert_transform.h"
 #endif
 
 extern "C" {
@@ -92,4 +115,14 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("kurtosis(Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");
   module.def("kurtosis_backward(Tensor grad_output, Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");
   module.def("kurtosis_backward_backward(Tensor grad_grad_input, Tensor grad_output, Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> (Tensor, Tensor)");
+
+  // `torchscience.integral_transform`
+  // n=-1 means use input size along dim (no padding/truncation)
+  module.def("hilbert_transform(Tensor input, int n=-1, int dim=-1) -> Tensor");
+  module.def("hilbert_transform_backward(Tensor grad_output, Tensor input, int n, int dim) -> Tensor");
+  module.def("hilbert_transform_backward_backward(Tensor grad_grad_input, Tensor grad_output, Tensor input, int n, int dim) -> (Tensor, Tensor)");
+
+  module.def("inverse_hilbert_transform(Tensor input, int n=-1, int dim=-1) -> Tensor");
+  module.def("inverse_hilbert_transform_backward(Tensor grad_output, Tensor input, int n, int dim) -> Tensor");
+  module.def("inverse_hilbert_transform_backward_backward(Tensor grad_grad_input, Tensor grad_output, Tensor input, int n, int dim) -> (Tensor, Tensor)");
 }
