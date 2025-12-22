@@ -2,10 +2,7 @@
 
 #include <ATen/autocast_mode.h>
 #include <torch/library.h>
-
-// =============================================================================
-// Helper macros for handling parenthesized parameter lists
-// =============================================================================
+#include "../core/creation_common.h"
 
 #ifndef TORCHSCIENCE_UNPACK_IMPL
 #define TORCHSCIENCE_UNPACK_IMPL(...) __VA_ARGS__
@@ -14,27 +11,7 @@
 #define TORCHSCIENCE_COMMA_IF(X) TORCHSCIENCE_COMMA_IF_IMPL(TORCHSCIENCE_UNPACK(X))
 #endif
 
-// =============================================================================
-// AUTOCAST_CREATION_OPERATOR
-// =============================================================================
-// Flexible macro for creation operators under autocast.
-// When autocast is enabled and no dtype is specified, uses autocast dtype.
-//
-// Parameters:
-//   NAMESPACE     - Namespace (e.g., window_function)
-//   OPERATOR_NAME - Operator name (e.g., rectangular_window)
-//   PARAMS        - Parenthesized typed params: (int64_t n) or ()
-//   ARGS          - Parenthesized arg names: (n) or ()
-//   TYPED_SIG     - Typed signature for dispatcher (params + standard opts)
-//
-// Usage:
-//   AUTOCAST_CREATION_OPERATOR(
-//     window_function, rectangular_window,
-//     (int64_t n), (n),
-//     (int64_t, const c10::optional<at::ScalarType>&,
-//      const c10::optional<at::Layout>&, const c10::optional<at::Device>&, bool))
-// =============================================================================
-
+// Autocast: intercept creation ops, use autocast dtype if none specified
 #define AUTOCAST_CREATION_OPERATOR(                                             \
   NAMESPACE,                                                                    \
   OPERATOR_NAME,                                                                \
@@ -53,6 +30,7 @@ inline at::Tensor OPERATOR_NAME(                                                
   const c10::optional<at::Device>& device,                                      \
   bool requires_grad                                                            \
 ) {                                                                             \
+  /* Exclude autocast to prevent infinite recursion */                          \
   c10::impl::ExcludeDispatchKeyGuard exclude_autocast(                          \
     c10::DispatchKey::Autocast                                                  \
   );                                                                            \
@@ -68,6 +46,7 @@ inline at::Tensor OPERATOR_NAME(                                                
     }                                                                           \
   }                                                                             \
                                                                                 \
+  /* Re-dispatch to actual backend implementation */                            \
   return c10::Dispatcher::singleton().findSchemaOrThrow(                        \
     "torchscience::" #OPERATOR_NAME,                                            \
     ""                                                                          \
