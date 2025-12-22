@@ -8,18 +8,18 @@
  * The Hilbert transform is a linear operator, so its gradient is straightforward.
  *
  * Forward: y = H[x]
- * Backward: grad_x = H[grad_y]
+ * Backward: grad_x = -H[grad_y]
  *
  * This is because H is orthogonal (preserves inner products):
  *   <H[f], g> = <f, H^T[g]> = <f, -H[g]>
  *
- * But for the gradient of a loss L with respect to input x:
+ * For the gradient of a loss L with respect to input x:
  *   dL/dx = H^T[dL/dy] = -H[dL/dy]
  *
- * Wait, let's be more careful. For real-valued functions:
+ * For real-valued functions:
  *   H^T = -H (the adjoint of H is -H)
  *
- * So: grad_input = -H[grad_output]
+ * Therefore: grad_input = -H[grad_output]
  *
  * However, in practice with FFT implementation:
  *   H[f] = IFFT(FFT(f) * h)

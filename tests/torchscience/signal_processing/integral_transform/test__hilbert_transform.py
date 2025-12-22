@@ -7,10 +7,19 @@ tests/torchscience/integral_transform/test__hilbert_transform.py file.
 
 import math
 
+import numpy as np
 import pytest
 import torch
 
 import torchscience.signal_processing.integral_transform
+
+# Check if scipy is available for reference tests
+try:
+    from scipy.signal import hilbert as scipy_hilbert
+
+    HAS_SCIPY = True
+except ImportError:
+    HAS_SCIPY = False
 
 
 class TestHilbertTransformPaddingMode:
@@ -516,3 +525,392 @@ class TestHilbertTransformEdgeCasesNewParams:
                 expected_size = n if n is not None else 64
                 assert result.shape == (expected_size,)
                 assert torch.all(torch.isfinite(result))
+
+
+class TestHilbertTransformComplexInput:
+    """Tests for complex input with padding modes."""
+
+    @pytest.mark.parametrize(
+        "mode", ["constant", "reflect", "replicate", "circular"]
+    )
+    def test_complex_input_with_padding_modes(self, mode):
+        """Test complex input works with all padding modes."""
+        x = torch.randn(64, dtype=torch.complex128)
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, n=128, padding_mode=mode
+        )
+        assert result.shape == (128,)
+        assert result.dtype == torch.complex128
+        assert torch.all(torch.isfinite(result.real))
+        assert torch.all(torch.isfinite(result.imag))
+
+    def test_complex_input_batched_with_padding(self):
+        """Test complex batched input with padding."""
+        x = torch.randn(3, 4, 64, dtype=torch.complex128)
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, n=128, dim=-1, padding_mode="reflect"
+        )
+        assert result.shape == (3, 4, 128)
+        assert result.dtype == torch.complex128
+
+    def test_complex_input_gradient_with_padding(self):
+        """Test gradient works for complex input with padding."""
+        x = torch.randn(32, dtype=torch.complex128, requires_grad=True)
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, n=64, padding_mode="reflect"
+        )
+        loss = result.abs().sum()
+        loss.backward()
+
+        assert x.grad is not None
+        assert x.grad.shape == x.shape
+
+
+class TestHilbertTransformTruncation:
+    """Tests for truncation mode (n < input_size)."""
+
+    def test_truncation_basic(self):
+        """Test basic truncation."""
+        x = torch.randn(128, dtype=torch.float64)
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, n=64
+        )
+        assert result.shape == (64,)
+        assert torch.all(torch.isfinite(result))
+
+    def test_truncation_gradient(self):
+        """Test gradient with truncation."""
+        x = torch.randn(128, requires_grad=True, dtype=torch.float64)
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, n=64
+        )
+        loss = result.sum()
+        loss.backward()
+
+        assert x.grad is not None
+        assert x.grad.shape == x.shape
+        assert torch.all(torch.isfinite(x.grad))
+
+    def test_gradcheck_truncation(self):
+        """Test gradient correctness with truncation."""
+        x = torch.randn(64, requires_grad=True, dtype=torch.float64)
+
+        def fn(input_tensor):
+            return torchscience.signal_processing.integral_transform.hilbert_transform(
+                input_tensor, n=32
+            )
+
+        assert torch.autograd.gradcheck(
+            fn, (x,), eps=1e-5, atol=1e-4, rtol=1e-4
+        )
+
+    def test_truncation_batched(self):
+        """Test truncation with batched input."""
+        x = torch.randn(3, 4, 128, dtype=torch.float64)
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, n=64, dim=-1
+        )
+        assert result.shape == (3, 4, 64)
+
+
+class TestHilbertTransformMultiDimensional:
+    """Tests for multi-dimensional inputs with non-last dimension."""
+
+    @pytest.mark.parametrize("dim", [0, 1, 2])
+    def test_3d_all_dims(self, dim):
+        """Test 3D input with transform along all possible dimensions."""
+        x = torch.randn(16, 32, 64, dtype=torch.float64)
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, dim=dim
+        )
+
+        expected_shape = list(x.shape)
+        assert result.shape == tuple(expected_shape)
+        assert torch.all(torch.isfinite(result))
+
+    @pytest.mark.parametrize("dim", [0, 1])
+    def test_3d_non_last_dim_with_padding(self, dim):
+        """Test padding along non-last dimension."""
+        x = torch.randn(16, 32, 64, dtype=torch.float64)
+        n = x.size(dim) * 2  # Double the size along dim
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, n=n, dim=dim, padding_mode="reflect"
+        )
+
+        expected_shape = list(x.shape)
+        expected_shape[dim] = n
+        assert result.shape == tuple(expected_shape)
+        assert torch.all(torch.isfinite(result))
+
+    def test_dim_0_gradient(self):
+        """Test gradient with dim=0."""
+        x = torch.randn(32, 64, requires_grad=True, dtype=torch.float64)
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, dim=0
+        )
+        loss = result.sum()
+        loss.backward()
+
+        assert x.grad is not None
+        assert x.grad.shape == x.shape
+
+    def test_negative_dim(self):
+        """Test negative dimension indexing."""
+        x = torch.randn(16, 32, 64, dtype=torch.float64)
+
+        result_neg = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, dim=-2
+        )
+        result_pos = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, dim=1
+        )
+
+        torch.testing.assert_close(result_neg, result_pos)
+
+
+class TestHilbertTransformZeroSignal:
+    """Tests for zero-valued signals."""
+
+    def test_zero_signal(self):
+        """Test that zero input produces zero output."""
+        x = torch.zeros(64, dtype=torch.float64)
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x
+        )
+        torch.testing.assert_close(result, x)
+
+    def test_zero_signal_with_padding(self):
+        """Test zero signal with padding."""
+        x = torch.zeros(64, dtype=torch.float64)
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, n=128, padding_mode="constant"
+        )
+        assert torch.allclose(result, torch.zeros(128, dtype=torch.float64))
+
+    def test_zero_signal_gradient(self):
+        """Test gradient for zero signal."""
+        x = torch.zeros(64, requires_grad=True, dtype=torch.float64)
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x
+        )
+        loss = result.sum()
+        loss.backward()
+
+        assert x.grad is not None
+        assert torch.all(torch.isfinite(x.grad))
+
+
+class TestHilbertTransformDeviceMismatch:
+    """Tests for device mismatch error handling."""
+
+    @pytest.mark.skipif(
+        not torch.cuda.is_available(), reason="CUDA not available"
+    )
+    def test_window_device_mismatch_raises(self):
+        """Test that window on different device raises error."""
+        x = torch.randn(64, device="cuda", dtype=torch.float64)
+        window = torch.hann_window(64, dtype=torch.float64, device="cpu")
+
+        with pytest.raises(RuntimeError, match="same device"):
+            torchscience.signal_processing.integral_transform.hilbert_transform(
+                x, window=window
+            )
+
+    @pytest.mark.skipif(
+        not torch.cuda.is_available(), reason="CUDA not available"
+    )
+    def test_window_device_mismatch_cpu_input_cuda_window(self):
+        """Test CPU input with CUDA window raises error."""
+        x = torch.randn(64, device="cpu", dtype=torch.float64)
+        window = torch.hann_window(64, dtype=torch.float64, device="cuda")
+
+        with pytest.raises(RuntimeError, match="same device"):
+            torchscience.signal_processing.integral_transform.hilbert_transform(
+                x, window=window
+            )
+
+
+class TestHilbertTransformGradcheckPaddingWindow:
+    """Gradcheck tests for padding + window combinations."""
+
+    @pytest.mark.parametrize(
+        "mode", ["constant", "reflect", "replicate", "circular"]
+    )
+    def test_gradcheck_padding_with_window(self, mode):
+        """Test gradient correctness with padding and window."""
+        x = torch.randn(32, requires_grad=True, dtype=torch.float64)
+        window = torch.hann_window(64, dtype=torch.float64)
+
+        def fn(input_tensor):
+            return torchscience.signal_processing.integral_transform.hilbert_transform(
+                input_tensor, n=64, padding_mode=mode, window=window
+            )
+
+        assert torch.autograd.gradcheck(
+            fn, (x,), eps=1e-5, atol=1e-4, rtol=1e-4
+        )
+
+    def test_gradgradcheck_with_padding_and_window(self):
+        """Test double backward with padding and window."""
+        x = torch.randn(32, requires_grad=True, dtype=torch.float64)
+        window = torch.hann_window(64, dtype=torch.float64)
+
+        def fn(input_tensor):
+            return torchscience.signal_processing.integral_transform.hilbert_transform(
+                input_tensor, n=64, padding_mode="reflect", window=window
+            )
+
+        assert torch.autograd.gradgradcheck(
+            fn, (x,), eps=1e-5, atol=1e-4, rtol=1e-4
+        )
+
+
+@pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
+class TestHilbertTransformScipyReference:
+    """Tests comparing against SciPy's hilbert implementation."""
+
+    def test_matches_scipy_basic(self):
+        """Test basic case matches SciPy."""
+        np.random.seed(42)
+        x_np = np.random.randn(128)
+        x_torch = torch.from_numpy(x_np)
+
+        # SciPy's hilbert returns analytic signal: f + i*H[f]
+        # So the imaginary part is the Hilbert transform
+        scipy_result = scipy_hilbert(x_np).imag
+
+        torch_result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x_torch
+        ).numpy()
+
+        np.testing.assert_allclose(
+            scipy_result, torch_result, rtol=1e-10, atol=1e-10
+        )
+
+    def test_matches_scipy_various_sizes(self):
+        """Test various signal sizes match SciPy."""
+        np.random.seed(42)
+        for n in [32, 64, 100, 127, 128, 255, 256]:
+            x_np = np.random.randn(n)
+            x_torch = torch.from_numpy(x_np)
+
+            scipy_result = scipy_hilbert(x_np).imag
+            torch_result = torchscience.signal_processing.integral_transform.hilbert_transform(
+                x_torch
+            ).numpy()
+
+            np.testing.assert_allclose(
+                scipy_result,
+                torch_result,
+                rtol=1e-10,
+                atol=1e-10,
+                err_msg=f"Mismatch for n={n}",
+            )
+
+    def test_matches_scipy_sine_wave(self):
+        """Test with sine wave (known analytical result)."""
+        n = 256
+        t = np.linspace(0, 2 * np.pi, n, endpoint=False)
+        x_np = np.sin(t)
+        x_torch = torch.from_numpy(x_np)
+
+        scipy_result = scipy_hilbert(x_np).imag
+        torch_result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x_torch
+        ).numpy()
+
+        np.testing.assert_allclose(
+            scipy_result, torch_result, rtol=1e-10, atol=1e-10
+        )
+
+        # For sin(t), H[sin(t)] = -cos(t)
+        expected = -np.cos(t)
+        np.testing.assert_allclose(
+            torch_result, expected, rtol=1e-4, atol=1e-4
+        )
+
+    def test_matches_scipy_cosine_wave(self):
+        """Test with cosine wave (known analytical result)."""
+        n = 256
+        t = np.linspace(0, 2 * np.pi, n, endpoint=False)
+        x_np = np.cos(t)
+        x_torch = torch.from_numpy(x_np)
+
+        scipy_result = scipy_hilbert(x_np).imag
+        torch_result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x_torch
+        ).numpy()
+
+        np.testing.assert_allclose(
+            scipy_result, torch_result, rtol=1e-10, atol=1e-10
+        )
+
+        # For cos(t), H[cos(t)] = sin(t)
+        expected = np.sin(t)
+        np.testing.assert_allclose(
+            torch_result, expected, rtol=1e-4, atol=1e-4
+        )
+
+    def test_matches_scipy_with_n_parameter(self):
+        """Test with n parameter (padding) matches SciPy."""
+        np.random.seed(42)
+        x_np = np.random.randn(64)
+        x_torch = torch.from_numpy(x_np)
+
+        # With n > input_size, both should zero-pad
+        scipy_result = scipy_hilbert(x_np, N=128).imag
+        torch_result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x_torch, n=128, padding_mode="constant", padding_value=0.0
+        ).numpy()
+
+        np.testing.assert_allclose(
+            scipy_result, torch_result, rtol=1e-10, atol=1e-10
+        )
+
+    def test_double_hilbert_property(self):
+        """Test that H[H[f]] = -f (involutory property).
+
+        Note: This property holds exactly only for infinite signals or
+        properly windowed periodic signals. For finite discrete signals,
+        there are edge effects (Gibbs phenomenon), so we verify:
+        1. The property holds approximately for random signals
+        2. The property holds exactly for periodic signals with integer periods
+        """
+        # Test with periodic signal (exact property)
+        n = 256
+        t = np.linspace(0, 2 * np.pi, n, endpoint=False)
+        x_periodic = np.sin(t)
+        x_torch = torch.from_numpy(x_periodic)
+
+        h1 = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x_torch
+        )
+        h2 = torchscience.signal_processing.integral_transform.hilbert_transform(
+            h1
+        )
+
+        # For periodic signals, property should hold well
+        np.testing.assert_allclose(
+            h2.numpy(), -x_periodic, rtol=1e-6, atol=1e-6
+        )
+
+        # Test with random signal (approximate due to edge effects)
+        np.random.seed(42)
+        x_random = np.random.randn(128)
+        x_torch_random = torch.from_numpy(x_random)
+
+        h1_random = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x_torch_random
+        )
+        h2_random = torchscience.signal_processing.integral_transform.hilbert_transform(
+            h1_random
+        )
+
+        # For random signals, verify the central region (avoiding edge effects)
+        center_slice = slice(32, 96)
+        np.testing.assert_allclose(
+            h2_random.numpy()[center_slice],
+            -x_random[center_slice],
+            rtol=0.1,
+            atol=0.1,
+        )

@@ -108,7 +108,7 @@ inline at::Tensor hilbert_transform(
 
     // If input was real, return real part
     if (!input.is_complex()) {
-        result = at::real(result).contiguous();
+        result = at::real(result);
     }
 
     return result;
