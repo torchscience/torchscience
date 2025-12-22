@@ -2,10 +2,7 @@
 
 #include <ATen/ATen.h>
 #include <torch/library.h>
-
-// =============================================================================
-// Helper macros for handling parenthesized parameter lists
-// =============================================================================
+#include "../../../core/creation_common.h"
 
 #ifndef TORCHSCIENCE_UNPACK_IMPL
 #define TORCHSCIENCE_UNPACK_IMPL(...) __VA_ARGS__
@@ -14,21 +11,8 @@
 #define TORCHSCIENCE_COMMA_IF(X) TORCHSCIENCE_COMMA_IF_IMPL(TORCHSCIENCE_UNPACK(X))
 #endif
 
-// =============================================================================
-// SPARSE_CSR_CPU_CREATION_OPERATOR
-// =============================================================================
-// Flexible macro for creating sparse CSR tensors from scalar parameters.
-//
-// Kernel signature expected:
-//   namespace impl::NAMESPACE {
-//     template <typename scalar_t>
-//     std::tuple<at::Tensor, at::Tensor, at::Tensor> OPERATOR_NAME_kernel(
-//       int64_t* shape, int64_t ndim, PARAMS...
-//     )
-//     // Returns (crow_indices, col_indices, values) tensors
-//   }
-// =============================================================================
-
+// Sparse CSR: kernel returns (crow_indices, col_indices, values) tuple
+// Like PyTorch's empty_sparse_compressed
 #define SPARSE_CSR_CPU_CREATION_OPERATOR(                                       \
   NAMESPACE,                                                                    \
   OPERATOR_NAME,                                                                \
@@ -47,20 +31,14 @@ inline at::Tensor OPERATOR_NAME(                                                
   const c10::optional<at::Device>& device,                                      \
   bool requires_grad                                                            \
 ) {                                                                             \
-  (void)layout;                                                                 \
-                                                                                \
-  auto options = at::TensorOptions()                                            \
-    .dtype(dtype.value_or(                                                      \
-      c10::typeMetaToScalarType(at::get_default_dtype())                        \
-    ))                                                                          \
-    .device(device.value_or(at::kCPU))                                          \
-    .requires_grad(false);                                                      \
+  (void)layout;  /* CSR layout is implicit */                                   \
                                                                                 \
   std::vector<int64_t> shape_vec = OUTPUT_SHAPE;                                \
-  for (auto s : shape_vec) {                                                    \
-    TORCH_CHECK(s >= 0,                                                         \
-      #OPERATOR_NAME ": size must be non-negative, got ", s);                   \
-  }                                                                             \
+  ::torchscience::core::check_size_nonnegative(shape_vec, #OPERATOR_NAME);      \
+                                                                                \
+  auto options = ::torchscience::core::build_options(                           \
+    dtype, c10::nullopt, device, at::kCPU                                       \
+  );                                                                            \
                                                                                 \
   at::Tensor crow_indices;                                                      \
   at::Tensor col_indices;                                                       \
@@ -84,6 +62,7 @@ inline at::Tensor OPERATOR_NAME(                                                
     }                                                                           \
   );                                                                            \
                                                                                 \
+  /* Construct sparse CSR tensor like PyTorch's empty_sparse_compressed */      \
   at::Tensor output = at::sparse_csr_tensor(                                    \
     crow_indices,                                                               \
     col_indices,                                                                \
