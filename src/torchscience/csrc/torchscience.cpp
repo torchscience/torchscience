@@ -118,11 +118,12 @@ TORCH_LIBRARY(torchscience, module) {
 
   // `torchscience.integral_transform`
   // n=-1 means use input size along dim (no padding/truncation)
-  module.def("hilbert_transform(Tensor input, int n=-1, int dim=-1) -> Tensor");
-  module.def("hilbert_transform_backward(Tensor grad_output, Tensor input, int n, int dim) -> Tensor");
-  module.def("hilbert_transform_backward_backward(Tensor grad_grad_input, Tensor grad_output, Tensor input, int n, int dim) -> (Tensor, Tensor)");
+  // padding_mode: 0=constant, 1=reflect, 2=replicate, 3=circular
+  module.def("hilbert_transform(Tensor input, int n=-1, int dim=-1, int padding_mode=0, float padding_value=0.0, Tensor? window=None) -> Tensor");
+  module.def("hilbert_transform_backward(Tensor grad_output, Tensor input, int n, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
+  module.def("hilbert_transform_backward_backward(Tensor grad_grad_input, Tensor grad_output, Tensor input, int n, int dim, int padding_mode, float padding_value, Tensor? window) -> (Tensor, Tensor)");
 
-  module.def("inverse_hilbert_transform(Tensor input, int n=-1, int dim=-1) -> Tensor");
-  module.def("inverse_hilbert_transform_backward(Tensor grad_output, Tensor input, int n, int dim) -> Tensor");
-  module.def("inverse_hilbert_transform_backward_backward(Tensor grad_grad_input, Tensor grad_output, Tensor input, int n, int dim) -> (Tensor, Tensor)");
+  module.def("inverse_hilbert_transform(Tensor input, int n=-1, int dim=-1, int padding_mode=0, float padding_value=0.0, Tensor? window=None) -> Tensor");
+  module.def("inverse_hilbert_transform_backward(Tensor grad_output, Tensor input, int n, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
+  module.def("inverse_hilbert_transform_backward_backward(Tensor grad_grad_input, Tensor grad_output, Tensor input, int n, int dim, int padding_mode, float padding_value, Tensor? window) -> (Tensor, Tensor)");
 }

@@ -1,11 +1,19 @@
 """Hilbert transform implementation."""
 
-from typing import Optional
+from typing import Literal, Optional
 
 import torch
 from torch import Tensor
 
 import torchscience._csrc  # noqa: F401 - Load C++ operators
+
+# Padding mode mapping
+_PADDING_MODES = {
+    "constant": 0,
+    "reflect": 1,
+    "replicate": 2,
+    "circular": 3,
+}
 
 
 def hilbert_transform(
@@ -13,6 +21,11 @@ def hilbert_transform(
     *,
     n: Optional[int] = None,
     dim: int = -1,
+    padding_mode: Literal[
+        "constant", "reflect", "replicate", "circular"
+    ] = "constant",
+    padding_value: float = 0.0,
+    window: Optional[Tensor] = None,
 ) -> Tensor:
     r"""Compute the Hilbert transform of a signal along a specified dimension.
 
@@ -32,13 +45,30 @@ def hilbert_transform(
     input : Tensor
         Input tensor of any shape. Can be real or complex.
     n : int, optional
-        Signal length. If given, the input will either be zero-padded or
-        truncated to this length before computing the transform. This is
-        useful for mitigating edge effects by zero-padding.
+        Signal length. If given, the input will either be padded or
+        truncated to this length before computing the transform.
         Default: ``None`` (use input size along ``dim``).
     dim : int, optional
         The dimension along which to compute the transform.
         Default: ``-1`` (last dimension).
+    padding_mode : str, optional
+        Padding mode when ``n`` is larger than input size. One of:
+
+        - ``'constant'``: Pad with ``padding_value`` (default 0).
+        - ``'reflect'``: Reflect the signal at boundaries.
+        - ``'replicate'``: Replicate edge values.
+        - ``'circular'``: Wrap around (periodic extension).
+
+        Default: ``'constant'``.
+    padding_value : float, optional
+        Fill value for ``'constant'`` padding mode. Ignored for other modes.
+        Default: ``0.0``.
+    window : Tensor, optional
+        Window function to apply before the transform. Must be 1-D with size
+        matching the (possibly padded) signal length along ``dim``.
+        Use window functions from ``torch`` (e.g., ``torch.hann_window``) or
+        ``torchscience.signal_processing.window_function``.
+        Default: ``None`` (no windowing).
 
     Returns
     -------
@@ -54,24 +84,30 @@ def hilbert_transform(
 
     >>> t = torch.linspace(0, 2 * torch.pi, 100)
     >>> x = torch.sin(t)  # sin(t)
-    >>> h = torchscience.integral_transform.hilbert_transform(x)
-    >>> # H[sin(t)] ≈ -cos(t) for positive frequencies
+    >>> h = hilbert_transform(x)
+    >>> # H[sin(t)] ~ -cos(t) for positive frequencies
     >>> torch.allclose(h, -torch.cos(t), atol=0.1)
     True
 
     Transform along a specific dimension:
 
     >>> x = torch.randn(3, 100)
-    >>> h = torchscience.integral_transform.hilbert_transform(x, dim=1)
+    >>> h = hilbert_transform(x, dim=1)
     >>> h.shape
     torch.Size([3, 100])
 
-    Zero-padding to mitigate edge effects:
+    With reflection padding to reduce edge effects:
+
+    >>> x = torch.randn(64)
+    >>> h = hilbert_transform(x, n=128, padding_mode='reflect')
+    >>> h.shape
+    torch.Size([128])
+
+    With a window function:
 
     >>> x = torch.randn(100)
-    >>> h = torchscience.integral_transform.hilbert_transform(x, n=256)
-    >>> h.shape  # Output has length 256
-    torch.Size([256])
+    >>> window = torch.hann_window(100)
+    >>> h = hilbert_transform(x, window=window)
 
     Notes
     -----
@@ -82,6 +118,26 @@ def hilbert_transform(
     - :math:`\mathcal{H}[\mathcal{H}[f]] = -f` (involutory up to sign)
     - Energy preservation: :math:`\int |H[f]|^2 = \int |f|^2`
     - Linearity: :math:`\mathcal{H}[\alpha f + \beta g] = \alpha\mathcal{H}[f] + \beta\mathcal{H}[g]`
+
+    **Padding Modes:**
+
+    - ``'constant'``: Zero-padding (default). Simple but can introduce
+      discontinuities at boundaries.
+    - ``'reflect'``: Reduces edge effects by reflecting the signal. Good for
+      non-periodic signals.
+    - ``'replicate'``: Extends the signal with edge values. Useful for smooth
+      signals.
+    - ``'circular'``: Wraps around, assuming periodicity. Best for truly
+      periodic signals.
+
+    **Windowing:**
+
+    Applying a window function before the transform can reduce spectral
+    leakage and edge effects. Common windows include:
+
+    - ``torch.hann_window``: Good general-purpose window
+    - ``torch.hamming_window``: Similar to Hann, slightly different shape
+    - ``torch.blackman_window``: Better sidelobe suppression
 
     **Complex Input Behavior:**
 
@@ -100,9 +156,11 @@ def hilbert_transform(
 
     Uses FFT-based computation:
 
-    1. Compute FFT of input (with optional zero-padding via ``n``)
-    2. Multiply by frequency response :math:`h[k] = -i \cdot \text{sign}(\text{freq}[k])`
-    3. Compute inverse FFT
+    1. Apply padding if ``n`` > input size (using specified mode)
+    2. Apply window function if provided
+    3. Compute FFT of input
+    4. Multiply by frequency response :math:`h[k] = -i \cdot \text{sign}(\text{freq}[k])`
+    5. Compute inverse FFT
 
     **Gradient Computation:**
 
@@ -118,10 +176,13 @@ def hilbert_transform(
     Warnings
     --------
     - Edge effects: The discrete Hilbert transform assumes periodic boundary
-      conditions. For non-periodic signals, use zero-padding via the ``n``
-      parameter (e.g., ``n=2*input.size(dim)``).
+      conditions. For non-periodic signals, use ``padding_mode='reflect'``
+      or ``padding_mode='replicate'`` with ``n > input.size(dim)``.
 
     - The transform is not well-defined for DC components (frequency = 0).
+
+    - When using windowing, the window must match the padded signal length,
+      not the original input length.
 
     References
     ----------
@@ -135,6 +196,17 @@ def hilbert_transform(
     inverse_hilbert_transform : The inverse Hilbert transform.
     scipy.signal.hilbert : SciPy's Hilbert transform (returns analytic signal).
     """
+    if padding_mode not in _PADDING_MODES:
+        raise ValueError(
+            f"padding_mode must be one of {list(_PADDING_MODES.keys())}, "
+            f"got '{padding_mode}'"
+        )
+
     return torch.ops.torchscience.hilbert_transform(
-        input, n if n is not None else -1, dim
+        input,
+        n if n is not None else -1,
+        dim,
+        _PADDING_MODES[padding_mode],
+        padding_value,
+        window,
     )

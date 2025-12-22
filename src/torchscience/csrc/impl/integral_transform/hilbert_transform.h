@@ -26,7 +26,7 @@
  *
  * KEY PROPERTIES:
  * ===============
- * 1. H[sin(wt)] = cos(wt), H[cos(wt)] = -sin(wt)
+ * 1. H[sin(wt)] = -cos(wt), H[cos(wt)] = sin(wt)
  * 2. H[H[f]] = -f (involutory up to sign)
  * 3. Energy preservation: integral |H[f]|^2 = integral |f|^2
  * 4. Linearity: H[af + bg] = aH[f] + bH[g]
@@ -35,9 +35,173 @@
 
 #include <c10/macros/Macros.h>
 #include <c10/util/complex.h>
+#include <ATen/core/Tensor.h>
+#include <ATen/ops/pad.h>
 #include <cmath>
+#include <vector>
 
 namespace torchscience::impl::integral_transform {
+
+/**
+ * Padding mode enum matching PyTorch conventions.
+ * Maps to torch.nn.functional.pad modes.
+ */
+enum class PaddingMode : int64_t {
+    Constant = 0,
+    Reflect = 1,
+    Replicate = 2,
+    Circular = 3
+};
+
+/**
+ * Convert padding mode integer to string for ATen pad function.
+ */
+inline std::string padding_mode_to_string(int64_t mode) {
+    switch (static_cast<PaddingMode>(mode)) {
+        case PaddingMode::Constant: return "constant";
+        case PaddingMode::Reflect: return "reflect";
+        case PaddingMode::Replicate: return "replicate";
+        case PaddingMode::Circular: return "circular";
+        default:
+            TORCH_CHECK(false, "Invalid padding_mode: ", mode,
+                ". Must be 0 (constant), 1 (reflect), 2 (replicate), or 3 (circular)");
+    }
+}
+
+/**
+ * Apply a single step of padding to a tensor (internal helper).
+ * Handles the 2D requirement for non-constant padding modes.
+ *
+ * @param input Input tensor (last dimension is the one to pad)
+ * @param pad_amount Amount to pad on the right
+ * @param padding_mode Padding mode
+ * @param padding_value Value for constant padding
+ * @param needs_unsqueeze Whether we need to add a batch dimension
+ * @return Padded tensor
+ */
+inline at::Tensor apply_padding_step(
+    const at::Tensor& input,
+    int64_t pad_amount,
+    int64_t padding_mode,
+    double padding_value,
+    bool needs_unsqueeze
+) {
+    at::Tensor input_work = input;
+
+    if (needs_unsqueeze) {
+        input_work = input_work.unsqueeze(0);
+    }
+
+    std::vector<int64_t> pad_sizes = {0, pad_amount};
+    std::string mode_str = padding_mode_to_string(padding_mode);
+
+    at::Tensor padded;
+    if (padding_mode == static_cast<int64_t>(PaddingMode::Constant)) {
+        padded = at::pad(input_work, pad_sizes, mode_str, padding_value);
+    } else {
+        padded = at::pad(input_work, pad_sizes, mode_str);
+    }
+
+    if (needs_unsqueeze) {
+        padded = padded.squeeze(0);
+    }
+
+    return padded;
+}
+
+/**
+ * Apply padding to tensor along specified dimension.
+ *
+ * For non-constant padding modes, if the padding amount exceeds the input size,
+ * padding is applied iteratively in chunks to satisfy PyTorch's constraints.
+ *
+ * @param input Input tensor
+ * @param target_size Target size along dim after padding
+ * @param dim Dimension to pad
+ * @param padding_mode Padding mode (0=constant, 1=reflect, 2=replicate, 3=circular)
+ * @param padding_value Value for constant padding
+ * @return Padded tensor
+ */
+inline at::Tensor apply_padding(
+    const at::Tensor& input,
+    int64_t target_size,
+    int64_t dim,
+    int64_t padding_mode,
+    double padding_value
+) {
+    int64_t current_size = input.size(dim);
+
+    if (target_size <= current_size) {
+        // No padding needed (truncation handled elsewhere)
+        return input;
+    }
+
+    int64_t total_pad = target_size - current_size;
+
+    // Move target dim to last position for F.pad
+    at::Tensor result = input.movedim(dim, -1);
+
+    // PyTorch's at::pad requires at least 2D input for non-constant padding modes.
+    bool needs_unsqueeze = (result.dim() == 1) &&
+        (padding_mode != static_cast<int64_t>(PaddingMode::Constant));
+
+    // For constant padding, we can do it all at once
+    if (padding_mode == static_cast<int64_t>(PaddingMode::Constant)) {
+        result = apply_padding_step(result, total_pad, padding_mode, padding_value, needs_unsqueeze);
+    } else {
+        // For reflect mode, padding must be < current size
+        // For replicate/circular, padding can be any size in recent PyTorch,
+        // but we handle all non-constant modes the same way for robustness.
+        // We iteratively pad in chunks when the padding is too large.
+        int64_t remaining_pad = total_pad;
+
+        while (remaining_pad > 0) {
+            int64_t current_dim_size = result.size(-1);
+            // For reflect: pad < size, so max_pad = size - 1
+            // We use size - 1 to be safe for all non-constant modes
+            int64_t max_pad = current_dim_size - 1;
+            if (max_pad <= 0) {
+                // Should not happen with valid input, but handle gracefully
+                max_pad = 1;
+            }
+
+            int64_t pad_this_step = std::min(remaining_pad, max_pad);
+            result = apply_padding_step(result, pad_this_step, padding_mode, padding_value, needs_unsqueeze);
+            remaining_pad -= pad_this_step;
+        }
+    }
+
+    // Move dimension back
+    return result.movedim(-1, dim);
+}
+
+/**
+ * Apply window function to tensor along specified dimension.
+ *
+ * @param input Input tensor
+ * @param window 1-D window tensor (must match input size along dim)
+ * @param dim Dimension to apply window
+ * @return Windowed tensor
+ */
+inline at::Tensor apply_window(
+    const at::Tensor& input,
+    const at::Tensor& window,
+    int64_t dim
+) {
+    TORCH_CHECK(window.dim() == 1,
+        "window must be 1-D, got ", window.dim(), "-D tensor");
+    TORCH_CHECK(window.size(0) == input.size(dim),
+        "window size (", window.size(0), ") must match input size along dim (",
+        input.size(dim), ")");
+
+    // Reshape window for broadcasting: (1, 1, ..., n, ..., 1)
+    std::vector<int64_t> window_shape(input.dim(), 1);
+    window_shape[dim] = window.size(0);
+
+    at::Tensor window_reshaped = window.view(window_shape);
+
+    return input * window_reshaped;
+}
 
 /**
  * Compute the Hilbert transform frequency response multiplier for index k.

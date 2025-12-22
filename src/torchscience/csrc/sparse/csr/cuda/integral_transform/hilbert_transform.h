@@ -13,7 +13,10 @@ namespace torchscience::sparse::csr::cuda::integral_transform {
 inline at::Tensor hilbert_transform(
     const at::Tensor& input,
     [[maybe_unused]] int64_t n_param,
-    int64_t dim
+    int64_t dim,
+    int64_t padding_mode,
+    double padding_value,
+    const c10::optional<at::Tensor>& window
 ) {
     TORCH_CHECK(
         input.layout() == at::kSparseCsr && input.is_cuda(),
@@ -24,8 +27,8 @@ inline at::Tensor hilbert_transform(
 
     return c10::Dispatcher::singleton()
         .findSchemaOrThrow("torchscience::hilbert_transform", "")
-        .typed<at::Tensor(const at::Tensor&, int64_t, int64_t)>()
-        .call(input_dense, n_param, dim);
+        .typed<at::Tensor(const at::Tensor&, int64_t, int64_t, int64_t, double, const c10::optional<at::Tensor>&)>()
+        .call(input_dense, n_param, dim, padding_mode, padding_value, window);
 }
 
 /**
@@ -35,7 +38,10 @@ inline at::Tensor hilbert_transform_backward(
     const at::Tensor& grad_output,
     const at::Tensor& input,
     [[maybe_unused]] int64_t n_param,
-    int64_t dim
+    int64_t dim,
+    int64_t padding_mode,
+    double padding_value,
+    const c10::optional<at::Tensor>& window
 ) {
     TORCH_CHECK(
         input.layout() == at::kSparseCsr && input.is_cuda(),
@@ -48,8 +54,8 @@ inline at::Tensor hilbert_transform_backward(
 
     at::Tensor grad_input_dense = c10::Dispatcher::singleton()
         .findSchemaOrThrow("torchscience::hilbert_transform_backward", "")
-        .typed<at::Tensor(const at::Tensor&, const at::Tensor&, int64_t, int64_t)>()
-        .call(grad_output_dense, input_dense, n_param, dim);
+        .typed<at::Tensor(const at::Tensor&, const at::Tensor&, int64_t, int64_t, int64_t, double, const c10::optional<at::Tensor>&)>()
+        .call(grad_output_dense, input_dense, n_param, dim, padding_mode, padding_value, window);
 
     return grad_input_dense.to_sparse_csr();
 }
@@ -62,7 +68,10 @@ inline std::tuple<at::Tensor, at::Tensor> hilbert_transform_backward_backward(
     const at::Tensor& grad_output,
     const at::Tensor& input,
     [[maybe_unused]] int64_t n_param,
-    int64_t dim
+    int64_t dim,
+    int64_t padding_mode,
+    double padding_value,
+    const c10::optional<at::Tensor>& window
 ) {
     at::Tensor input_dense = (input.layout() == at::kSparseCsr)
         ? input.to_dense() : input;
@@ -74,9 +83,9 @@ inline std::tuple<at::Tensor, at::Tensor> hilbert_transform_backward_backward(
     auto [gg_output, new_grad_input] = c10::Dispatcher::singleton()
         .findSchemaOrThrow("torchscience::hilbert_transform_backward_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor>(
-            const at::Tensor&, const at::Tensor&, const at::Tensor&, int64_t, int64_t
+            const at::Tensor&, const at::Tensor&, const at::Tensor&, int64_t, int64_t, int64_t, double, const c10::optional<at::Tensor>&
         )>()
-        .call(gg_input_dense, grad_output_dense, input_dense, n_param, dim);
+        .call(gg_input_dense, grad_output_dense, input_dense, n_param, dim, padding_mode, padding_value, window);
 
     return {gg_output, new_grad_input};
 }

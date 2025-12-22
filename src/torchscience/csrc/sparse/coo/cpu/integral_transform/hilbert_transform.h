@@ -9,28 +9,26 @@ namespace torchscience::sparse::coo::cpu::integral_transform {
 
 /**
  * Sparse COO CPU implementation of Hilbert transform.
- *
- * For sparse input, we convert to dense for computation since the Hilbert
- * transform requires FFT which operates on the full signal.
  */
 inline at::Tensor hilbert_transform(
     const at::Tensor& input,
     [[maybe_unused]] int64_t n_param,
-    int64_t dim
+    int64_t dim,
+    int64_t padding_mode,
+    double padding_value,
+    const c10::optional<at::Tensor>& window
 ) {
     TORCH_CHECK(
         input.is_sparse(),
         "hilbert_transform (SparseCPU) expects sparse COO tensor"
     );
 
-    // Convert sparse to dense for FFT computation
     at::Tensor input_dense = input.to_dense();
 
-    // Call the dense implementation via dispatcher
     return c10::Dispatcher::singleton()
         .findSchemaOrThrow("torchscience::hilbert_transform", "")
-        .typed<at::Tensor(const at::Tensor&, int64_t, int64_t)>()
-        .call(input_dense, n_param, dim);
+        .typed<at::Tensor(const at::Tensor&, int64_t, int64_t, int64_t, double, const c10::optional<at::Tensor>&)>()
+        .call(input_dense, n_param, dim, padding_mode, padding_value, window);
 }
 
 /**
@@ -40,7 +38,10 @@ inline at::Tensor hilbert_transform_backward(
     const at::Tensor& grad_output,
     const at::Tensor& input,
     [[maybe_unused]] int64_t n_param,
-    int64_t dim
+    int64_t dim,
+    int64_t padding_mode,
+    double padding_value,
+    const c10::optional<at::Tensor>& window
 ) {
     TORCH_CHECK(
         input.is_sparse(),
@@ -51,13 +52,11 @@ inline at::Tensor hilbert_transform_backward(
     at::Tensor grad_output_dense = grad_output.is_sparse()
         ? grad_output.to_dense() : grad_output;
 
-    // Compute dense gradient
     at::Tensor grad_input_dense = c10::Dispatcher::singleton()
         .findSchemaOrThrow("torchscience::hilbert_transform_backward", "")
-        .typed<at::Tensor(const at::Tensor&, const at::Tensor&, int64_t, int64_t)>()
-        .call(grad_output_dense, input_dense, n_param, dim);
+        .typed<at::Tensor(const at::Tensor&, const at::Tensor&, int64_t, int64_t, int64_t, double, const c10::optional<at::Tensor>&)>()
+        .call(grad_output_dense, input_dense, n_param, dim, padding_mode, padding_value, window);
 
-    // Return as sparse with same sparsity pattern as input
     return grad_input_dense.to_sparse();
 }
 
@@ -69,7 +68,10 @@ inline std::tuple<at::Tensor, at::Tensor> hilbert_transform_backward_backward(
     const at::Tensor& grad_output,
     const at::Tensor& input,
     [[maybe_unused]] int64_t n_param,
-    int64_t dim
+    int64_t dim,
+    int64_t padding_mode,
+    double padding_value,
+    const c10::optional<at::Tensor>& window
 ) {
     at::Tensor input_dense = input.is_sparse() ? input.to_dense() : input;
     at::Tensor grad_output_dense = grad_output.is_sparse()
@@ -80,9 +82,9 @@ inline std::tuple<at::Tensor, at::Tensor> hilbert_transform_backward_backward(
     auto [gg_output, new_grad_input] = c10::Dispatcher::singleton()
         .findSchemaOrThrow("torchscience::hilbert_transform_backward_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor>(
-            const at::Tensor&, const at::Tensor&, const at::Tensor&, int64_t, int64_t
+            const at::Tensor&, const at::Tensor&, const at::Tensor&, int64_t, int64_t, int64_t, double, const c10::optional<at::Tensor>&
         )>()
-        .call(gg_input_dense, grad_output_dense, input_dense, n_param, dim);
+        .call(gg_input_dense, grad_output_dense, input_dense, n_param, dim, padding_mode, padding_value, window);
 
     return {gg_output, new_grad_input};
 }

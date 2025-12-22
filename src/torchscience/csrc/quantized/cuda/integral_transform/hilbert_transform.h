@@ -13,7 +13,10 @@ namespace torchscience::quantized::cuda::integral_transform {
 inline at::Tensor hilbert_transform(
     const at::Tensor& input,
     [[maybe_unused]] int64_t n_param,
-    int64_t dim
+    int64_t dim,
+    int64_t padding_mode,
+    double padding_value,
+    const c10::optional<at::Tensor>& window
 ) {
     TORCH_CHECK(
         input.is_quantized() && input.is_cuda(),
@@ -24,8 +27,8 @@ inline at::Tensor hilbert_transform(
 
     return c10::Dispatcher::singleton()
         .findSchemaOrThrow("torchscience::hilbert_transform", "")
-        .typed<at::Tensor(const at::Tensor&, int64_t, int64_t)>()
-        .call(input_dequant, n_param, dim);
+        .typed<at::Tensor(const at::Tensor&, int64_t, int64_t, int64_t, double, const c10::optional<at::Tensor>&)>()
+        .call(input_dequant, n_param, dim, padding_mode, padding_value, window);
 }
 
 /**
@@ -35,7 +38,10 @@ inline at::Tensor hilbert_transform_backward(
     const at::Tensor& grad_output,
     const at::Tensor& input,
     [[maybe_unused]] int64_t n_param,
-    int64_t dim
+    int64_t dim,
+    int64_t padding_mode,
+    double padding_value,
+    const c10::optional<at::Tensor>& window
 ) {
     TORCH_CHECK(
         input.is_quantized() && input.is_cuda(),
@@ -46,8 +52,8 @@ inline at::Tensor hilbert_transform_backward(
 
     return c10::Dispatcher::singleton()
         .findSchemaOrThrow("torchscience::hilbert_transform_backward", "")
-        .typed<at::Tensor(const at::Tensor&, const at::Tensor&, int64_t, int64_t)>()
-        .call(grad_output, input_dequant, n_param, dim);
+        .typed<at::Tensor(const at::Tensor&, const at::Tensor&, int64_t, int64_t, int64_t, double, const c10::optional<at::Tensor>&)>()
+        .call(grad_output, input_dequant, n_param, dim, padding_mode, padding_value, window);
 }
 
 /**
@@ -58,16 +64,19 @@ inline std::tuple<at::Tensor, at::Tensor> hilbert_transform_backward_backward(
     const at::Tensor& grad_output,
     const at::Tensor& input,
     [[maybe_unused]] int64_t n_param,
-    int64_t dim
+    int64_t dim,
+    int64_t padding_mode,
+    double padding_value,
+    const c10::optional<at::Tensor>& window
 ) {
     at::Tensor input_dequant = input.is_quantized() ? input.dequantize() : input;
 
     auto [gg_output, new_grad_input] = c10::Dispatcher::singleton()
         .findSchemaOrThrow("torchscience::hilbert_transform_backward_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor>(
-            const at::Tensor&, const at::Tensor&, const at::Tensor&, int64_t, int64_t
+            const at::Tensor&, const at::Tensor&, const at::Tensor&, int64_t, int64_t, int64_t, double, const c10::optional<at::Tensor>&
         )>()
-        .call(grad_grad_input, grad_output, input_dequant, n_param, dim);
+        .call(grad_grad_input, grad_output, input_dequant, n_param, dim, padding_mode, padding_value, window);
 
     return {gg_output, new_grad_input};
 }

@@ -19,19 +19,28 @@ public:
         const at::Tensor& input,
         int64_t n,
         int64_t dim,
+        int64_t padding_mode,
+        double padding_value,
+        const c10::optional<at::Tensor>& window,
         bool input_requires_grad
     ) {
         context->save_for_backward({grad_output, input});
+        if (window.has_value()) {
+            context->saved_data["window"] = window.value();
+        }
         context->saved_data["n"] = n;
         context->saved_data["dim"] = dim;
+        context->saved_data["padding_mode"] = padding_mode;
+        context->saved_data["padding_value"] = padding_value;
+        context->saved_data["has_window"] = window.has_value();
         context->saved_data["input_requires_grad"] = input_requires_grad;
 
         at::AutoDispatchBelowAutograd guard;
 
         at::Tensor grad_input = c10::Dispatcher::singleton()
             .findSchemaOrThrow("torchscience::inverse_hilbert_transform_backward", "")
-            .typed<at::Tensor(const at::Tensor&, const at::Tensor&, int64_t, int64_t)>()
-            .call(grad_output, input, n, dim);
+            .typed<at::Tensor(const at::Tensor&, const at::Tensor&, int64_t, int64_t, int64_t, double, const c10::optional<at::Tensor>&)>()
+            .call(grad_output, input, n, dim, padding_mode, padding_value, window);
 
         return {grad_input};
     }
@@ -46,17 +55,28 @@ public:
 
         int64_t n = context->saved_data["n"].toInt();
         int64_t dim = context->saved_data["dim"].toInt();
+        int64_t padding_mode = context->saved_data["padding_mode"].toInt();
+        double padding_value = context->saved_data["padding_value"].toDouble();
+        bool has_window = context->saved_data["has_window"].toBool();
         bool input_requires_grad = context->saved_data["input_requires_grad"].toBool();
+
+        c10::optional<at::Tensor> window = c10::nullopt;
+        if (has_window) {
+            window = context->saved_data["window"].toTensor();
+        }
 
         at::Tensor grad_grad_input = grad_outputs[0];
 
         if (!grad_grad_input.defined() || !input_requires_grad) {
             return {
-                at::Tensor(),
-                at::Tensor(),
-                at::Tensor(),
-                at::Tensor(),
-                at::Tensor()
+                at::Tensor(),  // grad_grad_output
+                at::Tensor(),  // grad_input
+                at::Tensor(),  // grad_n
+                at::Tensor(),  // grad_dim
+                at::Tensor(),  // grad_padding_mode
+                at::Tensor(),  // grad_padding_value
+                at::Tensor(),  // grad_window
+                at::Tensor()   // grad_input_requires_grad
             };
         }
 
@@ -65,16 +85,19 @@ public:
         auto [grad_grad_output, new_grad_input] = c10::Dispatcher::singleton()
             .findSchemaOrThrow("torchscience::inverse_hilbert_transform_backward_backward", "")
             .typed<std::tuple<at::Tensor, at::Tensor>(
-                const at::Tensor&, const at::Tensor&, const at::Tensor&, int64_t, int64_t
+                const at::Tensor&, const at::Tensor&, const at::Tensor&, int64_t, int64_t, int64_t, double, const c10::optional<at::Tensor>&
             )>()
-            .call(grad_grad_input, grad_output, input, n, dim);
+            .call(grad_grad_input, grad_output, input, n, dim, padding_mode, padding_value, window);
 
         return {
             grad_grad_output,
             new_grad_input,
-            at::Tensor(),
-            at::Tensor(),
-            at::Tensor()
+            at::Tensor(),  // grad_n
+            at::Tensor(),  // grad_dim
+            at::Tensor(),  // grad_padding_mode
+            at::Tensor(),  // grad_padding_value
+            at::Tensor(),  // grad_window
+            at::Tensor()   // grad_input_requires_grad
         };
     }
 };
@@ -89,11 +112,20 @@ public:
         torch::autograd::AutogradContext* context,
         const at::Tensor& input,
         int64_t n,
-        int64_t dim
+        int64_t dim,
+        int64_t padding_mode,
+        double padding_value,
+        const c10::optional<at::Tensor>& window
     ) {
         context->save_for_backward({input});
+        if (window.has_value()) {
+            context->saved_data["window"] = window.value();
+        }
         context->saved_data["n"] = n;
         context->saved_data["dim"] = dim;
+        context->saved_data["padding_mode"] = padding_mode;
+        context->saved_data["padding_value"] = padding_value;
+        context->saved_data["has_window"] = window.has_value();
 
         bool input_requires_grad = input.requires_grad() &&
             (at::isFloatingType(input.scalar_type()) || at::isComplexType(input.scalar_type()));
@@ -103,8 +135,8 @@ public:
 
         return c10::Dispatcher::singleton()
             .findSchemaOrThrow("torchscience::inverse_hilbert_transform", "")
-            .typed<at::Tensor(const at::Tensor&, int64_t, int64_t)>()
-            .call(input, n, dim);
+            .typed<at::Tensor(const at::Tensor&, int64_t, int64_t, int64_t, double, const c10::optional<at::Tensor>&)>()
+            .call(input, n, dim, padding_mode, padding_value, window);
     }
 
     static torch::autograd::variable_list backward(
@@ -117,13 +149,24 @@ public:
 
         int64_t n = context->saved_data["n"].toInt();
         int64_t dim = context->saved_data["dim"].toInt();
+        int64_t padding_mode = context->saved_data["padding_mode"].toInt();
+        double padding_value = context->saved_data["padding_value"].toDouble();
+        bool has_window = context->saved_data["has_window"].toBool();
         bool input_requires_grad = context->saved_data["input_requires_grad"].toBool();
+
+        c10::optional<at::Tensor> window = c10::nullopt;
+        if (has_window) {
+            window = context->saved_data["window"].toTensor();
+        }
 
         if (!input_requires_grad) {
             return {
-                at::Tensor(),
-                at::Tensor(),
-                at::Tensor()
+                at::Tensor(),  // grad_input
+                at::Tensor(),  // grad_n
+                at::Tensor(),  // grad_dim
+                at::Tensor(),  // grad_padding_mode
+                at::Tensor(),  // grad_padding_value
+                at::Tensor()   // grad_window
             };
         }
 
@@ -132,13 +175,19 @@ public:
             input,
             n,
             dim,
+            padding_mode,
+            padding_value,
+            window,
             input_requires_grad
         );
 
         return {
-            gradients[0],
-            at::Tensor(),
-            at::Tensor()
+            gradients[0],  // grad_input
+            at::Tensor(),  // grad_n
+            at::Tensor(),  // grad_dim
+            at::Tensor(),  // grad_padding_mode
+            at::Tensor(),  // grad_padding_value
+            at::Tensor()   // grad_window
         };
     }
 };
@@ -146,9 +195,12 @@ public:
 inline at::Tensor inverse_hilbert_transform(
     const at::Tensor& input,
     int64_t n,
-    int64_t dim
+    int64_t dim,
+    int64_t padding_mode,
+    double padding_value,
+    const c10::optional<at::Tensor>& window
 ) {
-    return InverseHilbertTransform::apply(input, n, dim);
+    return InverseHilbertTransform::apply(input, n, dim, padding_mode, padding_value, window);
 }
 
 }  // namespace torchscience::autograd::integral_transform
