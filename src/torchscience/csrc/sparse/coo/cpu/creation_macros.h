@@ -2,10 +2,7 @@
 
 #include <ATen/ATen.h>
 #include <torch/library.h>
-
-// =============================================================================
-// Helper macros for handling parenthesized parameter lists
-// =============================================================================
+#include "../../../core/creation_common.h"
 
 #ifndef TORCHSCIENCE_UNPACK_IMPL
 #define TORCHSCIENCE_UNPACK_IMPL(...) __VA_ARGS__
@@ -14,29 +11,8 @@
 #define TORCHSCIENCE_COMMA_IF(X) TORCHSCIENCE_COMMA_IF_IMPL(TORCHSCIENCE_UNPACK(X))
 #endif
 
-// =============================================================================
-// SPARSE_COO_CPU_CREATION_OPERATOR
-// =============================================================================
-// Flexible macro for creating sparse COO tensors from scalar parameters.
-// Used for sparse structured matrices (identity, diagonal, etc.)
-//
-// Parameters:
-//   NAMESPACE     - Namespace (e.g., structured_matrix)
-//   OPERATOR_NAME - Operator name (e.g., sparse_identity)
-//   OUTPUT_SHAPE  - Shape expression (e.g., {n, n})
-//   PARAMS        - Parenthesized typed params: (int64_t n) or ()
-//   ARGS          - Parenthesized arg names: (n) or ()
-//
-// Kernel signature expected:
-//   namespace impl::NAMESPACE {
-//     template <typename scalar_t>
-//     std::pair<at::Tensor, at::Tensor> OPERATOR_NAME_kernel(
-//       int64_t* shape, int64_t ndim, PARAMS...
-//     )
-//     // Returns (indices, values) tensors
-//   }
-// =============================================================================
-
+// Sparse COO: kernel returns (indices, values) pair
+// Like PyTorch's empty_sparse, constructs COO tensor from components
 #define SPARSE_COO_CPU_CREATION_OPERATOR(                                       \
   NAMESPACE,                                                                    \
   OPERATOR_NAME,                                                                \
@@ -57,18 +33,12 @@ inline at::Tensor OPERATOR_NAME(                                                
 ) {                                                                             \
   (void)layout;  /* Sparse layout is implicit */                                \
                                                                                 \
-  auto options = at::TensorOptions()                                            \
-    .dtype(dtype.value_or(                                                      \
-      c10::typeMetaToScalarType(at::get_default_dtype())                        \
-    ))                                                                          \
-    .device(device.value_or(at::kCPU))                                          \
-    .requires_grad(false);                                                      \
-                                                                                \
   std::vector<int64_t> shape_vec = OUTPUT_SHAPE;                                \
-  for (auto s : shape_vec) {                                                    \
-    TORCH_CHECK(s >= 0,                                                         \
-      #OPERATOR_NAME ": size must be non-negative, got ", s);                   \
-  }                                                                             \
+  ::torchscience::core::check_size_nonnegative(shape_vec, #OPERATOR_NAME);      \
+                                                                                \
+  auto options = ::torchscience::core::build_options(                           \
+    dtype, c10::nullopt, device, at::kCPU                                       \
+  );                                                                            \
                                                                                 \
   at::Tensor indices;                                                           \
   at::Tensor values;                                                            \
@@ -90,6 +60,7 @@ inline at::Tensor OPERATOR_NAME(                                                
     }                                                                           \
   );                                                                            \
                                                                                 \
+  /* Construct sparse COO tensor like PyTorch's empty_sparse */                 \
   at::Tensor output = at::_sparse_coo_tensor_unsafe(                            \
     indices,                                                                    \
     values,                                                                     \
