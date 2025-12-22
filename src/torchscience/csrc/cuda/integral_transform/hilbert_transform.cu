@@ -228,7 +228,9 @@ at::Tensor hilbert_transform_backward(
     int64_t n = (n_param > 0) ? n_param : input_size;
 
     // Apply -H with size n to grad_output
-    at::Tensor grad = -hilbert_transform(grad_output, n_param, dim, 0, 0.0, c10::nullopt);
+    // Use the same padding_mode as forward for consistency, though in practice
+    // grad_output already has size n so no padding is applied
+    at::Tensor grad = -hilbert_transform(grad_output, n_param, dim, padding_mode, padding_value, c10::nullopt);
 
     // If window was applied in forward, multiply gradient by window BEFORE size adjustment
     // (chain rule: d/dx[w*x] = w * d/dx[x], where w operates at padded size)

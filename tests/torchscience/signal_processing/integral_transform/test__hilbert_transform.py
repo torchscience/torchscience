@@ -472,6 +472,31 @@ class TestHilbertTransformEdgeCasesNewParams:
         assert result.shape == (1024,)
         assert torch.all(torch.isfinite(result))
 
+    @pytest.mark.parametrize("mode", ["reflect", "replicate", "circular"])
+    def test_size_one_with_non_constant_padding_raises(self, mode):
+        """Test that size-1 dimension with non-constant padding raises an error.
+
+        Reflect/replicate/circular padding requires at least 2 elements to work
+        properly. Using these modes with a size-1 dimension should raise an error.
+        """
+        x = torch.tensor([1.0], dtype=torch.float64)
+
+        with pytest.raises(
+            RuntimeError, match="Cannot use reflect/replicate/circular padding"
+        ):
+            torchscience.signal_processing.integral_transform.hilbert_transform(
+                x, n=10, padding_mode=mode
+            )
+
+    def test_size_one_with_constant_padding_works(self):
+        """Test that size-1 dimension with constant padding works."""
+        x = torch.tensor([1.0], dtype=torch.float64)
+        result = torchscience.signal_processing.integral_transform.hilbert_transform(
+            x, n=10, padding_mode="constant"
+        )
+        assert result.shape == (10,)
+        assert torch.all(torch.isfinite(result))
+
     def test_all_combinations(self):
         """Test various combinations of parameters."""
         x = torch.randn(64, dtype=torch.float64)

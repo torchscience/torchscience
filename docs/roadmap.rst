@@ -22,8 +22,8 @@ MVP Milestones
 
 **Milestone 2: Remaining Patterns**
 
-* Reduction operators via ``kurtosis``
-* Transformation operators via ``hilbert_transform``
+* Reduction operators via ``kurtosis`` ✓
+* Transformation operators via ``hilbert_transform`` ✓
 * Iterative operators via ``shortest_path``
 * Higher-order operators via ``adaptive_quadrature``
 * Pairwise operators via ``kd_tree_query``
@@ -106,7 +106,7 @@ Modules to Establish
    * - ``optimization.root_finding``
      - ``brent_root``
      - Higher-order
-   * - ``optimization.test_functions``
+   * - ``optimization.test_functions`` ✓
      - ``rosenbrock``
      - Elementwise
    * - ``polynomials``
@@ -115,13 +115,13 @@ Modules to Establish
    * - ``probability``
      - ``gaussian_probability_density``
      - Elementwise
-   * - ``signal_processing.transform``
+   * - ``signal_processing.integral_transform`` ✓
      - ``hilbert_transform``
      - Transformation
    * - ``space_partitioning``
      - ``kd_tree_query``
      - Pairwise
-   * - ``statistics.descriptive``
+   * - ``statistics.descriptive`` ✓
      - ``kurtosis``
      - Reduction
    * - ``statistics.hypothesis_testing``
@@ -169,7 +169,7 @@ Comprehensive signal processing toolkit:
 * **Window functions**: Hann, Hamming, Blackman, Kaiser, Gaussian, Tukey, DPSS
 * **Waveforms**: Square, sawtooth, triangle, chirp, pulse
 * **Spectral analysis**: Periodogram, Welch, multitaper, spectrogram
-* **Transforms**: Hilbert, cepstrum, envelope detection
+* **Transforms**: Hilbert ✓, cepstrum, envelope detection
 * **Resampling**: Interpolation, decimation, rational resampling
 * **Convolution**: 1D/2D/3D convolution, correlation, deconvolution
 
@@ -203,6 +203,7 @@ Transforms between function representations:
 * Radon transforms (forward, inverse, fan-beam, cone-beam)
 * Wavelet transforms (CWT, DWT, wavelet packets, scattering transforms)
 * Z-transforms
+* Hilbert transforms ✓
 * Hilbert-Huang transform
 
 Wavelets
@@ -357,7 +358,7 @@ Optimization Test Functions
 
 Standard benchmark functions for optimization research:
 
-* Unimodal functions (sphere, Rosenbrock, bent cigar, different powers)
+* Unimodal functions (sphere, Rosenbrock ✓, bent cigar, different powers)
 * Multimodal functions (Ackley, Rastrigin, Schwefel, Griewank, Levy)
 * Separable and non-separable variants
 * Constrained test problems (CEC suites)
@@ -385,7 +386,7 @@ Statistical inference and analysis.
 Descriptive Statistics
 """"""""""""""""""""""
 
-* Moments (mean, variance, skewness, kurtosis)
+* Moments (mean, variance, skewness, kurtosis ✓)
 * Quantiles and percentiles
 * Order statistics
 * L-moments

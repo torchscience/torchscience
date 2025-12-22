@@ -58,8 +58,22 @@ wave = torchscience.signal_processing.waveform.sine_wave(
 | Submodule | Function | Description |
 |-----------|----------|-------------|
 | `filter` | `butterworth_analog_bandpass_filter` | Analog Butterworth bandpass filter design |
+| `integral_transform` | `hilbert_transform` | Hilbert transform of a signal |
+| `integral_transform` | `inverse_hilbert_transform` | Inverse Hilbert transform |
 | `waveform` | `sine_wave` | Sinusoidal waveform generation |
 | `window_function` | `rectangular_window` | Rectangular (boxcar) window |
+
+### Optimization
+
+| Submodule | Function | Description |
+|-----------|----------|-------------|
+| `test_functions` | `rosenbrock` | Rosenbrock function for optimization benchmarking |
+
+### Statistics
+
+| Submodule | Function | Description |
+|-----------|----------|-------------|
+| `descriptive` | `kurtosis` | Fourth standardized moment measuring distribution tailedness |
 
 ## PyTorch Compatibility
 

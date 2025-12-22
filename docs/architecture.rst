@@ -226,7 +226,7 @@ Implementation Patterns Summary
      - Example Operators
    * - Elementwise (1-4 ary)
      - Point-wise operations with broadcasting
-     - ``gamma``, ``chebyshev_polynomial_t``, ``incomplete_beta``, ``hypergeometric_2_f_1``
+     - ``gamma``, ``chebyshev_polynomial_t``, ``incomplete_beta``, ``hypergeometric_2_f_1``, ``rosenbrock``
    * - Reduction
      - Aggregate along dimensions
      - ``entropy``, ``kurtosis``
@@ -235,7 +235,7 @@ Implementation Patterns Summary
      - ``rectangular_window``, ``pink_noise``
    * - Transformation
      - Reshape or reorder data
-     - ``discrete_wavelet_transform``, ``hilbert_transform``
+     - ``hilbert_transform``, ``inverse_hilbert_transform``, ``discrete_wavelet_transform``
    * - Pairwise
      - Operate on pairs of elements
      - ``minkowski_distance``, ``kd_tree_query``

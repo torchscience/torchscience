@@ -160,10 +160,10 @@ inline at::Tensor apply_padding(
             // For reflect: pad < size, so max_pad = size - 1
             // We use size - 1 to be safe for all non-constant modes
             int64_t max_pad = current_dim_size - 1;
-            if (max_pad <= 0) {
-                // Should not happen with valid input, but handle gracefully
-                max_pad = 1;
-            }
+            TORCH_CHECK(max_pad > 0,
+                "Cannot use reflect/replicate/circular padding with dimension size 1. "
+                "The input dimension along dim must have size >= 2 for non-constant padding modes. "
+                "Use padding_mode='constant' instead, or ensure input has sufficient size.");
 
             int64_t pad_this_step = std::min(remaining_pad, max_pad);
             result = apply_padding_step(result, pad_this_step, padding_mode, padding_value, needs_unsqueeze);
@@ -190,9 +190,13 @@ inline at::Tensor apply_window(
 ) {
     TORCH_CHECK(window.dim() == 1,
         "window must be 1-D, got ", window.dim(), "-D tensor");
+    TORCH_CHECK(window.device() == input.device(),
+        "window must be on the same device as input, got window on ",
+        window.device(), " and input on ", input.device());
     TORCH_CHECK(window.size(0) == input.size(dim),
         "window size (", window.size(0), ") must match input size along dim (",
-        input.size(dim), ")");
+        input.size(dim), "). When using the n parameter, window must match the ",
+        "padded size, not the original input size.");
 
     // Reshape window for broadcasting: (1, 1, ..., n, ..., 1)
     std::vector<int64_t> window_shape(input.dim(), 1);
