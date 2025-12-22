@@ -2,6 +2,7 @@
 
 #include <ATen/ATen.h>
 #include <torch/library.h>
+#include "../../core/creation_common.h"
 
 // =============================================================================
 // Helper macros for handling parenthesized parameter lists
@@ -65,15 +66,9 @@ inline at::Tensor OPERATOR_NAME(                                                
     .requires_grad(false);                                                      \
                                                                                 \
   std::vector<int64_t> shape_vec = OUTPUT_SHAPE;                                \
-  for (auto s : shape_vec) {                                                    \
-    TORCH_CHECK(s >= 0,                                                         \
-      #OPERATOR_NAME ": size must be non-negative, got ", s);                   \
-  }                                                                             \
+  ::torchscience::core::check_size_nonnegative(shape_vec, #OPERATOR_NAME);     \
                                                                                 \
-  int64_t numel = 1;                                                            \
-  for (auto s : shape_vec) {                                                    \
-    numel *= s;                                                                 \
-  }                                                                             \
+  int64_t numel = ::torchscience::core::compute_numel(shape_vec);                                                                             \
                                                                                 \
   /* Create float tensor first, then quantize */                                \
   at::Tensor float_output = at::empty(shape_vec,                                \
