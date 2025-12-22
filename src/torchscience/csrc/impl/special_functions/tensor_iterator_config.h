@@ -2,9 +2,7 @@
 
 #include <ATen/TensorIterator.h>
 
-namespace torchscience {
-namespace impl {
-namespace special_functions {
+namespace torchscience::impl::special_functions {
 
 /**
  * Common TensorIterator configuration for unary special functions.
@@ -135,6 +133,4 @@ inline at::TensorIterator make_ternary_dual_output_iterator(
     .build();
 }
 
-} // namespace special_functions
-} // namespace impl
-} // namespace torchscience
+}  // namespace torchscience::impl::special_functions

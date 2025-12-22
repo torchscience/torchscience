@@ -46,12 +46,11 @@
 #include <c10/macros/Macros.h>
 #include <c10/util/complex.h>
 #include <cmath>
-#include <tuple>
 
-#include "digamma.h"
-#include "trigamma.h"
 #include "factorial.h"
+#include "is_nonpositive_integer.h"
 #include "lanczos_approximation.h"
+#include "sin_pi.h"
 
 namespace torchscience::impl::special_functions {
 
@@ -229,107 +228,6 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::enable_if_t<c10::is_complex<T>::value, T>
   }
 
   return real(scalar_t(kSqrt2Pi)) * exp((z - real(scalar_t(0.5))) * log(z + real(scalar_t(kLanczosG) - scalar_t(0.5))) - (z + real(scalar_t(kLanczosG) - scalar_t(0.5)))) * lanczos_series(z);
-}
-
-// ============================================================================
-// Backward implementation (first-order derivative)
-// ============================================================================
-
-/**
- * Backward pass for gamma function.
- * d/dz Γ(z) = Γ(z) * ψ(z)
- *
- * Returns gradient with respect to z.
- *
- * Complex Gradient Convention (Wirtinger Calculus):
- * ------------------------------------------------
- * PyTorch stores ∂L/∂z̄ (conjugate Wirtinger derivative) in .grad, not ∂L/∂z.
- * This convention makes gradient descent work correctly for complex parameters,
- * since the steepest descent direction for a real loss L is 2·∂L/∂z̄.
- *
- * For a holomorphic function f(z), the chain rule in Wirtinger calculus is:
- *     ∂L/∂z̄ = (∂L/∂w̄) · conj(df/dz)
- * where w = f(z).
- *
- * For Γ(z), the holomorphic derivative is dΓ/dz = Γ(z)·ψ(z), so:
- *     gradient_z̄ = gradient_w̄ · conj(Γ(z)·ψ(z))
- *
- * For real types, conjugation is the identity, so no special handling needed.
- */
-template <typename T>
-C10_HOST_DEVICE C10_ALWAYS_INLINE T gamma_backward(
-  T gradient_output,
-  T z
-) {
-  if constexpr (c10::is_complex<T>::value) {
-    return gradient_output * std::conj(gamma(z) * digamma(z));
-  }
-
-  return gradient_output * gamma(z) * digamma(z);
-}
-
-// ============================================================================
-// Double-backward implementation (second-order derivative)
-// ============================================================================
-
-/**
- * Double-backward pass for gamma function.
- *
- * Given:
- *   gradient_gradient_z = gradient w.r.t. gradient_z from first backward
- *   gradient_output = original upstream gradient
- *   z = original input
- *
- * The first backward computes:
- *   gradient_z = gradient_output * Γ(z) * ψ(z)
- *
- * Double backward computes:
- *   gradient_gradient_output = gradient_gradient_z * Γ(z) * ψ(z)  (derivative w.r.t gradient_output)
- *   gradient_z = gradient_gradient_z * gradient_output * d/dz[Γ(z) * ψ(z)]
- *              = gradient_gradient_z * gradient_output * Γ(z) * (ψ(z)² + ψ'(z))
- *
- * Returns: (gradient_gradient_output, gradient_z)
- *
- * Complex Gradient Convention (Wirtinger Calculus):
- * ------------------------------------------------
- * Same convention as gamma_backward applies here. For each term that involves
- * a holomorphic derivative, we conjugate when computing the Wirtinger gradient.
- *
- * gradient_gradient_output: This is ∂L/∂(gradient_output)̄, and since the first backward
- *   computed gradient_z = gradient_output * [Γ(z)·ψ(z)], differentiating w.r.t.
- *   gradient_output (treating it as a variable) gives conj(Γ(z)·ψ(z)).
- *
- * gradient_z: This differentiates through the [Γ(z)·ψ(z)] term, giving
- *   conj(d/dz[Γ(z)·ψ(z)]) = conj(Γ(z)·(ψ(z)² + ψ'(z))).
- */
-template <typename T>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<T, T> gamma_backward_backward(
-  T gradient_gradient_z,
-  T gradient_output,
-  T z,
-  const bool has_gradient_gradient_z
-) {
-  T gradient_gradient_output;
-  T gradient_z;
-
-  if (!has_gradient_gradient_z) {
-    return std::make_tuple(T(0), T(0));
-  }
-
-  if constexpr (c10::is_complex<T>::value) {
-    gradient_gradient_output = gradient_gradient_z * std::conj(gamma(z) * digamma(z));
-
-    gradient_z = gradient_gradient_z * gradient_output * std::conj(gamma(z) * (digamma(z) * digamma(z) + trigamma(z)));
-  } else {
-    gradient_gradient_output = gradient_gradient_z * gamma(z) * digamma(z);
-
-    gradient_z = gradient_gradient_z * gradient_output * (gamma(z) * (digamma(z) * digamma(z) + trigamma(z)));
-  }
-
-  return std::make_tuple(
-    gradient_gradient_output,
-    gradient_z
-  );
 }
 
 }  // namespace torchscience::impl::special_functions

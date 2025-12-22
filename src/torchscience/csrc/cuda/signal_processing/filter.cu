@@ -6,6 +6,8 @@
 #include <torch/library.h>
 
 #include "../impl/filter/butterworth_analog_bandpass_filter.h"
+#include "../impl/filter/butterworth_analog_bandpass_filter_backward.h"
+#include "../impl/filter/butterworth_analog_bandpass_filter_backward_backward.h"
 
 namespace torchscience::cuda::filter {
 

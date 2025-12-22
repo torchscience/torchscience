@@ -11,27 +11,27 @@
 #include "quantized/cpu/special_functions.h"
 #include "quantized/cpu/optimization/test_functions.h"
 
-#include "composite/window_functions.h"
-#include "composite/waveform.h"
+#include "composite/signal_processing/window_functions.h"
+#include "composite/signal_processing/waveform.h"
 #include "composite/optimization/test_functions.h"
 // Note: batching/optimization/test_functions.h disabled - functorch batch rules
 // require different registration for custom ops (not TORCH_LIBRARY_IMPL)
 
-#include "cpu/filter.h"
+#include "cpu/signal_processing/filter.h"
 #include "cpu/optimization/test_functions.h"
-#include "cpu/descriptive/kurtosis.h"
-#include "autograd/filter.h"
+#include "cpu/statistics/descriptive/kurtosis.h"
+#include "autograd/signal_processing/filter.h"
 #include "autograd/optimization/test_functions.h"
-#include "autograd/descriptive/kurtosis.h"
-#include "meta/filter.h"
+#include "autograd/statistics/descriptive/kurtosis.h"
+#include "meta/signal_processing/filter.h"
 #include "meta/optimization/test_functions.h"
-#include "meta/descriptive/kurtosis.h"
-#include "autocast/filter.h"
-#include "autocast/descriptive/kurtosis.h"
+#include "meta/statistics/descriptive/kurtosis.h"
+#include "autocast/signal_processing/filter.h"
+#include "autocast/statistics/descriptive/kurtosis.h"
 
 #ifdef TORCHSCIENCE_CUDA
 #include "cuda/optimization/test_functions.cu"
-#include "cuda/descriptive/kurtosis.cu"
+#include "cuda/statistics/descriptive/kurtosis.cu"
 #include "sparse/coo/cuda/special_functions.h"
 #include "sparse/coo/cuda/optimization/test_functions.h"
 #include "sparse/csr/cuda/special_functions.h"

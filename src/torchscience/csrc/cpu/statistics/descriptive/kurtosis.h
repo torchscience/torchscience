@@ -8,7 +8,9 @@
 #include <ATen/TensorIterator.h>
 #include <torch/library.h>
 
-#include "../../impl/descriptive/kurtosis.h"
+#include "../../../impl/statistics/descriptive/kurtosis.h"
+#include "../../../impl/statistics/descriptive/kurtosis_backward.h"
+#include "../../../impl/statistics/descriptive/kurtosis_backward_backward.h"
 
 namespace torchscience::cpu::descriptive {
 

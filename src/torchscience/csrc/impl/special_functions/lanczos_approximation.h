@@ -9,7 +9,7 @@
  *    The Lanczos approximation provides a way to compute the gamma function
  *    with high precision using a rational function approximation:
  *
- *    Γ(z+1) = √(2π) * (z + g + 0.5)^(z + 0.5) * e^(-(z + g + 0.5)) * A_g(z)
+ *    Gamma(z+1) = sqrt(2*pi) * (z + g + 0.5)^(z + 0.5) * e^(-(z + g + 0.5)) * A_g(z)
  *
  *    where g is a parameter that controls the tradeoff between the number
  *    of terms and the accuracy, and A_g(z) is a series approximation.
@@ -20,8 +20,8 @@
  *    - Provides ~15 digits of precision for double
  *
  * 3. USAGE:
- *    - Used by gamma.h for Γ(z) computation
- *    - Used by log_gamma.h for log(Γ(z)) computation
+ *    - Used by gamma.h for Gamma(z) computation
+ *    - Used by log_gamma.h for log(Gamma(z)) computation
  *
  * 4. REFERENCES:
  *    - Lanczos, C. (1964). "A Precision Approximation of the Gamma Function"
@@ -31,6 +31,8 @@
 #include <c10/macros/Macros.h>
 #include <c10/util/complex.h>
 #include <type_traits>
+
+#include "type_traits.h"
 
 namespace torchscience::impl::special_functions {
 
@@ -62,50 +64,32 @@ constexpr double kLanczosCoeffs[kLanczosN] = {
 constexpr double kSqrt2Pi = 2.5066282746310005024157652848110452530069867406099;
 
 // ============================================================================
-// Lanczos series computation
+// Unified Lanczos series computation (works for real and complex)
 // ============================================================================
 
 /**
- * Compute the Lanczos series A_g(z) for real types.
+ * Compute the Lanczos series A_g(z) for both real and complex types.
  *
  * A_g(z) = c_0 + sum_{k=1}^{n-1} c_k / (z + k - 1)
  *
  * This is the rational function part of the Lanczos approximation.
- */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE
-std::enable_if_t<
-  !c10::is_complex<scalar_t>::value &&
-  (std::is_same_v<scalar_t, float> || std::is_same_v<scalar_t, double>),
-  scalar_t>
-lanczos_series(scalar_t z) {
-  scalar_t output = scalar_t(kLanczosCoeffs[0]);
-
-  for (int index = 1; index < kLanczosN; index++) {
-    output = output + (scalar_t(kLanczosCoeffs[index]) / (z + scalar_t(index - 1)));
-  }
-
-  return output;
-}
-
-/**
- * Compute the Lanczos series A_g(z) for complex types.
+ * The implementation uses template metaprogramming to handle both
+ * real (float, double) and complex types uniformly.
  *
- * A_g(z) = c_0 + sum_{k=1}^{n-1} c_k / (z + k - 1)
- *
- * This is the rational function part of the Lanczos approximation.
+ * @param z Input value (real or complex)
+ * @return Lanczos series value A_g(z)
  */
 template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
-c10::complex<T> lanczos_series(c10::complex<T> z) {
-  const auto real = [](T val) {
-    return c10::complex<T>(val, T(0));
-  };
+T lanczos_series(T z) {
+  using real_t = scalar_value_t<T>;
 
-  c10::complex<T> output = real(T(kLanczosCoeffs[0]));
+  T output = make_scalar_for(z, real_t(kLanczosCoeffs[0]));
 
   for (int index = 1; index < kLanczosN; index++) {
-    output = output + real(T(kLanczosCoeffs[index])) / (z + real(T(index - 1)));
+    T coeff = make_scalar_for(z, real_t(kLanczosCoeffs[index]));
+    T denom = z + make_scalar_for(z, real_t(index - 1));
+    output = output + coeff / denom;
   }
 
   return output;

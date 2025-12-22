@@ -42,11 +42,9 @@
 #include <c10/util/complex.h>
 #include <cmath>
 #include <limits>
-#include <tuple>
 #include <type_traits>
 
-#include "digamma.h"
-#include "trigamma.h"
+#include "is_nonpositive_integer.h"
 
 namespace torchscience::impl::special_functions {
 
@@ -525,92 +523,6 @@ factorial(scalar_t z) {
 
   // General case: z! = Γ(z + 1)
   return gamma(z + scalar_t(T(1), T(0)));
-}
-
-// ============================================================================
-// Backward implementation (first-order derivative)
-// ============================================================================
-
-/**
- * Backward pass for factorial function.
- *
- * Since z! = Γ(z + 1):
- *   d/dz z! = Γ(z + 1) * ψ(z + 1)
- *
- * where ψ is the digamma function.
- *
- * Returns gradient with respect to z.
- */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE scalar_t
-factorial_backward(scalar_t grad_output, scalar_t z) {
-  auto z_plus_1 = z + scalar_t(1);
-  auto gamma_z_plus_1 = gamma(z_plus_1);
-  auto psi_z_plus_1 = digamma(z_plus_1);
-
-  if constexpr (c10::is_complex<scalar_t>::value) {
-    // Wirtinger chain rule: conjugate the holomorphic derivative
-    return grad_output * std::conj(gamma_z_plus_1 * psi_z_plus_1);
-  } else {
-    return grad_output * gamma_z_plus_1 * psi_z_plus_1;
-  }
-}
-
-// ============================================================================
-// Double-backward implementation (second-order derivative)
-// ============================================================================
-
-/**
- * Double-backward pass for factorial function.
- *
- * Given:
- *   gg_z = gradient w.r.t. gradient_z from first backward
- *   grad_output = original upstream gradient
- *   z = original input
- *
- * The first backward computes:
- *   gradient_z = grad_output * Γ(z+1) * ψ(z+1)
- *
- * Double backward computes:
- *   gradient_grad_output = gg_z * Γ(z+1) * ψ(z+1)
- *   gradient_z = gg_z * grad_output * d/dz[Γ(z+1) * ψ(z+1)]
- *              = gg_z * grad_output * Γ(z+1) * (ψ(z+1)² + ψ'(z+1))
- *
- * Returns: (gradient_grad_output, gradient_z)
- */
-template <typename scalar_t>
-C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t>
-factorial_backward_backward(
-    scalar_t gg_z,
-    scalar_t grad_output,
-    scalar_t z,
-    bool has_gg_z
-) {
-  scalar_t gradient_grad_output = scalar_t(0);
-  scalar_t gradient_z = scalar_t(0);
-
-  if (!has_gg_z) {
-    return std::make_tuple(gradient_grad_output, gradient_z);
-  }
-
-  auto z_plus_1 = z + scalar_t(1);
-  auto gamma_z_plus_1 = gamma(z_plus_1);
-  auto psi_z_plus_1 = digamma(z_plus_1);
-  auto psi_prime_z_plus_1 = trigamma(z_plus_1);
-
-  // d/dz[Γ(z+1) * ψ(z+1)] = Γ(z+1) * (ψ(z+1)² + ψ'(z+1))
-  auto dGamma_psi_dz = gamma_z_plus_1 * (psi_z_plus_1 * psi_z_plus_1 + psi_prime_z_plus_1);
-
-  if constexpr (c10::is_complex<scalar_t>::value) {
-    // Wirtinger chain rule: conjugate each holomorphic derivative term
-    gradient_grad_output = gg_z * std::conj(gamma_z_plus_1 * psi_z_plus_1);
-    gradient_z = gg_z * grad_output * std::conj(dGamma_psi_dz);
-  } else {
-    gradient_grad_output = gg_z * gamma_z_plus_1 * psi_z_plus_1;
-    gradient_z = gg_z * grad_output * dGamma_psi_dz;
-  }
-
-  return std::make_tuple(gradient_grad_output, gradient_z);
 }
 
 }  // namespace torchscience::impl::special_functions
