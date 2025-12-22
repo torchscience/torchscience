@@ -4,10 +4,7 @@
 #include <ATen/cuda/CUDAContext.h>
 #include <c10/cuda/CUDAGuard.h>
 #include <torch/library.h>
-
-// =============================================================================
-// Helper macros for handling parenthesized parameter lists
-// =============================================================================
+#include "../core/creation_common.h"
 
 #ifndef TORCHSCIENCE_UNPACK_IMPL
 #define TORCHSCIENCE_UNPACK_IMPL(...) __VA_ARGS__
@@ -15,28 +12,6 @@
 #define TORCHSCIENCE_COMMA_IF_IMPL(...) __VA_OPT__(,)
 #define TORCHSCIENCE_COMMA_IF(X) TORCHSCIENCE_COMMA_IF_IMPL(TORCHSCIENCE_UNPACK(X))
 #endif
-
-// =============================================================================
-// CUDA_CREATION_OPERATOR
-// =============================================================================
-// Flexible macro for creating tensors from scalar parameters on CUDA.
-//
-// Parameters:
-//   NAMESPACE     - Namespace (e.g., window_function)
-//   OPERATOR_NAME - Operator name (e.g., rectangular_window)
-//   OUTPUT_SHAPE  - Shape expression (e.g., {n})
-//   PARAMS        - Parenthesized typed params: (int64_t n) or ()
-//   ARGS          - Parenthesized arg names: (n) or ()
-//
-// Usage:
-//   CUDA_CREATION_OPERATOR(window_function, rectangular_window, {n}, (int64_t n), (n))
-//
-// Kernel signature expected:
-//   namespace impl::NAMESPACE {
-//     template <typename scalar_t>
-//     __global__ void OPERATOR_NAME_kernel(scalar_t* output, int64_t numel, PARAMS...)
-//   }
-// =============================================================================
 
 #define CUDA_CREATION_OPERATOR(                                                 \
   NAMESPACE,                                                                    \
@@ -59,26 +34,17 @@ inline at::Tensor OPERATOR_NAME(                                                
   auto dev = device.value_or(at::kCUDA);                                        \
   TORCH_CHECK(dev.is_cuda(), #OPERATOR_NAME ": device must be CUDA");           \
                                                                                 \
+  /* CUDA device guard - critical for multi-GPU */                              \
   c10::cuda::CUDAGuard guard(dev);                                              \
                                                                                 \
-  auto options = at::TensorOptions()                                            \
-    .dtype(dtype.value_or(                                                      \
-      c10::typeMetaToScalarType(at::get_default_dtype())                        \
-    ))                                                                          \
-    .layout(layout.value_or(at::kStrided))                                      \
-    .device(dev)                                                                \
-    .requires_grad(false);                                                      \
-                                                                                \
   std::vector<int64_t> shape_vec = OUTPUT_SHAPE;                                \
-  for (auto s : shape_vec) {                                                    \
-    TORCH_CHECK(s >= 0,                                                         \
-      #OPERATOR_NAME ": size must be non-negative, got ", s);                   \
-  }                                                                             \
+  ::torchscience::core::check_size_nonnegative(shape_vec, #OPERATOR_NAME);      \
                                                                                 \
-  int64_t numel = 1;                                                            \
-  for (auto s : shape_vec) {                                                    \
-    numel *= s;                                                                 \
-  }                                                                             \
+  auto options = ::torchscience::core::build_options(                           \
+    dtype, layout, device, dev                                                  \
+  );                                                                            \
+                                                                                \
+  int64_t numel = ::torchscience::core::compute_numel(shape_vec);               \
                                                                                 \
   at::Tensor output = at::empty(shape_vec, options);                            \
                                                                                 \
