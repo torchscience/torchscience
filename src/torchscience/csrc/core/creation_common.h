@@ -1,9 +1,8 @@
 #pragma once
 
+#include <limits>
 #include <vector>
 #include <ATen/ATen.h>
-#include <ATen/Dispatch.h>
-#include <c10/core/DispatchKeySet.h>
 
 namespace torchscience::core {
 
@@ -14,10 +13,15 @@ inline void check_size_nonnegative(const std::vector<int64_t>& shape, const char
     }
 }
 
-// Compute numel from shape
+// Compute total number of elements from shape (with overflow checking)
 inline int64_t compute_numel(const std::vector<int64_t>& shape) {
     int64_t numel = 1;
     for (auto s : shape) {
+        // Check for overflow before multiplication
+        TORCH_CHECK(
+            numel <= std::numeric_limits<int64_t>::max() / (s == 0 ? 1 : s),
+            "numel would overflow int64_t for shape with total elements exceeding 2^63-1"
+        );
         numel *= s;
     }
     return numel;
