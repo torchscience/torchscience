@@ -47,6 +47,7 @@
 .tox/
 .venv
 .webassets-cache
+.worktrees/
 /site
 CLAUDE.md
 ENV/
