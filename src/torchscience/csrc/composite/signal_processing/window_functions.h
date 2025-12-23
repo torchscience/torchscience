@@ -1,10 +1,15 @@
 #pragma once
 
 #include <torch/extension.h>
-#include "../../impl/signal_processing/window_function/rectangular_window.h"
+#include "../../cpu/creation_operators.h"
+#include "../../meta/creation_operators.h"
+#include "../../impl/window_function/rectangular_window_traits.h"
+
+using torchscience::impl::window_function::RectangularWindowTraits;
 
 namespace torchscience::window_function {
 
+// Composite implementation that routes to appropriate backend based on device
 inline at::Tensor rectangular_window(
   int64_t n,
   const c10::optional<at::ScalarType> dtype,
@@ -12,44 +17,24 @@ inline at::Tensor rectangular_window(
   const c10::optional<at::Device> device,
   const bool requires_grad
 ) {
-  TORCH_CHECK(n >= 0, "rectangular_window: n must be non-negative, got ", n);
+  // Determine target device
+  at::Device target_device = device.value_or(at::kCPU);
 
-  auto options = at::TensorOptions()
-    .dtype(dtype.value_or(c10::typeMetaToScalarType(at::get_default_dtype())))
-    .layout(layout.value_or(at::kStrided))
-    .device(device.value_or(at::kCPU))
-    .requires_grad(false);
-
-  at::Tensor output = at::empty({n}, options);
-
-  if (n > 0) {
-    AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16,
-      at::kHalf,
-      output.scalar_type(),
-      "rectangular_window",
-      [&]() {
-        impl::window_function::rectangular_window_kernel<scalar_t>(
-          output.data_ptr<scalar_t>(),
-          n,
-          n
-        );
-      }
+  // Dispatch to appropriate implementation
+  if (target_device.type() == at::kMeta) {
+    return torchscience::meta::MetaCreationOperator<RectangularWindowTraits>::forward<int64_t>(
+      n, dtype, layout, device, requires_grad
+    );
+  } else {
+    return torchscience::cpu::CPUCreationOperator<RectangularWindowTraits>::forward<int64_t>(
+      n, dtype, layout, device, requires_grad
     );
   }
-
-  if (requires_grad) {
-    output = output.requires_grad_(true);
-  }
-
-  return output;
 }
 
 } // namespace torchscience::window_function
 
+// CompositeExplicitAutograd implementation for operators with no tensor arguments
 TORCH_LIBRARY_IMPL(torchscience, CompositeExplicitAutograd, module) {
-  module.impl(
-    "rectangular_window",
-    &torchscience::window_function::rectangular_window
-  );
+  module.impl("rectangular_window", &torchscience::window_function::rectangular_window);
 }
