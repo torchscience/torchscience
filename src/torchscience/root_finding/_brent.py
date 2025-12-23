@@ -14,6 +14,71 @@ def _get_default_tol(dtype: torch.dtype) -> float:
         return 1e-12
 
 
+class _BrentImplicitGrad(torch.autograd.Function):
+    """Custom autograd for implicit differentiation through root-finding."""
+
+    @staticmethod
+    def forward(ctx, root: Tensor, f_callable, orig_shape) -> Tensor:
+        ctx.f_callable = f_callable
+        ctx.orig_shape = orig_shape
+        ctx.save_for_backward(root)
+        return root
+
+    @staticmethod
+    def backward(ctx, grad_output: Tensor) -> tuple[Tensor | None, None, None]:
+        (root,) = ctx.saved_tensors
+
+        # Compute df/dx at the root
+        x = root.detach().requires_grad_(True)
+        with torch.enable_grad():
+            fx = ctx.f_callable(x)
+            # Compute df/dx
+            df_dx = torch.autograd.grad(
+                fx,
+                x,
+                grad_outputs=torch.ones_like(fx),
+                create_graph=True,
+                retain_graph=True,
+            )[0]
+
+            # Compute df/dtheta (gradient w.r.t. parameters)
+            # This is done by computing the gradient of f w.r.t. its inputs
+            # when evaluated at the root
+            if fx.grad_fn is not None:
+                # grad_output is dL/dx*, we need dL/dtheta
+                # Using implicit function theorem: dx*/dtheta = -[df/dx]^{-1} * df/dtheta
+                # So: dL/dtheta = dL/dx* * dx*/dtheta = -dL/dx* * [df/dx]^{-1} * df/dtheta
+                #
+                # We compute this by backpropagating through f with modified gradient
+                modified_grad = -grad_output / df_dx
+                torch.autograd.backward(fx, modified_grad)
+
+        return None, None, None
+
+
+def _attach_implicit_grad(result: Tensor, f, orig_shape: tuple) -> Tensor:
+    """Attach implicit differentiation gradient if needed."""
+    # Check if any parameter of f requires gradients
+    try:
+        test_input = result.detach().requires_grad_(True)
+        with torch.enable_grad():
+            test_output = f(test_input)
+        needs_grad = test_output.requires_grad
+    except Exception:
+        needs_grad = False
+
+    if not needs_grad:
+        return result.reshape(orig_shape)
+
+    # Make sure result has requires_grad=True for the autograd function
+    # This is needed when result comes from endpoint detection (no iteration)
+    if not result.requires_grad:
+        result = result.clone().requires_grad_(True)
+
+    result = _BrentImplicitGrad.apply(result, f, orig_shape)
+    return result.reshape(orig_shape)
+
+
 def brent(
     f: Callable[[Tensor], Tensor],
     a: Tensor,
@@ -57,11 +122,12 @@ def brent(
             f"a and b must have same shape, got {a.shape} and {b.shape}"
         )
 
-    if a.numel() == 0:
-        return a.clone()
-
     # Flatten for processing, remember original shape
     orig_shape = a.shape
+
+    if a.numel() == 0:
+        return _attach_implicit_grad(a.clone(), f, orig_shape)
+
     a = a.flatten()
     b = b.flatten()
 
@@ -84,7 +150,7 @@ def brent(
     root = torch.where(fa == 0, a, torch.where(fb == 0, b, a.clone()))
     at_endpoint = (fa == 0) | (fb == 0)
     if torch.all(at_endpoint):
-        return root.reshape(orig_shape)
+        return _attach_implicit_grad(root, f, orig_shape)
 
     # Check for valid brackets (only for non-endpoint cases)
     if torch.any(fa * fb >= 0):
@@ -118,7 +184,7 @@ def brent(
         result = torch.where(newly_converged, b, result)
 
         if torch.all(converged):
-            return result.reshape(orig_shape)
+            return _attach_implicit_grad(result, f, orig_shape)
 
         # Only update unconverged elements
         active = ~converged
