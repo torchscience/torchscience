@@ -187,3 +187,222 @@ class TestBrent:
         root = brent(f, a, b)
 
         assert root.shape == (0,)
+
+
+class TestBrentAutograd:
+    """Tests for autograd support via implicit differentiation."""
+
+    def test_implicit_diff_simple(self):
+        """Test gradient w.r.t. function parameter via implicit differentiation.
+
+        For f(x) = x^2 - theta, root x* = sqrt(theta).
+        By implicit function theorem: dx*/dtheta = -[df/dx]^{-1} * df/dtheta
+        df/dx = 2x = 2*sqrt(theta), df/dtheta = -1
+        dx*/dtheta = -1/(2*sqrt(theta)) * (-1) = 1/(2*sqrt(theta))
+        """
+        theta = torch.tensor([2.0], dtype=torch.float64, requires_grad=True)
+
+        def f(x):
+            return x**2 - theta
+
+        a = torch.tensor([0.0], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+
+        root = brent(f, a, b)
+        root.sum().backward()
+
+        # Expected: 1/(2*sqrt(2)) = 0.3536
+        expected = 1.0 / (2.0 * math.sqrt(2.0))
+        torch.testing.assert_close(
+            theta.grad,
+            torch.tensor([expected], dtype=torch.float64),
+            rtol=1e-4,
+            atol=1e-6,
+        )
+
+    def test_implicit_diff_batched(self):
+        """Test gradient with batched inputs."""
+        theta = torch.tensor(
+            [2.0, 3.0, 4.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def f(x):
+            return x**2 - theta
+
+        a = torch.zeros(3, dtype=torch.float64)
+        b = torch.full((3,), 10.0, dtype=torch.float64)
+
+        roots = brent(f, a, b)
+        loss = roots.sum()
+        loss.backward()
+
+        # Expected: 1/(2*sqrt(theta_i)) for each element
+        expected = 1.0 / (2.0 * torch.sqrt(theta.detach()))
+        torch.testing.assert_close(theta.grad, expected, rtol=1e-4, atol=1e-6)
+
+    def test_implicit_diff_linear_param(self):
+        """Test gradient with linear parameter dependence.
+
+        For f(x) = x - theta, root x* = theta.
+        df/dx = 1, df/dtheta = -1
+        dx*/dtheta = -1/1 * (-1) = 1
+        """
+        theta = torch.tensor([5.0], dtype=torch.float64, requires_grad=True)
+
+        def f(x):
+            return x - theta
+
+        a = torch.tensor([0.0], dtype=torch.float64)
+        b = torch.tensor([10.0], dtype=torch.float64)
+
+        root = brent(f, a, b)
+        root.sum().backward()
+
+        # Expected: dx*/dtheta = 1
+        torch.testing.assert_close(
+            theta.grad,
+            torch.tensor([1.0], dtype=torch.float64),
+            rtol=1e-4,
+            atol=1e-6,
+        )
+
+    def test_implicit_diff_no_param_grad(self):
+        """Test that no error occurs when function has no differentiable parameters."""
+        constant = 2.0  # Not a tensor with requires_grad
+
+        def f(x):
+            return x**2 - constant
+
+        a = torch.tensor([1.0], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+
+        root = brent(f, a, b)
+
+        # Should just return the root without error
+        torch.testing.assert_close(
+            root,
+            torch.tensor([math.sqrt(2)], dtype=torch.float64),
+            rtol=1e-6,
+            atol=1e-6,
+        )
+
+    def test_implicit_diff_numerical_verification(self):
+        """Verify gradient numerically (finite differences)."""
+        theta_val = 2.0
+        eps = 1e-5
+
+        def f(x, t):
+            return x**2 - t
+
+        a = torch.tensor([0.0], dtype=torch.float64)
+        b = torch.tensor([3.0], dtype=torch.float64)
+
+        # Compute root at theta and theta + eps
+        theta = torch.tensor(
+            [theta_val], dtype=torch.float64, requires_grad=True
+        )
+
+        def f1(x):
+            return f(x, theta)
+
+        root1 = brent(f1, a, b)
+
+        theta_plus = torch.tensor([theta_val + eps], dtype=torch.float64)
+
+        def f2(x):
+            return f(x, theta_plus)
+
+        root2 = brent(f2, a, b)
+
+        # Numerical gradient
+        numerical_grad = (root2 - root1) / eps
+
+        # Analytical gradient via backward
+        root1.sum().backward()
+        analytical_grad = theta.grad
+
+        torch.testing.assert_close(
+            analytical_grad, numerical_grad, rtol=1e-3, atol=1e-6
+        )
+
+    def test_gradient_with_loss_function(self):
+        """Test gradient computation through a loss function."""
+        theta = torch.tensor([4.0], dtype=torch.float64, requires_grad=True)
+        target = torch.tensor([1.5], dtype=torch.float64)
+
+        def f(x):
+            return x**2 - theta
+
+        a = torch.tensor([0.0], dtype=torch.float64)
+        b = torch.tensor([10.0], dtype=torch.float64)
+
+        root = brent(f, a, b)
+        loss = (root - target) ** 2  # MSE loss
+
+        loss.backward()
+
+        # root = sqrt(theta) = 2.0
+        # d(loss)/d(root) = 2 * (root - target) = 2 * (2.0 - 1.5) = 1.0
+        # d(root)/d(theta) = 1/(2*sqrt(theta)) = 1/4 = 0.25
+        # d(loss)/d(theta) = 1.0 * 0.25 = 0.25
+        expected = torch.tensor([0.25], dtype=torch.float64)
+        torch.testing.assert_close(theta.grad, expected, rtol=1e-4, atol=1e-6)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+class TestBrentCUDA:
+    """Tests for CUDA device support."""
+
+    def test_cuda_basic(self):
+        """Test basic functionality on CUDA."""
+        device = torch.device("cuda")
+        c = torch.tensor([2.0], device=device)
+        f = lambda x: x**2 - c
+        a = torch.tensor([1.0], device=device)
+        b = torch.tensor([2.0], device=device)
+
+        root = brent(f, a, b)
+
+        assert root.device.type == "cuda"
+        expected = math.sqrt(2)
+        torch.testing.assert_close(
+            root.cpu(), torch.tensor([expected]), rtol=1e-6, atol=1e-6
+        )
+
+    def test_cuda_batched(self):
+        """Test batched operation on CUDA."""
+        device = torch.device("cuda")
+        c = torch.tensor([2.0, 3.0, 4.0, 5.0], device=device)
+        f = lambda x: x**2 - c
+        a = torch.ones(4, device=device)
+        b = torch.full((4,), 10.0, device=device)
+
+        roots = brent(f, a, b)
+
+        assert roots.device.type == "cuda"
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+
+    def test_cuda_autograd(self):
+        """Test autograd on CUDA."""
+        device = torch.device("cuda")
+        theta = torch.tensor(
+            [2.0], dtype=torch.float64, device=device, requires_grad=True
+        )
+
+        def f(x):
+            return x**2 - theta
+
+        a = torch.tensor([0.0], dtype=torch.float64, device=device)
+        b = torch.tensor([2.0], dtype=torch.float64, device=device)
+
+        root = brent(f, a, b)
+        root.sum().backward()
+
+        expected = 1.0 / (2.0 * math.sqrt(2.0))
+        torch.testing.assert_close(
+            theta.grad.cpu(),
+            torch.tensor([expected], dtype=torch.float64),
+            rtol=1e-4,
+            atol=1e-6,
+        )
