@@ -63,6 +63,9 @@ inline std::pair<int64_t, int64_t> compute_reduce_info(
     std::vector<bool> reduce_dim(ndim, false);
     for (int64_t d : *dim) {
         int64_t pos_d = d >= 0 ? d : d + ndim;
+        TORCH_CHECK(pos_d >= 0 && pos_d < ndim,
+            "Dimension out of range (expected to be in range of [",
+            -ndim, ", ", ndim - 1, "], but got ", d, ")");
         reduce_dim[pos_d] = true;
     }
 
@@ -96,6 +99,9 @@ inline std::vector<int64_t> compute_permutation(
     std::vector<bool> reduce_dim(ndim, false);
     for (int64_t d : *dim) {
         int64_t pos_d = d >= 0 ? d : d + ndim;
+        TORCH_CHECK(pos_d >= 0 && pos_d < ndim,
+            "Dimension out of range (expected to be in range of [",
+            -ndim, ", ", ndim - 1, "], but got ", d, ")");
         reduce_dim[pos_d] = true;
     }
 
