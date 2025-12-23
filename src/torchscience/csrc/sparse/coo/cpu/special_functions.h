@@ -1,11 +1,11 @@
 #pragma once
 
-#include "macros.h"
+#include "operators.h"
 
-SPARSE_COO_CPU_UNARY_OPERATOR(special_functions, gamma, z)
-
-SPARSE_COO_CPU_BINARY_OPERATOR(special_functions, chebyshev_polynomial_t, v, z)
-
-SPARSE_COO_CPU_TERNARY_OPERATOR(special_functions, incomplete_beta, z, a, b)
-
-SPARSE_COO_CPU_QUATERNARY_OPERATOR(special_functions, hypergeometric_2_f_1, a, b, c, z)
+// Template-based registration (Sparse COO CPU operators delegate to dense ops)
+TORCH_LIBRARY_IMPL(torchscience, SparseCPU, m_sparse_coo_cpu_special_functions) {
+    REGISTER_SPARSE_COO_CPU_UNARY(m_sparse_coo_cpu_special_functions, gamma);
+    REGISTER_SPARSE_COO_CPU_BINARY(m_sparse_coo_cpu_special_functions, chebyshev_polynomial_t);
+    REGISTER_SPARSE_COO_CPU_TERNARY(m_sparse_coo_cpu_special_functions, incomplete_beta);
+    REGISTER_SPARSE_COO_CPU_QUATERNARY(m_sparse_coo_cpu_special_functions, hypergeometric_2_f_1);
+}

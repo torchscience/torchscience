@@ -1,11 +1,11 @@
 #pragma once
 
-#include "macros.h"
+#include "operators.h"
 
-META_UNARY_OPERATOR(special_functions, gamma, z)
-
-META_BINARY_OPERATOR(special_functions, chebyshev_polynomial_t, v, z)
-
-META_TERNARY_OPERATOR(special_functions, incomplete_beta, z, a, b)
-
-META_QUATERNARY_OPERATOR(special_functions, hypergeometric_2_f_1, a, b, c, z)
+// Template-based registration (Meta operators don't need ImplTraits - shape only)
+TORCH_LIBRARY_IMPL(torchscience, Meta, m_meta_special_functions) {
+    REGISTER_META_UNARY(m_meta_special_functions, gamma);
+    REGISTER_META_BINARY(m_meta_special_functions, chebyshev_polynomial_t);
+    REGISTER_META_TERNARY(m_meta_special_functions, incomplete_beta);
+    REGISTER_META_QUATERNARY(m_meta_special_functions, hypergeometric_2_f_1);
+}

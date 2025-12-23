@@ -1,11 +1,21 @@
 #pragma once
 
-#include "macros.h"
+#include "../impl/special_functions/gamma_traits.h"
+#include "../impl/special_functions/chebyshev_polynomial_t_traits.h"
+#include "../impl/special_functions/incomplete_beta_traits.h"
+#include "../impl/special_functions/hypergeometric_2_f_1_traits.h"
 
-AUTOGRAD_UNARY_OPERATOR(special_functions, Gamma, gamma, z)
+#include "operators.h"
 
-AUTOGRAD_BINARY_OPERATOR(special_functions, ChebyshevPolynomialT, chebyshev_polynomial_t, v, z)
+// Template-based registration using ImplTraits
+using torchscience::impl::special_functions::GammaImpl;
+using torchscience::impl::special_functions::ChebyshevPolynomialTImpl;
+using torchscience::impl::special_functions::IncompleteBetaImpl;
+using torchscience::impl::special_functions::Hypergeometric2F1Impl;
 
-AUTOGRAD_TERNARY_OPERATOR(special_functions, IncompleteBeta, incomplete_beta, z, a, b)
-
-AUTOGRAD_QUATERNARY_OPERATOR(special_functions, Hypergeometric2F1, hypergeometric_2_f_1, a, b, c, z)
+TORCH_LIBRARY_IMPL(torchscience, Autograd, m_autograd_special_functions) {
+    REGISTER_AUTOGRAD_UNARY(m_autograd_special_functions, gamma, GammaImpl);
+    REGISTER_AUTOGRAD_BINARY(m_autograd_special_functions, chebyshev_polynomial_t, ChebyshevPolynomialTImpl);
+    REGISTER_AUTOGRAD_TERNARY(m_autograd_special_functions, incomplete_beta, IncompleteBetaImpl);
+    REGISTER_AUTOGRAD_QUATERNARY(m_autograd_special_functions, hypergeometric_2_f_1, Hypergeometric2F1Impl);
+}
