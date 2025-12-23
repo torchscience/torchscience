@@ -76,23 +76,23 @@ def brent(
     fa = f(a)
     fb = f(b)
 
-    # Check for valid brackets
+    # Check for NaN/Inf in inputs
+    if torch.any(~torch.isfinite(a)) or torch.any(~torch.isfinite(b)):
+        raise ValueError("a and b must not contain NaN or Inf")
+
+    # Check for roots at endpoints first (before bracket validation)
+    root = torch.where(fa == 0, a, torch.where(fb == 0, b, a.clone()))
+    at_endpoint = (fa == 0) | (fb == 0)
+    if torch.all(at_endpoint):
+        return root.reshape(orig_shape)
+
+    # Check for valid brackets (only for non-endpoint cases)
     if torch.any(fa * fb >= 0):
         invalid = fa * fb >= 0
         raise ValueError(
             f"Invalid bracket: f(a) and f(b) must have opposite signs. "
             f"{invalid.sum().item()} of {invalid.numel()} brackets are invalid."
         )
-
-    # Check for NaN/Inf in inputs
-    if torch.any(~torch.isfinite(a)) or torch.any(~torch.isfinite(b)):
-        raise ValueError("a and b must not contain NaN or Inf")
-
-    # Check for roots at endpoints
-    root = torch.where(fa == 0, a, torch.where(fb == 0, b, a.clone()))
-    at_endpoint = (fa == 0) | (fb == 0)
-    if torch.all(at_endpoint):
-        return root.reshape(orig_shape)
 
     # Ensure |f(a)| >= |f(b)| by swapping if needed
     swap_mask = torch.abs(fa) < torch.abs(fb)
