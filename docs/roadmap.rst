@@ -9,25 +9,26 @@ MVP Roadmap
 The MVP focuses on implementing the minimum operators necessary to establish:
 
 1. **Module structure** — One or more operators in each planned top-level module
-2. **Implementation patterns** — Examples of each operator pattern (elementwise, reduction, creation, etc.)
+2. **Implementation patterns** — Examples of each operator category (pointwise, reduction, factory, fixed, n-dimensional, identity, flatten, dynamic, batched)
 
 MVP Milestones
 ^^^^^^^^^^^^^^
 
-**Milestone 1: Core Patterns** ✓
+**Milestone 1: Core Categories** ✓
 
-* Elementwise operators (1-4 ary) via special functions
-* Creation operators via window functions
-* Composite operators via signal processing
+* Pointwise operators (1-4 ary) via special functions
+* Factory operators via window functions
+* Fixed operators via signal processing
 
-**Milestone 2: Remaining Patterns**
+**Milestone 2: Remaining Categories**
 
 * Reduction operators via ``kurtosis`` ✓
-* Transformation operators via ``hilbert_transform`` ✓
-* Iterative operators via ``shortest_path``
-* Higher-order operators via ``adaptive_quadrature``
-* Pairwise operators via ``kd_tree_query``
-* Scatter/Gather operators via ``histogram2d``
+* Fixed operators via ``hilbert_transform`` ✓
+* N-dimensional operators via ``minkowski_distance``
+* Dynamic operators via ``shortest_path``
+* Batched operators via ``matrix_exponential``
+* Identity operators via ``srgb_to_hsv``
+* Flatten operators via ``histogram``
 
 **Milestone 3: Module Coverage**
 
@@ -42,94 +43,274 @@ Modules to Establish
 
    * - Module
      - MVP Operator
-     - Pattern Demonstrated
+     - Category
    * - ``clustering``
      - ``k_means``
-     - Iterative
+     - N-dimensional
    * - ``combinatorics``
      - ``binomial_coefficient``
-     - Elementwise
+     - Pointwise
    * - ``differentiation``
      - ``finite_difference``
-     - Transformation
+     - Fixed
    * - ``distance``
      - ``minkowski_distance``
-     - Pairwise
+     - N-dimensional
    * - ``finite_elements``
      - ``stiffness_matrix``
-     - Transformation
+     - Fixed
    * - ``geometry``
      - ``convex_hull``
-     - Transformation
+     - Dynamic
    * - ``geometry.intersections``
      - ``ray_triangle_intersection``
-     - Elementwise
+     - Batched
    * - ``geometry.transforms``
      - ``rotation_matrix``
-     - Creation
+     - Factory
    * - ``graph_theory``
      - ``shortest_path``
-     - Iterative
+     - Dynamic
    * - ``graphics.color``
      - ``srgb_to_hsv``
-     - Elementwise
+     - Identity
    * - ``graphics.shading``
      - ``cook_torrance``
-     - Elementwise
+     - Batched
    * - ``information_theory``
      - ``kullback_leibler_divergence``
      - Reduction
    * - ``integral_transforms``
      - ``discrete_cosine_transform``
-     - Transformation
+     - Fixed
    * - ``integration.ordinary_differential_equations``
      - ``runge_kutta_step``
-     - Higher-order
+     - Fixed
    * - ``integration.quadrature``
      - ``adaptive_quadrature``
-     - Higher-order
+     - Reduction
    * - ``interpolation``
      - ``cubic_spline_interpolate``
-     - Creation
+     - Fixed
    * - ``linear_algebra``
      - ``matrix_exponential``
-     - Transformation
+     - Batched
    * - ``noise``
      - ``pink_noise``
-     - Creation
+     - Factory
    * - ``number_theory``
      - ``prime_sieve``
-     - Creation
+     - Dynamic
    * - ``optimization``
      - ``brent_minimization``
-     - Higher-order
+     - Reduction
    * - ``optimization.root_finding``
      - ``brent_root``
-     - Higher-order
+     - Reduction
    * - ``optimization.test_functions`` ✓
      - ``rosenbrock``
-     - Elementwise
+     - Batched
    * - ``polynomials``
      - ``evaluate_polynomial``
-     - Elementwise
+     - Pointwise
    * - ``probability``
      - ``gaussian_probability_density``
-     - Elementwise
+     - Pointwise
    * - ``signal_processing.integral_transform`` ✓
      - ``hilbert_transform``
-     - Transformation
+     - Fixed
    * - ``space_partitioning``
      - ``kd_tree_query``
-     - Pairwise
+     - N-dimensional
    * - ``statistics.descriptive`` ✓
      - ``kurtosis``
      - Reduction
+   * - ``statistics.histograms``
+     - ``histogram``
+     - Flatten
    * - ``statistics.hypothesis_testing``
      - ``t_test``
      - Reduction
    * - ``wavelets``
      - ``discrete_wavelet_transform``
-     - Transformation
+     - Fixed
+
+Shape Behavior Reference
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Each operator's category is determined by its input/output shape behavior:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 25 20 20 10
+
+   * - Module
+     - Operator
+     - Input Shape
+     - Output Shape
+     - Category
+   * - ``clustering``
+     - ``k_means``
+     - ``(n, d)`` points
+     - ``(n,)`` labels, ``(k, d)`` centroids
+     - N-dimensional
+   * - ``combinatorics``
+     - ``binomial_coefficient``
+     - ``(...)`` n, ``(...)`` k
+     - ``(...)`` broadcasted
+     - Pointwise
+   * - ``differentiation``
+     - ``finite_difference``
+     - ``(..., n)``
+     - ``(..., n)`` or ``(..., n-1)``
+     - Fixed
+   * - ``distance``
+     - ``minkowski_distance``
+     - ``(m, d)``, ``(n, d)``
+     - ``(m, n)`` pairwise
+     - N-dimensional
+   * - ``finite_elements``
+     - ``stiffness_matrix``
+     - mesh/element info
+     - ``(n_dof, n_dof)``
+     - Fixed
+   * - ``geometry``
+     - ``convex_hull``
+     - ``(n, d)`` points
+     - ``(h, d)`` hull vertices
+     - Dynamic
+   * - ``geometry.intersections``
+     - ``ray_triangle_intersection``
+     - ``(..., 3)`` rays, tris
+     - ``(...)`` t, hit
+     - Batched
+   * - ``geometry.transforms``
+     - ``rotation_matrix``
+     - angle(s), axis
+     - ``(..., d, d)``
+     - Factory
+   * - ``graph_theory``
+     - ``shortest_path``
+     - ``(n, n)`` adjacency
+     - variable-length path
+     - Dynamic
+   * - ``graphics.color``
+     - ``srgb_to_hsv``
+     - ``(..., 3)``
+     - ``(..., 3)``
+     - Identity
+   * - ``graphics.shading``
+     - ``cook_torrance``
+     - ``(..., 3)`` vectors
+     - ``(...)`` reflectance
+     - Batched
+   * - ``information_theory``
+     - ``kullback_leibler_divergence``
+     - ``(..., n)`` P, Q
+     - ``(...)``
+     - Reduction
+   * - ``integral_transforms``
+     - ``discrete_cosine_transform``
+     - ``(..., n)``
+     - ``(..., n)``
+     - Fixed
+   * - ``integration.ode``
+     - ``runge_kutta_step``
+     - ``(..., n)`` state
+     - ``(..., n)`` next state
+     - Fixed
+   * - ``integration.quadrature``
+     - ``adaptive_quadrature``
+     - function, bounds
+     - ``(...)`` integral
+     - Reduction
+   * - ``interpolation``
+     - ``cubic_spline_interpolate``
+     - ``(n,)`` x/y, ``(m,)`` query
+     - ``(m,)`` interpolated
+     - Fixed
+   * - ``linear_algebra``
+     - ``matrix_exponential``
+     - ``(..., n, n)``
+     - ``(..., n, n)``
+     - Batched
+   * - ``noise``
+     - ``pink_noise``
+     - shape specification
+     - ``(...)`` noise
+     - Factory
+   * - ``number_theory``
+     - ``prime_sieve``
+     - integer n
+     - ``(π(n),)`` primes
+     - Dynamic
+   * - ``optimization``
+     - ``brent_minimization``
+     - function, bounds
+     - ``(...)`` x_min
+     - Reduction
+   * - ``optimization.root_finding``
+     - ``brent_root``
+     - function, bounds
+     - ``(...)`` root
+     - Reduction
+   * - ``optimization.test_functions``
+     - ``rosenbrock``
+     - ``(..., n)``
+     - ``(...)``
+     - Batched
+   * - ``polynomials``
+     - ``evaluate_polynomial``
+     - ``(...)`` x, ``(k,)`` coeffs
+     - ``(...)``
+     - Pointwise
+   * - ``probability``
+     - ``gaussian_probability_density``
+     - ``(...)`` x, μ, σ
+     - ``(...)``
+     - Pointwise
+   * - ``signal_processing``
+     - ``hilbert_transform``
+     - ``(..., n)``
+     - ``(..., n)`` complex
+     - Fixed
+   * - ``space_partitioning``
+     - ``kd_tree_query``
+     - ``(n, d)`` tree, ``(m, d)`` queries
+     - ``(m, k)`` indices
+     - N-dimensional
+   * - ``statistics.descriptive``
+     - ``kurtosis``
+     - ``(..., n)``
+     - ``(...)``
+     - Reduction
+   * - ``statistics.histograms``
+     - ``histogram``
+     - ``(...)`` samples
+     - ``(bins,)`` counts
+     - Flatten
+   * - ``statistics.hypothesis_testing``
+     - ``t_test``
+     - ``(..., n)`` samples
+     - ``(...)`` statistic
+     - Reduction
+   * - ``wavelets``
+     - ``discrete_wavelet_transform``
+     - ``(..., n)``
+     - ``(..., n)`` coeffs
+     - Fixed
+
+**Category Definitions:**
+
+* **Pointwise** — Element-wise with broadcasting; each output element depends only on corresponding input element(s)
+* **Reduction** — Reduces one or more dimensions; output has fewer dimensions than input
+* **Factory** — Creates tensors without tensor inputs; only takes shape/parameter specifications
+* **Fixed** — Operates on specific dimensions (e.g., last dim, last 2 dims); other dims are batch dims
+* **Batched** — Arbitrary batch dimensions at start, fixed operation on trailing dimensions
+* **Identity** — Preserves shape exactly; elements may interact but dimensions unchanged
+* **Flatten** — Treats input as 1D internally regardless of actual shape
+* **Dynamic** — Output shape depends on input data values, not just input shape
+* **N-dimensional** — Works generically on arbitrary dimensionality with complex shape rules
 
 ----
 
