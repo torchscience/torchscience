@@ -23,7 +23,7 @@ struct AutocastReductionOperator {
         );
 
         at::ScalarType target_dtype = at::autocast::get_autocast_dtype(
-            at::kCPU
+            input.device().is_cpu() ? at::kCPU : at::kCUDA
         );
 
         return Dispatcher::dispatch_forward(
@@ -47,7 +47,7 @@ struct AutocastReductionOperator {
         );
 
         at::ScalarType target_dtype = at::autocast::get_autocast_dtype(
-            at::kCPU
+            grad_output.device().is_cpu() ? at::kCPU : at::kCUDA
         );
 
         return Dispatcher::dispatch_backward(
