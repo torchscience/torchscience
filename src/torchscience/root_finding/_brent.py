@@ -91,30 +91,103 @@ def brent(
     """
     Find roots of f(x) = 0 using Brent's method.
 
+    Brent's method combines bisection, secant, and inverse quadratic
+    interpolation for robust and fast root-finding. It guarantees
+    convergence like bisection but achieves superlinear convergence
+    when possible.
+
     Parameters
     ----------
     f : Callable[[Tensor], Tensor]
-        Vectorized function. Takes tensor of shape (N,), returns (N,).
+        Vectorized function. Takes tensor of shape ``(N,)``, returns ``(N,)``.
+        The function must be continuous on the interval [a, b].
     a, b : Tensor
-        Bracket endpoints. Shape (N,). Must satisfy f(a) * f(b) < 0.
+        Bracket endpoints. Must have the same shape and satisfy
+        ``f(a) * f(b) < 0`` for each element (opposite signs).
     xtol : float, optional
-        Tolerance on interval width. Default: dtype-aware.
+        Tolerance on interval width. Convergence requires ``|b - a| < xtol``.
+        Default: dtype-aware (1e-3 for float16/bfloat16, 1e-6 for float32,
+        1e-12 for float64).
     ftol : float, optional
-        Tolerance on |f(x)|. Default: dtype-aware.
-    maxiter : int
+        Tolerance on residual. Convergence requires ``|f(x)| < ftol``.
+        Default: dtype-aware (same as xtol).
+    maxiter : int, default=100
         Maximum iterations. Raises RuntimeError if exceeded.
 
     Returns
     -------
     Tensor
-        Roots of shape (N,).
+        Roots with the same shape as input ``a`` and ``b``.
 
     Raises
     ------
     ValueError
-        If f(a) and f(b) have the same sign for any element.
+        If ``a`` and ``b`` have different shapes, contain NaN/Inf,
+        or if ``f(a)`` and ``f(b)`` have the same sign.
     RuntimeError
-        If convergence is not achieved within maxiter iterations.
+        If convergence is not achieved within maxiter iterations,
+        or if the function returns NaN during iteration.
+
+    Examples
+    --------
+    Find the square root of 2 (solve x^2 - 2 = 0):
+
+    >>> import torch
+    >>> from torchscience.root_finding import brent
+    >>> f = lambda x: x**2 - 2
+    >>> a, b = torch.tensor([1.0]), torch.tensor([2.0])
+    >>> root = brent(f, a, b)
+    >>> root
+    tensor([1.4142])
+
+    Batched root-finding (find sqrt(2), sqrt(3), sqrt(4)):
+
+    >>> c = torch.tensor([2.0, 3.0, 4.0])
+    >>> f = lambda x: x**2 - c
+    >>> a = torch.ones(3)
+    >>> b = torch.full((3,), 10.0)
+    >>> roots = brent(f, a, b)
+    >>> roots
+    tensor([1.4142, 1.7321, 2.0000])
+
+    Find pi (solve sin(x) = 0 in [2, 4]):
+
+    >>> f = lambda x: torch.sin(x)
+    >>> a, b = torch.tensor([2.0]), torch.tensor([4.0])
+    >>> brent(f, a, b)
+    tensor([3.1416])
+
+    Notes
+    -----
+    **Convergence Criterion**: Both ``xtol`` AND ``ftol`` must be satisfied
+    for convergence. This ensures the root is both well-localized and
+    the residual is small.
+
+    **Autograd Support**: Gradients with respect to parameters in ``f``
+    are computed via implicit differentiation using the implicit function
+    theorem. If ``f(x*, theta) = 0``, then:
+
+    .. math::
+
+        \\frac{dx^*}{d\\theta} = -\\left[\\frac{\\partial f}{\\partial x}\\right]^{-1}
+        \\frac{\\partial f}{\\partial \\theta}
+
+    Example with autograd:
+
+    >>> theta = torch.tensor([2.0], requires_grad=True)
+    >>> f = lambda x: x**2 - theta  # root is sqrt(theta)
+    >>> a, b = torch.tensor([0.0]), torch.tensor([3.0])
+    >>> root = brent(f, a, b)
+    >>> root.backward()
+    >>> theta.grad  # d(sqrt(theta))/d(theta) = 1/(2*sqrt(theta))
+    tensor([0.3536])
+
+    **CUDA Support**: Works on any device (CPU or CUDA) as long as all
+    inputs are on the same device.
+
+    See Also
+    --------
+    scipy.optimize.brentq : SciPy's scalar Brent implementation
     """
     # Input validation
     if a.shape != b.shape:
