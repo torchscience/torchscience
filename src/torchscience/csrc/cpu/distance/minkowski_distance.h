@@ -158,7 +158,7 @@ inline std::tuple<at::Tensor, at::Tensor> minkowski_distance_backward(
 
 }  // namespace torchscience::cpu::distance
 
-TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
-    m.impl("minkowski_distance", &torchscience::cpu::distance::minkowski_distance);
-    m.impl("minkowski_distance_backward", &torchscience::cpu::distance::minkowski_distance_backward);
+TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
+    module.impl("minkowski_distance", &torchscience::cpu::distance::minkowski_distance);
+    module.impl("minkowski_distance_backward", &torchscience::cpu::distance::minkowski_distance_backward);
 }
