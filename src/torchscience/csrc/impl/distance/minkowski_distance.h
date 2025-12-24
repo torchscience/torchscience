@@ -51,14 +51,14 @@ T minkowski_distance_pair(
         // Unweighted case
         for (int64_t i = 0; i < d; ++i) {
             T diff = x[i] - y[i];
-            T abs_diff = diff >= T(0) ? diff : -diff;
+            T abs_diff = std::abs(diff);
             sum += std::pow(abs_diff, p);
         }
     } else {
         // Weighted case
         for (int64_t i = 0; i < d; ++i) {
             T diff = x[i] - y[i];
-            T abs_diff = diff >= T(0) ? diff : -diff;
+            T abs_diff = std::abs(diff);
             sum += w[i] * std::pow(abs_diff, p);
         }
     }

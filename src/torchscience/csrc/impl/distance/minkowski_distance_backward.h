@@ -46,7 +46,7 @@ void minkowski_distance_backward_pair(
     T grad_out,
     const T* x,
     const T* y,
-    int64_t dim,
+    int64_t d,
     T p,
     const T* w,
     T dist,
@@ -55,7 +55,7 @@ void minkowski_distance_backward_pair(
 ) {
     // Handle zero distance case
     if (dist == T(0)) {
-        for (int64_t i = 0; i < dim; ++i) {
+        for (int64_t i = 0; i < d; ++i) {
             grad_x[i] = T(0);
             grad_y[i] = T(0);
         }
@@ -65,7 +65,7 @@ void minkowski_distance_backward_pair(
     // Compute d^(p-1) for the denominator
     T dist_pow_pm1 = std::pow(dist, p - T(1));
 
-    for (int64_t i = 0; i < dim; ++i) {
+    for (int64_t i = 0; i < d; ++i) {
         T diff = x[i] - y[i];
 
         // Handle zero difference
@@ -75,7 +75,7 @@ void minkowski_distance_backward_pair(
             continue;
         }
 
-        T abs_diff = diff >= T(0) ? diff : -diff;
+        T abs_diff = std::abs(diff);
         T sign_diff = diff >= T(0) ? T(1) : T(-1);
 
         // |x_k - y_k|^(p-1)
