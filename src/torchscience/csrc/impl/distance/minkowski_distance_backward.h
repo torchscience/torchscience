@@ -99,4 +99,61 @@ void minkowski_distance_backward_pair(
     }
 }
 
+/**
+ * Compute gradient for weight in weighted Minkowski distance.
+ *
+ * Gradient derivation:
+ *   d = ( sum_i w_i * |x_i - y_i|^p )^(1/p)
+ *   dd/dw_k = (1/p) * d^(1-p) * |x_k - y_k|^p
+ *           = |x_k - y_k|^p / (p * d^(p-1))
+ *
+ * @param grad_out Upstream gradient (scalar)
+ * @param x First vector
+ * @param y Second vector
+ * @param d Dimension
+ * @param p Order of norm
+ * @param dist Pre-computed distance value
+ * @param grad_w Output gradient for weight (d elements)
+ */
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+void minkowski_distance_weight_backward_pair(
+    T grad_out,
+    const T* x,
+    const T* y,
+    int64_t d,
+    T p,
+    T dist,
+    T* grad_w
+) {
+    // Handle zero distance case
+    if (dist == T(0)) {
+        for (int64_t i = 0; i < d; ++i) {
+            grad_w[i] = T(0);
+        }
+        return;
+    }
+
+    // Compute 1 / (p * d^(p-1))
+    T dist_pow_pm1 = std::pow(dist, p - T(1));
+    T scale = T(1) / (p * dist_pow_pm1);
+
+    for (int64_t i = 0; i < d; ++i) {
+        T diff = x[i] - y[i];
+        T abs_diff = std::abs(diff);
+
+        // |x_k - y_k|^p
+        T abs_diff_pow_p;
+        if (p == T(1)) {
+            abs_diff_pow_p = abs_diff;
+        } else if (p == T(2)) {
+            abs_diff_pow_p = abs_diff * abs_diff;
+        } else {
+            abs_diff_pow_p = std::pow(abs_diff, p);
+        }
+
+        grad_w[i] = grad_out * abs_diff_pow_p * scale;
+    }
+}
+
 }  // namespace torchscience::impl::distance

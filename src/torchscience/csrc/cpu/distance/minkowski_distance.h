@@ -81,8 +81,10 @@ inline at::Tensor minkowski_distance(
 
 /**
  * Backward pass for Minkowski distance.
+ *
+ * Returns gradients for x, y, and weight (if provided).
  */
-inline std::tuple<at::Tensor, at::Tensor> minkowski_distance_backward(
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> minkowski_distance_backward(
     const at::Tensor& grad_output,
     const at::Tensor& x,
     const at::Tensor& y,
@@ -101,11 +103,13 @@ inline std::tuple<at::Tensor, at::Tensor> minkowski_distance_backward(
 
     at::Tensor grad_x = at::zeros_like(x);
     at::Tensor grad_y = at::zeros_like(y);
+    at::Tensor grad_w;
 
     at::Tensor w_contig;
     bool has_weight = weight.has_value() && weight->defined();
     if (has_weight) {
         w_contig = weight->contiguous();
+        grad_w = at::zeros_like(w_contig);
     }
 
     AT_DISPATCH_FLOATING_TYPES_AND2(
@@ -120,12 +124,14 @@ inline std::tuple<at::Tensor, at::Tensor> minkowski_distance_backward(
             const scalar_t* w_ptr = has_weight ? w_contig.data_ptr<scalar_t>() : nullptr;
             scalar_t* grad_x_ptr = grad_x.data_ptr<scalar_t>();
             scalar_t* grad_y_ptr = grad_y.data_ptr<scalar_t>();
+            scalar_t* grad_w_ptr = has_weight ? grad_w.data_ptr<scalar_t>() : nullptr;
             scalar_t p_val = static_cast<scalar_t>(p);
 
             // Sequential accumulation for correctness
             // (parallel would need atomic operations or per-thread buffers)
             std::vector<scalar_t> temp_grad_x(d);
             std::vector<scalar_t> temp_grad_y(d);
+            std::vector<scalar_t> temp_grad_w(d);
 
             for (int64_t i = 0; i < m; ++i) {
                 for (int64_t j = 0; j < n; ++j) {
@@ -148,12 +154,29 @@ inline std::tuple<at::Tensor, at::Tensor> minkowski_distance_backward(
                         grad_x_ptr[i * d + k] += temp_grad_x[k];
                         grad_y_ptr[j * d + k] += temp_grad_y[k];
                     }
+
+                    // Compute weight gradient if weight was provided
+                    if (has_weight) {
+                        impl::distance::minkowski_distance_weight_backward_pair<scalar_t>(
+                            grad_val,
+                            x_ptr + i * d,
+                            y_ptr + j * d,
+                            d,
+                            p_val,
+                            dist_val,
+                            temp_grad_w.data()
+                        );
+
+                        for (int64_t k = 0; k < d; ++k) {
+                            grad_w_ptr[k] += temp_grad_w[k];
+                        }
+                    }
                 }
             }
         }
     );
 
-    return std::make_tuple(grad_x, grad_y);
+    return std::make_tuple(grad_x, grad_y, grad_w);
 }
 
 }  // namespace torchscience::cpu::distance

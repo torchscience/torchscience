@@ -83,7 +83,7 @@ extern "C" {
 TORCH_LIBRARY(torchscience, module) {
   // `torchscience.distance`
   module.def("minkowski_distance(Tensor x, Tensor y, float p, Tensor? weight) -> Tensor");
-  module.def("minkowski_distance_backward(Tensor grad_output, Tensor x, Tensor y, float p, Tensor? weight, Tensor dist_output) -> (Tensor, Tensor)");
+  module.def("minkowski_distance_backward(Tensor grad_output, Tensor x, Tensor y, float p, Tensor? weight, Tensor dist_output) -> (Tensor, Tensor, Tensor)");
 
   // `torchscience.optimization.test_functions`
   module.def("rosenbrock(Tensor x, Tensor a, Tensor b) -> Tensor");

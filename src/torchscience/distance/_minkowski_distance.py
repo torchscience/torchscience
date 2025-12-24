@@ -136,4 +136,13 @@ def minkowski_distance(
         if (weight < 0).any():
             raise ValueError("weight must be non-negative")
 
+    # Dtype promotion: promote x, y, and weight to common dtype
+    target_dtype = torch.promote_types(x.dtype, y.dtype)
+    if x.dtype != target_dtype:
+        x = x.to(target_dtype)
+    if y.dtype != target_dtype:
+        y = y.to(target_dtype)
+    if weight is not None and weight.dtype != target_dtype:
+        weight = weight.to(target_dtype)
+
     return torch.ops.torchscience.minkowski_distance(x, y, p, weight)

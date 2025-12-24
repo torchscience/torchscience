@@ -25,7 +25,7 @@ inline at::Tensor minkowski_distance(
     return at::empty({m, n}, x.options());
 }
 
-inline std::tuple<at::Tensor, at::Tensor> minkowski_distance_backward(
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> minkowski_distance_backward(
     const at::Tensor& grad_output,
     const at::Tensor& x,
     const at::Tensor& y,
@@ -33,9 +33,14 @@ inline std::tuple<at::Tensor, at::Tensor> minkowski_distance_backward(
     const c10::optional<at::Tensor>& weight,
     const at::Tensor& dist_output
 ) {
+    at::Tensor grad_w;
+    if (weight.has_value() && weight->defined()) {
+        grad_w = at::empty_like(*weight);
+    }
     return std::make_tuple(
         at::empty_like(x),
-        at::empty_like(y)
+        at::empty_like(y),
+        grad_w
     );
 }
 

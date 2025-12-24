@@ -17,11 +17,14 @@ public:
         double p,
         const c10::optional<at::Tensor>& weight
     ) {
-        if (weight.has_value() && weight->defined()) {
+        bool has_weight = weight.has_value() && weight->defined();
+        if (has_weight) {
             ctx->saved_data["weight"] = weight.value();
             ctx->saved_data["has_weight"] = true;
+            ctx->saved_data["w_requires_grad"] = weight->requires_grad() && at::isFloatingType(weight->scalar_type());
         } else {
             ctx->saved_data["has_weight"] = false;
+            ctx->saved_data["w_requires_grad"] = false;
         }
         ctx->saved_data["p"] = p;
 
@@ -63,13 +66,14 @@ public:
         bool has_weight = ctx->saved_data["has_weight"].toBool();
         bool x_requires_grad = ctx->saved_data["x_requires_grad"].toBool();
         bool y_requires_grad = ctx->saved_data["y_requires_grad"].toBool();
+        bool w_requires_grad = ctx->saved_data["w_requires_grad"].toBool();
 
         c10::optional<at::Tensor> weight;
         if (has_weight) {
             weight = ctx->saved_data["weight"].toTensor();
         }
 
-        if (!x_requires_grad && !y_requires_grad) {
+        if (!x_requires_grad && !y_requires_grad && !w_requires_grad) {
             return {
                 at::Tensor(),  // grad_x
                 at::Tensor(),  // grad_y
@@ -80,9 +84,9 @@ public:
 
         at::AutoDispatchBelowAutograd guard;
 
-        auto [grad_x, grad_y] = c10::Dispatcher::singleton()
+        auto [grad_x, grad_y, grad_w] = c10::Dispatcher::singleton()
             .findSchemaOrThrow("torchscience::minkowski_distance_backward", "")
-            .typed<std::tuple<at::Tensor, at::Tensor>(
+            .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
                 const at::Tensor&,
                 const at::Tensor&,
                 const at::Tensor&,
@@ -96,7 +100,7 @@ public:
             x_requires_grad ? grad_x : at::Tensor(),
             y_requires_grad ? grad_y : at::Tensor(),
             at::Tensor(),  // grad_p (not differentiable)
-            at::Tensor()   // grad_weight (could be added later)
+            w_requires_grad ? grad_w : at::Tensor()
         };
     }
 };

@@ -294,7 +294,6 @@ class TestMinkowskiDistanceGradient:
 
         assert gradcheck(func, (x, y), eps=1e-6, atol=1e-4)
 
-    @pytest.mark.xfail(reason="Weight gradients not yet implemented")
     def test_gradient_weight_parameter(self):
         """Gradient computation works when weight has requires_grad."""
         x = torch.randn(3, 2, dtype=torch.float64)
@@ -332,7 +331,6 @@ class TestMinkowskiDistanceDtype:
         assert dist.dtype == torch.float64
         assert dist.shape == (5, 4)
 
-    @pytest.mark.xfail(reason="Mixed dtype promotion not yet implemented")
     def test_mixed_dtype_x_y(self):
         """Handles mixed dtypes for x and y."""
         x = torch.randn(5, 3, dtype=torch.float32)
@@ -343,7 +341,6 @@ class TestMinkowskiDistanceDtype:
 
         assert dist.shape == (5, 4)
 
-    @pytest.mark.xfail(reason="Weight dtype promotion not yet implemented")
     def test_weight_dtype_promotion(self):
         """Weight dtype is promoted to match inputs."""
         x = torch.randn(5, 3, dtype=torch.float64)
