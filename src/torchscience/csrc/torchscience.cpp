@@ -18,18 +18,21 @@
 // require different registration for custom ops (not TORCH_LIBRARY_IMPL)
 
 #include "cpu/distance/minkowski_distance.h"
+#include "cpu/graphics/shading/cook_torrance.h"
 #include "cpu/signal_processing/filter.h"
 #include "cpu/optimization/test_functions.h"
 #include "cpu/statistics/descriptive/kurtosis.h"
 #include "cpu/integral_transform/hilbert_transform.h"
 #include "cpu/integral_transform/inverse_hilbert_transform.h"
 #include "autograd/distance/minkowski_distance.h"
+#include "autograd/graphics/shading/cook_torrance.h"
 #include "autograd/signal_processing/filter.h"
 #include "autograd/optimization/test_functions.h"
 #include "autograd/statistics/descriptive/kurtosis.h"
 #include "autograd/integral_transform/hilbert_transform.h"
 #include "autograd/integral_transform/inverse_hilbert_transform.h"
 #include "meta/distance/minkowski_distance.h"
+#include "meta/graphics/shading/cook_torrance.h"
 #include "meta/signal_processing/filter.h"
 #include "meta/optimization/test_functions.h"
 #include "meta/statistics/descriptive/kurtosis.h"
@@ -84,6 +87,11 @@ TORCH_LIBRARY(torchscience, module) {
   // `torchscience.distance`
   module.def("minkowski_distance(Tensor x, Tensor y, float p, Tensor? weight) -> Tensor");
   module.def("minkowski_distance_backward(Tensor grad_output, Tensor x, Tensor y, float p, Tensor? weight, Tensor dist_output) -> (Tensor, Tensor, Tensor)");
+
+  // `torchscience.graphics.shading`
+  module.def("cook_torrance(Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> Tensor");
+  module.def("cook_torrance_backward(Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+  module.def("cook_torrance_backward_backward(Tensor gg_normal, Tensor gg_view, Tensor gg_light, Tensor gg_roughness, Tensor gg_f0, Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
 
   // `torchscience.optimization.test_functions`
   module.def("rosenbrock(Tensor x, Tensor a, Tensor b) -> Tensor");
