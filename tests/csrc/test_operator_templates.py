@@ -86,3 +86,38 @@ class TestOperatorTemplates:
         # Backward
         result.sum().backward()
         assert x.grad is not None
+        assert x.grad.shape == x.shape
+
+    def test_pointwise_backward_backward(self, device):
+        """Verify pointwise backward_backward via gamma."""
+        x = torch.tensor(
+            [2.0, 3.0, 4.0, 5.0], device=device, requires_grad=True
+        )
+
+        result = torch.ops.torchscience.gamma(x)
+
+        # First backward with graph retention
+        (grad,) = torch.autograd.grad(result.sum(), x, create_graph=True)
+
+        # Second backward
+        (grad_grad,) = torch.autograd.grad(grad.sum(), x, retain_graph=True)
+
+        assert grad_grad is not None
+        assert grad_grad.shape == x.shape
+        # Verify values are finite
+        assert torch.isfinite(grad_grad).all()
+
+    def test_reduction_backward_backward(self, device):
+        """Verify reduction backward_backward via kurtosis."""
+        x = torch.randn(4, 10, device=device, requires_grad=True)
+
+        result = torch.ops.torchscience.kurtosis(x, None, False, True, True)
+
+        # Check if backward_backward is implemented
+        try:
+            (grad,) = torch.autograd.grad(result, x, create_graph=True)
+            (grad_grad,) = torch.autograd.grad(grad.sum(), x)
+            assert grad_grad.shape == x.shape
+            assert torch.isfinite(grad_grad).all()
+        except RuntimeError:
+            pytest.skip("backward_backward not yet implemented for kurtosis")

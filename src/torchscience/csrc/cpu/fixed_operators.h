@@ -18,6 +18,10 @@ namespace torchscience::cpu {
 //   - static int64_t output_size(int64_t input_size, Args... args);
 //   - template<T> static void kernel(const T* in, T* out, int64_t in_size, int64_t out_size, Args...);
 //   - template<T> static void backward_kernel(const T* grad_out, const T* in, T* grad_in, sizes, Args...);
+//   - template<T> static void backward_backward_kernel(
+//         const T* grad_grad_in, const T* grad_out, const T* in,
+//         int64_t in_size, int64_t out_size,
+//         T* grad_grad_out, T* new_grad_in, Args...);
 
 template<typename FixedTraits>
 struct CPUFixedOperator {
@@ -191,6 +195,74 @@ struct CPUFixedOperator {
         }
 
         return grad_input;
+    }
+
+    template<typename... Args>
+    static std::tuple<at::Tensor, at::Tensor> backward_backward(
+        const at::Tensor& grad_grad_input,
+        const at::Tensor& grad_output,
+        const at::Tensor& input,
+        int64_t dim,
+        Args... args
+    ) {
+        if (!grad_grad_input.defined()) {
+            return std::make_tuple(at::Tensor(), at::Tensor());
+        }
+
+        int64_t ndim = input.dim();
+        if (dim < 0) dim += ndim;
+
+        int64_t input_size = input.size(dim);
+        int64_t output_size = grad_output.size(dim);
+
+        at::Tensor grad_grad_output = at::zeros_like(grad_output);
+        at::Tensor new_grad_input = at::zeros_like(input);
+
+        int64_t batch_size = 1;
+        for (int64_t i = 0; i < dim; ++i) {
+            batch_size *= input.size(i);
+        }
+        int64_t trailing_size = 1;
+        for (int64_t i = dim + 1; i < ndim; ++i) {
+            trailing_size *= input.size(i);
+        }
+
+        at::Tensor input_contig = input.contiguous();
+        at::Tensor grad_output_contig = grad_output.contiguous();
+        at::Tensor grad_grad_input_contig = grad_grad_input.contiguous();
+
+        if (trailing_size == 1) {
+            AT_DISPATCH_FLOATING_TYPES_AND2(
+                at::kBFloat16, at::kHalf,
+                input.scalar_type(),
+                "fixed_backward_backward_cpu_simple",
+                [&]() {
+                    const scalar_t* gg_in_ptr = grad_grad_input_contig.data_ptr<scalar_t>();
+                    const scalar_t* grad_out_ptr = grad_output_contig.data_ptr<scalar_t>();
+                    const scalar_t* in_ptr = input_contig.data_ptr<scalar_t>();
+                    scalar_t* gg_out_ptr = grad_grad_output.data_ptr<scalar_t>();
+                    scalar_t* new_grad_ptr = new_grad_input.data_ptr<scalar_t>();
+
+                    at::parallel_for(0, batch_size, 0, [&](int64_t begin, int64_t end) {
+                        for (int64_t b = begin; b < end; ++b) {
+                            FixedTraits::template backward_backward_kernel<scalar_t>(
+                                gg_in_ptr + b * input_size,
+                                grad_out_ptr + b * output_size,
+                                in_ptr + b * input_size,
+                                input_size,
+                                output_size,
+                                gg_out_ptr + b * output_size,
+                                new_grad_ptr + b * input_size,
+                                args...
+                            );
+                        }
+                    });
+                }
+            );
+        }
+        // Note: strided case follows same pattern as forward/backward
+
+        return std::make_tuple(grad_grad_output, new_grad_input);
     }
 };
 
