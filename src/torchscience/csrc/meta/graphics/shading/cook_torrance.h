@@ -81,9 +81,36 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> co
     );
 }
 
+/**
+ * Meta implementation for Cook-Torrance backward_backward shape inference.
+ */
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> cook_torrance_backward_backward(
+    const at::Tensor& gg_normal,
+    const at::Tensor& gg_view,
+    const at::Tensor& gg_light,
+    const at::Tensor& gg_roughness,
+    const at::Tensor& gg_f0,
+    const at::Tensor& grad_output,
+    const at::Tensor& normal,
+    const at::Tensor& view,
+    const at::Tensor& light,
+    const at::Tensor& roughness,
+    const at::Tensor& f0
+) {
+    return std::make_tuple(
+        at::empty_like(grad_output),
+        at::empty_like(normal),
+        at::empty_like(view),
+        at::empty_like(light),
+        at::empty_like(roughness),
+        at::empty_like(f0)
+    );
+}
+
 }  // namespace torchscience::meta::graphics::shading
 
 TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
     m.impl("cook_torrance", &torchscience::meta::graphics::shading::cook_torrance);
     m.impl("cook_torrance_backward", &torchscience::meta::graphics::shading::cook_torrance_backward);
+    m.impl("cook_torrance_backward_backward", &torchscience::meta::graphics::shading::cook_torrance_backward_backward);
 }
