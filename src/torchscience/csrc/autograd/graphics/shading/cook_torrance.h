@@ -5,6 +5,132 @@
 namespace torchscience::autograd::graphics::shading {
 
 /**
+ * Nested Backward class for second-order gradients.
+ */
+class CookTorranceBackward
+    : public torch::autograd::Function<CookTorranceBackward> {
+public:
+    static std::vector<at::Tensor> forward(
+        torch::autograd::AutogradContext* ctx,
+        const at::Tensor& grad_output,
+        const at::Tensor& normal,
+        const at::Tensor& view,
+        const at::Tensor& light,
+        const at::Tensor& roughness,
+        const at::Tensor& f0,
+        bool normal_requires_grad,
+        bool view_requires_grad,
+        bool light_requires_grad,
+        bool roughness_requires_grad,
+        bool f0_requires_grad
+    ) {
+        ctx->save_for_backward({grad_output, normal, view, light, roughness, f0});
+        ctx->saved_data["normal_requires_grad"] = normal_requires_grad;
+        ctx->saved_data["view_requires_grad"] = view_requires_grad;
+        ctx->saved_data["light_requires_grad"] = light_requires_grad;
+        ctx->saved_data["roughness_requires_grad"] = roughness_requires_grad;
+        ctx->saved_data["f0_requires_grad"] = f0_requires_grad;
+
+        at::AutoDispatchBelowAutograd guard;
+
+        auto [grad_normal, grad_view, grad_light, grad_roughness, grad_f0] =
+            c10::Dispatcher::singleton()
+                .findSchemaOrThrow("torchscience::cook_torrance_backward", "")
+                .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor>(
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&
+                )>()
+                .call(grad_output, normal, view, light, roughness, f0);
+
+        return {grad_normal, grad_view, grad_light, grad_roughness, grad_f0};
+    }
+
+    static std::vector<at::Tensor> backward(
+        torch::autograd::AutogradContext* ctx,
+        const std::vector<at::Tensor>& grad_outputs
+    ) {
+        const torch::autograd::variable_list saved = ctx->get_saved_variables();
+        at::Tensor grad_output = saved[0];
+        at::Tensor normal = saved[1];
+        at::Tensor view = saved[2];
+        at::Tensor light = saved[3];
+        at::Tensor roughness = saved[4];
+        at::Tensor f0 = saved[5];
+
+        bool normal_requires_grad = ctx->saved_data["normal_requires_grad"].toBool();
+        bool view_requires_grad = ctx->saved_data["view_requires_grad"].toBool();
+        bool light_requires_grad = ctx->saved_data["light_requires_grad"].toBool();
+        bool roughness_requires_grad = ctx->saved_data["roughness_requires_grad"].toBool();
+        bool f0_requires_grad = ctx->saved_data["f0_requires_grad"].toBool();
+
+        // grad_outputs[0] = gg_normal, [1] = gg_view, [2] = gg_light, [3] = gg_roughness, [4] = gg_f0
+        at::Tensor gg_normal = grad_outputs[0].defined() ? grad_outputs[0] : at::zeros_like(normal);
+        at::Tensor gg_view = grad_outputs[1].defined() ? grad_outputs[1] : at::zeros_like(view);
+        at::Tensor gg_light = grad_outputs[2].defined() ? grad_outputs[2] : at::zeros_like(light);
+        at::Tensor gg_roughness = grad_outputs[3].defined() ? grad_outputs[3] : at::zeros_like(roughness);
+        at::Tensor gg_f0 = grad_outputs[4].defined() ? grad_outputs[4] : at::zeros_like(f0);
+
+        bool any_requires_grad = normal_requires_grad || view_requires_grad ||
+                                  light_requires_grad || roughness_requires_grad || f0_requires_grad;
+
+        if (!any_requires_grad) {
+            return {
+                at::Tensor(),  // grad_grad_output
+                at::Tensor(),  // grad2_normal
+                at::Tensor(),  // grad2_view
+                at::Tensor(),  // grad2_light
+                at::Tensor(),  // grad2_roughness
+                at::Tensor(),  // grad2_f0
+                at::Tensor(),  // normal_requires_grad (not differentiable)
+                at::Tensor(),  // view_requires_grad
+                at::Tensor(),  // light_requires_grad
+                at::Tensor(),  // roughness_requires_grad
+                at::Tensor()   // f0_requires_grad
+            };
+        }
+
+        at::AutoDispatchBelowAutograd guard;
+
+        auto [grad_grad_output, grad2_normal, grad2_view, grad2_light, grad2_roughness, grad2_f0] =
+            c10::Dispatcher::singleton()
+                .findSchemaOrThrow("torchscience::cook_torrance_backward_backward", "")
+                .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor>(
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&,
+                    const at::Tensor&
+                )>()
+                .call(gg_normal, gg_view, gg_light, gg_roughness, gg_f0,
+                      grad_output, normal, view, light, roughness, f0);
+
+        return {
+            grad_grad_output,
+            normal_requires_grad ? grad2_normal : at::Tensor(),
+            view_requires_grad ? grad2_view : at::Tensor(),
+            light_requires_grad ? grad2_light : at::Tensor(),
+            roughness_requires_grad ? grad2_roughness : at::Tensor(),
+            f0_requires_grad ? grad2_f0 : at::Tensor(),
+            at::Tensor(),  // normal_requires_grad (not differentiable)
+            at::Tensor(),  // view_requires_grad
+            at::Tensor(),  // light_requires_grad
+            at::Tensor(),  // roughness_requires_grad
+            at::Tensor()   // f0_requires_grad
+        };
+    }
+};
+
+/**
  * Autograd Function for Cook-Torrance BRDF.
  */
 class CookTorrance
@@ -79,27 +205,19 @@ public:
             };
         }
 
-        at::AutoDispatchBelowAutograd guard;
-
-        auto [grad_normal, grad_view, grad_light, grad_roughness, grad_f0] =
-            c10::Dispatcher::singleton()
-                .findSchemaOrThrow("torchscience::cook_torrance_backward", "")
-                .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor>(
-                    const at::Tensor&,
-                    const at::Tensor&,
-                    const at::Tensor&,
-                    const at::Tensor&,
-                    const at::Tensor&,
-                    const at::Tensor&
-                )>()
-                .call(grad_output, normal, view, light, roughness, f0);
+        // Use nested backward function for double backward support
+        std::vector<at::Tensor> grads = CookTorranceBackward::apply(
+            grad_output, normal, view, light, roughness, f0,
+            normal_requires_grad, view_requires_grad, light_requires_grad,
+            roughness_requires_grad, f0_requires_grad
+        );
 
         return {
-            normal_requires_grad ? grad_normal : at::Tensor(),
-            view_requires_grad ? grad_view : at::Tensor(),
-            light_requires_grad ? grad_light : at::Tensor(),
-            roughness_requires_grad ? grad_roughness : at::Tensor(),
-            f0_requires_grad ? grad_f0 : at::Tensor()
+            normal_requires_grad ? grads[0] : at::Tensor(),
+            view_requires_grad ? grads[1] : at::Tensor(),
+            light_requires_grad ? grads[2] : at::Tensor(),
+            roughness_requires_grad ? grads[3] : at::Tensor(),
+            f0_requires_grad ? grads[4] : at::Tensor()
         };
     }
 };
