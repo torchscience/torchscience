@@ -56,6 +56,7 @@
 #include "cuda/graphics/shading/cook_torrance.cu"
 #include "cuda/optimization/test_functions.cu"
 #include "cuda/statistics/descriptive/kurtosis.cu"
+#include "cuda/statistics/descriptive/histogram.cu"
 #include "cuda/integral_transform/hilbert_transform.cu"
 #include "cuda/integral_transform/inverse_hilbert_transform.cu"
 #include "sparse/coo/cuda/special_functions.h"
