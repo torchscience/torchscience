@@ -34,9 +34,6 @@ class TestHistogramBasic:
         )
         assert torch.all(edges[1:] > edges[:-1])
 
-    @pytest.mark.xfail(
-        reason="Explicit bin edges with range=None not yet properly handled in wrapper"
-    )
     def test_explicit_bin_edges(self):
         """Test histogram with explicit bin edges."""
         x = torch.tensor([0.5, 1.5, 2.5, 3.5, 4.5])
@@ -89,9 +86,6 @@ class TestHistogramWeights:
 
         torch.testing.assert_close(counts_unweighted, counts_weighted)
 
-    @pytest.mark.xfail(
-        reason="Explicit bin edges with range=None not yet properly handled in wrapper"
-    )
     def test_zero_weights(self):
         """Test that zero weights exclude samples."""
         x = torch.tensor([0.5, 1.5, 2.5])
@@ -162,17 +156,21 @@ class TestHistogramNotDifferentiable:
     """Tests confirming histogram is not differentiable."""
 
     def test_no_gradient(self):
-        """Test that histogram does not support backward pass."""
+        """Test that histogram does not propagate gradients to input."""
         x = torch.randn(100, requires_grad=True)
-        counts, edges = torchscience.statistics.descriptive.histogram(
-            x, bins=10
-        )
-        # Histogram computation is not differentiable - backward should fail
-        # Note: torch.histogram may return tensor with requires_grad=True but
-        # grad_fn is NotImplemented, meaning backward will raise an error
-        if counts.requires_grad:
-            with pytest.raises(RuntimeError):
+        with pytest.warns(
+            UserWarning, match="autograd kernel was not registered"
+        ):
+            counts, edges = torchscience.statistics.descriptive.histogram(
+                x, bins=10
+            )
+            # Histogram computation is not differentiable. The C++ operator uses
+            # PyTorch's autograd fallback (WarnNotImplemented) which allows
+            # backward pass but doesn't compute meaningful gradients.
+            if counts.requires_grad:
                 counts.sum().backward()
+        # Input gradient should remain None since histogram is not differentiable
+        assert x.grad is None
 
 
 class TestHistogramSciPyCompatibility:
