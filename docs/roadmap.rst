@@ -28,7 +28,7 @@ MVP Milestones
 * Dynamic operators via ``shortest_path``
 * Batched operators via ``matrix_exponential``
 * Identity operators via ``srgb_to_hsv``
-* Flatten operators via ``histogram``
+* Flatten operators via ``histogram`` ✓
 
 **Milestone 3: Module Coverage**
 
@@ -123,11 +123,8 @@ Modules to Establish
      - ``kd_tree_query``
      - N-dimensional
    * - ``statistics.descriptive`` ✓
-     - ``kurtosis``
-     - Reduction
-   * - ``statistics.histograms``
-     - ``histogram``
-     - Flatten
+     - ``kurtosis``, ``histogram``
+     - Reduction, Flatten
    * - ``statistics.hypothesis_testing``
      - ``t_test``
      - Reduction
@@ -284,7 +281,7 @@ Each operator's category is determined by its input/output shape behavior:
      - ``(..., n)``
      - ``(...)``
      - Reduction
-   * - ``statistics.histograms``
+   * - ``statistics.descriptive``
      - ``histogram``
      - ``(...)`` samples
      - ``(bins,)`` counts
