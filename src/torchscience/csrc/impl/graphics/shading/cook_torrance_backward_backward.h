@@ -51,7 +51,7 @@ void cook_torrance_backward_backward_scalar(
     *grad2_roughness = T(0);
     *grad2_f0 = T(0);
 
-    roughness = std::max(roughness, MIN_ROUGHNESS<T>);
+    roughness = std::max(roughness, min_roughness<T>());
 
     T n_dot_l = dot3(normal, light);
     T n_dot_v = dot3(normal, view);
@@ -61,21 +61,21 @@ void cook_torrance_backward_backward_scalar(
         return;
     }
 
-    T n_dot_l_clamped = std::max(n_dot_l, DOT_EPSILON<T>);
-    T n_dot_v_clamped = std::max(n_dot_v, DOT_EPSILON<T>);
+    T n_dot_l_clamped = std::max(n_dot_l, dot_epsilon<T>());
+    T n_dot_v_clamped = std::max(n_dot_v, dot_epsilon<T>());
 
     T h[3] = { light[0] + view[0], light[1] + view[1], light[2] + view[2] };
     T h_len = std::sqrt(h[0] * h[0] + h[1] * h[1] + h[2] * h[2]);
 
-    if (h_len < DOT_EPSILON<T>) {
+    if (h_len < dot_epsilon<T>()) {
         return;
     }
 
     T inv_h_len = T(1) / h_len;
     T h_normalized[3] = { h[0] * inv_h_len, h[1] * inv_h_len, h[2] * inv_h_len };
 
-    T n_dot_h = std::max(dot3(normal, h_normalized), DOT_EPSILON<T>);
-    T h_dot_v = std::max(dot3(h_normalized, view), DOT_EPSILON<T>);
+    T n_dot_h = std::max(dot3(normal, h_normalized), dot_epsilon<T>());
+    T h_dot_v = std::max(dot3(h_normalized, view), dot_epsilon<T>());
 
     T alpha = roughness * roughness;
     T alpha_squared = alpha * alpha;
@@ -84,7 +84,7 @@ void cook_torrance_backward_backward_scalar(
     T n_dot_h_sq = n_dot_h * n_dot_h;
     T denom_d = n_dot_h_sq * (alpha_squared - T(1)) + T(1);
     T denom_d_sq = denom_d * denom_d;
-    constexpr T PI = T(3.14159265358979323846);
+    const T PI = T(3.14159265358979323846);
     T D = alpha_squared / (PI * denom_d_sq);
 
     // G term
