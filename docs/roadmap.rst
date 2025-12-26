@@ -58,7 +58,7 @@ Modules to Establish
      - N-dimensional
    * - ``finite_elements``
      - ``stiffness_matrix``
-     - Fixed
+     - Factory
    * - ``geometry``
      - ``convex_hull``
      - Dynamic
@@ -76,7 +76,7 @@ Modules to Establish
      - Identity
    * - ``graphics.shading``
      - ``cook_torrance``
-     - Batched
+     - Reduction
    * - ``information_theory``
      - ``kullback_leibler_divergence``
      - Reduction
@@ -109,7 +109,7 @@ Modules to Establish
      - Reduction
    * - ``optimization.test_functions`` ✓
      - ``rosenbrock``
-     - Batched
+     - Reduction
    * - ``polynomials``
      - ``evaluate_polynomial``
      - Pointwise
@@ -173,7 +173,7 @@ Each operator's category is determined by its input/output shape behavior:
      - ``stiffness_matrix``
      - mesh/element info
      - ``(n_dof, n_dof)``
-     - Fixed
+     - Factory
    * - ``geometry``
      - ``convex_hull``
      - ``(n, d)`` points
@@ -203,7 +203,7 @@ Each operator's category is determined by its input/output shape behavior:
      - ``cook_torrance``
      - ``(..., 3)`` vectors
      - ``(...)`` reflectance
-     - Batched
+     - Reduction
    * - ``information_theory``
      - ``kullback_leibler_divergence``
      - ``(..., n)`` P, Q
@@ -258,7 +258,7 @@ Each operator's category is determined by its input/output shape behavior:
      - ``rosenbrock``
      - ``(..., n)``
      - ``(...)``
-     - Batched
+     - Reduction
    * - ``polynomials``
      - ``evaluate_polynomial``
      - ``(...)`` x, ``(k,)`` coeffs

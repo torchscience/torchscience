@@ -6,6 +6,14 @@ import torch
 
 from torchscience.root_finding import brent
 
+# Check if scipy is available for comparison tests
+try:
+    from scipy.optimize import brentq
+
+    scipy_available = True
+except ImportError:
+    scipy_available = False
+
 
 class TestBrent:
     """Tests for Brent's root-finding method."""
@@ -103,6 +111,17 @@ class TestBrent:
         with pytest.raises(ValueError, match="must not contain NaN"):
             brent(f, a, b)
 
+    def test_inf_function_output_raises(self):
+        """Raise ValueError when function returns Inf at endpoints."""
+        f = lambda x: torch.where(
+            x == 1.0, torch.tensor(float("inf")), x - 1.5
+        )
+        a = torch.tensor([1.0])
+        b = torch.tensor([2.0])
+
+        with pytest.raises(ValueError, match="Function returned NaN or Inf"):
+            brent(f, a, b)
+
     def test_maxiter_exceeded_raises(self):
         """Raise RuntimeError when maxiter is exceeded."""
         f = lambda x: x**3 - x - 1
@@ -169,7 +188,7 @@ class TestBrent:
         assert residual < ftol * 10
 
     def test_preserves_shape(self):
-        """Output has same shape as input."""
+        """Output has same shape as input and correct values."""
         f = lambda x: x**2 - 2
         a = torch.ones(2, 3)
         b = torch.full((2, 3), 2.0)
@@ -177,6 +196,8 @@ class TestBrent:
         root = brent(f, a, b)
 
         assert root.shape == (2, 3)
+        expected = torch.full((2, 3), math.sqrt(2))
+        torch.testing.assert_close(root, expected, rtol=1e-6, atol=1e-6)
 
     def test_empty_input(self):
         """Handle empty input gracefully."""
@@ -187,6 +208,124 @@ class TestBrent:
         root = brent(f, a, b)
 
         assert root.shape == (0,)
+
+    def test_float16(self):
+        """Works correctly with float16 (reduced precision)."""
+        f = lambda x: x**2 - 2
+        a = torch.tensor([1.0], dtype=torch.float16)
+        b = torch.tensor([2.0], dtype=torch.float16)
+
+        root = brent(f, a, b)
+
+        assert root.dtype == torch.float16
+        # float16 has lower precision, use looser tolerance
+        torch.testing.assert_close(
+            root,
+            torch.tensor([math.sqrt(2)], dtype=torch.float16),
+            rtol=1e-2,
+            atol=1e-2,
+        )
+
+    def test_bfloat16(self):
+        """Works correctly with bfloat16 (reduced precision).
+
+        bfloat16 has only ~3 decimal digits of precision (8-bit mantissa),
+        so we expect lower accuracy than float16 or float32.
+        """
+        f = lambda x: x**2 - 2
+        a = torch.tensor([1.0], dtype=torch.bfloat16)
+        b = torch.tensor([2.0], dtype=torch.bfloat16)
+
+        root = brent(f, a, b)
+
+        assert root.dtype == torch.bfloat16
+        # bfloat16 has lower precision, use looser tolerance
+        torch.testing.assert_close(
+            root,
+            torch.tensor([math.sqrt(2)], dtype=torch.bfloat16),
+            rtol=2e-2,
+            atol=2e-2,
+        )
+
+    @pytest.mark.skipif(not scipy_available, reason="scipy not available")
+    def test_matches_scipy_quadratic(self):
+        """Results match scipy.optimize.brentq for quadratic function."""
+        f_torch = lambda x: x**2 - 2
+        f_scipy = lambda x: x**2 - 2
+
+        scipy_root = brentq(f_scipy, 1.0, 2.0)
+        our_root = brent(
+            f_torch,
+            torch.tensor([1.0], dtype=torch.float64),
+            torch.tensor([2.0], dtype=torch.float64),
+        )
+
+        torch.testing.assert_close(
+            our_root,
+            torch.tensor([scipy_root], dtype=torch.float64),
+            rtol=1e-10,
+            atol=1e-10,
+        )
+
+    @pytest.mark.skipif(not scipy_available, reason="scipy not available")
+    def test_matches_scipy_cubic(self):
+        """Results match scipy.optimize.brentq for cubic function."""
+        f_torch = lambda x: x**3 - x - 1
+        f_scipy = lambda x: x**3 - x - 1
+
+        scipy_root = brentq(f_scipy, 1.0, 2.0)
+        our_root = brent(
+            f_torch,
+            torch.tensor([1.0], dtype=torch.float64),
+            torch.tensor([2.0], dtype=torch.float64),
+        )
+
+        torch.testing.assert_close(
+            our_root,
+            torch.tensor([scipy_root], dtype=torch.float64),
+            rtol=1e-10,
+            atol=1e-10,
+        )
+
+    @pytest.mark.skipif(not scipy_available, reason="scipy not available")
+    def test_matches_scipy_transcendental(self):
+        """Results match scipy.optimize.brentq for transcendental function."""
+        f_torch = lambda x: torch.exp(x) - 2
+        f_scipy = lambda x: math.exp(x) - 2
+
+        scipy_root = brentq(f_scipy, 0.0, 1.0)
+        our_root = brent(
+            f_torch,
+            torch.tensor([0.0], dtype=torch.float64),
+            torch.tensor([1.0], dtype=torch.float64),
+        )
+
+        torch.testing.assert_close(
+            our_root,
+            torch.tensor([scipy_root], dtype=torch.float64),
+            rtol=1e-10,
+            atol=1e-10,
+        )
+
+    @pytest.mark.skipif(not scipy_available, reason="scipy not available")
+    def test_matches_scipy_trigonometric(self):
+        """Results match scipy.optimize.brentq for trigonometric function."""
+        f_torch = lambda x: torch.sin(x)
+        f_scipy = lambda x: math.sin(x)
+
+        scipy_root = brentq(f_scipy, 2.0, 4.0)
+        our_root = brent(
+            f_torch,
+            torch.tensor([2.0], dtype=torch.float64),
+            torch.tensor([4.0], dtype=torch.float64),
+        )
+
+        torch.testing.assert_close(
+            our_root,
+            torch.tensor([scipy_root], dtype=torch.float64),
+            rtol=1e-10,
+            atol=1e-10,
+        )
 
 
 class TestBrentAutograd:
@@ -347,6 +486,30 @@ class TestBrentAutograd:
         # d(loss)/d(theta) = 1.0 * 0.25 = 0.25
         expected = torch.tensor([0.25], dtype=torch.float64)
         torch.testing.assert_close(theta.grad, expected, rtol=1e-4, atol=1e-6)
+
+    def test_implicit_diff_small_derivative(self):
+        """Test gradient computation when df/dx is very small at root.
+
+        For f(x) = x^3 - theta with theta near 0, the root x* is near 0
+        and df/dx = 3x^2 is also near 0. The safeguard should prevent
+        division by zero and return a finite (though large) gradient.
+        """
+        # Use a small theta so the root is near 0
+        theta = torch.tensor([1e-12], dtype=torch.float64, requires_grad=True)
+
+        def f(x):
+            return x**3 - theta
+
+        a = torch.tensor([0.0], dtype=torch.float64)
+        b = torch.tensor([1.0], dtype=torch.float64)
+
+        root = brent(f, a, b)
+        root.sum().backward()
+
+        # Gradient should be finite (not NaN or Inf)
+        assert torch.isfinite(theta.grad).all(), (
+            f"Expected finite gradient, got {theta.grad}"
+        )
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")

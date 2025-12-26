@@ -51,6 +51,7 @@
 #include "quantized/cpu/integral_transform/inverse_hilbert_transform.h"
 
 #ifdef TORCHSCIENCE_CUDA
+#include "cuda/graphics/shading/cook_torrance.cu"
 #include "cuda/optimization/test_functions.cu"
 #include "cuda/statistics/descriptive/kurtosis.cu"
 #include "cuda/integral_transform/hilbert_transform.cu"

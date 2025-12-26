@@ -32,6 +32,7 @@
  */
 
 #include <c10/macros/Macros.h>
+#include <algorithm>
 #include <cmath>
 
 namespace torchscience::impl::graphics::shading {
@@ -112,8 +113,8 @@ T cook_torrance_scalar(
     T roughness,
     T f0
 ) {
-    // Clamp roughness to avoid singularities
-    roughness = std::max(roughness, min_roughness<T>());
+    // Clamp roughness to [0.001, 1.0] to avoid singularities
+    roughness = std::clamp(roughness, min_roughness<T>(), T(1));
 
     // Compute dot products
     T n_dot_l = dot3(normal, light);
@@ -138,8 +139,8 @@ T cook_torrance_scalar(
     T inv_h_len = T(1) / h_len;
     T h_normalized[3] = { h[0] * inv_h_len, h[1] * inv_h_len, h[2] * inv_h_len };
 
-    T n_dot_h = std::max(dot3(normal, h_normalized), T(0));
-    T h_dot_v = std::max(dot3(h_normalized, view), T(0));
+    T n_dot_h = std::max(dot3(normal, h_normalized), dot_epsilon<T>());
+    T h_dot_v = std::max(dot3(h_normalized, view), dot_epsilon<T>());
 
     // Compute BRDF components
     T alpha = roughness * roughness;

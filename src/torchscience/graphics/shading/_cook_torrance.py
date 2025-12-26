@@ -85,6 +85,9 @@ def cook_torrance(
     - Roughness is internally clamped to [0.001, 1.0] for numerical stability.
     - This implementation follows Unreal Engine 4's approach from
       "Real Shading in Unreal Engine 4" (SIGGRAPH 2013).
+    - **Gradient Support**: Full autograd support with first-order and
+      second-order (Hessian) gradients. Use ``create_graph=True`` for
+      second-order optimization in inverse rendering applications.
 
     References
     ----------
@@ -107,17 +110,17 @@ def cook_torrance(
             f"light must have last dimension 3, got {light.shape[-1]}"
         )
 
-    # Convert scalars to tensors
+    # Convert scalars to tensors (use normal's device, dtype will be promoted later)
     if not isinstance(roughness, Tensor):
-        roughness = torch.tensor(
-            roughness, dtype=normal.dtype, device=normal.device
-        )
+        roughness = torch.tensor(roughness, device=normal.device)
     if not isinstance(f0, Tensor):
-        f0 = torch.tensor(f0, dtype=normal.dtype, device=normal.device)
+        f0 = torch.tensor(f0, device=normal.device)
 
     # Ensure tensors are on the same device and have compatible dtypes
-    target_dtype = torch.promote_types(normal.dtype, view.dtype)
-    target_dtype = torch.promote_types(target_dtype, light.dtype)
+    # Include all tensor inputs in dtype promotion
+    target_dtype = normal.dtype
+    for t in [view, light, roughness, f0]:
+        target_dtype = torch.promote_types(target_dtype, t.dtype)
     target_device = normal.device
 
     if normal.dtype != target_dtype:

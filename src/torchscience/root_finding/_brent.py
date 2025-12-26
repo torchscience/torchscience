@@ -5,8 +5,18 @@ from torch import Tensor
 
 
 def _get_default_tol(dtype: torch.dtype) -> float:
-    """Get dtype-aware default tolerance."""
-    if dtype in (torch.float16, torch.bfloat16):
+    """Get dtype-aware default tolerance.
+
+    Tolerances are chosen based on the number of significant digits
+    available in each dtype:
+    - bfloat16: ~3 digits (8-bit mantissa)
+    - float16: ~3-4 digits (10-bit mantissa)
+    - float32: ~7 digits (23-bit mantissa)
+    - float64: ~16 digits (52-bit mantissa)
+    """
+    if dtype == torch.bfloat16:
+        return 1e-2  # bfloat16 has less precision than float16
+    elif dtype == torch.float16:
         return 1e-3
     elif dtype == torch.float32:
         return 1e-6
@@ -50,13 +60,24 @@ class _BrentImplicitGrad(torch.autograd.Function):
                 # So: dL/dtheta = dL/dx* * dx*/dtheta = -dL/dx* * [df/dx]^{-1} * df/dtheta
                 #
                 # We compute this by backpropagating through f with modified gradient
-                modified_grad = -grad_output / df_dx
+                # Safeguard against division by very small df/dx (near-horizontal tangent)
+                eps = torch.finfo(df_dx.dtype).eps * 10
+                safe_df_dx = torch.where(
+                    torch.abs(df_dx) < eps,
+                    torch.sign(df_dx) * eps,
+                    df_dx,
+                )
+                # Handle case where df_dx is exactly zero (sign returns 0)
+                safe_df_dx = torch.where(safe_df_dx == 0, eps, safe_df_dx)
+                modified_grad = -grad_output / safe_df_dx
                 torch.autograd.backward(fx, modified_grad)
 
         return None, None, None
 
 
-def _attach_implicit_grad(result: Tensor, f, orig_shape: tuple) -> Tensor:
+def _attach_implicit_grad(
+    result: Tensor, f: Callable[[Tensor], Tensor], orig_shape: tuple
+) -> Tensor:
     """Attach implicit differentiation gradient if needed."""
     # Check if any parameter of f requires gradients
     try:
@@ -137,8 +158,8 @@ def brent(
     >>> f = lambda x: x**2 - 2
     >>> a, b = torch.tensor([1.0]), torch.tensor([2.0])
     >>> root = brent(f, a, b)
-    >>> root
-    tensor([1.4142])
+    >>> float(root)  # doctest: +ELLIPSIS
+    1.414...
 
     Batched root-finding (find sqrt(2), sqrt(3), sqrt(4)):
 
@@ -147,15 +168,15 @@ def brent(
     >>> a = torch.ones(3)
     >>> b = torch.full((3,), 10.0)
     >>> roots = brent(f, a, b)
-    >>> roots
-    tensor([1.4142, 1.7321, 2.0000])
+    >>> [f"{v:.4f}" for v in roots.tolist()]
+    ['1.4142', '1.7321', '2.0000']
 
     Find pi (solve sin(x) = 0 in [2, 4]):
 
     >>> f = lambda x: torch.sin(x)
     >>> a, b = torch.tensor([2.0]), torch.tensor([4.0])
-    >>> brent(f, a, b)
-    tensor([3.1416])
+    >>> float(brent(f, a, b))  # doctest: +ELLIPSIS
+    3.141...
 
     Notes
     -----
@@ -184,6 +205,10 @@ def brent(
 
     **CUDA Support**: Works on any device (CPU or CUDA) as long as all
     inputs are on the same device.
+
+    **Gradient Limitations**: Only first-order gradients have been validated.
+    Second-order gradients (e.g., for Hessian computation) are not tested
+    and may produce incorrect results.
 
     See Also
     --------
@@ -219,8 +244,12 @@ def brent(
     if torch.any(~torch.isfinite(a)) or torch.any(~torch.isfinite(b)):
         raise ValueError("a and b must not contain NaN or Inf")
 
+    # Check for NaN/Inf in function evaluations at endpoints
+    if torch.any(~torch.isfinite(fa)) or torch.any(~torch.isfinite(fb)):
+        raise ValueError("Function returned NaN or Inf at bracket endpoints")
+
     # Check for roots at endpoints first (before bracket validation)
-    root = torch.where(fa == 0, a, torch.where(fb == 0, b, a.clone()))
+    root = torch.where(fa == 0, a, torch.where(fb == 0, b, a))
     at_endpoint = (fa == 0) | (fb == 0)
     if torch.all(at_endpoint):
         return _attach_implicit_grad(root, f, orig_shape)
@@ -228,9 +257,11 @@ def brent(
     # Check for valid brackets (only for non-endpoint cases)
     if torch.any(fa * fb >= 0):
         invalid = fa * fb >= 0
+        invalid_indices = torch.where(invalid)[0].tolist()
         raise ValueError(
             f"Invalid bracket: f(a) and f(b) must have opposite signs. "
-            f"{invalid.sum().item()} of {invalid.numel()} brackets are invalid."
+            f"{invalid.sum().item()} of {invalid.numel()} brackets are invalid "
+            f"at indices {invalid_indices}."
         )
 
     # Ensure |f(a)| >= |f(b)| by swapping if needed
@@ -283,22 +314,35 @@ def brent(
 
         s = torch.where(use_iqp, s_iqp, s_secant)
 
-        # Check if we should use bisection instead
-        # Condition 1: s not in the acceptable range
+        # Brent's method uses 5 conditions to decide when to fall back to bisection.
+        # These conditions ensure that the interpolation step makes sufficient
+        # progress; otherwise, bisection provides guaranteed convergence.
+
+        # Condition 1: s must lie in the interval ((3a+b)/4, b).
+        # This ensures the new estimate is within a reasonable range and not
+        # outside the bracket or too close to endpoint a.
         min_range = torch.minimum((3 * a + b) / 4, b)
         max_range = torch.maximum((3 * a + b) / 4, b)
         cond1 = ~((min_range < s) & (s < max_range))
 
-        # Condition 2: mflag is true and |s - b| >= |b - c| / 2
+        # Condition 2: If bisection was used in the previous step (mflag=True),
+        # and the new step |s - b| is at least half of |b - c|, then bisection
+        # would have made at least as much progress. Use bisection instead.
         cond2 = mflag & (torch.abs(s - b) >= torch.abs(b - c) / 2)
 
-        # Condition 3: mflag is false and |s - b| >= |c - d| / 2
+        # Condition 3: If interpolation was used previously (mflag=False),
+        # and the new step |s - b| is at least half of |c - d|, the interpolation
+        # is not converging fast enough. Fall back to bisection.
         cond3 = ~mflag & (torch.abs(s - b) >= torch.abs(c - d) / 2)
 
-        # Condition 4: mflag is true and |b - c| < xtol
+        # Condition 4: If bisection was used previously and the interval |b - c|
+        # is already smaller than xtol, further bisection won't help.
+        # This prevents infinite loops when the interval is very small.
         cond4 = mflag & (torch.abs(b - c) < xtol)
 
-        # Condition 5: mflag is false and |c - d| < xtol
+        # Condition 5: If interpolation was used previously and |c - d| < xtol,
+        # the previous interpolation step was too small to be useful.
+        # Fall back to bisection for guaranteed progress.
         cond5 = ~mflag & (torch.abs(c - d) < xtol)
 
         use_bisection = (cond1 | cond2 | cond3 | cond4 | cond5) & active
