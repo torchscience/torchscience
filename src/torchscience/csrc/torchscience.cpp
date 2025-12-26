@@ -132,6 +132,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("kurtosis_backward(Tensor grad_output, Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");
   module.def("kurtosis_backward_backward(Tensor grad_grad_input, Tensor grad_output, Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> (Tensor, Tensor)");
 
+  // `torchscience.statistics.descriptive` - histogram (non-differentiable)
+  module.def("histogram(Tensor input, int bins, float[]? range, Tensor? weight, bool density, str closed, str out_of_bounds) -> (Tensor, Tensor)");
+  module.def("histogram_edges(Tensor input, Tensor bins, Tensor? weight, bool density, str closed, str out_of_bounds) -> (Tensor, Tensor)");
+
   // `torchscience.integral_transform`
   // n=-1 means use input size along dim (no padding/truncation)
   // padding_mode: 0=constant, 1=reflect, 2=replicate, 3=circular
