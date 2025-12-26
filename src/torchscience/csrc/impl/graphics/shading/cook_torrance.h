@@ -38,11 +38,13 @@ namespace torchscience::impl::graphics::shading {
 
 // Minimum roughness to avoid division by zero
 template <typename T>
-constexpr T MIN_ROUGHNESS = T(0.001);
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+T min_roughness() { return T(0.001); }
 
 // Small epsilon for dot product clamping
 template <typename T>
-constexpr T DOT_EPSILON = T(1e-7);
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+T dot_epsilon() { return T(1e-7); }
 
 /**
  * Compute GGX/Trowbridge-Reitz normal distribution function.
@@ -53,7 +55,7 @@ T ggx_distribution(T n_dot_h, T alpha_squared) {
     T n_dot_h_sq = n_dot_h * n_dot_h;
     T denom = n_dot_h_sq * (alpha_squared - T(1)) + T(1);
     denom = denom * denom;
-    constexpr T PI = T(3.14159265358979323846);
+    const T PI = T(3.14159265358979323846);
     return alpha_squared / (PI * denom);
 }
 
@@ -111,7 +113,7 @@ T cook_torrance_scalar(
     T f0
 ) {
     // Clamp roughness to avoid singularities
-    roughness = std::max(roughness, MIN_ROUGHNESS<T>);
+    roughness = std::max(roughness, min_roughness<T>());
 
     // Compute dot products
     T n_dot_l = dot3(normal, light);
@@ -122,14 +124,14 @@ T cook_torrance_scalar(
         return T(0);
     }
 
-    n_dot_l = std::max(n_dot_l, DOT_EPSILON<T>);
-    n_dot_v = std::max(n_dot_v, DOT_EPSILON<T>);
+    n_dot_l = std::max(n_dot_l, dot_epsilon<T>());
+    n_dot_v = std::max(n_dot_v, dot_epsilon<T>());
 
     // Compute halfway vector: h = normalize(l + v)
     T h[3] = { light[0] + view[0], light[1] + view[1], light[2] + view[2] };
     T h_len = std::sqrt(h[0] * h[0] + h[1] * h[1] + h[2] * h[2]);
 
-    if (h_len < DOT_EPSILON<T>) {
+    if (h_len < dot_epsilon<T>()) {
         return T(0);
     }
 
