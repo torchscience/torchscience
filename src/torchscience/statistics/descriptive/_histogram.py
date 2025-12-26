@@ -7,6 +7,9 @@ from torch import Tensor
 
 import torchscience._csrc  # noqa: F401 - Load C++ operators
 
+# Valid values for out_of_bounds parameter
+_VALID_OUT_OF_BOUNDS = {"ignore", "clamp", "error"}
+
 
 def histogram(
     input: Tensor,
@@ -185,24 +188,41 @@ def histogram(
         )
 
     # Validate closed parameter
-    if closed != "right":
-        raise NotImplementedError(
-            f"closed='{closed}' is not yet implemented. "
-            "Only closed='right' is currently supported."
+    if closed not in ("left", "right"):
+        raise ValueError(
+            f"histogram: closed must be 'left' or 'right', got '{closed}'"
         )
 
     # Validate out_of_bounds parameter
-    if out_of_bounds != "ignore":
-        raise NotImplementedError(
-            f"out_of_bounds='{out_of_bounds}' is not yet implemented. "
-            "Only out_of_bounds='ignore' is currently supported."
+    if out_of_bounds not in _VALID_OUT_OF_BOUNDS:
+        raise ValueError(
+            f"histogram: out_of_bounds must be one of {_VALID_OUT_OF_BOUNDS}, "
+            f"got '{out_of_bounds}'"
         )
 
-    # Delegate to torch.histogram for 1D case
-    return torch.histogram(
-        input,
-        bins,
-        range=range,
-        weight=weight,
-        density=density,
-    )
+    # Flatten input for 1D histogram computation
+    flat_input = input.flatten()
+    flat_weight = weight.flatten() if weight is not None else None
+
+    # Dispatch to appropriate C++ operator based on bins type
+    if isinstance(bins, Tensor):
+        # Tensor bins: use histogram_edges operator
+        return torch.ops.torchscience.histogram_edges(
+            flat_input,
+            bins,
+            flat_weight,
+            density,
+            closed,
+            out_of_bounds,
+        )
+    else:
+        # Integer bins: use histogram operator
+        return torch.ops.torchscience.histogram(
+            flat_input,
+            bins,
+            list(range) if range is not None else None,
+            flat_weight,
+            density,
+            closed,
+            out_of_bounds,
+        )
