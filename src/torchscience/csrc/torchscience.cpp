@@ -37,6 +37,7 @@
 #include "meta/signal_processing/filter.h"
 #include "meta/optimization/test_functions.h"
 #include "meta/statistics/descriptive/kurtosis.h"
+#include "meta/statistics/descriptive/histogram.h"
 #include "meta/integral_transform/hilbert_transform.h"
 #include "meta/integral_transform/inverse_hilbert_transform.h"
 #include "autocast/signal_processing/filter.h"
