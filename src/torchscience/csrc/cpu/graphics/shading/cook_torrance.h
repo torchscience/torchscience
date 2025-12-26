@@ -79,13 +79,25 @@ inline at::Tensor cook_torrance(
     at::Tensor normal_expanded = normal.expand(vec_shape).contiguous().view({numel, 3});
     at::Tensor view_expanded = view.expand(vec_shape).contiguous().view({numel, 3});
     at::Tensor light_expanded = light.expand(vec_shape).contiguous().view({numel, 3});
-    at::Tensor roughness_expanded = roughness.expand(batch_shape).contiguous().view({numel});
 
-    at::Tensor f0_expanded;
+    // Optimize: avoid full expansion for scalar/broadcasted roughness and f0
+    // Use stride=0 for scalars (read same value for all elements)
+    bool roughness_is_scalar = roughness.numel() == 1;
+    bool f0_is_scalar = !f0_is_rgb && f0.numel() == 1;
+
+    at::Tensor roughness_data = roughness_is_scalar ? roughness.contiguous().view({1}) : roughness.expand(batch_shape).contiguous().view({numel});
+    int64_t roughness_stride = roughness_is_scalar ? 0 : 1;
+
+    at::Tensor f0_data;
+    int64_t f0_stride;
     if (f0_is_rgb) {
-        f0_expanded = f0.expand(vec_shape).contiguous().view({numel, 3});
+        // For RGB f0, check if it's a single RGB value broadcasted
+        bool f0_rgb_is_scalar = f0.numel() == 3;
+        f0_data = f0_rgb_is_scalar ? f0.contiguous().view({1, 3}) : f0.expand(vec_shape).contiguous().view({numel, 3});
+        f0_stride = f0_rgb_is_scalar ? 0 : 1;
     } else {
-        f0_expanded = f0.expand(batch_shape).contiguous().view({numel});
+        f0_data = f0_is_scalar ? f0.contiguous().view({1}) : f0.expand(batch_shape).contiguous().view({numel});
+        f0_stride = f0_is_scalar ? 0 : 1;
     }
 
     // Create output tensor
@@ -104,8 +116,8 @@ inline at::Tensor cook_torrance(
             const scalar_t* normal_ptr = normal_expanded.data_ptr<scalar_t>();
             const scalar_t* view_ptr = view_expanded.data_ptr<scalar_t>();
             const scalar_t* light_ptr = light_expanded.data_ptr<scalar_t>();
-            const scalar_t* roughness_ptr = roughness_expanded.data_ptr<scalar_t>();
-            const scalar_t* f0_ptr = f0_expanded.data_ptr<scalar_t>();
+            const scalar_t* roughness_ptr = roughness_data.data_ptr<scalar_t>();
+            const scalar_t* f0_ptr = f0_data.data_ptr<scalar_t>();
             scalar_t* out_ptr = output.data_ptr<scalar_t>();
 
             if (f0_is_rgb) {
@@ -114,8 +126,8 @@ inline at::Tensor cook_torrance(
                         const scalar_t* n = normal_ptr + idx * 3;
                         const scalar_t* v = view_ptr + idx * 3;
                         const scalar_t* l = light_ptr + idx * 3;
-                        scalar_t r = roughness_ptr[idx];
-                        const scalar_t* f = f0_ptr + idx * 3;
+                        scalar_t r = roughness_ptr[idx * roughness_stride];
+                        const scalar_t* f = f0_ptr + idx * f0_stride * 3;
 
                         // Compute BRDF for each color channel
                         for (int c = 0; c < 3; ++c) {
@@ -131,8 +143,8 @@ inline at::Tensor cook_torrance(
                         const scalar_t* n = normal_ptr + idx * 3;
                         const scalar_t* v = view_ptr + idx * 3;
                         const scalar_t* l = light_ptr + idx * 3;
-                        scalar_t r = roughness_ptr[idx];
-                        scalar_t f = f0_ptr[idx];
+                        scalar_t r = roughness_ptr[idx * roughness_stride];
+                        scalar_t f = f0_ptr[idx * f0_stride];
 
                         out_ptr[idx] = impl::graphics::shading::cook_torrance_scalar<scalar_t>(
                             n, v, l, r, f
@@ -212,15 +224,25 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> co
     at::Tensor normal_expanded = normal.expand(vec_shape).contiguous().view({numel, 3});
     at::Tensor view_expanded = view.expand(vec_shape).contiguous().view({numel, 3});
     at::Tensor light_expanded = light.expand(vec_shape).contiguous().view({numel, 3});
-    at::Tensor roughness_expanded = roughness.expand(batch_shape).contiguous().view({numel});
 
-    at::Tensor f0_expanded;
+    // Optimize: avoid full expansion for scalar/broadcasted roughness and f0
+    bool roughness_is_scalar = roughness.numel() == 1;
+    bool f0_is_scalar = !f0_is_rgb && f0.numel() == 1;
+
+    at::Tensor roughness_data = roughness_is_scalar ? roughness.contiguous().view({1}) : roughness.expand(batch_shape).contiguous().view({numel});
+    int64_t roughness_stride = roughness_is_scalar ? 0 : 1;
+
+    at::Tensor f0_data;
     at::Tensor grad_expanded;
+    int64_t f0_stride;
     if (f0_is_rgb) {
-        f0_expanded = f0.expand(vec_shape).contiguous().view({numel, 3});
+        bool f0_rgb_is_scalar = f0.numel() == 3;
+        f0_data = f0_rgb_is_scalar ? f0.contiguous().view({1, 3}) : f0.expand(vec_shape).contiguous().view({numel, 3});
+        f0_stride = f0_rgb_is_scalar ? 0 : 1;
         grad_expanded = grad_output.contiguous().view({numel, 3});
     } else {
-        f0_expanded = f0.expand(batch_shape).contiguous().view({numel});
+        f0_data = f0_is_scalar ? f0.contiguous().view({1}) : f0.expand(batch_shape).contiguous().view({numel});
+        f0_stride = f0_is_scalar ? 0 : 1;
         grad_expanded = grad_output.contiguous().view({numel});
     }
 
@@ -244,8 +266,8 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> co
             const scalar_t* normal_ptr = normal_expanded.data_ptr<scalar_t>();
             const scalar_t* view_ptr = view_expanded.data_ptr<scalar_t>();
             const scalar_t* light_ptr = light_expanded.data_ptr<scalar_t>();
-            const scalar_t* roughness_ptr = roughness_expanded.data_ptr<scalar_t>();
-            const scalar_t* f0_ptr = f0_expanded.data_ptr<scalar_t>();
+            const scalar_t* roughness_ptr = roughness_data.data_ptr<scalar_t>();
+            const scalar_t* f0_ptr = f0_data.data_ptr<scalar_t>();
             const scalar_t* grad_ptr = grad_expanded.data_ptr<scalar_t>();
 
             scalar_t* grad_normal_ptr = grad_normal.data_ptr<scalar_t>();
@@ -260,8 +282,8 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> co
                         const scalar_t* n = normal_ptr + idx * 3;
                         const scalar_t* v = view_ptr + idx * 3;
                         const scalar_t* l = light_ptr + idx * 3;
-                        scalar_t r = roughness_ptr[idx];
-                        const scalar_t* f = f0_ptr + idx * 3;
+                        scalar_t r = roughness_ptr[idx * roughness_stride];
+                        const scalar_t* f = f0_ptr + idx * f0_stride * 3;
                         const scalar_t* g = grad_ptr + idx * 3;
 
                         scalar_t* gn = grad_normal_ptr + idx * 3;
@@ -296,8 +318,8 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> co
                         const scalar_t* n = normal_ptr + idx * 3;
                         const scalar_t* v = view_ptr + idx * 3;
                         const scalar_t* l = light_ptr + idx * 3;
-                        scalar_t r = roughness_ptr[idx];
-                        scalar_t f = f0_ptr[idx];
+                        scalar_t r = roughness_ptr[idx * roughness_stride];
+                        scalar_t f = f0_ptr[idx * f0_stride];
                         scalar_t g = grad_ptr[idx];
 
                         scalar_t* gn = grad_normal_ptr + idx * 3;
@@ -388,24 +410,42 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor, at
     at::Tensor normal_expanded = normal.expand(vec_shape).contiguous().view({numel, 3});
     at::Tensor view_expanded = view.expand(vec_shape).contiguous().view({numel, 3});
     at::Tensor light_expanded = light.expand(vec_shape).contiguous().view({numel, 3});
-    at::Tensor roughness_expanded = roughness.expand(batch_shape).contiguous().view({numel});
 
     at::Tensor gg_normal_expanded = gg_normal.expand(vec_shape).contiguous().view({numel, 3});
     at::Tensor gg_view_expanded = gg_view.expand(vec_shape).contiguous().view({numel, 3});
     at::Tensor gg_light_expanded = gg_light.expand(vec_shape).contiguous().view({numel, 3});
-    at::Tensor gg_roughness_expanded = gg_roughness.expand(batch_shape).contiguous().view({numel});
 
-    at::Tensor f0_expanded;
+    // Optimize: avoid full expansion for scalar/broadcasted roughness and f0
+    bool roughness_is_scalar = roughness.numel() == 1;
+    bool gg_roughness_is_scalar = gg_roughness.numel() == 1;
+    bool f0_is_scalar = !f0_is_rgb && f0.numel() == 1;
+
+    at::Tensor roughness_data = roughness_is_scalar ? roughness.contiguous().view({1}) : roughness.expand(batch_shape).contiguous().view({numel});
+    int64_t roughness_stride = roughness_is_scalar ? 0 : 1;
+
+    at::Tensor gg_roughness_data = gg_roughness_is_scalar ? gg_roughness.contiguous().view({1}) : gg_roughness.expand(batch_shape).contiguous().view({numel});
+    int64_t gg_roughness_stride = gg_roughness_is_scalar ? 0 : 1;
+
+    at::Tensor f0_data;
     at::Tensor grad_expanded;
-    at::Tensor gg_f0_expanded;
+    at::Tensor gg_f0_data;
+    int64_t f0_stride;
+    int64_t gg_f0_stride;
     if (f0_is_rgb) {
-        f0_expanded = f0.expand(vec_shape).contiguous().view({numel, 3});
+        bool f0_rgb_is_scalar = f0.numel() == 3;
+        bool gg_f0_rgb_is_scalar = gg_f0.numel() == 3;
+        f0_data = f0_rgb_is_scalar ? f0.contiguous().view({1, 3}) : f0.expand(vec_shape).contiguous().view({numel, 3});
+        f0_stride = f0_rgb_is_scalar ? 0 : 1;
+        gg_f0_data = gg_f0_rgb_is_scalar ? gg_f0.contiguous().view({1, 3}) : gg_f0.expand(vec_shape).contiguous().view({numel, 3});
+        gg_f0_stride = gg_f0_rgb_is_scalar ? 0 : 1;
         grad_expanded = grad_output.expand(vec_shape).contiguous().view({numel, 3});
-        gg_f0_expanded = gg_f0.expand(vec_shape).contiguous().view({numel, 3});
     } else {
-        f0_expanded = f0.expand(batch_shape).contiguous().view({numel});
+        bool gg_f0_is_scalar = gg_f0.numel() == 1;
+        f0_data = f0_is_scalar ? f0.contiguous().view({1}) : f0.expand(batch_shape).contiguous().view({numel});
+        f0_stride = f0_is_scalar ? 0 : 1;
+        gg_f0_data = gg_f0_is_scalar ? gg_f0.contiguous().view({1}) : gg_f0.expand(batch_shape).contiguous().view({numel});
+        gg_f0_stride = gg_f0_is_scalar ? 0 : 1;
         grad_expanded = grad_output.expand(batch_shape).contiguous().view({numel});
-        gg_f0_expanded = gg_f0.expand(batch_shape).contiguous().view({numel});
     }
 
     // Create output tensors
@@ -434,15 +474,15 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor, at
             const scalar_t* normal_ptr = normal_expanded.data_ptr<scalar_t>();
             const scalar_t* view_ptr = view_expanded.data_ptr<scalar_t>();
             const scalar_t* light_ptr = light_expanded.data_ptr<scalar_t>();
-            const scalar_t* roughness_ptr = roughness_expanded.data_ptr<scalar_t>();
-            const scalar_t* f0_ptr = f0_expanded.data_ptr<scalar_t>();
+            const scalar_t* roughness_ptr = roughness_data.data_ptr<scalar_t>();
+            const scalar_t* f0_ptr = f0_data.data_ptr<scalar_t>();
             const scalar_t* grad_ptr = grad_expanded.data_ptr<scalar_t>();
 
             const scalar_t* gg_normal_ptr = gg_normal_expanded.data_ptr<scalar_t>();
             const scalar_t* gg_view_ptr = gg_view_expanded.data_ptr<scalar_t>();
             const scalar_t* gg_light_ptr = gg_light_expanded.data_ptr<scalar_t>();
-            const scalar_t* gg_roughness_ptr = gg_roughness_expanded.data_ptr<scalar_t>();
-            const scalar_t* gg_f0_ptr = gg_f0_expanded.data_ptr<scalar_t>();
+            const scalar_t* gg_roughness_ptr = gg_roughness_data.data_ptr<scalar_t>();
+            const scalar_t* gg_f0_ptr = gg_f0_data.data_ptr<scalar_t>();
 
             scalar_t* grad_grad_output_ptr = grad_grad_output.data_ptr<scalar_t>();
             scalar_t* grad2_normal_ptr = grad2_normal.data_ptr<scalar_t>();
@@ -457,14 +497,14 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor, at
                         const scalar_t* n = normal_ptr + idx * 3;
                         const scalar_t* v = view_ptr + idx * 3;
                         const scalar_t* l = light_ptr + idx * 3;
-                        scalar_t r = roughness_ptr[idx];
-                        const scalar_t* f = f0_ptr + idx * 3;
+                        scalar_t r = roughness_ptr[idx * roughness_stride];
+                        const scalar_t* f = f0_ptr + idx * f0_stride * 3;
 
                         const scalar_t* gg_n = gg_normal_ptr + idx * 3;
                         const scalar_t* gg_v = gg_view_ptr + idx * 3;
                         const scalar_t* gg_l = gg_light_ptr + idx * 3;
-                        scalar_t gg_r = gg_roughness_ptr[idx];
-                        const scalar_t* gg_f = gg_f0_ptr + idx * 3;
+                        scalar_t gg_r = gg_roughness_ptr[idx * gg_roughness_stride];
+                        const scalar_t* gg_f = gg_f0_ptr + idx * gg_f0_stride * 3;
                         const scalar_t* g = grad_ptr + idx * 3;
 
                         scalar_t* ggo = grad_grad_output_ptr + idx * 3;
@@ -506,14 +546,14 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor, at
                         const scalar_t* n = normal_ptr + idx * 3;
                         const scalar_t* v = view_ptr + idx * 3;
                         const scalar_t* l = light_ptr + idx * 3;
-                        scalar_t r = roughness_ptr[idx];
-                        scalar_t f = f0_ptr[idx];
+                        scalar_t r = roughness_ptr[idx * roughness_stride];
+                        scalar_t f = f0_ptr[idx * f0_stride];
 
                         const scalar_t* gg_n = gg_normal_ptr + idx * 3;
                         const scalar_t* gg_v = gg_view_ptr + idx * 3;
                         const scalar_t* gg_l = gg_light_ptr + idx * 3;
-                        scalar_t gg_r = gg_roughness_ptr[idx];
-                        scalar_t gg_f = gg_f0_ptr[idx];
+                        scalar_t gg_r = gg_roughness_ptr[idx * gg_roughness_stride];
+                        scalar_t gg_f = gg_f0_ptr[idx * gg_f0_stride];
                         scalar_t g = grad_ptr[idx];
 
                         impl::graphics::shading::cook_torrance_backward_backward_scalar<scalar_t>(

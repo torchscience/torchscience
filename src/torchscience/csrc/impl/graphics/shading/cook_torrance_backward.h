@@ -2,6 +2,7 @@
 #pragma once
 
 #include <c10/macros/Macros.h>
+#include <algorithm>
 #include <cmath>
 #include "cook_torrance.h"
 
@@ -34,7 +35,7 @@ void cook_torrance_backward_scalar(
     *grad_roughness = T(0);
     *grad_f0 = T(0);
 
-    roughness = std::max(roughness, min_roughness<T>());
+    roughness = std::clamp(roughness, min_roughness<T>(), T(1));
 
     T n_dot_l = dot3(normal, light);
     T n_dot_v = dot3(normal, view);
