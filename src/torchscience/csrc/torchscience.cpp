@@ -22,6 +22,7 @@
 #include "cpu/signal_processing/filter.h"
 #include "cpu/optimization/test_functions.h"
 #include "cpu/statistics/descriptive/kurtosis.h"
+#include "cpu/statistics/descriptive/histogram.h"
 #include "cpu/integral_transform/hilbert_transform.h"
 #include "cpu/integral_transform/inverse_hilbert_transform.h"
 #include "autograd/distance/minkowski_distance.h"
