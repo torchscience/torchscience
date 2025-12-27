@@ -1,11 +1,19 @@
 #pragma once
 
 #include "operators.h"
+#include "../../../operators/special_functions.def"
 
-// Template-based registration (Sparse CSR CPU operators delegate to dense ops)
+// Arity-based dispatch helper for Sparse CSR CPU
+#define REGISTER_SPARSE_CSR_CPU_ARITY_1(m, name) REGISTER_SPARSE_CSR_CPU_UNARY(m, name)
+#define REGISTER_SPARSE_CSR_CPU_ARITY_2(m, name) REGISTER_SPARSE_CSR_CPU_BINARY(m, name)
+#define REGISTER_SPARSE_CSR_CPU_ARITY_3(m, name) REGISTER_SPARSE_CSR_CPU_TERNARY(m, name)
+#define REGISTER_SPARSE_CSR_CPU_ARITY_4(m, name) REGISTER_SPARSE_CSR_CPU_QUATERNARY(m, name)
+
+#define REGISTER_SPARSE_CSR_CPU_DISPATCH(m, name, arity) \
+    REGISTER_SPARSE_CSR_CPU_ARITY_##arity(m, name)
+
 TORCH_LIBRARY_IMPL(torchscience, SparseCsrCPU, m_sparse_csr_cpu_special_functions) {
-    REGISTER_SPARSE_CSR_CPU_UNARY(m_sparse_csr_cpu_special_functions, gamma);
-    REGISTER_SPARSE_CSR_CPU_BINARY(m_sparse_csr_cpu_special_functions, chebyshev_polynomial_t);
-    REGISTER_SPARSE_CSR_CPU_TERNARY(m_sparse_csr_cpu_special_functions, incomplete_beta);
-    REGISTER_SPARSE_CSR_CPU_QUATERNARY(m_sparse_csr_cpu_special_functions, hypergeometric_2_f_1);
+    #define REGISTER_OP(name, arity, impl) REGISTER_SPARSE_CSR_CPU_DISPATCH(m_sparse_csr_cpu_special_functions, name, arity);
+    TORCHSCIENCE_SPECIAL_FUNCTIONS(REGISTER_OP)
+    #undef REGISTER_OP
 }
