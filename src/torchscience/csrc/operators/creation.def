@@ -1,0 +1,20 @@
+// ============================================================================
+// Factory (Creation) Operators Registry
+// ============================================================================
+//
+// Format: X(name, extra_args_schema, impl_type)
+//   name         - operator name
+//   extra_args   - extra parameters beyond (int n) before TensorOptions
+//   impl_type    - fully qualified implementation (unused for schema, kept for consistency)
+//
+// Note: Factory operators are non-differentiable tensor creation operations.
+// They use CompositeImplicitAutograd or CompositeExplicitAutograd dispatch.
+// ============================================================================
+
+#ifndef TORCHSCIENCE_CREATION
+#define TORCHSCIENCE_CREATION(X) \
+    X(sine_wave, "float frequency=1.0, float sample_rate=1.0, float amplitude=1.0, float phase=0.0", \
+      torchscience::waveform::sine_wave) \
+    X(rectangular_window, "", \
+      torchscience::window_function::rectangular_window)
+#endif

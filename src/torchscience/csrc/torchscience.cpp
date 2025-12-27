@@ -10,6 +10,8 @@
 #include "operators/distance.def"
 #include "core/graphics_schema.h"
 #include "operators/graphics.def"
+#include "core/factory_schema.h"
+#include "operators/creation.def"
 
 #include "cpu/special_functions.h"
 #include "autograd/special_functions.h"
@@ -121,11 +123,12 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("butterworth_analog_bandpass_filter_backward(Tensor grad_output, int n, Tensor omega_p1, Tensor omega_p2) -> (Tensor, Tensor)");
   module.def("butterworth_analog_bandpass_filter_backward_backward(Tensor grad_grad_omega_p1, Tensor grad_grad_omega_p2, Tensor grad_output, int n, Tensor omega_p1, Tensor omega_p2) -> (Tensor, Tensor, Tensor)");
 
-  // `torchscience.signal_processing.waveform`
-  module.def("sine_wave(int n, float frequency=1.0, float sample_rate=1.0, float amplitude=1.0, float phase=0.0, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False) -> Tensor");
-
-  // `torchscience.signal_processing.window_function`
-  module.def("rectangular_window(int n, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False) -> Tensor");
+  // `torchscience.signal_processing` - factory operators (waveform, window_function)
+  // auto-generated from X-macro
+  #define DEFINE_FACTORY(name, extra_args, impl) \
+      DEFINE_FACTORY_SCHEMA(module, name, extra_args, impl);
+  TORCHSCIENCE_CREATION(DEFINE_FACTORY)
+  #undef DEFINE_FACTORY
 
   // `torchscience.special_functions` - auto-generated from X-macro
   #define DEFINE_OP(name, arity, impl) DEFINE_POINTWISE_SCHEMA(module, name, arity);
