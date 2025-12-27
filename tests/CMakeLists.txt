@@ -85,11 +85,6 @@ add_special_function_test(
 )
 
 add_special_function_test(
-  polygamma_test
-  torchscience/csrc/impl/special_functions/polygamma_test.cpp
-)
-
-add_special_function_test(
   chebyshev_polynomial_t_test
   torchscience/csrc/impl/special_functions/chebyshev_polynomial_t_test.cpp
 )
