@@ -80,12 +80,21 @@ public:
     }
 };
 
-inline at::Tensor chebyshev_polynomial_t_autograd(const at::Tensor& x, const at::Tensor& n) {
-    return ChebyshevPolynomialTForward::apply(x, n);
+inline at::Tensor chebyshev_polynomial_t(
+    const at::Tensor& x,
+    const at::Tensor& n
+) {
+    return ChebyshevPolynomialTForward::apply(
+        x,
+        n
+    );
 }
 
 }  // namespace torchscience::autograd
 
-TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {
-    m.impl("chebyshev_polynomial_t", torchscience::autograd::chebyshev_polynomial_t_autograd);
+TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {
+    module.impl(
+        "chebyshev_polynomial_t",
+        torchscience::autograd::chebyshev_polynomial_t
+    );
 }

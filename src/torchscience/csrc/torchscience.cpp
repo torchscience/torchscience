@@ -109,8 +109,8 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("hypergeometric_2_f_1_backward_backward(Tensor gg_a, Tensor gg_b, Tensor gg_c, Tensor gg_z, Tensor grad_output, Tensor a, Tensor b, Tensor c, Tensor z) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
 
   // distance
-  module.def("minkowski_distance(Tensor x, Tensor y, Tensor p) -> Tensor");
-  module.def("minkowski_distance_backward(Tensor grad_output, Tensor x, Tensor y, Tensor p) -> (Tensor, Tensor, Tensor)");
+  module.def("minkowski_distance(Tensor x, Tensor y, float p, Tensor? weight) -> Tensor");
+  module.def("minkowski_distance_backward(Tensor grad_output, Tensor x, Tensor y, float p, Tensor? weight, Tensor dist_output) -> (Tensor, Tensor, Tensor)");
 
   // graphics.shading
   module.def("cook_torrance(Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> Tensor");
@@ -128,28 +128,25 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("butterworth_analog_bandpass_filter_backward_backward(Tensor gg_omega_p1, Tensor gg_omega_p2, Tensor grad_output, int n, Tensor omega_p1, Tensor omega_p2) -> (Tensor, Tensor, Tensor)");
 
   // signal_processing.waveform
-  module.def("sawtooth_wave(int size, Tensor frequency, Tensor? dtype, Tensor? layout, Tensor? device, bool? requires_grad) -> Tensor");
-  module.def("sine_wave(int size, Tensor frequency, Tensor? dtype, Tensor? layout, Tensor? device, bool? requires_grad) -> Tensor");
-  module.def("square_wave(int size, Tensor frequency, Tensor duty_cycle, Tensor? dtype, Tensor? layout, Tensor? device, bool? requires_grad) -> Tensor");
-  module.def("triangle_wave(int size, Tensor frequency, Tensor? dtype, Tensor? layout, Tensor? device, bool? requires_grad) -> Tensor");
+  module.def("sine_wave(int n, float frequency, float sample_rate, float amplitude, float phase, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
 
   // signal_processing.window_function
-  module.def("rectangular_window(int size, Tensor? dtype, Tensor? layout, Tensor? device, bool? requires_grad) -> Tensor");
+  module.def("rectangular_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
 
   // statistics.descriptive
-  module.def("kurtosis(Tensor input, int[]? dim, bool correction, bool keepdim) -> Tensor");
-  module.def("kurtosis_backward(Tensor grad_output, Tensor input, int[]? dim, bool correction, bool keepdim) -> Tensor");
-  module.def("kurtosis_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int[]? dim, bool correction, bool keepdim) -> (Tensor, Tensor)");
+  module.def("kurtosis(Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");
+  module.def("kurtosis_backward(Tensor grad_output, Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");
+  module.def("kurtosis_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> (Tensor, Tensor)");
 
   module.def("histogram(Tensor input, int bins, float[]? range, Tensor? weight, bool density, str closed, str out_of_bounds) -> (Tensor, Tensor)");
   module.def("histogram_edges(Tensor input, Tensor bins, Tensor? weight, bool density, str closed, str out_of_bounds) -> (Tensor, Tensor)");
 
   // integral_transform
-  module.def("hilbert_transform(Tensor input, int? dim) -> Tensor");
-  module.def("hilbert_transform_backward(Tensor grad_output, Tensor input, int? dim) -> Tensor");
-  module.def("hilbert_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int? dim) -> (Tensor, Tensor)");
+  module.def("hilbert_transform(Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
+  module.def("hilbert_transform_backward(Tensor grad_output, Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
+  module.def("hilbert_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> (Tensor, Tensor)");
 
-  module.def("inverse_hilbert_transform(Tensor input, int? dim) -> Tensor");
-  module.def("inverse_hilbert_transform_backward(Tensor grad_output, Tensor input, int? dim) -> Tensor");
-  module.def("inverse_hilbert_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int? dim) -> (Tensor, Tensor)");
+  module.def("inverse_hilbert_transform(Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
+  module.def("inverse_hilbert_transform_backward(Tensor grad_output, Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
+  module.def("inverse_hilbert_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> (Tensor, Tensor)");
 }

@@ -1,26 +1,160 @@
 #pragma once
 
+#include <cmath>
+#include <vector>
+
 #include <ATen/Dispatch.h>
 #include <ATen/Parallel.h>
 #include <ATen/core/Tensor.h>
+#include <c10/macros/Macros.h>
 #include <torch/library.h>
-
-#include "../../impl/distance/minkowski_distance.h"
-#include "../../impl/distance/minkowski_distance_backward.h"
 
 namespace torchscience::cpu::distance {
 
+namespace {
+
 /**
- * CPU implementation of pairwise Minkowski distance.
+ * Compute weighted Minkowski distance between two vectors.
  *
- * Computes distance between each pair of points from x and y.
- *
- * @param x First set of points, shape (m, d)
- * @param y Second set of points, shape (n, d)
- * @param p Order of the norm
- * @param weight Optional weights, shape (d,)
- * @return Distance matrix, shape (m, n)
+ * d_p(x, y; w) = ( sum_i w_i * |x_i - y_i|^p )^(1/p)
  */
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+T minkowski_distance_pair(
+    const T* x,
+    const T* y,
+    int64_t d,
+    T p,
+    const T* w
+) {
+    T sum = T(0);
+
+    if (w == nullptr) {
+        for (int64_t i = 0; i < d; ++i) {
+            T diff = x[i] - y[i];
+            T abs_diff = std::abs(diff);
+            sum += std::pow(abs_diff, p);
+        }
+    } else {
+        for (int64_t i = 0; i < d; ++i) {
+            T diff = x[i] - y[i];
+            T abs_diff = std::abs(diff);
+            sum += w[i] * std::pow(abs_diff, p);
+        }
+    }
+
+    if (p == T(1)) {
+        return sum;
+    } else if (p == T(2)) {
+        return std::sqrt(sum);
+    } else {
+        return std::pow(sum, T(1) / p);
+    }
+}
+
+/**
+ * Compute gradients for weighted Minkowski distance.
+ *
+ * dd/dx_k = w_k * sign(x_k - y_k) * |x_k - y_k|^(p-1) / d^(p-1)
+ * dd/dy_k = -dd/dx_k
+ */
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+void minkowski_distance_backward_pair(
+    T grad_out,
+    const T* x,
+    const T* y,
+    int64_t d,
+    T p,
+    const T* w,
+    T dist,
+    T* grad_x,
+    T* grad_y
+) {
+    if (dist == T(0)) {
+        for (int64_t i = 0; i < d; ++i) {
+            grad_x[i] = T(0);
+            grad_y[i] = T(0);
+        }
+        return;
+    }
+
+    T dist_pow_pm1 = std::pow(dist, p - T(1));
+
+    for (int64_t i = 0; i < d; ++i) {
+        T diff = x[i] - y[i];
+
+        if (diff == T(0)) {
+            grad_x[i] = T(0);
+            grad_y[i] = T(0);
+            continue;
+        }
+
+        T abs_diff = std::abs(diff);
+        T sign_diff = diff >= T(0) ? T(1) : T(-1);
+
+        T abs_diff_pow_pm1;
+        if (p == T(1)) {
+            abs_diff_pow_pm1 = T(1);
+        } else if (p == T(2)) {
+            abs_diff_pow_pm1 = abs_diff;
+        } else {
+            abs_diff_pow_pm1 = std::pow(abs_diff, p - T(1));
+        }
+
+        T weight_i = (w != nullptr) ? w[i] : T(1);
+        T grad_component = weight_i * sign_diff * abs_diff_pow_pm1 / dist_pow_pm1;
+
+        grad_x[i] = grad_out * grad_component;
+        grad_y[i] = -grad_out * grad_component;
+    }
+}
+
+/**
+ * Compute gradient for weight in weighted Minkowski distance.
+ *
+ * dd/dw_k = |x_k - y_k|^p / (p * d^(p-1))
+ */
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE
+void minkowski_distance_weight_backward_pair(
+    T grad_out,
+    const T* x,
+    const T* y,
+    int64_t d,
+    T p,
+    T dist,
+    T* grad_w
+) {
+    if (dist == T(0)) {
+        for (int64_t i = 0; i < d; ++i) {
+            grad_w[i] = T(0);
+        }
+        return;
+    }
+
+    T dist_pow_pm1 = std::pow(dist, p - T(1));
+    T scale = T(1) / (p * dist_pow_pm1);
+
+    for (int64_t i = 0; i < d; ++i) {
+        T diff = x[i] - y[i];
+        T abs_diff = std::abs(diff);
+
+        T abs_diff_pow_p;
+        if (p == T(1)) {
+            abs_diff_pow_p = abs_diff;
+        } else if (p == T(2)) {
+            abs_diff_pow_p = abs_diff * abs_diff;
+        } else {
+            abs_diff_pow_p = std::pow(abs_diff, p);
+        }
+
+        grad_w[i] = grad_out * abs_diff_pow_p * scale;
+    }
+}
+
+}  // anonymous namespace
+
 inline at::Tensor minkowski_distance(
     const at::Tensor& x,
     const at::Tensor& y,
@@ -40,7 +174,6 @@ inline at::Tensor minkowski_distance(
     at::Tensor y_contig = y.contiguous();
     at::Tensor output = at::empty({m, n}, x.options());
 
-    // Handle optional weight
     at::Tensor w_contig;
     bool has_weight = weight.has_value() && weight->defined();
     if (has_weight) {
@@ -64,7 +197,7 @@ inline at::Tensor minkowski_distance(
                 for (int64_t idx = begin; idx < end; ++idx) {
                     int64_t i = idx / n;
                     int64_t j = idx % n;
-                    out_ptr[idx] = impl::distance::minkowski_distance_pair<scalar_t>(
+                    out_ptr[idx] = minkowski_distance_pair<scalar_t>(
                         x_ptr + i * d,
                         y_ptr + j * d,
                         d,
@@ -79,11 +212,6 @@ inline at::Tensor minkowski_distance(
     return output;
 }
 
-/**
- * Backward pass for Minkowski distance.
- *
- * Returns gradients for x, y, and weight (if provided).
- */
 inline std::tuple<at::Tensor, at::Tensor, at::Tensor> minkowski_distance_backward(
     const at::Tensor& grad_output,
     const at::Tensor& x,
@@ -127,8 +255,6 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> minkowski_distance_backwar
             scalar_t* grad_w_ptr = has_weight ? grad_w.data_ptr<scalar_t>() : nullptr;
             scalar_t p_val = static_cast<scalar_t>(p);
 
-            // Sequential accumulation for correctness
-            // (parallel would need atomic operations or per-thread buffers)
             std::vector<scalar_t> temp_grad_x(d);
             std::vector<scalar_t> temp_grad_y(d);
             std::vector<scalar_t> temp_grad_w(d);
@@ -138,7 +264,7 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> minkowski_distance_backwar
                     scalar_t grad_val = grad_ptr[i * n + j];
                     scalar_t dist_val = dist_ptr[i * n + j];
 
-                    impl::distance::minkowski_distance_backward_pair<scalar_t>(
+                    minkowski_distance_backward_pair<scalar_t>(
                         grad_val,
                         x_ptr + i * d,
                         y_ptr + j * d,
@@ -155,9 +281,8 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> minkowski_distance_backwar
                         grad_y_ptr[j * d + k] += temp_grad_y[k];
                     }
 
-                    // Compute weight gradient if weight was provided
                     if (has_weight) {
-                        impl::distance::minkowski_distance_weight_backward_pair<scalar_t>(
+                        minkowski_distance_weight_backward_pair<scalar_t>(
                             grad_val,
                             x_ptr + i * d,
                             y_ptr + j * d,
