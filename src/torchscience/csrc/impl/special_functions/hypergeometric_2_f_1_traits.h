@@ -6,9 +6,6 @@
  * This file provides the traits struct that bridges the element-wise
  * hypergeometric 2F1 function implementations to the tensor-level operator
  * templates (CPUQuaternaryOperator, AutogradQuaternaryOperator, etc.).
- *
- * This is kept separate from hypergeometric_2_f_1.h to avoid circular include
- * dependencies.
  */
 
 #include <tuple>
@@ -16,19 +13,19 @@
 #include <ATen/ATen.h>
 #include <c10/macros/Macros.h>
 
+#include "../../core/dispatch_helpers.h"
 #include "hypergeometric_2_f_1.h"
 #include "hypergeometric_2_f_1_backward.h"
 #include "hypergeometric_2_f_1_backward_backward.h"
 
 namespace torchscience::impl::special_functions {
 
+// Declare operator name for template instantiation
+DECLARE_OP_NAME(hypergeometric_2_f_1);
+
 /**
  * Traits struct for Gauss hypergeometric function 2F1(a, b; c; z) that provides
  * forward/backward methods compatible with the CPUQuaternaryOperator template.
- *
- * This struct bridges the element-wise implementations (hypergeometric_2_f_1,
- * hypergeometric_2_f_1_backward, hypergeometric_2_f_1_backward_backward)
- * to the tensor-level operator templates.
  */
 struct Hypergeometric2F1Impl {
     // Element-wise operations for CPU kernel dispatch
@@ -55,21 +52,16 @@ struct Hypergeometric2F1Impl {
         );
     }
 
-    // Tensor-level dispatch methods for autograd operator template
-    // These dispatch through the PyTorch operator dispatcher to invoke
-    // the appropriate backend kernel (CPU, CUDA, etc.)
+    // Tensor-level dispatch methods - delegated to dispatch helper
+    using Dispatch = ::torchscience::core::QuaternaryDispatch<hypergeometric_2_f_1_op_name>;
+
     static at::Tensor dispatch_forward(
         const at::Tensor& a,
         const at::Tensor& b,
         const at::Tensor& c,
         const at::Tensor& z
     ) {
-        return c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::hypergeometric_2_f_1", "")
-            .typed<at::Tensor(
-                const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&
-            )>()
-            .call(a, b, c, z);
+        return Dispatch::forward(a, b, c, z);
     }
 
     static std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> dispatch_backward(
@@ -79,13 +71,7 @@ struct Hypergeometric2F1Impl {
         const at::Tensor& c,
         const at::Tensor& z
     ) {
-        return c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::hypergeometric_2_f_1_backward", "")
-            .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor>(
-                const at::Tensor&, const at::Tensor&, const at::Tensor&,
-                const at::Tensor&, const at::Tensor&
-            )>()
-            .call(grad_output, a, b, c, z);
+        return Dispatch::backward(grad_output, a, b, c, z);
     }
 
     static std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> dispatch_backward_backward(
@@ -99,14 +85,10 @@ struct Hypergeometric2F1Impl {
         const at::Tensor& c,
         const at::Tensor& z
     ) {
-        return c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::hypergeometric_2_f_1_backward_backward", "")
-            .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor>(
-                const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&,
-                const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&,
-                const at::Tensor&
-            )>()
-            .call(grad_grad_a, grad_grad_b, grad_grad_c, grad_grad_z, grad_output, a, b, c, z);
+        return Dispatch::backward_backward(
+            grad_grad_a, grad_grad_b, grad_grad_c, grad_grad_z,
+            grad_output, a, b, c, z
+        );
     }
 };
 

@@ -6,9 +6,6 @@
  * This file provides the traits struct that bridges the element-wise gamma
  * implementations to the tensor-level operator templates (CPUUnaryOperator,
  * AutogradUnaryOperator, etc.).
- *
- * This is kept separate from gamma.h to avoid circular include dependencies
- * (gamma_backward.h includes gamma.h).
  */
 
 #include <tuple>
@@ -16,18 +13,19 @@
 #include <ATen/ATen.h>
 #include <c10/macros/Macros.h>
 
+#include "../../core/dispatch_helpers.h"
 #include "gamma.h"
 #include "gamma_backward.h"
 #include "gamma_backward_backward.h"
 
 namespace torchscience::impl::special_functions {
 
+// Declare operator name for template instantiation
+DECLARE_OP_NAME(gamma);
+
 /**
  * Traits struct for gamma function that provides forward/backward methods
  * compatible with the CPUUnaryOperator template.
- *
- * This struct bridges the element-wise implementations (gamma, gamma_backward,
- * gamma_backward_backward) to the tensor-level operator templates.
  */
 struct GammaImpl {
     // Element-wise operations for CPU kernel dispatch
@@ -48,24 +46,18 @@ struct GammaImpl {
         return gamma_backward_backward(gg, grad, z, has_gg);
     }
 
-    // Tensor-level dispatch methods for autograd operator template
-    // These dispatch through the PyTorch operator dispatcher to invoke
-    // the appropriate backend kernel (CPU, CUDA, etc.)
+    // Tensor-level dispatch methods - delegated to dispatch helper
+    using Dispatch = ::torchscience::core::UnaryDispatch<gamma_op_name>;
+
     static at::Tensor dispatch_forward(const at::Tensor& input) {
-        return c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::gamma", "")
-            .typed<at::Tensor(const at::Tensor&)>()
-            .call(input);
+        return Dispatch::forward(input);
     }
 
     static at::Tensor dispatch_backward(
         const at::Tensor& grad_output,
         const at::Tensor& input
     ) {
-        return c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::gamma_backward", "")
-            .typed<at::Tensor(const at::Tensor&, const at::Tensor&)>()
-            .call(grad_output, input);
+        return Dispatch::backward(grad_output, input);
     }
 
     static std::tuple<at::Tensor, at::Tensor> dispatch_backward_backward(
@@ -73,12 +65,7 @@ struct GammaImpl {
         const at::Tensor& grad_output,
         const at::Tensor& input
     ) {
-        return c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::gamma_backward_backward", "")
-            .typed<std::tuple<at::Tensor, at::Tensor>(
-                const at::Tensor&, const at::Tensor&, const at::Tensor&
-            )>()
-            .call(grad_grad_input, grad_output, input);
+        return Dispatch::backward_backward(grad_grad_input, grad_output, input);
     }
 };
 

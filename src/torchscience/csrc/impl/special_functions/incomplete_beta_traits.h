@@ -6,9 +6,6 @@
  * This file provides the traits struct that bridges the element-wise incomplete
  * beta function implementations to the tensor-level operator templates
  * (CPUTernaryOperator, AutogradTernaryOperator, etc.).
- *
- * This is kept separate from incomplete_beta.h to avoid circular include
- * dependencies.
  */
 
 #include <tuple>
@@ -16,19 +13,19 @@
 #include <ATen/ATen.h>
 #include <c10/macros/Macros.h>
 
+#include "../../core/dispatch_helpers.h"
 #include "incomplete_beta.h"
 #include "incomplete_beta_backward.h"
 #include "incomplete_beta_backward_backward.h"
 
 namespace torchscience::impl::special_functions {
 
+// Declare operator name for template instantiation
+DECLARE_OP_NAME(incomplete_beta);
+
 /**
  * Traits struct for regularized incomplete beta function I_z(a, b) that provides
  * forward/backward methods compatible with the CPUTernaryOperator template.
- *
- * This struct bridges the element-wise implementations (incomplete_beta,
- * incomplete_beta_backward, incomplete_beta_backward_backward)
- * to the tensor-level operator templates.
  */
 struct IncompleteBetaImpl {
     // Element-wise operations for CPU kernel dispatch
@@ -52,18 +49,15 @@ struct IncompleteBetaImpl {
         return incomplete_beta_backward_backward(gg1, gg2, gg3, grad, z, a, b, has_gg1, has_gg2, has_gg3);
     }
 
-    // Tensor-level dispatch methods for autograd operator template
-    // These dispatch through the PyTorch operator dispatcher to invoke
-    // the appropriate backend kernel (CPU, CUDA, etc.)
+    // Tensor-level dispatch methods - delegated to dispatch helper
+    using Dispatch = ::torchscience::core::TernaryDispatch<incomplete_beta_op_name>;
+
     static at::Tensor dispatch_forward(
         const at::Tensor& z,
         const at::Tensor& a,
         const at::Tensor& b
     ) {
-        return c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::incomplete_beta", "")
-            .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
-            .call(z, a, b);
+        return Dispatch::forward(z, a, b);
     }
 
     static std::tuple<at::Tensor, at::Tensor, at::Tensor> dispatch_backward(
@@ -72,12 +66,7 @@ struct IncompleteBetaImpl {
         const at::Tensor& a,
         const at::Tensor& b
     ) {
-        return c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::incomplete_beta_backward", "")
-            .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
-                const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&
-            )>()
-            .call(grad_output, z, a, b);
+        return Dispatch::backward(grad_output, z, a, b);
     }
 
     static std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> dispatch_backward_backward(
@@ -89,13 +78,7 @@ struct IncompleteBetaImpl {
         const at::Tensor& a,
         const at::Tensor& b
     ) {
-        return c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::incomplete_beta_backward_backward", "")
-            .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor>(
-                const at::Tensor&, const at::Tensor&, const at::Tensor&,
-                const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&
-            )>()
-            .call(grad_grad_z, grad_grad_a, grad_grad_b, grad_output, z, a, b);
+        return Dispatch::backward_backward(grad_grad_z, grad_grad_a, grad_grad_b, grad_output, z, a, b);
     }
 };
 
