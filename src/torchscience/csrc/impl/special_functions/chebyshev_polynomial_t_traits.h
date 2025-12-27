@@ -6,9 +6,6 @@
  * This file provides the traits struct that bridges the element-wise Chebyshev
  * polynomial implementations to the tensor-level operator templates
  * (CPUBinaryOperator, AutogradBinaryOperator, etc.).
- *
- * This is kept separate from chebyshev_polynomial_t.h to avoid circular include
- * dependencies.
  */
 
 #include <tuple>
@@ -16,17 +13,17 @@
 #include <ATen/ATen.h>
 #include <c10/macros/Macros.h>
 
+#include "../../core/dispatch_helpers.h"
 #include "chebyshev_polynomial_t.h"
 
 namespace torchscience::impl::special_functions {
 
+// Declare operator name for template instantiation
+DECLARE_OP_NAME(chebyshev_polynomial_t);
+
 /**
  * Traits struct for Chebyshev polynomial T_v(z) that provides forward/backward
  * methods compatible with the CPUBinaryOperator template.
- *
- * This struct bridges the element-wise implementations (chebyshev_polynomial_t,
- * chebyshev_polynomial_t_backward, chebyshev_polynomial_t_backward_backward)
- * to the tensor-level operator templates.
  */
 struct ChebyshevPolynomialTImpl {
     // Element-wise operations for CPU kernel dispatch
@@ -49,17 +46,14 @@ struct ChebyshevPolynomialTImpl {
         return chebyshev_polynomial_t_backward_backward(gg1, gg2, grad, v, z, has_gg1, has_gg2);
     }
 
-    // Tensor-level dispatch methods for autograd operator template
-    // These dispatch through the PyTorch operator dispatcher to invoke
-    // the appropriate backend kernel (CPU, CUDA, etc.)
+    // Tensor-level dispatch methods - delegated to dispatch helper
+    using Dispatch = ::torchscience::core::BinaryDispatch<chebyshev_polynomial_t_op_name>;
+
     static at::Tensor dispatch_forward(
         const at::Tensor& v,
         const at::Tensor& z
     ) {
-        return c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::chebyshev_polynomial_t", "")
-            .typed<at::Tensor(const at::Tensor&, const at::Tensor&)>()
-            .call(v, z);
+        return Dispatch::forward(v, z);
     }
 
     static std::tuple<at::Tensor, at::Tensor> dispatch_backward(
@@ -67,12 +61,7 @@ struct ChebyshevPolynomialTImpl {
         const at::Tensor& v,
         const at::Tensor& z
     ) {
-        return c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::chebyshev_polynomial_t_backward", "")
-            .typed<std::tuple<at::Tensor, at::Tensor>(
-                const at::Tensor&, const at::Tensor&, const at::Tensor&
-            )>()
-            .call(grad_output, v, z);
+        return Dispatch::backward(grad_output, v, z);
     }
 
     static std::tuple<at::Tensor, at::Tensor, at::Tensor> dispatch_backward_backward(
@@ -82,13 +71,7 @@ struct ChebyshevPolynomialTImpl {
         const at::Tensor& v,
         const at::Tensor& z
     ) {
-        return c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::chebyshev_polynomial_t_backward_backward", "")
-            .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
-                const at::Tensor&, const at::Tensor&, const at::Tensor&,
-                const at::Tensor&, const at::Tensor&
-            )>()
-            .call(grad_grad_v, grad_grad_z, grad_output, v, z);
+        return Dispatch::backward_backward(grad_grad_v, grad_grad_z, grad_output, v, z);
     }
 };
 
