@@ -1,0 +1,17 @@
+// ============================================================================
+// Transform Operators Registry
+// ============================================================================
+//
+// Format: X(name, extra_args_schema, impl_type)
+//   name         - operator name
+//   extra_args   - extra parameters beyond (Tensor input, int n, int dim)
+//   impl_type    - fully qualified traits struct type
+// ============================================================================
+
+#ifndef TORCHSCIENCE_TRANSFORMS
+#define TORCHSCIENCE_TRANSFORMS(X) \
+    X(hilbert_transform, "int padding_mode=0, float padding_value=0.0, Tensor? window=None", \
+      torchscience::impl::integral_transform::HilbertTransformImpl) \
+    X(inverse_hilbert_transform, "int padding_mode=0, float padding_value=0.0, Tensor? window=None", \
+      torchscience::impl::integral_transform::InverseHilbertTransformImpl)
+#endif
