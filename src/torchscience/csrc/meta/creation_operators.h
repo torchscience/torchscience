@@ -3,9 +3,18 @@
 #include <vector>
 #include <ATen/ATen.h>
 #include <torch/library.h>
-#include "../core/creation_common.h"
 
 namespace torchscience::meta {
+
+namespace {
+
+inline void check_size_nonnegative(const std::vector<int64_t>& shape, const char* op_name) {
+    for (auto s : shape) {
+        TORCH_CHECK(s >= 0, op_name, ": size must be non-negative, got ", s);
+    }
+}
+
+}  // anonymous namespace
 
 // MetaCreationTraits only needs output_shape - no kernel dispatch
 template<typename CreationTraits>
@@ -19,7 +28,7 @@ struct MetaCreationOperator {
         bool requires_grad
     ) {
         std::vector<int64_t> shape_vec = CreationTraits::output_shape(args...);
-        ::torchscience::core::check_size_nonnegative(shape_vec, "meta_creation_op");
+        check_size_nonnegative(shape_vec, "meta_creation_op");
 
         auto options = at::TensorOptions()
             .dtype(dtype.value_or(

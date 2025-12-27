@@ -8,11 +8,24 @@
 #include <ATen/cpu/vec/vec.h>
 #include <torch/library.h>
 
-#include "../../impl/optimization/test_functions.h"
-
 namespace torchscience::cpu::test_functions {
 
-using torchscience::impl::optimization::test_functions::check_rosenbrock_input;
+namespace {
+
+inline void check_rosenbrock_input(const at::Tensor& x, const char* fn_name) {
+    TORCH_CHECK(
+        at::isFloatingType(x.scalar_type()) || at::isComplexType(x.scalar_type()),
+        fn_name, " requires floating-point or complex input, got ",
+        x.scalar_type()
+    );
+    TORCH_CHECK(
+        x.dim() >= 1 && x.size(-1) >= 2,
+        fn_name, " requires at least 2 dimensions in the last axis, got shape ",
+        x.sizes()
+    );
+}
+
+}  // anonymous namespace
 
 namespace {
 

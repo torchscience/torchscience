@@ -1,13 +1,29 @@
 #pragma once
 
+#include <vector>
 #include <torch/extension.h>
 #include "../../cpu/creation_operators.h"
 #include "../../meta/creation_operators.h"
-#include "../../impl/window_function/rectangular_window_traits.h"
-
-using torchscience::impl::window_function::RectangularWindowTraits;
 
 namespace torchscience::window_function {
+
+namespace {
+
+struct RectangularWindowTraits {
+    static std::vector<int64_t> output_shape(int64_t n) {
+        return {n};
+    }
+
+    template<typename scalar_t>
+    static void kernel(scalar_t* output, int64_t numel, int64_t n) {
+        (void)n;  // n == numel for rectangular window
+        for (int64_t i = 0; i < numel; ++i) {
+            output[i] = scalar_t(1);
+        }
+    }
+};
+
+}  // anonymous namespace
 
 // Composite implementation that routes to appropriate backend based on device
 inline at::Tensor rectangular_window(
