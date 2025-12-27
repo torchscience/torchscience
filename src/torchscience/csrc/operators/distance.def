@@ -1,0 +1,15 @@
+// ============================================================================
+// Distance Operators Registry
+// ============================================================================
+//
+// Format: X(name, extra_args_schema, impl_type)
+//   name         - operator name
+//   extra_args   - extra parameters beyond (Tensor x, Tensor y)
+//   impl_type    - fully qualified traits struct type
+// ============================================================================
+
+#ifndef TORCHSCIENCE_DISTANCES
+#define TORCHSCIENCE_DISTANCES(X) \
+    X(minkowski_distance, "float p, Tensor? weight", \
+      torchscience::impl::distance::MinkowskiDistanceImpl)
+#endif
