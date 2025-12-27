@@ -1,0 +1,14 @@
+// ============================================================================
+// Graphics Operators Registry
+// ============================================================================
+//
+// Format: X(name, input_count, impl_type)
+//   name         - operator name
+//   input_count  - number of input tensors (e.g., 5 for cook_torrance)
+//   impl_type    - fully qualified traits struct type
+// ============================================================================
+
+#ifndef TORCHSCIENCE_GRAPHICS
+#define TORCHSCIENCE_GRAPHICS(X) \
+    X(cook_torrance, 5, torchscience::impl::graphics::shading::CookTorranceImpl)
+#endif
