@@ -1,11 +1,10 @@
 #pragma once
 
-#include "operators.h"
+#include "../core/pointwise_registration.h"
+#include "../operators/special_functions.def"
 
-// Template-based registration (Autocast operators don't need ImplTraits - dtype casting only)
 TORCH_LIBRARY_IMPL(torchscience, Autocast, m_autocast_special_functions) {
-    REGISTER_AUTOCAST_UNARY(m_autocast_special_functions, gamma);
-    REGISTER_AUTOCAST_BINARY(m_autocast_special_functions, chebyshev_polynomial_t);
-    REGISTER_AUTOCAST_TERNARY(m_autocast_special_functions, incomplete_beta);
-    REGISTER_AUTOCAST_QUATERNARY(m_autocast_special_functions, hypergeometric_2_f_1);
+    #define REGISTER_OP(name, arity, impl) REGISTER_POINTWISE_AUTOCAST(m_autocast_special_functions, name, arity);
+    TORCHSCIENCE_SPECIAL_FUNCTIONS(REGISTER_OP)
+    #undef REGISTER_OP
 }
