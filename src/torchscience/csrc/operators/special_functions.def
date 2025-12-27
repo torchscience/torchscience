@@ -1,0 +1,23 @@
+// ============================================================================
+// Special Functions Operator Registry
+// ============================================================================
+//
+// This file defines all special function operators using X-macros.
+// To add a new operator:
+//   1. Create impl/.../new_op.h with forward/backward/backward_backward kernels
+//   2. Create impl/.../new_op_traits.h with the traits struct
+//   3. Add ONE line here: X(new_op, ARITY, namespace::NewOpImpl)
+//
+// Format: X(name, arity, impl_type)
+//   name     - operator name (e.g., gamma, incomplete_beta)
+//   arity    - number of tensor inputs (1-4)
+//   impl     - fully qualified traits struct type
+// ============================================================================
+
+#ifndef TORCHSCIENCE_SPECIAL_FUNCTIONS
+#define TORCHSCIENCE_SPECIAL_FUNCTIONS(X) \
+    X(gamma,                    1, torchscience::impl::special_functions::GammaImpl) \
+    X(chebyshev_polynomial_t,   2, torchscience::impl::special_functions::ChebyshevPolynomialTImpl) \
+    X(incomplete_beta,          3, torchscience::impl::special_functions::IncompleteBetaImpl) \
+    X(hypergeometric_2_f_1,     4, torchscience::impl::special_functions::Hypergeometric2F1Impl)
+#endif
