@@ -4,7 +4,7 @@
 #include <tuple>
 
 #include <ATen/ATen.h>
-#include <c10/core/Dispatcher.h>
+#include <ATen/core/dispatch/Dispatcher.h>
 
 namespace torchscience::core {
 

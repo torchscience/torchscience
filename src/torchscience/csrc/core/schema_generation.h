@@ -115,9 +115,9 @@ struct PointwiseSchema<4> {
 // Helper to register all schemas for a pointwise operator
 template<std::size_t Arity>
 inline void register_pointwise_schema(torch::Library& m, const char* name) {
-    m.def(PointwiseSchema<Arity>::forward(name));
-    m.def(PointwiseSchema<Arity>::backward(name));
-    m.def(PointwiseSchema<Arity>::backward_backward(name));
+    m.def(PointwiseSchema<Arity>::forward(name).c_str());
+    m.def(PointwiseSchema<Arity>::backward(name).c_str());
+    m.def(PointwiseSchema<Arity>::backward_backward(name).c_str());
 }
 
 }  // namespace torchscience::core
