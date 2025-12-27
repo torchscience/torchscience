@@ -2,6 +2,8 @@
 
 #include "core/schema_generation.h"
 #include "operators/special_functions.def"
+#include "core/reduction_schema.h"
+#include "operators/reductions.def"
 
 #include "cpu/special_functions.h"
 #include "autograd/special_functions.h"
@@ -121,10 +123,11 @@ TORCH_LIBRARY(torchscience, module) {
   TORCHSCIENCE_SPECIAL_FUNCTIONS(DEFINE_OP)
   #undef DEFINE_OP
 
-  // `torchscience.statistics.descriptive`
-  module.def("kurtosis(Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");
-  module.def("kurtosis_backward(Tensor grad_output, Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");
-  module.def("kurtosis_backward_backward(Tensor grad_grad_input, Tensor grad_output, Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> (Tensor, Tensor)");
+  // `torchscience.statistics.descriptive` - auto-generated from X-macro
+  #define DEFINE_REDUCTION(name, extra_args, extra_count, impl) \
+      DEFINE_REDUCTION_SCHEMA(module, name, extra_args, extra_count, impl);
+  TORCHSCIENCE_REDUCTIONS(DEFINE_REDUCTION)
+  #undef DEFINE_REDUCTION
 
   // `torchscience.statistics.descriptive` - histogram (non-differentiable)
   module.def("histogram(Tensor input, int bins, float[]? range, Tensor? weight, bool density, str closed, str out_of_bounds) -> (Tensor, Tensor)");

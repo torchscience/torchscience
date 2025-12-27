@@ -55,9 +55,9 @@ inline void register_reduction_schema(
     const char* name,
     const char* extra_args
 ) {
-    m.def(ReductionSchema::forward(name, extra_args));
-    m.def(ReductionSchema::backward(name, extra_args));
-    m.def(ReductionSchema::backward_backward(name, extra_args));
+    m.def(ReductionSchema::forward(name, extra_args).c_str());
+    m.def(ReductionSchema::backward(name, extra_args).c_str());
+    m.def(ReductionSchema::backward_backward(name, extra_args).c_str());
 }
 
 }  // namespace torchscience::core
