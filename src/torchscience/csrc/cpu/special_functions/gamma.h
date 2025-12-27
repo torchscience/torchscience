@@ -13,29 +13,28 @@ namespace torchscience::cpu {
 
 namespace {
 
-inline constexpr double kGammaG = 7.0;
-inline constexpr double kGammaCoefficients[] = {
-    0.99999999999980993,  676.5203681218851,
-    -1259.1392167224028,  771.32342877765313,
-    -176.61502916214059,  12.507343278686905,
-    -0.13857109526572012, 9.9843695780195716e-6,
-    1.5056327351493116e-7};
-
-template <typename T> T gamma_kernel(T z) {
-  const T g = static_cast<T>(kGammaG);
+template <typename T> T gamma_forward_kernel(T z) {
+  constexpr double kGammaG = 7.0;
+  constexpr double kGammaCoefficients[] = {
+      0.99999999999980993,  676.5203681218851,
+      -1259.1392167224028,  771.32342877765313,
+      -176.61502916214059,  12.507343278686905,
+      -0.13857109526572012, 9.9843695780195716e-6,
+      1.5056327351493116e-7};
 
   if (z < T(0.5)) {
-    return static_cast<T>(M_PI) / (std::sin(static_cast<T>(M_PI) * z) * gamma_kernel(T(1) - z));
+    return static_cast<T>(M_PI) / (std::sin(static_cast<T>(M_PI) * z) * gamma_forward_kernel(T(1) - z));
   }
 
-  z -= T(1);
+  T z_adj = z - T(1);
   T x = static_cast<T>(kGammaCoefficients[0]);
   for (int i = 1; i < 9; ++i) {
-    x += static_cast<T>(kGammaCoefficients[i]) / (z + T(i));
+    x += static_cast<T>(kGammaCoefficients[i]) / (z_adj + T(i));
   }
 
-  T t = z + g + T(0.5);
-  return std::sqrt(static_cast<T>(2 * M_PI)) * std::pow(t, z + T(0.5)) * std::exp(-t) * x;
+  const T g = static_cast<T>(kGammaG);
+  T t = z_adj + g + T(0.5);
+  return std::sqrt(static_cast<T>(2 * M_PI)) * std::pow(t, z_adj + T(0.5)) * std::exp(-t) * x;
 }
 
 template <typename T> T digamma_kernel(T x) {
@@ -82,14 +81,7 @@ inline at::Tensor gamma_forward(
     iterator.common_dtype(),
     "gamma_cpu",
     [&] {
-      at::native::cpu_kernel(
-        iterator,
-        [](
-          scalar_t x
-        ) -> scalar_t {
-          return gamma_kernel(x);
-        }
-      );
+      at::native::cpu_kernel(iterator, gamma_forward_kernel<scalar_t>);
     }
   );
 
@@ -122,7 +114,7 @@ inline at::Tensor gamma_backward(
           scalar_t g,
           scalar_t z
         ) -> scalar_t {
-          return g * gamma_kernel(z) * digamma_kernel(z);
+          return g * gamma_forward_kernel(z) * digamma_kernel(z);
         }
       );
     }
@@ -166,7 +158,7 @@ inline std::tuple<at::Tensor, at::Tensor> gamma_backward_backward(
           scalar_t g,
           scalar_t z
         ) -> std::tuple<scalar_t, scalar_t> {
-          scalar_t gamma_z = gamma_kernel(z);
+          scalar_t gamma_z = gamma_forward_kernel(z);
           scalar_t psi_z = digamma_kernel(z);
           scalar_t psi1_z = trigamma_kernel(z);
           scalar_t gg_out = gg * gamma_z * psi_z;
