@@ -1,0 +1,14 @@
+// ============================================================================
+// Reduction Operators Registry
+// ============================================================================
+//
+// Format: X(name, extra_args_schema, extra_args_count, impl_type)
+//   name            - operator name (e.g., kurtosis)
+//   extra_args      - extra non-tensor arguments as schema string
+//   impl_type       - fully qualified traits struct type
+// ============================================================================
+
+#ifndef TORCHSCIENCE_REDUCTIONS
+#define TORCHSCIENCE_REDUCTIONS(X) \
+    X(kurtosis, "bool fisher, bool bias", 2, torchscience::impl::statistics::descriptive::KurtosisImpl)
+#endif
