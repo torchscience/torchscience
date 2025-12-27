@@ -58,11 +58,6 @@ add_benchmark(
 )
 
 add_benchmark(
-  polygamma_benchmark
-  torchscience/csrc/impl/special_functions/polygamma_benchmark.cpp
-)
-
-add_benchmark(
   gamma_benchmark
   torchscience/csrc/impl/special_functions/gamma_benchmark.cpp
 )
