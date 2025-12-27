@@ -1,10 +1,6 @@
 #pragma once
 
-#include "../core/pointwise_registration.h"
-#include "../operators/special_functions.def"
-
-TORCH_LIBRARY_IMPL(torchscience, Autocast, m_autocast_special_functions) {
-    #define REGISTER_OP(name, arity, impl) REGISTER_POINTWISE_AUTOCAST(m_autocast_special_functions, name, arity);
-    TORCHSCIENCE_SPECIAL_FUNCTIONS(REGISTER_OP)
-    #undef REGISTER_OP
-}
+#include "special_functions/gamma.h"
+#include "special_functions/chebyshev_polynomial_t.h"
+#include "special_functions/incomplete_beta.h"
+#include "special_functions/hypergeometric_2_f_1.h"
