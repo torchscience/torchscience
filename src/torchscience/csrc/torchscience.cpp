@@ -8,6 +8,8 @@
 #include "operators/transforms.def"
 #include "core/pairwise_schema.h"
 #include "operators/distance.def"
+#include "core/graphics_schema.h"
+#include "operators/graphics.def"
 
 #include "cpu/special_functions.h"
 #include "autograd/special_functions.h"
@@ -103,10 +105,11 @@ TORCH_LIBRARY(torchscience, module) {
   TORCHSCIENCE_DISTANCES(DEFINE_DISTANCE)
   #undef DEFINE_DISTANCE
 
-  // `torchscience.graphics.shading`
-  module.def("cook_torrance(Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> Tensor");
-  module.def("cook_torrance_backward(Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
-  module.def("cook_torrance_backward_backward(Tensor gg_normal, Tensor gg_view, Tensor gg_light, Tensor gg_roughness, Tensor gg_f0, Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
+  // `torchscience.graphics.shading` - auto-generated from X-macro
+  #define DEFINE_GRAPHICS(name, input_count, impl) \
+      DEFINE_GRAPHICS_SCHEMA(module, name, input_count, impl);
+  TORCHSCIENCE_GRAPHICS(DEFINE_GRAPHICS)
+  #undef DEFINE_GRAPHICS
 
   // `torchscience.optimization.test_functions`
   module.def("rosenbrock(Tensor x, Tensor a, Tensor b) -> Tensor");
