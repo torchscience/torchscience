@@ -82,17 +82,15 @@
  *      to enable collection of convergence statistics (iterations, error, etc.)
  */
 
+#include <algorithm>
 #include <c10/macros/Macros.h>
 #include <c10/util/complex.h>
-#include <algorithm>
 #include <cmath>
-#include <tuple>
-#include <type_traits>
 #include <limits>
+#include <tuple>
 
-#include "digamma.h"
-#include "gamma.h"
 #include "adaptive_quadrature.h"
+#include "digamma.h"
 #include "hypergeometric_2_f_1.h"
 
 namespace torchscience::impl::special_functions {

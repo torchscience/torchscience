@@ -65,7 +65,6 @@
 #include <algorithm>
 #include <cmath>
 #include <tuple>
-#include <type_traits>
 
 namespace torchscience::impl::special_functions {
 

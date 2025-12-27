@@ -130,20 +130,64 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scala
   // =========================================================================
 
   // Get first derivatives at perturbed a values
-  auto [df_da_ap, df_db_ap, df_dc_ap, df_dz_ap] = hypergeometric_2_f_1_backward(scalar_t(1), a + h_s, b, c, z);
-  auto [df_da_am, df_db_am, df_dc_am, df_dz_am] = hypergeometric_2_f_1_backward(scalar_t(1), a - h_s, b, c, z);
+  auto [
+    df_da_ap,
+    df_db_ap,
+    df_dc_ap,
+    df_dz_ap
+  ] = hypergeometric_2_f_1_backward(scalar_t(1), a + h_s, b, c, z);
+
+  auto [
+    df_da_am,
+    df_db_am,
+    df_dc_am,
+    df_dz_am
+  ] = hypergeometric_2_f_1_backward(scalar_t(1), a - h_s, b, c, z);
 
   // Get first derivatives at perturbed b values
-  auto [df_da_bp, df_db_bp, df_dc_bp, df_dz_bp] = hypergeometric_2_f_1_backward(scalar_t(1), a, b + h_s, c, z);
-  auto [df_da_bm, df_db_bm, df_dc_bm, df_dz_bm] = hypergeometric_2_f_1_backward(scalar_t(1), a, b - h_s, c, z);
+  auto [
+    df_da_bp,
+    df_db_bp,
+    df_dc_bp,
+    df_dz_bp
+  ] = hypergeometric_2_f_1_backward(scalar_t(1), a, b + h_s, c, z);
+
+  auto [
+    df_da_bm,
+    df_db_bm,
+    df_dc_bm,
+    df_dz_bm
+  ] = hypergeometric_2_f_1_backward(scalar_t(1), a, b - h_s, c, z);
 
   // Get first derivatives at perturbed c values
-  auto [df_da_cp, df_db_cp, df_dc_cp, df_dz_cp] = hypergeometric_2_f_1_backward(scalar_t(1), a, b, c + h_s, z);
-  auto [df_da_cm, df_db_cm, df_dc_cm, df_dz_cm] = hypergeometric_2_f_1_backward(scalar_t(1), a, b, c - h_s, z);
+  auto [
+    df_da_cp,
+    df_db_cp,
+    df_dc_cp,
+    df_dz_cp
+  ] = hypergeometric_2_f_1_backward(scalar_t(1), a, b, c + h_s, z);
+
+  auto [
+    df_da_cm,
+    df_db_cm,
+    df_dc_cm,
+    df_dz_cm
+  ] = hypergeometric_2_f_1_backward(scalar_t(1), a, b, c - h_s, z);
 
   // Get first derivatives at perturbed z values
-  auto [df_da_zp, df_db_zp, df_dc_zp, df_dz_zp] = hypergeometric_2_f_1_backward(scalar_t(1), a, b, c, z + h_s);
-  auto [df_da_zm, df_db_zm, df_dc_zm, df_dz_zm] = hypergeometric_2_f_1_backward(scalar_t(1), a, b, c, z - h_s);
+  auto [
+    df_da_zp,
+    df_db_zp,
+    df_dc_zp,
+    df_dz_zp
+  ] = hypergeometric_2_f_1_backward(scalar_t(1), a, b, c, z + h_s);
+
+  auto [
+    df_da_zm,
+    df_db_zm,
+    df_dc_zm,
+    df_dz_zm
+  ] = hypergeometric_2_f_1_backward(scalar_t(1), a, b, c, z - h_s);
 
   // Compute pure second derivatives: d²f/dx²
   scalar_t d2f_da2 = (df_da_ap - df_da_am) / two_h;
@@ -152,8 +196,7 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scala
 
   // For d²f/dz², use analytical formula for better accuracy:
   // d²f/dz² = (ab/c) * ((a+1)(b+1)/(c+1)) * 2F1(a+2, b+2; c+2; z)
-  scalar_t d2f_dz2 = (a * b / c) * ((a + scalar_t(1)) * (b + scalar_t(1)) / (c + scalar_t(1)))
-                   * hypergeometric_2_f_1(a + scalar_t(2), b + scalar_t(2), c + scalar_t(2), z);
+  scalar_t d2f_dz2 = a * b / c * ((a + scalar_t(1)) * (b + scalar_t(1)) / (c + scalar_t(1))) * hypergeometric_2_f_1(a + scalar_t(2), b + scalar_t(2), c + scalar_t(2), z);
 
   // Compute mixed second derivatives: d²f/dxdy (symmetric, so d²f/dxdy = d²f/dydx)
   // d²f/dadb = d(df/da)/db = (df/da(b+h) - df/da(b-h)) / (2h)
@@ -175,18 +218,21 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scala
       gradient_c += gradient_gradient_a * gradient_output * std::conj(d2f_dadc);
       gradient_z += gradient_gradient_a * gradient_output * std::conj(d2f_dadz);
     }
+
     if (has_gradient_gradient_b) {
       gradient_a += gradient_gradient_b * gradient_output * std::conj(d2f_dadb);  // symmetric
       gradient_b += gradient_gradient_b * gradient_output * std::conj(d2f_db2);
       gradient_c += gradient_gradient_b * gradient_output * std::conj(d2f_dbdc);
       gradient_z += gradient_gradient_b * gradient_output * std::conj(d2f_dbdz);
     }
+
     if (has_gradient_gradient_c) {
       gradient_a += gradient_gradient_c * gradient_output * std::conj(d2f_dadc);  // symmetric
       gradient_b += gradient_gradient_c * gradient_output * std::conj(d2f_dbdc);  // symmetric
       gradient_c += gradient_gradient_c * gradient_output * std::conj(d2f_dc2);
       gradient_z += gradient_gradient_c * gradient_output * std::conj(d2f_dcdz);
     }
+
     if (has_gradient_gradient_z) {
       gradient_a += gradient_gradient_z * gradient_output * std::conj(d2f_dadz);  // symmetric
       gradient_b += gradient_gradient_z * gradient_output * std::conj(d2f_dbdz);  // symmetric
@@ -200,18 +246,21 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scala
       gradient_c += gradient_gradient_a * gradient_output * d2f_dadc;
       gradient_z += gradient_gradient_a * gradient_output * d2f_dadz;
     }
+
     if (has_gradient_gradient_b) {
       gradient_a += gradient_gradient_b * gradient_output * d2f_dadb;  // symmetric
       gradient_b += gradient_gradient_b * gradient_output * d2f_db2;
       gradient_c += gradient_gradient_b * gradient_output * d2f_dbdc;
       gradient_z += gradient_gradient_b * gradient_output * d2f_dbdz;
     }
+
     if (has_gradient_gradient_c) {
       gradient_a += gradient_gradient_c * gradient_output * d2f_dadc;  // symmetric
       gradient_b += gradient_gradient_c * gradient_output * d2f_dbdc;  // symmetric
       gradient_c += gradient_gradient_c * gradient_output * d2f_dc2;
       gradient_z += gradient_gradient_c * gradient_output * d2f_dcdz;
     }
+
     if (has_gradient_gradient_z) {
       gradient_a += gradient_gradient_z * gradient_output * d2f_dadz;  // symmetric
       gradient_b += gradient_gradient_z * gradient_output * d2f_dbdz;  // symmetric

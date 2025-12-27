@@ -77,15 +77,11 @@
 #include <c10/util/complex.h>
 #include <cmath>
 #include <tuple>
-#include <type_traits>
 #include <limits>
 
 #include "factorial.h"
-#include "gamma.h"
 #include "digamma.h"
 #include "trigamma.h"
-#include "sin_pi.h"
-#include "cos_pi.h"
 #include "log_gamma.h"
 #include "sign_gamma.h"
 
