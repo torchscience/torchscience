@@ -27,8 +27,6 @@
 #include "composite/signal_processing/window_functions.h"
 #include "composite/signal_processing/waveform.h"
 #include "composite/optimization/test_functions.h"
-// Note: batching/optimization/test_functions.h disabled - functorch batch rules
-// require different registration for custom ops (not TORCH_LIBRARY_IMPL)
 
 #include "cpu/distance/minkowski_distance.h"
 #include "cpu/graphics/shading/cook_torrance.h"
