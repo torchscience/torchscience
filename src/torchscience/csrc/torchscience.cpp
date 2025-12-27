@@ -6,6 +6,8 @@
 #include "operators/reductions.def"
 #include "core/transform_schema.h"
 #include "operators/transforms.def"
+#include "core/pairwise_schema.h"
+#include "operators/distance.def"
 
 #include "cpu/special_functions.h"
 #include "autograd/special_functions.h"
@@ -95,9 +97,11 @@ extern "C" {
 }
 
 TORCH_LIBRARY(torchscience, module) {
-  // `torchscience.distance`
-  module.def("minkowski_distance(Tensor x, Tensor y, float p, Tensor? weight) -> Tensor");
-  module.def("minkowski_distance_backward(Tensor grad_output, Tensor x, Tensor y, float p, Tensor? weight, Tensor dist_output) -> (Tensor, Tensor, Tensor)");
+  // `torchscience.distance` - auto-generated from X-macro
+  #define DEFINE_DISTANCE(name, extra_args, impl) \
+      DEFINE_PAIRWISE_SCHEMA(module, name, extra_args, impl);
+  TORCHSCIENCE_DISTANCES(DEFINE_DISTANCE)
+  #undef DEFINE_DISTANCE
 
   // `torchscience.graphics.shading`
   module.def("cook_torrance(Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> Tensor");
