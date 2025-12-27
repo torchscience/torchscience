@@ -30,11 +30,9 @@
 #include <c10/util/complex.h>
 #include <cmath>
 #include <limits>
-#include <type_traits>
 
 #include "lanczos_approximation.h"  // for lanczos_series, kLanczosG
 #include "sin_pi.h"                 // for sin_pi
-#include "digamma.h"                // for is_nonpositive_integer
 
 namespace torchscience::impl::special_functions {
 

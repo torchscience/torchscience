@@ -1,18 +1,10 @@
 #pragma once
 
-/*
- * Gauss Hypergeometric Function 2F1(a, b; c; z) - Backward Pass (First Derivatives)
- *
- * This file contains the first-order backward pass for the hypergeometric function,
- * computing gradients with respect to parameters a, b, c, and z.
- */
-
 #include <c10/macros/Macros.h>
 #include <c10/util/complex.h>
 #include <cmath>
-#include <tuple>
-#include <type_traits>
 #include <limits>
+#include <tuple>
 
 #include "hypergeometric_2_f_1.h"
 
@@ -114,23 +106,38 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE std::tuple<scalar_t, scalar_t, scalar_t, scala
     d_z = hypergeometric_2f1_derivative(a, b, c, z);
   } else if (one_minus_z_mag < z_mag) {
     auto [value, da, db, dc] = hypergeometric_2f1_one_minus_z_transform_with_param_derivatives(a, b, c, z);
+
     (void)value;
 
     d_a = da;
     d_b = db;
     d_c = dc;
+
     d_z = hypergeometric_2f1_derivative(a, b, c, z);
   } else {
-    auto [value, da, db, dc] = hypergeometric_2f1_series_with_param_derivatives(a, b, c, z);
+    auto [
+      value,
+      da,
+      db,
+      dc
+    ] = hypergeometric_2f1_series_with_param_derivatives(
+      a,
+      b,
+      c,
+      z
+    );
+
     (void)value;
 
     d_a = da;
     d_b = db;
     d_c = dc;
+
     d_z = hypergeometric_2f1_derivative(a, b, c, z);
   }
 
   scalar_t gradient_a, gradient_b, gradient_c, gradient_z;
+
   if constexpr (c10::is_complex<scalar_t>::value) {
     gradient_a = gradient_output * std::conj(d_a);
     gradient_b = gradient_output * std::conj(d_b);

@@ -19,6 +19,7 @@ Torchscience supports several operator categories, each with its own signature p
 | **Transforms** | `(Tensor input, int n, int dim, <extra_args>)` | `hilbert_transform(input, n, dim, padding_mode, ...)` |
 | **Pairwise Distance** | `(Tensor x, Tensor y, <extra_args>)` | `minkowski_distance(x, y, p, weight)` |
 | **Graphics** | `(Tensor t1, ..., Tensor tN)` with N inputs | `cook_torrance(t1, t2, t3, t4, t5)` |
+| **Factory** | `(int n, <extra_args>, *, TensorOptions)` | `sine_wave(n, frequency, ...)`, `rectangular_window(n)` |
 
 ## Pointwise Operators
 
@@ -329,6 +330,97 @@ Edit `src/torchscience/csrc/operators/graphics.def`:
 
 ---
 
+## Factory Operators
+
+Factory operators create tensors from scalar parameters (like size and frequency). They are **non-differentiable** tensor creation operations that use TensorOptions. They follow the signature pattern:
+
+```
+op(int n, <extra_args>, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False) -> Tensor
+```
+
+### X-Macro Format
+
+```cpp
+X(name, extra_args_schema, impl_type)
+```
+
+| Field | Description |
+|-------|-------------|
+| `name` | Operator name (e.g., `sine_wave`, `rectangular_window`) |
+| `extra_args_schema` | Extra parameters before TensorOptions (e.g., `"float frequency=1.0, float sample_rate=1.0"`) |
+| `impl_type` | Fully qualified implementation function |
+
+### Generated Schemas
+
+Factory operators only generate a forward schema (no backward needed):
+
+- **Forward**: `op(int n, <extra_args>, *, TensorOptions) -> Tensor`
+
+### Adding a Factory Operator
+
+#### 1. Implement the Composite Function
+
+Create the implementation in `src/torchscience/csrc/composite/<category>/<operator>.h`:
+
+```cpp
+#pragma once
+
+#include <torch/extension.h>
+
+namespace torchscience::<category> {
+
+inline at::Tensor my_factory(
+    int64_t n,
+    double param1,
+    const c10::optional<at::ScalarType> dtype,
+    const c10::optional<at::Layout> layout,
+    const c10::optional<at::Device> device,
+    const bool requires_grad
+) {
+    auto options = at::TensorOptions()
+        .dtype(dtype.value_or(c10::typeMetaToScalarType(at::get_default_dtype())))
+        .layout(layout.value_or(at::kStrided))
+        .device(device.value_or(at::kCPU))
+        .requires_grad(false);
+
+    // Create your tensor
+    at::Tensor result = at::ones(n, options) * param1;
+
+    if (requires_grad) {
+        result = result.requires_grad_(true);
+    }
+
+    return result;
+}
+
+}  // namespace torchscience::<category>
+
+TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
+    module.impl("my_factory", &torchscience::<category>::my_factory);
+}
+```
+
+#### 2. Add to the X-Macro Definition
+
+Edit `src/torchscience/csrc/operators/creation.def`:
+
+```cpp
+#ifndef TORCHSCIENCE_CREATION
+#define TORCHSCIENCE_CREATION(X) \
+    X(sine_wave, "float frequency=1.0, float sample_rate=1.0, float amplitude=1.0, float phase=0.0", \
+      torchscience::waveform::sine_wave) \
+    X(rectangular_window, "", \
+      torchscience::window_function::rectangular_window) \
+    X(my_factory, "float param1=1.0", \
+      torchscience::my_category::my_factory)
+//    ^name       ^extra args schema (empty string for no extra args)   ^implementation
+#endif
+```
+
+Note: Factory operators typically use `CompositeImplicitAutograd` or `CompositeExplicitAutograd` for dispatch, so they don't need separate CPU/Meta/Autograd backend registrations.
+
+---
+
 ## File Structure
 
 ```
@@ -339,13 +431,15 @@ src/torchscience/csrc/
 │   ├── reduction_schema.h        # Schema generators for reductions
 │   ├── transform_schema.h        # Schema generators for transforms
 │   ├── pairwise_schema.h         # Schema generators for pairwise distance
-│   └── graphics_schema.h         # Schema generators for graphics
+│   ├── graphics_schema.h         # Schema generators for graphics
+│   └── factory_schema.h          # Schema generators for factory operators
 ├── operators/
 │   ├── special_functions.def     # Pointwise operators X-macro definitions
 │   ├── reductions.def            # Reduction operators X-macro definitions
 │   ├── transforms.def            # Transform operators X-macro definitions
 │   ├── distance.def              # Pairwise distance operators X-macro definitions
-│   └── graphics.def              # Graphics operators X-macro definitions
+│   ├── graphics.def              # Graphics operators X-macro definitions
+│   └── creation.def              # Factory operators X-macro definitions
 ├── impl/
 │   ├── special_functions/
 │   │   ├── gamma.h               # Kernel implementation
