@@ -4,6 +4,8 @@
 #include "operators/special_functions.def"
 #include "core/reduction_schema.h"
 #include "operators/reductions.def"
+#include "core/transform_schema.h"
+#include "operators/transforms.def"
 
 #include "cpu/special_functions.h"
 #include "autograd/special_functions.h"
@@ -133,14 +135,11 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("histogram(Tensor input, int bins, float[]? range, Tensor? weight, bool density, str closed, str out_of_bounds) -> (Tensor, Tensor)");
   module.def("histogram_edges(Tensor input, Tensor bins, Tensor? weight, bool density, str closed, str out_of_bounds) -> (Tensor, Tensor)");
 
-  // `torchscience.integral_transform`
+  // `torchscience.integral_transform` - auto-generated from X-macro
   // n=-1 means use input size along dim (no padding/truncation)
   // padding_mode: 0=constant, 1=reflect, 2=replicate, 3=circular
-  module.def("hilbert_transform(Tensor input, int n=-1, int dim=-1, int padding_mode=0, float padding_value=0.0, Tensor? window=None) -> Tensor");
-  module.def("hilbert_transform_backward(Tensor grad_output, Tensor input, int n, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
-  module.def("hilbert_transform_backward_backward(Tensor grad_grad_input, Tensor grad_output, Tensor input, int n, int dim, int padding_mode, float padding_value, Tensor? window) -> (Tensor, Tensor)");
-
-  module.def("inverse_hilbert_transform(Tensor input, int n=-1, int dim=-1, int padding_mode=0, float padding_value=0.0, Tensor? window=None) -> Tensor");
-  module.def("inverse_hilbert_transform_backward(Tensor grad_output, Tensor input, int n, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
-  module.def("inverse_hilbert_transform_backward_backward(Tensor grad_grad_input, Tensor grad_output, Tensor input, int n, int dim, int padding_mode, float padding_value, Tensor? window) -> (Tensor, Tensor)");
+  #define DEFINE_TRANSFORM(name, extra_args, impl) \
+      DEFINE_TRANSFORM_SCHEMA(module, name, extra_args, impl);
+  TORCHSCIENCE_TRANSFORMS(DEFINE_TRANSFORM)
+  #undef DEFINE_TRANSFORM
 }
