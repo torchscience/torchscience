@@ -49,6 +49,24 @@ template <typename T> T digamma_kernel(T x) {
   return result;
 }
 
+template <typename T> T gamma_backward_kernel(T g, T z) {
+  // Compute gamma(z)
+  T gamma_z = gamma_forward_kernel(z);
+
+  // Compute digamma(z) - inlined
+  T psi = T(0);
+  T x = z;
+  while (x < T(6)) {
+    psi -= T(1) / x;
+    x += T(1);
+  }
+  T x2 = T(1) / (x * x);
+  psi += std::log(x) - T(0.5) / x -
+         x2 * (T(1.0 / 12) - x2 * (T(1.0 / 120) - x2 * T(1.0 / 252)));
+
+  return g * gamma_z * psi;
+}
+
 template <typename T> T trigamma_kernel(T x) {
   T result = T(0);
   while (x < T(6)) {
@@ -108,15 +126,7 @@ inline at::Tensor gamma_backward(
     iterator.common_dtype(),
     "gamma_backward_cpu",
     [&] {
-      at::native::cpu_kernel(
-        iterator,
-        [](
-          scalar_t g,
-          scalar_t z
-        ) -> scalar_t {
-          return g * gamma_forward_kernel(z) * digamma_kernel(z);
-        }
-      );
+      at::native::cpu_kernel(iterator, gamma_backward_kernel<scalar_t>);
     }
   );
 
