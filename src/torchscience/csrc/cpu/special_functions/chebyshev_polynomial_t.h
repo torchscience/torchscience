@@ -23,6 +23,14 @@ template <typename T> T chebyshev_polynomial_t_forward_kernel(T x, T n) {
   return sign * std::cosh(n * std::acosh(-x));
 }
 
+template <typename T>
+std::tuple<T, T> chebyshev_polynomial_t_backward_kernel(T g, T x, T n) {
+  T eps = T(1e-6);
+  T grad_x = g * n * (chebyshev_polynomial_t_forward_kernel(x + eps, n) -
+                       chebyshev_polynomial_t_forward_kernel(x - eps, n)) / (T(2) * eps);
+  return {grad_x, T(0)};
+}
+
 } // anonymous namespace
 
 inline at::Tensor chebyshev_polynomial_t_forward(
@@ -78,28 +86,12 @@ inline std::tuple<at::Tensor, at::Tensor> chebyshev_polynomial_t_backward(
     [&] {
       at::native::cpu_kernel_multiple_outputs(
         iterator,
-        [](
-          scalar_t g,
-          scalar_t x,
-          scalar_t n
-        ) -> std::tuple<scalar_t, scalar_t> {
-          scalar_t eps = scalar_t(1e-6);
-
-          scalar_t grad_x = g * n * (chebyshev_polynomial_t_forward_kernel(x + eps, n) - chebyshev_polynomial_t_forward_kernel(x - eps, n)) / (scalar_t(2) * eps);
-
-          return {
-            grad_x,
-            scalar_t(0)
-          };
-        }
+        chebyshev_polynomial_t_backward_kernel<scalar_t>
       );
     }
   );
 
-  return {
-    iterator.output(0),
-    iterator.output(1)
-  };
+  return {iterator.output(0), iterator.output(1)};
 }
 
 inline std::tuple<at::Tensor, at::Tensor, at::Tensor> chebyshev_polynomial_t_backward_backward(
