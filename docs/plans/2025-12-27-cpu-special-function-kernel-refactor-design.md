@@ -1,5 +1,7 @@
 # CPU Special Function Kernel Refactor Design
 
+**Status: Complete**
+
 ## Summary
 
 Refactor CPU special function operators to separate pure scalar kernels from TensorIterator dispatch. Each operator will have exactly three kernel functions (`*_forward_kernel`, `*_backward_kernel`, `*_backward_backward_kernel`) with all math inlined.
