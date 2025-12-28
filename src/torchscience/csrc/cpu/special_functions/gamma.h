@@ -37,18 +37,6 @@ template <typename T> T gamma_forward_kernel(T z) {
   return std::sqrt(static_cast<T>(2 * M_PI)) * std::pow(t, z_adj + T(0.5)) * std::exp(-t) * x;
 }
 
-template <typename T> T digamma_kernel(T x) {
-  T result = T(0);
-  while (x < T(6)) {
-    result -= T(1) / x;
-    x += T(1);
-  }
-  T x2 = T(1) / (x * x);
-  result += std::log(x) - T(0.5) / x -
-            x2 * (T(1.0 / 12) - x2 * (T(1.0 / 120) - x2 * T(1.0 / 252)));
-  return result;
-}
-
 template <typename T> T gamma_backward_kernel(T g, T z) {
   // Compute gamma(z)
   T gamma_z = gamma_forward_kernel(z);
@@ -67,16 +55,37 @@ template <typename T> T gamma_backward_kernel(T g, T z) {
   return g * gamma_z * psi;
 }
 
-template <typename T> T trigamma_kernel(T x) {
-  T result = T(0);
+template <typename T>
+std::tuple<T, T> gamma_backward_backward_kernel(T gg, T g, T z) {
+  // Compute gamma(z)
+  T gamma_z = gamma_forward_kernel(z);
+
+  // Compute digamma(z) - inlined
+  T psi = T(0);
+  T x = z;
   while (x < T(6)) {
-    result += T(1) / (x * x);
+    psi -= T(1) / x;
     x += T(1);
   }
   T x2 = T(1) / (x * x);
-  result += T(1) / x + T(0.5) * x2 +
-            x2 / x * (T(1.0 / 6) - x2 * (T(1.0 / 30) - x2 * T(1.0 / 42)));
-  return result;
+  psi += std::log(x) - T(0.5) / x -
+         x2 * (T(1.0 / 12) - x2 * (T(1.0 / 120) - x2 * T(1.0 / 252)));
+
+  // Compute trigamma(z) - inlined
+  T psi1 = T(0);
+  T y = z;
+  while (y < T(6)) {
+    psi1 += T(1) / (y * y);
+    y += T(1);
+  }
+  T y2 = T(1) / (y * y);
+  psi1 += T(1) / y + T(0.5) * y2 +
+          y2 / y * (T(1.0 / 6) - y2 * (T(1.0 / 30) - y2 * T(1.0 / 42)));
+
+  T gg_out = gg * gamma_z * psi;
+  T new_grad = gg * g * gamma_z * (psi * psi + psi1);
+
+  return {gg_out, new_grad};
 }
 
 } // anonymous namespace
@@ -163,30 +172,12 @@ inline std::tuple<at::Tensor, at::Tensor> gamma_backward_backward(
     [&] {
       at::native::cpu_kernel_multiple_outputs(
         iterator,
-        [](
-          scalar_t gg,
-          scalar_t g,
-          scalar_t z
-        ) -> std::tuple<scalar_t, scalar_t> {
-          scalar_t gamma_z = gamma_forward_kernel(z);
-          scalar_t psi_z = digamma_kernel(z);
-          scalar_t psi1_z = trigamma_kernel(z);
-          scalar_t gg_out = gg * gamma_z * psi_z;
-          scalar_t new_grad = gg * g * gamma_z * (psi_z * psi_z + psi1_z);
-
-          return {
-            gg_out,
-            new_grad
-          };
-        }
+        gamma_backward_backward_kernel<scalar_t>
       );
     }
   );
 
-  return {
-    iterator.output(0),
-    iterator.output(1)
-  };
+  return {iterator.output(0), iterator.output(1)};
 }
 
 } // namespace torchscience::cpu
