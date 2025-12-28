@@ -6,40 +6,48 @@
 namespace torchscience::autocast {
 
 inline at::Tensor hypergeometric_2_f_1(
-    const at::Tensor& a,
-    const at::Tensor& b,
-    const at::Tensor& c,
-    const at::Tensor& z
+  const at::Tensor &a,
+  const at::Tensor &b,
+  const at::Tensor &c,
+  const at::Tensor &z
 ) {
-    c10::impl::ExcludeDispatchKeyGuard no_autocast(c10::DispatchKey::Autocast);
+  c10::impl::ExcludeDispatchKeyGuard no_autocast(
+    c10::DispatchKey::Autocast
+  );
 
-    static auto op = c10::Dispatcher::singleton()
-        .findSchemaOrThrow(
-            "torchscience::hypergeometric_2_f_1",
-            ""
-        )
-        .typed<at::Tensor(
-            const at::Tensor&,
-            const at::Tensor&,
-            const at::Tensor&,
-            const at::Tensor&
-        )>();
+  auto dtype = at::autocast::promote_type(
+    at::kFloat,
+    a.device().type(),
+    a,
+    b,
+    c,
+    z
+  );
 
-    auto dtype = at::autocast::promote_type(at::kFloat, a.device().type(), a, b, c, z);
-
-    return op.call(
-        at::autocast::cached_cast(dtype, a),
-        at::autocast::cached_cast(dtype, b),
-        at::autocast::cached_cast(dtype, c),
-        at::autocast::cached_cast(dtype, z)
+  return c10::Dispatcher::singleton()
+    .findSchemaOrThrow(
+      "torchscience::hypergeometric_2_f_1",
+      ""
+    )
+    .typed<at::Tensor(
+      const at::Tensor &,
+      const at::Tensor &,
+      const at::Tensor &,
+      const at::Tensor &
+    )>()
+    .call(
+      at::autocast::cached_cast(dtype, a),
+      at::autocast::cached_cast(dtype, b),
+      at::autocast::cached_cast(dtype, c),
+      at::autocast::cached_cast(dtype, z)
     );
 }
 
-}  // namespace torchscience::autocast
+} // namespace torchscience::autocast
 
 TORCH_LIBRARY_IMPL(torchscience, Autocast, module) {
-    module.impl(
-        "hypergeometric_2_f_1",
-        torchscience::autocast::hypergeometric_2_f_1
-    );
+  module.impl(
+    "hypergeometric_2_f_1",
+    torchscience::autocast::hypergeometric_2_f_1
+  );
 }
