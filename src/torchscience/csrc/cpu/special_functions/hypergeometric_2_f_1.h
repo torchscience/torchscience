@@ -338,17 +338,29 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> hypergeometric
     .cast_common_dtype_to_outputs(true)
     .build();
 
-  AT_DISPATCH_FLOATING_TYPES_AND2(
-    at::kBFloat16,
-    at::kHalf,
-    iterator.common_dtype(),
-    "hypergeometric_2_f_1_backward_cpu",
-    [&] {
-      at::native::cpu_kernel_multiple_outputs(iterator, [](scalar_t grad, scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
-        return hyp2f1_backward_kernel(grad, a, b, c, z);
-      });
-    }
-  );
+  if (at::isComplexType(iterator.common_dtype())) {
+    AT_DISPATCH_COMPLEX_TYPES(
+      iterator.common_dtype(),
+      "hypergeometric_2_f_1_backward_cpu_complex",
+      [&] {
+        at::native::cpu_kernel_multiple_outputs(iterator, [](scalar_t grad, scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
+          return hyp2f1_backward_kernel(grad, a, b, c, z);
+        });
+      }
+    );
+  } else {
+    AT_DISPATCH_FLOATING_TYPES_AND2(
+      at::kBFloat16,
+      at::kHalf,
+      iterator.common_dtype(),
+      "hypergeometric_2_f_1_backward_cpu",
+      [&] {
+        at::native::cpu_kernel_multiple_outputs(iterator, [](scalar_t grad, scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
+          return hyp2f1_backward_kernel(grad, a, b, c, z);
+        });
+      }
+    );
+  }
 
   return {iterator.output(0), iterator.output(1), iterator.output(2), iterator.output(3)};
 }
