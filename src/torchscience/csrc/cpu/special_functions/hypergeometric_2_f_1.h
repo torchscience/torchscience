@@ -104,31 +104,6 @@ T hyp2f1_series(T a, T b, T c, T z, int max_iter = 500) {
   return sum;
 }
 
-// Digamma function approximation using series expansion
-template <typename T>
-T digamma(T x) {
-  // For x > 6, use asymptotic expansion
-  // psi(x) ~ ln(x) - 1/(2x) - 1/(12x^2) + 1/(120x^4) - ...
-  T result = T(0);
-
-  // Use recurrence to shift x to larger value: psi(x) = psi(x+1) - 1/x
-  while (std::abs(x) < T(6)) {
-    if (std::abs(x) < epsilon<T>()) {
-      return -std::numeric_limits<T>::infinity();
-    }
-    result -= T(1) / x;
-    x += T(1);
-  }
-
-  // Asymptotic expansion for large x
-  T inv_x = T(1) / x;
-  T inv_x2 = inv_x * inv_x;
-  result += std::log(x) - T(0.5) * inv_x;
-  result -= inv_x2 * (T(1)/T(12) - inv_x2 * (T(1)/T(120) - inv_x2 * T(1)/T(252)));
-
-  return result;
-}
-
 template <typename T>
 struct Hyp2F1WithGrads {
   T value;
@@ -320,7 +295,13 @@ std::tuple<T, T, T, T> hyp2f1_backward_kernel(T grad, T a, T b, T c, T z) {
   T dz = grad * (a * b / c) * hyp2f1_forward_kernel(a + T(1), b + T(1), c + T(1), z);
 
   // For |z| < 0.5 and non-terminating series, use analytical gradients
-  bool use_analytical = std::abs(static_cast<double>(z)) < 0.5 &&
+  double z_abs;
+  if constexpr (is_complex_v<T>) {
+    z_abs = std::abs(z);  // std::abs on complex returns real
+  } else {
+    z_abs = std::abs(static_cast<double>(z));
+  }
+  bool use_analytical = z_abs < 0.5 &&
                         !is_nonpositive_integer(a) &&
                         !is_nonpositive_integer(b);
 

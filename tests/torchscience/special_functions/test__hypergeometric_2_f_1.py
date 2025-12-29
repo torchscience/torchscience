@@ -1059,7 +1059,25 @@ class TestHypergeometric2F1(OpTestCase):
             )
             fd_da = (f_a_plus - f_a_minus) / (2 * eps)
 
+            f_b_plus = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b + eps, c, z
+            )
+            f_b_minus = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b - eps, c, z
+            )
+            fd_db = (f_b_plus - f_b_minus) / (2 * eps)
+
+            f_c_plus = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c + eps, z
+            )
+            f_c_minus = torchscience.special_functions.hypergeometric_2_f_1(
+                a, b, c - eps, z
+            )
+            fd_dc = (f_c_plus - f_c_minus) / (2 * eps)
+
         torch.testing.assert_close(a.grad, fd_da, rtol=1e-5, atol=1e-5)
+        torch.testing.assert_close(b.grad, fd_db, rtol=1e-5, atol=1e-5)
+        torch.testing.assert_close(c.grad, fd_dc, rtol=1e-5, atol=1e-5)
 
     # =========================================================================
     # Tests for second-order derivatives (gradgradcheck)
