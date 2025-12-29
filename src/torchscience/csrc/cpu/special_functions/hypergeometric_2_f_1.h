@@ -167,6 +167,15 @@ T hyp2f1_forward_kernel(T a, T b, T c, T z) {
   return std::numeric_limits<T>::quiet_NaN();
 }
 
+template <typename T>
+std::tuple<T, T, T, T> hyp2f1_backward_kernel(T grad, T a, T b, T c, T z) {
+  // d/dz 2F1(a,b;c;z) = (a*b/c) * 2F1(a+1, b+1; c+1; z)
+  T dz = grad * (a * b / c) * hyp2f1_forward_kernel(a + T(1), b + T(1), c + T(1), z);
+
+  // For now, return zeros for parameter gradients (will implement in Task 6)
+  return {T(0), T(0), T(0), dz};
+}
+
 } // anonymous namespace
 
 inline at::Tensor hypergeometric_2_f_1_forward(
@@ -209,7 +218,35 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> hypergeometric
   const at::Tensor &c,
   const at::Tensor &z
 ) {
-  TORCH_CHECK(false, "hypergeometric_2_f_1_backward not yet implemented");
+  at::Tensor grad_a, grad_b, grad_c, grad_z;
+
+  auto iterator = at::TensorIteratorConfig()
+    .add_output(grad_a)
+    .add_output(grad_b)
+    .add_output(grad_c)
+    .add_output(grad_z)
+    .add_const_input(grad)
+    .add_const_input(a)
+    .add_const_input(b)
+    .add_const_input(c)
+    .add_const_input(z)
+    .promote_inputs_to_common_dtype(true)
+    .cast_common_dtype_to_outputs(true)
+    .build();
+
+  AT_DISPATCH_FLOATING_TYPES_AND2(
+    at::kBFloat16,
+    at::kHalf,
+    iterator.common_dtype(),
+    "hypergeometric_2_f_1_backward_cpu",
+    [&] {
+      at::native::cpu_kernel_multiple_outputs(iterator, [](scalar_t grad, scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
+        return hyp2f1_backward_kernel(grad, a, b, c, z);
+      });
+    }
+  );
+
+  return {iterator.output(0), iterator.output(1), iterator.output(2), iterator.output(3)};
 }
 
 inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> hypergeometric_2_f_1_backward_backward(
