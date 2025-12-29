@@ -2548,3 +2548,22 @@ class TestHypergeometric2F1(OpTestCase):
             rtol=1e-4,
             atol=1e-4,
         )
+
+    # =========================================================================
+    # Plan Implementation Tests (Task 1-10)
+    # =========================================================================
+
+    def test_series_basic_convergence(self):
+        """Test 2F1 with |z| < 0.5 where series converges directly."""
+        a = torch.tensor([1.5], dtype=torch.float64)
+        b = torch.tensor([2.5], dtype=torch.float64)
+        c = torch.tensor([3.5], dtype=torch.float64)
+        z = torch.tensor([0.3], dtype=torch.float64)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+
+        # Reference from scipy.special.hyp2f1(1.5, 2.5, 3.5, 0.3)
+        expected = torch.tensor([1.452767637957694], dtype=torch.float64)
+        torch.testing.assert_close(result, expected, rtol=1e-10, atol=1e-10)
