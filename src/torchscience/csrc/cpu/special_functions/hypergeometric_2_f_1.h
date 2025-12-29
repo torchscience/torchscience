@@ -172,8 +172,27 @@ std::tuple<T, T, T, T> hyp2f1_backward_kernel(T grad, T a, T b, T c, T z) {
   // d/dz 2F1(a,b;c;z) = (a*b/c) * 2F1(a+1, b+1; c+1; z)
   T dz = grad * (a * b / c) * hyp2f1_forward_kernel(a + T(1), b + T(1), c + T(1), z);
 
-  // For now, return zeros for parameter gradients (will implement in Task 6)
-  return {T(0), T(0), T(0), dz};
+  // Use finite differences for parameter gradients
+  // This is robust for all regions, though less efficient than analytical gradients
+  T eps = std::sqrt(epsilon<T>());
+  T f_center = hyp2f1_forward_kernel(a, b, c, z);
+
+  // d/da using central difference
+  T f_a_plus = hyp2f1_forward_kernel(a + eps, b, c, z);
+  T f_a_minus = hyp2f1_forward_kernel(a - eps, b, c, z);
+  T da = grad * (f_a_plus - f_a_minus) / (T(2) * eps);
+
+  // d/db using central difference
+  T f_b_plus = hyp2f1_forward_kernel(a, b + eps, c, z);
+  T f_b_minus = hyp2f1_forward_kernel(a, b - eps, c, z);
+  T db = grad * (f_b_plus - f_b_minus) / (T(2) * eps);
+
+  // d/dc using central difference
+  T f_c_plus = hyp2f1_forward_kernel(a, b, c + eps, z);
+  T f_c_minus = hyp2f1_forward_kernel(a, b, c - eps, z);
+  T dc = grad * (f_c_plus - f_c_minus) / (T(2) * eps);
+
+  return {da, db, dc, dz};
 }
 
 } // anonymous namespace
