@@ -10,7 +10,29 @@
 
 ---
 
-## Task 1: Forward Kernel - Series for |z| < 0.5
+## Progress
+
+| Task | Status | Commit |
+|------|--------|--------|
+| Task 1: Forward Series Kernel | ✅ Complete | `9d66ee1` |
+| Task 2: Special Cases | ✅ Complete | `7ad8ff1` |
+| Task 3: Pfaff Transformation | ✅ Complete | `3c17641` |
+| Task 4: Large z Transformations | ⏳ Pending | - |
+| Task 5: z Gradient | ⏳ Pending | - |
+| Task 6: Parameter Gradients | ⏳ Pending | - |
+| Task 7: Autograd Wrapper | ⏳ Pending | - |
+| Task 8: Complex Support | ⏳ Pending | - |
+| Task 9: Second-Order Gradients | ⏳ Pending | - |
+| Task 10: Full Test Suite | ⏳ Pending | - |
+| Task 11: Merge Preparation | ⏳ Pending | - |
+
+**Notes:**
+- Task 1: Corrected expected value from plan (scipy gives 1.4527... not 1.4285...)
+- Task 3: Corrected expected value from plan (scipy gives 2.1789... not 2.9629...)
+
+---
+
+## Task 1: Forward Kernel - Series for |z| < 0.5 ✅
 
 **Files:**
 - Modify: `src/torchscience/csrc/cpu/special_functions/hypergeometric_2_f_1.h:1-60`
@@ -204,7 +226,7 @@ git commit -m "feat(hyp2f1): implement forward series kernel for |z| < 0.5"
 
 ---
 
-## Task 2: Special Cases - z=0, Terminating Series, Poles
+## Task 2: Special Cases - z=0, Terminating Series, Poles ✅
 
 **Files:**
 - Modify: `src/torchscience/csrc/cpu/special_functions/hypergeometric_2_f_1.h`
@@ -356,7 +378,7 @@ git commit -m "feat(hyp2f1): add special case handling for poles, terminating se
 
 ---
 
-## Task 3: Transformation for z near 1
+## Task 3: Transformation for z near 1 ✅
 
 **Files:**
 - Modify: `src/torchscience/csrc/cpu/special_functions/hypergeometric_2_f_1.h`
