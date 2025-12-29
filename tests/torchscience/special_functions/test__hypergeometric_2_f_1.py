@@ -1036,6 +1036,31 @@ class TestHypergeometric2F1(OpTestCase):
                 f"z.grad too small at z={z_val}"
             )
 
+    def test_analytical_param_grad_matches_finite_diff(self):
+        """Verify analytical gradients match finite differences."""
+        a = torch.tensor([1.5], dtype=torch.float64, requires_grad=True)
+        b = torch.tensor([2.5], dtype=torch.float64, requires_grad=True)
+        c = torch.tensor([3.5], dtype=torch.float64, requires_grad=True)
+        z = torch.tensor([0.3], dtype=torch.float64)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+        result.backward()
+
+        # Finite difference reference
+        eps = 1e-6
+        with torch.no_grad():
+            f_a_plus = torchscience.special_functions.hypergeometric_2_f_1(
+                a + eps, b, c, z
+            )
+            f_a_minus = torchscience.special_functions.hypergeometric_2_f_1(
+                a - eps, b, c, z
+            )
+            fd_da = (f_a_plus - f_a_minus) / (2 * eps)
+
+        torch.testing.assert_close(a.grad, fd_da, rtol=1e-5, atol=1e-5)
+
     # =========================================================================
     # Tests for second-order derivatives (gradgradcheck)
     # =========================================================================

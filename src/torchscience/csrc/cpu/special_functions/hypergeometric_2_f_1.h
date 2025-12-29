@@ -104,6 +104,80 @@ T hyp2f1_series(T a, T b, T c, T z, int max_iter = 500) {
   return sum;
 }
 
+// Digamma function approximation using series expansion
+template <typename T>
+T digamma(T x) {
+  // For x > 6, use asymptotic expansion
+  // psi(x) ~ ln(x) - 1/(2x) - 1/(12x^2) + 1/(120x^4) - ...
+  T result = T(0);
+
+  // Use recurrence to shift x to larger value: psi(x) = psi(x+1) - 1/x
+  while (std::abs(x) < T(6)) {
+    if (std::abs(x) < epsilon<T>()) {
+      return -std::numeric_limits<T>::infinity();
+    }
+    result -= T(1) / x;
+    x += T(1);
+  }
+
+  // Asymptotic expansion for large x
+  T inv_x = T(1) / x;
+  T inv_x2 = inv_x * inv_x;
+  result += std::log(x) - T(0.5) * inv_x;
+  result -= inv_x2 * (T(1)/T(12) - inv_x2 * (T(1)/T(120) - inv_x2 * T(1)/T(252)));
+
+  return result;
+}
+
+template <typename T>
+struct Hyp2F1WithGrads {
+  T value;
+  T grad_a;
+  T grad_b;
+  T grad_c;
+};
+
+template <typename T>
+Hyp2F1WithGrads<T> hyp2f1_series_with_grads(T a, T b, T c, T z, int max_iter = 500) {
+  T sum = T(1);
+  T da_sum = T(0);
+  T db_sum = T(0);
+  T dc_sum = T(0);
+
+  T term = T(1);
+  T H_a = T(0);  // sum_{k=0}^{n-1} 1/(a+k)
+  T H_b = T(0);  // sum_{k=0}^{n-1} 1/(b+k)
+  T H_c = T(0);  // sum_{k=0}^{n-1} 1/(c+k)
+
+  for (int n = 0; n < max_iter; ++n) {
+    if (n > 0) {
+      // Update harmonic sums
+      H_a += T(1) / (a + T(n - 1));
+      H_b += T(1) / (b + T(n - 1));
+      H_c += T(1) / (c + T(n - 1));
+
+      // Accumulate gradient contributions
+      // d/da term_n = term_n * H_a
+      da_sum += term * H_a;
+      db_sum += term * H_b;
+      dc_sum -= term * H_c;  // Negative because c is in denominator
+    }
+
+    T denom = (c + T(n)) * T(n + 1);
+    if (std::abs(denom) < epsilon<T>()) {
+      break;
+    }
+    term *= (a + T(n)) * (b + T(n)) / denom * z;
+    sum += term;
+
+    if (std::abs(term) < epsilon<T>() * std::abs(sum)) {
+      break;
+    }
+  }
+
+  return {sum, da_sum, db_sum, dc_sum};
+}
+
 template <typename T>
 T hyp2f1_near_one(T a, T b, T c, T z) {
   // Pfaff transformation: 2F1(a,b;c;z) = (1-z)^(-a) * 2F1(a, c-b; c; z/(z-1))
@@ -245,22 +319,27 @@ std::tuple<T, T, T, T> hyp2f1_backward_kernel(T grad, T a, T b, T c, T z) {
   // d/dz 2F1(a,b;c;z) = (a*b/c) * 2F1(a+1, b+1; c+1; z)
   T dz = grad * (a * b / c) * hyp2f1_forward_kernel(a + T(1), b + T(1), c + T(1), z);
 
-  // Use finite differences for parameter gradients
-  // This is robust for all regions, though less efficient than analytical gradients
-  T eps = std::sqrt(epsilon<T>());
-  T f_center = hyp2f1_forward_kernel(a, b, c, z);
+  // For |z| < 0.5 and non-terminating series, use analytical gradients
+  bool use_analytical = std::abs(static_cast<double>(z)) < 0.5 &&
+                        !is_nonpositive_integer(a) &&
+                        !is_nonpositive_integer(b);
 
-  // d/da using central difference
+  if (use_analytical) {
+    auto result = hyp2f1_series_with_grads(a, b, c, z);
+    return {grad * result.grad_a, grad * result.grad_b, grad * result.grad_c, dz};
+  }
+
+  // Fallback to finite differences for transformed regions
+  T eps = std::sqrt(epsilon<T>());
+
   T f_a_plus = hyp2f1_forward_kernel(a + eps, b, c, z);
   T f_a_minus = hyp2f1_forward_kernel(a - eps, b, c, z);
   T da = grad * (f_a_plus - f_a_minus) / (T(2) * eps);
 
-  // d/db using central difference
   T f_b_plus = hyp2f1_forward_kernel(a, b + eps, c, z);
   T f_b_minus = hyp2f1_forward_kernel(a, b - eps, c, z);
   T db = grad * (f_b_plus - f_b_minus) / (T(2) * eps);
 
-  // d/dc using central difference
   T f_c_plus = hyp2f1_forward_kernel(a, b, c + eps, z);
   T f_c_minus = hyp2f1_forward_kernel(a, b, c - eps, z);
   T dc = grad * (f_c_plus - f_c_minus) / (T(2) * eps);
