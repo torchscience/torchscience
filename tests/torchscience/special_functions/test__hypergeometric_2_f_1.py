@@ -2567,3 +2567,44 @@ class TestHypergeometric2F1(OpTestCase):
         # Reference from scipy.special.hyp2f1(1.5, 2.5, 3.5, 0.3)
         expected = torch.tensor([1.452767637957694], dtype=torch.float64)
         torch.testing.assert_close(result, expected, rtol=1e-10, atol=1e-10)
+
+    def test_terminating_series_a_negative_int(self):
+        """Test 2F1 with a = -2 (terminating series)."""
+        a = torch.tensor([-2.0], dtype=torch.float64)
+        b = torch.tensor([3.0], dtype=torch.float64)
+        c = torch.tensor([4.0], dtype=torch.float64)
+        z = torch.tensor([0.7], dtype=torch.float64)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+
+        # scipy.special.hyp2f1(-2, 3, 4, 0.7) = 0.244
+        expected = torch.tensor([0.244], dtype=torch.float64)
+        torch.testing.assert_close(result, expected, rtol=1e-10, atol=1e-10)
+
+    def test_pole_at_c_negative_int(self):
+        """Test 2F1 returns inf when c is non-positive integer."""
+        a = torch.tensor([1.0], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+        c = torch.tensor([-1.0], dtype=torch.float64)
+        z = torch.tensor([0.3], dtype=torch.float64)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+
+        assert torch.isinf(result).all()
+
+    def test_reduction_to_power_function(self):
+        """Test 2F1(a, b; b; z) = (1-z)^(-a)."""
+        a = torch.tensor([2.0], dtype=torch.float64)
+        b = torch.tensor([3.0], dtype=torch.float64)
+        z = torch.tensor([0.3], dtype=torch.float64)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, b, z
+        )
+        expected = torch.pow(1 - z, -a)
+
+        torch.testing.assert_close(result, expected, rtol=1e-10, atol=1e-10)

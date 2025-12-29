@@ -25,6 +25,26 @@ constexpr T epsilon() {
 }
 
 template <typename T>
+bool is_nonpositive_integer(T x) {
+  if constexpr (std::is_same_v<T, std::complex<float>> || std::is_same_v<T, std::complex<double>>) {
+    return std::abs(std::imag(x)) < epsilon<typename T::value_type>() &&
+           std::real(x) <= 0 &&
+           std::abs(std::real(x) - std::round(std::real(x))) < epsilon<typename T::value_type>();
+  } else {
+    return x <= T(0) && std::abs(x - std::round(x)) < epsilon<T>();
+  }
+}
+
+template <typename T>
+int get_nonpositive_int(T x) {
+  if constexpr (std::is_same_v<T, std::complex<float>> || std::is_same_v<T, std::complex<double>>) {
+    return static_cast<int>(std::round(std::real(x)));
+  } else {
+    return static_cast<int>(std::round(x));
+  }
+}
+
+template <typename T>
 T hyp2f1_series(T a, T b, T c, T z, int max_iter = 500) {
   T sum = T(1);
   T term = T(1);
@@ -52,7 +72,43 @@ T hyp2f1_forward_kernel(T a, T b, T c, T z) {
     return T(1);
   }
 
-  // For now, only handle |z| < 0.5 with direct series
+  // Special case: a = 0 or b = 0
+  if (std::abs(a) < epsilon<T>() || std::abs(b) < epsilon<T>()) {
+    return T(1);
+  }
+
+  // Check for pole at c = 0, -1, -2, ...
+  if (is_nonpositive_integer(c)) {
+    int c_int = get_nonpositive_int(c);
+    // Check if pole is cancelled by a or b being "smaller" non-positive integer
+    bool a_cancels = is_nonpositive_integer(a) && get_nonpositive_int(a) > c_int;
+    bool b_cancels = is_nonpositive_integer(b) && get_nonpositive_int(b) > c_int;
+    if (!a_cancels && !b_cancels) {
+      return std::numeric_limits<T>::infinity();
+    }
+  }
+
+  // Special case: c = b (reduces to power function)
+  if (std::abs(c - b) < epsilon<T>()) {
+    return std::pow(T(1) - z, -a);
+  }
+
+  // Special case: c = a (reduces to power function)
+  if (std::abs(c - a) < epsilon<T>()) {
+    return std::pow(T(1) - z, -b);
+  }
+
+  // Terminating series: a or b is non-positive integer
+  if (is_nonpositive_integer(a)) {
+    int n_terms = -get_nonpositive_int(a) + 1;
+    return hyp2f1_series(a, b, c, z, n_terms);
+  }
+  if (is_nonpositive_integer(b)) {
+    int n_terms = -get_nonpositive_int(b) + 1;
+    return hyp2f1_series(a, b, c, z, n_terms);
+  }
+
+  // Direct series for |z| < 0.5
   if (std::abs(z) < T(0.5)) {
     return hyp2f1_series(a, b, c, z);
   }
