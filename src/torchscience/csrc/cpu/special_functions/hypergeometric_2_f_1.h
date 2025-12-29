@@ -4,43 +4,82 @@
 #include <complex>
 #include <limits>
 #include <tuple>
+#include <type_traits>
 
 #include <ATen/ATen.h>
 #include <ATen/Dispatch.h>
 #include <ATen/TensorIterator.h>
 #include <ATen/native/cpu/Loops.h>
+#include <c10/util/complex.h>
 #include <torch/library.h>
 
 namespace torchscience::cpu {
 
 namespace {
 
+// Helper to check if type is complex (either std::complex or c10::complex)
 template <typename T>
-constexpr T epsilon() {
-  if constexpr (std::is_same_v<T, float>) {
-    return T(1e-7);
+struct is_complex_type : std::false_type {};
+
+template <typename T>
+struct is_complex_type<std::complex<T>> : std::true_type {};
+
+template <typename T>
+struct is_complex_type<c10::complex<T>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_complex_v = is_complex_type<T>::value;
+
+// Get the real value type from complex
+template <typename T>
+struct real_type { using type = T; };
+
+template <typename T>
+struct real_type<std::complex<T>> { using type = T; };
+
+template <typename T>
+struct real_type<c10::complex<T>> { using type = T; };
+
+template <typename T>
+using real_type_t = typename real_type<T>::type;
+
+template <typename T>
+constexpr auto epsilon() {
+  using real_t = real_type_t<T>;
+  if constexpr (std::is_same_v<real_t, float>) {
+    return float(1e-7);
+  } else if constexpr (std::is_same_v<real_t, double>) {
+    return double(1e-15);
   } else {
-    return T(1e-15);
+    // For half types, use float epsilon
+    return float(1e-7);
   }
 }
 
 template <typename T>
 bool is_nonpositive_integer(T x) {
-  if constexpr (std::is_same_v<T, std::complex<float>> || std::is_same_v<T, std::complex<double>>) {
-    return std::abs(std::imag(x)) < epsilon<typename T::value_type>() &&
-           std::real(x) <= 0 &&
-           std::abs(std::real(x) - std::round(std::real(x))) < epsilon<typename T::value_type>();
+  if constexpr (is_complex_v<T>) {
+    using real_t = real_type_t<T>;
+    auto re = static_cast<real_t>(x.real());
+    auto im = static_cast<real_t>(x.imag());
+    return std::abs(im) < epsilon<T>() &&
+           re <= real_t(0) &&
+           std::abs(re - std::round(re)) < epsilon<T>();
   } else {
-    return x <= T(0) && std::abs(x - std::round(x)) < epsilon<T>();
+    // Convert to double for comparison to handle BFloat16/Half
+    double xd = static_cast<double>(x);
+    return xd <= 0.0 && std::abs(xd - std::round(xd)) < epsilon<T>();
   }
 }
 
 template <typename T>
 int get_nonpositive_int(T x) {
-  if constexpr (std::is_same_v<T, std::complex<float>> || std::is_same_v<T, std::complex<double>>) {
-    return static_cast<int>(std::round(std::real(x)));
+  if constexpr (is_complex_v<T>) {
+    using real_t = real_type_t<T>;
+    return static_cast<int>(std::round(static_cast<real_t>(x.real())));
   } else {
-    return static_cast<int>(std::round(x));
+    // Convert to double to handle BFloat16/Half
+    return static_cast<int>(std::round(static_cast<double>(x)));
   }
 }
 
@@ -69,12 +108,21 @@ template <typename T>
 T hyp2f1_near_one(T a, T b, T c, T z) {
   // Pfaff transformation: 2F1(a,b;c;z) = (1-z)^(-a) * 2F1(a, c-b; c; z/(z-1))
   T z_transformed = z / (z - T(1));
-  if (std::abs(z_transformed) < T(0.5)) {
+
+  // Use double for comparisons to handle BFloat16/Half
+  double zt_abs;
+  if constexpr (is_complex_v<T>) {
+    zt_abs = std::abs(z_transformed);
+  } else {
+    zt_abs = std::abs(static_cast<double>(z_transformed));
+  }
+
+  if (zt_abs < 0.5) {
     return std::pow(T(1) - z, -a) * hyp2f1_series(a, c - b, c, z_transformed);
   }
 
   // Alternative Pfaff: 2F1(a,b;c;z) = (1-z)^(-b) * 2F1(b, c-a; c; z/(z-1))
-  if (std::abs(z_transformed) < T(0.9)) {
+  if (zt_abs < 0.9) {
     return std::pow(T(1) - z, -b) * hyp2f1_series(b, c - a, c, z_transformed);
   }
 
@@ -95,8 +143,11 @@ T hyp2f1_negative_z(T a, T b, T c, T z) {
 
   T prefactor = std::pow(T(1) - z, -a);
 
+  // Use double for comparisons to handle BFloat16/Half
+  double w_abs = std::abs(static_cast<double>(w));
+
   // If |w| < 0.5, use direct series
-  if (std::abs(w) < T(0.5)) {
+  if (w_abs < 0.5) {
     return prefactor * hyp2f1_series(a, c - b, c, w);
   }
 
@@ -147,24 +198,46 @@ T hyp2f1_forward_kernel(T a, T b, T c, T z) {
     return hyp2f1_series(a, b, c, z, n_terms);
   }
 
-  // Negative z: use Pfaff transformation z -> z/(z-1)
-  if (z < T(0)) {
-    return hyp2f1_negative_z(a, b, c, z);
-  }
+  // For complex types, check if z is real and negative
+  // For real types, use direct comparison
+  if constexpr (is_complex_v<T>) {
+    using real_t = real_type_t<T>;
+    // Complex case: use series directly for |z| < 0.5, transformations otherwise
+    if (std::abs(z) < real_t(0.5)) {
+      return hyp2f1_series(a, b, c, z);
+    }
 
-  // Direct series for |z| < 0.5
-  if (std::abs(z) < T(0.5)) {
-    return hyp2f1_series(a, b, c, z);
-  }
+    // For |z| in [0.5, 1), use Pfaff transformation
+    if (std::abs(z) < real_t(1)) {
+      return hyp2f1_near_one(a, b, c, z);
+    }
 
-  // z in [0.5, 1): use Pfaff transformation
-  if (std::abs(z) >= T(0.5) && std::abs(z) < T(1)) {
-    return hyp2f1_near_one(a, b, c, z);
-  }
+    // For |z| >= 1, use Pfaff transformation with more iterations
+    // This handles the analytic continuation for complex z
+    T w = z / (z - T(1));
+    return std::pow(T(1) - z, -a) * hyp2f1_series(a, c - b, c, w, 2000);
+  } else {
+    // Real case - use double for comparisons to handle BFloat16/Half
+    double zd = static_cast<double>(z);
 
-  // z >= 1: divergent for real z on branch cut, return NaN
-  // (Complex z > 1 will be handled in Task 8)
-  return std::numeric_limits<T>::quiet_NaN();
+    // Negative z: use Pfaff transformation z -> z/(z-1)
+    if (zd < 0.0) {
+      return hyp2f1_negative_z(a, b, c, z);
+    }
+
+    // Direct series for |z| < 0.5
+    if (std::abs(zd) < 0.5) {
+      return hyp2f1_series(a, b, c, z);
+    }
+
+    // z in [0.5, 1): use Pfaff transformation
+    if (std::abs(zd) < 1.0) {
+      return hyp2f1_near_one(a, b, c, z);
+    }
+
+    // z >= 1: divergent for real z on branch cut, return NaN
+    return std::numeric_limits<T>::quiet_NaN();
+  }
 }
 
 template <typename T>
@@ -215,17 +288,29 @@ inline at::Tensor hypergeometric_2_f_1_forward(
     .cast_common_dtype_to_outputs(true)
     .build();
 
-  AT_DISPATCH_FLOATING_TYPES_AND2(
-    at::kBFloat16,
-    at::kHalf,
-    iterator.common_dtype(),
-    "hypergeometric_2_f_1_cpu",
-    [&] {
-      at::native::cpu_kernel(iterator, [](scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
-        return hyp2f1_forward_kernel(a, b, c, z);
-      });
-    }
-  );
+  if (at::isComplexType(iterator.common_dtype())) {
+    AT_DISPATCH_COMPLEX_TYPES(
+      iterator.common_dtype(),
+      "hypergeometric_2_f_1_cpu_complex",
+      [&] {
+        at::native::cpu_kernel(iterator, [](scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
+          return hyp2f1_forward_kernel(a, b, c, z);
+        });
+      }
+    );
+  } else {
+    AT_DISPATCH_FLOATING_TYPES_AND2(
+      at::kBFloat16,
+      at::kHalf,
+      iterator.common_dtype(),
+      "hypergeometric_2_f_1_cpu",
+      [&] {
+        at::native::cpu_kernel(iterator, [](scalar_t a, scalar_t b, scalar_t c, scalar_t z) {
+          return hyp2f1_forward_kernel(a, b, c, z);
+        });
+      }
+    );
+  }
 
   return iterator.output();
 }
