@@ -84,6 +84,49 @@ int get_nonpositive_int(T x) {
 }
 
 template <typename T>
+bool is_on_unit_circle(T z) {
+  double abs_z = std::abs(z);
+  return std::abs(abs_z - 1.0) < 1e-10;
+}
+
+template <typename T>
+bool series_diverges_on_unit_circle(T a, T b, T c, T z) {
+  // For |z| = 1, z ≠ 1:
+  // - Converges absolutely if Re(c-a-b) > 0
+  // - Converges conditionally if -1 < Re(c-a-b) ≤ 0
+  // - Diverges if Re(c-a-b) ≤ -1
+
+  if (!is_on_unit_circle(z)) {
+    return false;
+  }
+
+  // Check if z ≈ 1 (handled separately by Gauss's formula)
+  double z_real, z_imag_abs;
+  if constexpr (is_complex_v<T>) {
+    z_real = static_cast<double>(z.real());
+    z_imag_abs = std::abs(static_cast<double>(z.imag()));
+  } else {
+    z_real = static_cast<double>(z);
+    z_imag_abs = 0.0;
+  }
+
+  if (std::abs(z_real - 1.0) < 1e-10 && z_imag_abs < 1e-10) {
+    return false;  // z=1 handled by Gauss's formula
+  }
+
+  // Check Re(c-a-b)
+  T s = c - a - b;
+  double s_real;
+  if constexpr (is_complex_v<T>) {
+    s_real = static_cast<double>(s.real());
+  } else {
+    s_real = static_cast<double>(s);
+  }
+
+  return s_real <= -1.0;
+}
+
+template <typename T>
 T hyp2f1_series(T a, T b, T c, T z, int max_iter = 500) {
   T sum = T(1);
   T term = T(1);
@@ -267,6 +310,12 @@ T hyp2f1_forward_kernel(T a, T b, T c, T z) {
     if (!a_cancels && !b_cancels) {
       return std::numeric_limits<T>::infinity();
     }
+  }
+
+  // Check for divergence on unit circle (before other special cases)
+  // For |z| = 1, z ≠ 1: diverges if Re(c-a-b) ≤ -1
+  if (series_diverges_on_unit_circle(a, b, c, z)) {
+    return std::numeric_limits<T>::quiet_NaN();
   }
 
   // Special case: c = b (reduces to power function)
