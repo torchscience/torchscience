@@ -21,16 +21,19 @@
 | Task 5: z Gradient | ✅ Complete | `9320341` |
 | Task 6: Parameter Gradients | ✅ Complete | `8b184da` |
 | Task 7: Autograd Wrapper | ✅ Complete | `9320341` |
-| Task 8: Complex Support | ⏳ Pending | - |
-| Task 9: Second-Order Gradients | ⏳ Pending | - |
-| Task 10: Full Test Suite | ⏳ Pending | - |
-| Task 11: Merge Preparation | ⏳ Pending | - |
+| Task 8: Complex Support | ✅ Complete | `40ad3c0` |
+| Task 9: Second-Order Gradients | ✅ Complete | `53d588f` |
+| Task 10: Full Test Suite | ✅ Complete | `ac2d973` |
+| Task 11: Merge Preparation | ✅ Complete | - |
 
 **Notes:**
 - Task 1: Corrected expected value from plan (scipy gives 1.4527... not 1.4285...)
 - Task 3: Corrected expected value from plan (scipy gives 2.1789... not 2.9629...)
 - Task 4: Renamed from "Large z Transformations" - only negative z implemented; z > 1 deferred to Task 8 (complex support)
 - Task 5-7: Combined implementation - backward kernel + autograd wrapper done together
+- Task 8: Added c10::complex type traits, AT_DISPATCH_COMPLEX_TYPES support
+- Task 9: Made grad_z computation differentiable via recursive autograd call
+- Task 10: 74 passed, 61 skipped, 9 xfailed (known limitations documented)
 
 ---
 
