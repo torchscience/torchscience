@@ -2623,3 +2623,33 @@ class TestHypergeometric2F1(OpTestCase):
         # Reference from scipy.special.hyp2f1(1, 2, 4, 0.9)
         expected = torch.tensor([2.1789423102929675], dtype=torch.float64)
         torch.testing.assert_close(result, expected, rtol=1e-8, atol=1e-8)
+
+    def test_z_negative_large(self):
+        """Test 2F1 with large negative z using transformation."""
+        a = torch.tensor([1.0], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+        c = torch.tensor([3.0], dtype=torch.float64)
+        z = torch.tensor([-5.0], dtype=torch.float64)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+
+        # Reference from scipy.special.hyp2f1(1, 2, 3, -5)
+        expected = torch.tensor([0.2566592424617554], dtype=torch.float64)
+        torch.testing.assert_close(result, expected, rtol=1e-8, atol=1e-8)
+
+    def test_z_negative_moderate(self):
+        """Test 2F1 with moderate negative z."""
+        a = torch.tensor([1.5], dtype=torch.float64)
+        b = torch.tensor([2.5], dtype=torch.float64)
+        c = torch.tensor([3.5], dtype=torch.float64)
+        z = torch.tensor([-2.0], dtype=torch.float64)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+
+        # Reference from scipy.special.hyp2f1(1.5, 2.5, 3.5, -2)
+        expected = torch.tensor([0.28453773594866716], dtype=torch.float64)
+        torch.testing.assert_close(result, expected, rtol=1e-8, atol=1e-8)

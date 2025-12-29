@@ -83,6 +83,28 @@ T hyp2f1_near_one(T a, T b, T c, T z) {
 }
 
 template <typename T>
+T hyp2f1_negative_z(T a, T b, T c, T z) {
+  // For z < 0, use Pfaff transformation: z -> z/(z-1) which maps negative reals to (0,1)
+  // 2F1(a,b;c;z) = (1-z)^(-a) * 2F1(a, c-b; c; z/(z-1))
+  T w = z / (z - T(1));
+
+  // w is now in (0, 1) for any z < 0
+  // For z = -1: w = 0.5
+  // For z -> -inf: w -> 1
+  // For z -> 0-: w -> 0
+
+  T prefactor = std::pow(T(1) - z, -a);
+
+  // If |w| < 0.5, use direct series
+  if (std::abs(w) < T(0.5)) {
+    return prefactor * hyp2f1_series(a, c - b, c, w);
+  }
+
+  // For w in [0.5, 1), use more iterations
+  return prefactor * hyp2f1_series(a, c - b, c, w, 1000);
+}
+
+template <typename T>
 T hyp2f1_forward_kernel(T a, T b, T c, T z) {
   // Special case: z = 0
   if (std::abs(z) < epsilon<T>()) {
@@ -125,6 +147,11 @@ T hyp2f1_forward_kernel(T a, T b, T c, T z) {
     return hyp2f1_series(a, b, c, z, n_terms);
   }
 
+  // Negative z: use Pfaff transformation z -> z/(z-1)
+  if (z < T(0)) {
+    return hyp2f1_negative_z(a, b, c, z);
+  }
+
   // Direct series for |z| < 0.5
   if (std::abs(z) < T(0.5)) {
     return hyp2f1_series(a, b, c, z);
@@ -135,7 +162,8 @@ T hyp2f1_forward_kernel(T a, T b, T c, T z) {
     return hyp2f1_near_one(a, b, c, z);
   }
 
-  // Placeholder for other regions - will be implemented in later tasks
+  // z >= 1: divergent for real z on branch cut, return NaN
+  // (Complex z > 1 will be handled in Task 8)
   return std::numeric_limits<T>::quiet_NaN();
 }
 
