@@ -1145,9 +1145,6 @@ class TestHypergeometric2F1(OpTestCase):
 
         torch.autograd.gradgradcheck(func, (a, b, c, z), rtol=1e-3, atol=1e-3)
 
-    @pytest.mark.xfail(
-        reason="Parameter gradients use finite differences (not differentiable)"
-    )
     def test_second_derivative_creates_graph(self):
         """Test that create_graph=True works for computing higher-order derivatives."""
         a = torch.tensor([1.5], dtype=torch.float64, requires_grad=True)
@@ -1181,9 +1178,6 @@ class TestHypergeometric2F1(OpTestCase):
         assert torch.isfinite(grad_grad_a_b).all(), "d²f/dadb should be finite"
         assert torch.isfinite(grad_grad_a_c).all(), "d²f/dadc should be finite"
 
-    @pytest.mark.xfail(
-        reason="Parameter gradients use finite differences (not differentiable)"
-    )
     def test_second_derivative_symmetry(self):
         """Test that mixed partial derivatives are symmetric: d²f/dxdy = d²f/dydx."""
         a = torch.tensor([1.5], dtype=torch.float64, requires_grad=True)
@@ -1220,9 +1214,6 @@ class TestHypergeometric2F1(OpTestCase):
             msg="Mixed partials d²f/dadb and d²f/dbda should be equal",
         )
 
-    @pytest.mark.xfail(
-        reason="Parameter gradients use finite differences (not differentiable)"
-    )
     def test_second_derivative_values(self):
         """Test second derivative values against finite difference approximation."""
         a_val, b_val, c_val, z_val = 1.5, 2.0, 3.5, 0.3
@@ -1660,9 +1651,6 @@ class TestHypergeometric2F1(OpTestCase):
             atol=1e-10,
         )
 
-    @pytest.mark.xfail(
-        reason="Complex Wirtinger derivative sign convention needs implementation"
-    )
     def test_complex_gradcheck_a(self):
         """Test gradient correctness for complex a parameter."""
         a = torch.tensor(
@@ -1679,9 +1667,6 @@ class TestHypergeometric2F1(OpTestCase):
 
         torch.autograd.gradcheck(func, (a,), rtol=1e-4, atol=1e-4)
 
-    @pytest.mark.xfail(
-        reason="Complex Wirtinger derivative sign convention needs implementation"
-    )
     def test_complex_gradcheck_b(self):
         """Test gradient correctness for complex b parameter."""
         a = torch.tensor([1.5 + 0.0j], dtype=torch.complex128)
@@ -1698,9 +1683,6 @@ class TestHypergeometric2F1(OpTestCase):
 
         torch.autograd.gradcheck(func, (b,), rtol=1e-4, atol=1e-4)
 
-    @pytest.mark.xfail(
-        reason="Complex Wirtinger derivative sign convention needs implementation"
-    )
     def test_complex_gradcheck_c(self):
         """Test gradient correctness for complex c parameter."""
         a = torch.tensor([1.5 + 0.0j], dtype=torch.complex128)
@@ -1717,9 +1699,6 @@ class TestHypergeometric2F1(OpTestCase):
 
         torch.autograd.gradcheck(func, (c,), rtol=1e-4, atol=1e-4)
 
-    @pytest.mark.xfail(
-        reason="Complex Wirtinger derivative sign convention needs implementation"
-    )
     def test_complex_gradcheck_all_params(self):
         """Test gradient correctness for all complex parameters."""
         a = torch.tensor(
@@ -1746,9 +1725,6 @@ class TestHypergeometric2F1(OpTestCase):
     # Tests for unit circle convergence check
     # =========================================================================
 
-    @pytest.mark.xfail(
-        reason="z=1 convergence requires Gauss's formula (not implemented)"
-    )
     def test_unit_circle_convergence_at_z_equals_1(self):
         """Test convergence check at z = 1.
 
@@ -1838,9 +1814,6 @@ class TestHypergeometric2F1(OpTestCase):
             "Should converge when Re(c-a-b) = -0.5 > -1 at z=-1"
         )
 
-    @pytest.mark.xfail(
-        reason="Unit circle divergence detection not implemented"
-    )
     def test_unit_circle_divergence_not_at_z_equals_1(self):
         """Test divergence on unit circle at z != 1.
 
