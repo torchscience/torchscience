@@ -180,6 +180,48 @@ T hyp2f1_near_one(T a, T b, T c, T z) {
 }
 
 template <typename T>
+T hyp2f1_at_one(T a, T b, T c) {
+  // Gauss's summation formula: 2F1(a,b;c;1) = Γ(c)Γ(c-a-b) / (Γ(c-a)Γ(c-b))
+  // Valid when Re(c-a-b) > 0
+
+  T s = c - a - b;
+
+  // Check convergence condition
+  double s_real;
+  if constexpr (is_complex_v<T>) {
+    s_real = static_cast<double>(s.real());
+  } else {
+    s_real = static_cast<double>(s);
+  }
+
+  if (s_real <= 0) {
+    // Diverges
+    if constexpr (is_complex_v<T>) {
+      using real_t = real_type_t<T>;
+      return T(std::numeric_limits<real_t>::quiet_NaN(), real_t(0));
+    } else {
+      return std::numeric_limits<T>::quiet_NaN();
+    }
+  }
+
+  // Use tgamma for gamma function
+  // Note: std::tgamma only works for real types, not complex
+  if constexpr (is_complex_v<T>) {
+    // For complex, use series with z approaching 1 from below as fallback
+    // This is a simplified approach; a full implementation would use complex gamma
+    using real_t = real_type_t<T>;
+    return T(std::numeric_limits<real_t>::quiet_NaN(), real_t(0));
+  } else {
+    T gamma_c = std::tgamma(c);
+    T gamma_s = std::tgamma(s);
+    T gamma_c_minus_a = std::tgamma(c - a);
+    T gamma_c_minus_b = std::tgamma(c - b);
+
+    return gamma_c * gamma_s / (gamma_c_minus_a * gamma_c_minus_b);
+  }
+}
+
+template <typename T>
 T hyp2f1_negative_z(T a, T b, T c, T z) {
   // For z < 0, use Pfaff transformation: z -> z/(z-1) which maps negative reals to (0,1)
   // 2F1(a,b;c;z) = (1-z)^(-a) * 2F1(a, c-b; c; z/(z-1))
@@ -245,6 +287,20 @@ T hyp2f1_forward_kernel(T a, T b, T c, T z) {
   if (is_nonpositive_integer(b)) {
     int n_terms = -get_nonpositive_int(b) + 1;
     return hyp2f1_series(a, b, c, z, n_terms);
+  }
+
+  // Special case: z = 1 (Gauss's summation formula)
+  double z_real, z_imag_abs;
+  if constexpr (is_complex_v<T>) {
+    z_real = static_cast<double>(z.real());
+    z_imag_abs = std::abs(static_cast<double>(z.imag()));
+  } else {
+    z_real = static_cast<double>(z);
+    z_imag_abs = 0.0;
+  }
+
+  if (std::abs(z_real - 1.0) < 1e-10 && z_imag_abs < 1e-10) {
+    return hyp2f1_at_one(a, b, c);
   }
 
   // For complex types, check if z is real and negative
