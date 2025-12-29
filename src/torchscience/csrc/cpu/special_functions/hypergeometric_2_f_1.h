@@ -66,6 +66,23 @@ T hyp2f1_series(T a, T b, T c, T z, int max_iter = 500) {
 }
 
 template <typename T>
+T hyp2f1_near_one(T a, T b, T c, T z) {
+  // Pfaff transformation: 2F1(a,b;c;z) = (1-z)^(-a) * 2F1(a, c-b; c; z/(z-1))
+  T z_transformed = z / (z - T(1));
+  if (std::abs(z_transformed) < T(0.5)) {
+    return std::pow(T(1) - z, -a) * hyp2f1_series(a, c - b, c, z_transformed);
+  }
+
+  // Alternative Pfaff: 2F1(a,b;c;z) = (1-z)^(-b) * 2F1(b, c-a; c; z/(z-1))
+  if (std::abs(z_transformed) < T(0.9)) {
+    return std::pow(T(1) - z, -b) * hyp2f1_series(b, c - a, c, z_transformed);
+  }
+
+  // Fallback: direct series with more iterations
+  return hyp2f1_series(a, b, c, z, 2000);
+}
+
+template <typename T>
 T hyp2f1_forward_kernel(T a, T b, T c, T z) {
   // Special case: z = 0
   if (std::abs(z) < epsilon<T>()) {
@@ -111,6 +128,11 @@ T hyp2f1_forward_kernel(T a, T b, T c, T z) {
   // Direct series for |z| < 0.5
   if (std::abs(z) < T(0.5)) {
     return hyp2f1_series(a, b, c, z);
+  }
+
+  // z in [0.5, 1): use Pfaff transformation
+  if (std::abs(z) >= T(0.5) && std::abs(z) < T(1)) {
+    return hyp2f1_near_one(a, b, c, z);
   }
 
   // Placeholder for other regions - will be implemented in later tasks

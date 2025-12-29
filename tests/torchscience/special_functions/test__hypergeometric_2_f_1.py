@@ -2608,3 +2608,18 @@ class TestHypergeometric2F1(OpTestCase):
         expected = torch.pow(1 - z, -a)
 
         torch.testing.assert_close(result, expected, rtol=1e-10, atol=1e-10)
+
+    def test_z_near_one(self):
+        """Test 2F1 with z close to 1 using transformation."""
+        a = torch.tensor([1.0], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+        c = torch.tensor([4.0], dtype=torch.float64)
+        z = torch.tensor([0.9], dtype=torch.float64)
+
+        result = torchscience.special_functions.hypergeometric_2_f_1(
+            a, b, c, z
+        )
+
+        # Reference from scipy.special.hyp2f1(1, 2, 4, 0.9)
+        expected = torch.tensor([2.1789423102929675], dtype=torch.float64)
+        torch.testing.assert_close(result, expected, rtol=1e-8, atol=1e-8)
