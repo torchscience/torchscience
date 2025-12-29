@@ -17,10 +17,10 @@
 | Task 1: Forward Series Kernel | ✅ Complete | `9d66ee1` |
 | Task 2: Special Cases | ✅ Complete | `7ad8ff1` |
 | Task 3: Pfaff Transformation | ✅ Complete | `3c17641` |
-| Task 4: Large z Transformations | ⏳ Pending | - |
-| Task 5: z Gradient | ⏳ Pending | - |
-| Task 6: Parameter Gradients | ⏳ Pending | - |
-| Task 7: Autograd Wrapper | ⏳ Pending | - |
+| Task 4: Negative z Transformation | ✅ Complete | `0181d3b` |
+| Task 5: z Gradient | ✅ Complete | `9320341` |
+| Task 6: Parameter Gradients | ✅ Complete | `8b184da` |
+| Task 7: Autograd Wrapper | ✅ Complete | `9320341` |
 | Task 8: Complex Support | ⏳ Pending | - |
 | Task 9: Second-Order Gradients | ⏳ Pending | - |
 | Task 10: Full Test Suite | ⏳ Pending | - |
@@ -29,6 +29,8 @@
 **Notes:**
 - Task 1: Corrected expected value from plan (scipy gives 1.4527... not 1.4285...)
 - Task 3: Corrected expected value from plan (scipy gives 2.1789... not 2.9629...)
+- Task 4: Renamed from "Large z Transformations" - only negative z implemented; z > 1 deferred to Task 8 (complex support)
+- Task 5-7: Combined implementation - backward kernel + autograd wrapper done together
 
 ---
 
