@@ -30,12 +30,16 @@ inline at::Tensor gamma_forward(
     at::kBFloat16,
     at::kHalf,
     iterator.common_dtype(),
-    "gamma_cpu",
+    "gamma",
     [&] {
       at::native::cpu_kernel(
         iterator,
-        [](scalar_t z) -> scalar_t {
-          return kernel::special_functions::gamma(z);
+        [](
+          scalar_t z
+        ) -> scalar_t {
+          return kernel::special_functions::gamma(
+            z
+          );
         }
       );
     }
@@ -62,12 +66,18 @@ inline at::Tensor gamma_backward(
     at::kBFloat16,
     at::kHalf,
     iterator.common_dtype(),
-    "gamma_backward_cpu",
+    "gamma_backward",
     [&] {
       at::native::cpu_kernel(
         iterator,
-        [](scalar_t g, scalar_t z) -> scalar_t {
-          return kernel::special_functions::gamma_backward(g, z);
+        [](
+          scalar_t gradient,
+          scalar_t z
+        ) -> scalar_t {
+          return kernel::special_functions::gamma_backward(
+            gradient,
+            z
+          );
         }
       );
     }
@@ -82,7 +92,10 @@ inline std::tuple<at::Tensor, at::Tensor> gamma_backward_backward(
   const at::Tensor &input
 ) {
   if (!gg_input.defined()) {
-    return {at::Tensor(), at::Tensor()};
+    return {
+      at::Tensor(),
+      at::Tensor()
+    };
   }
 
   at::Tensor gg_output;
@@ -102,12 +115,20 @@ inline std::tuple<at::Tensor, at::Tensor> gamma_backward_backward(
     at::kBFloat16,
     at::kHalf,
     iterator.common_dtype(),
-    "gamma_backward_backward_cpu",
+    "gamma_backward_backward",
     [&] {
       at::native::cpu_kernel_multiple_outputs(
         iterator,
-        [](scalar_t gg, scalar_t g, scalar_t z) -> std::tuple<scalar_t, scalar_t> {
-          return kernel::special_functions::gamma_backward_backward(gg, g, z);
+        [](
+          scalar_t gradient_gradient,
+          scalar_t gradient,
+          scalar_t z
+        ) -> std::tuple<scalar_t, scalar_t> {
+          return kernel::special_functions::gamma_backward_backward(
+            gradient_gradient,
+            gradient,
+            z
+          );
         }
       );
     }

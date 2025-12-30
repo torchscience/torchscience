@@ -34,11 +34,10 @@ c10::complex<T> digamma(c10::complex<T> z) {
     return digamma(c10::complex<T>(T(1), T(0)) - x) + static_cast<T>(M_PI) * sin_pi(x - c10::complex<T>(T(0.5), T(0))) / sin_pi(x);
   }
 
-  // Use recurrence relation ψ(z+1) = ψ(z) + 1/z to shift to larger argument
   while (std::abs(x) < T(6)) {
-    psi = psi - (c10::complex<T>(T(1), T(0)) / x);
+    psi = psi - c10::complex<T>(T(1), T(0)) / x;
 
-    x = x + (c10::complex<T>(T(1), T(0)));
+    x = x + c10::complex<T>(T(1), T(0));
   }
 
   c10::complex<T> x2 = c10::complex<T>(T(1), T(0)) / (x * x);
