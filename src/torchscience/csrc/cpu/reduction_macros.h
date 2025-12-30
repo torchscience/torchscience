@@ -371,7 +371,6 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
                 scalar_t grad_out_val = grad_output.item<scalar_t>();           \
                                                                                 \
                 scalar_t gg_output;                                             \
-                std::vector<scalar_t> new_grad(arg##_contig.numel());           \
                                                                                 \
                 kernel::NS::name##_backward_backward<scalar_t>(                 \
                     gg_input_ptr,                                               \
@@ -380,15 +379,10 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
                     arg##_contig.numel()                                        \
                     EXTRA_ARGS                                                  \
                     , gg_output                                                 \
-                    , new_grad.data()                                           \
+                    , new_grad_input.data_ptr<scalar_t>()                       \
                 );                                                              \
                                                                                 \
                 grad_grad_output.fill_(gg_output);                              \
-                                                                                \
-                scalar_t* new_grad_ptr = new_grad_input.data_ptr<scalar_t>();   \
-                for (int64_t i = 0; i < arg##_contig.numel(); ++i) {            \
-                    new_grad_ptr[i] = new_grad[i];                              \
-                }                                                               \
             }                                                                   \
         );                                                                      \
                                                                                 \
@@ -652,7 +646,6 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
                 scalar_t grad_out_val = grad_output.item<scalar_t>();           \
                                                                                 \
                 scalar_t gg_output;                                             \
-                std::vector<scalar_t> new_grad(arg##_contig.numel());           \
                                                                                 \
                 kernel::NS::name##_backward_backward<scalar_t>(                 \
                     gg_input_ptr,                                               \
@@ -661,15 +654,10 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
                     arg##_contig.numel()                                        \
                     EXTRA_ARGS                                                  \
                     , gg_output                                                 \
-                    , new_grad.data()                                           \
+                    , new_grad_input.data_ptr<scalar_t>()                       \
                 );                                                              \
                                                                                 \
                 grad_grad_output.fill_(gg_output);                              \
-                                                                                \
-                scalar_t* new_grad_ptr = new_grad_input.data_ptr<scalar_t>();   \
-                for (int64_t i = 0; i < arg##_contig.numel(); ++i) {            \
-                    new_grad_ptr[i] = new_grad[i];                              \
-                }                                                               \
             }                                                                   \
         );                                                                      \
     } else {                                                                    \
