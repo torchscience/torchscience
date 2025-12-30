@@ -5,111 +5,42 @@ PyTorch operators for mathematics, science, and engineering.
 ## Installation
 
 ```bash
-pip install torchscience
-```
-
-For development:
-
-```bash
 git clone https://github.com/torchscience/torchscience.git
 cd torchscience
 pip install -e ".[dev]"
 ```
 
-## Quick Start
+## Guarantees
 
-```python
-import torch
-import torchscience
+torchscience is intended to be a foundational library used in downstream 
+optimization and machine learning tasks. To support that use case, we aim to 
+provide a small set of clear, testable guarantees about operator behavior.
 
-# Special functions with automatic differentiation
-z = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0], requires_grad=True)
-y = torchscience.special_functions.gamma(z)
-y.sum().backward()
-print(z.grad)
+### Automatic differentiation
 
-# Works with torch.compile
-compiled_gamma = torch.compile(torchscience.special_functions.gamma)
+For any operator that is differentiable on its stated domain:
 
-# Works with vmap for batching
-batched_gamma = torch.func.vmap(torchscience.special_functions.gamma)
+- **Autograd support is provided.** The operator participates in PyTorch autograd with a defined backward.
+- **Gradients are stable and validated.** Gradients are tested for correctness (e.g., via numerical checks and regression tests) and exercised in common optimization regimes to catch pathological behavior.
+- **Analytical gradients are preferred.** When closed-form derivatives are available, we implement them directly rather than relying on finite-difference approximations.
+- **Non-smooth points are documented.** If an operator is non-differentiable at certain points, or has domain restrictions, those are documented and the backward follows the documented convention.
 
-# Signal processing
-wave = torchscience.signal_processing.waveform.sine_wave(
-    torch.tensor(440.0),
-    num_samples=48000,
-    sample_rate=48000.0,
-)
-```
+torchscience is not a machine-learning package, but it is designed to be a reliable substrate for packages that are.
 
-## Features
+### Complex numbers
 
-### Special Functions
+When an operator has a mathematically meaningful extension to the complex plane:
 
-| Function | Description |
-|----------|-------------|
-| `gamma(z)` | Gamma function with Lanczos approximation |
-| `chebyshev_polynomial_t(n, x)` | Chebyshev polynomials of the first kind |
-| `incomplete_beta(a, b, x)` | Regularized incomplete beta function |
-| `hypergeometric_2_f_1(a, b, c, z)` | Gaussian hypergeometric function |
+- **Complex implementations are provided.** The operator supports complex dtypes with behavior consistent with the documented mathematical definition.
+- **Branch cuts and conventions are documented.** Any branch cuts, principal value conventions, and discontinuities are explicitly documented.
+- **Complex gradients are supported where applicable.** When a complex-valued gradient is well-defined under PyTorch’s autograd conventions, we provide it and test it.
 
-### Signal Processing
+### PyTorch surfaces that may evolve
 
-| Submodule | Function | Description |
-|-----------|----------|-------------|
-| `filter` | `butterworth_analog_bandpass_filter` | Analog Butterworth bandpass filter design |
-| `integral_transform` | `hilbert_transform` | Hilbert transform of a signal |
-| `integral_transform` | `inverse_hilbert_transform` | Inverse Hilbert transform |
-| `waveform` | `sine_wave` | Sinusoidal waveform generation |
-| `window_function` | `rectangular_window` | Rectangular (boxcar) window |
+Some PyTorch APIs are still evolving upstream. torchscience supports these areas, but you should expect occasional adjustments as PyTorch changes semantics or surface area:
 
-### Optimization
+- Quantization
+- Sparse tensors (`torch.sparse`)
+- Masked tensors (`torch.masked`)
 
-| Submodule | Function | Description |
-|-----------|----------|-------------|
-| `test_functions` | `rosenbrock` | Rosenbrock function for optimization benchmarking |
-
-### Statistics
-
-| Submodule | Function | Description |
-|-----------|----------|-------------|
-| `descriptive` | `kurtosis` | Fourth standardized moment measuring distribution tailedness |
-
-## PyTorch Compatibility
-
-Every operator supports:
-
-- **Autograd**: First-order and higher-order gradients, complex gradients (Wirtinger), forward-mode AD
-- **Compilation**: `torch.compile()` for graph optimization and kernel fusion
-- **Batching**: `torch.func.vmap` for efficient parallelism, NumPy-style broadcasting
-- **Data types**: float16, bfloat16, float32, float64, complex64, complex128
-- **Hardware**: CPU (vectorized), CUDA (device-agnostic kernels)
-- **Layouts**: Strided, Sparse COO, Sparse CSR
-- **Mixed precision**: Autocast with numerical stability
-
-## Design Principles
-
-1. **First-class PyTorch integration** — Seamless compatibility with autograd, torch.compile, torch.func, and the full PyTorch ecosystem.
-
-2. **Numerical rigor** — Careful handling of edge cases, overflow/underflow, and precision across the full input range.
-
-3. **Production quality** — Follows PyTorch standards for code organization, testing, and documentation.
-
-## Documentation
-
-- [Architecture](docs/architecture.rst) — Implementation patterns and PyTorch integration details
-- [Roadmap](docs/roadmap.rst) — Planned modules and features
-
-## Contributing
-
-Contributions are welcome. See [Architecture](docs/architecture.rst) for implementation patterns.
-
-1. Core implementation in `csrc/impl/` (device-agnostic, header-only C++)
-2. Dispatcher registrations for CPU, CUDA, Autograd, Meta, Autocast, Sparse, Quantized
-3. Python wrapper with comprehensive docstring
-4. Tests using the mixin framework in `src/torchscience/testing/`
-5. Benchmarks using Google Benchmark
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
+When upstream changes require updates, we will document behavior changes in release notes and, when practical, provide migration guidance.
