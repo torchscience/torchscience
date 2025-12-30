@@ -3,6 +3,8 @@
 import pytest
 import torch
 
+import torchscience._csrc  # noqa: F401
+
 
 class TestSumSquaresForward:
     """Test sum_squares forward pass."""
