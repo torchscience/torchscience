@@ -56,9 +56,9 @@ T log_gamma(T z) {
     x += static_cast<T>(coefficients[i]) / (z_adj + T(i));
   }
 
-  const T g = static_cast<T>(kGammaG);
+  const T gradient = static_cast<T>(kGammaG);
 
-  T t = z_adj + g + T(0.5);
+  T t = z_adj + gradient + T(0.5);
 
   // ln(Γ(z)) = 0.5*ln(2π) + (z-0.5)*ln(t) - t + ln(x)
   return T(0.5) * std::log(static_cast<T>(2 * M_PI)) + (z_adj + T(0.5)) * std::log(t) - t + std::log(x);
@@ -108,9 +108,9 @@ c10::complex<T> log_gamma(c10::complex<T> z) {
     x += static_cast<T>(coefficients[i]) / (z_adj + c10::complex<T>(T(i), T(0)));
   }
 
-  const T g = static_cast<T>(kGammaG);
+  const T gradient = static_cast<T>(kGammaG);
 
-  c10::complex<T> t = z_adj + c10::complex<T>(g + T(0.5), T(0));
+  c10::complex<T> t = z_adj + c10::complex<T>(gradient + T(0.5), T(0));
 
   // ln(Γ(z)) = 0.5*ln(2π) + (z-0.5)*ln(t) - t + ln(x)
   return c10::complex<T>(T(0.5) * std::log(static_cast<T>(2 * M_PI)), T(0))

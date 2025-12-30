@@ -27,7 +27,10 @@ c10::complex<T> cos_pi(c10::complex<T> z) {
     x_mod += T(2);
   }
 
-  return c10::complex<T>(std::cos(static_cast<T>(M_PI) * x_mod) * std::cosh(static_cast<T>(M_PI) * y), -std::sin(static_cast<T>(M_PI) * x_mod) * std::sinh(static_cast<T>(M_PI) * y));
+  return c10::complex<T>(
+    std::cos(static_cast<T>(M_PI) * x_mod) * std::cosh(static_cast<T>(M_PI) * y),
+    -std::sin(static_cast<T>(M_PI) * x_mod) * std::sinh(static_cast<T>(M_PI) * y)
+  );
 }
 
 } // namespace torchscience::kernel::special_functions

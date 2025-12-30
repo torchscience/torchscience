@@ -165,7 +165,7 @@ T log_weighted_beta_integral(T x, T a, T b, bool weight_log_t) {
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T, T> incomplete_beta_backward(T g, T x, T a, T b) {
+std::tuple<T, T, T> incomplete_beta_backward(T gradient, T x, T a, T b) {
   if (x <= T(0) || x >= T(1)) {
     return {T(0), T(0), T(0)};
   }
@@ -175,7 +175,7 @@ std::tuple<T, T, T> incomplete_beta_backward(T g, T x, T a, T b) {
 
   T log_pdf = (a - T(1)) * std::log(x) + (b - T(1)) * std::log(T(1) - x) - log_beta_val;
   T pdf = std::exp(log_pdf);
-  T grad_x = g * pdf;
+  T grad_x = gradient * pdf;
 
   T I_x = incomplete_beta(x, a, b);
 
@@ -184,10 +184,10 @@ std::tuple<T, T, T> incomplete_beta_backward(T g, T x, T a, T b) {
   T psi_ab = digamma(a + b);
 
   T log_integral_a = detail::log_weighted_beta_integral(x, a, b, true);
-  T grad_a = g * (log_integral_a - I_x * (psi_a - psi_ab));
+  T grad_a = gradient * (log_integral_a - I_x * (psi_a - psi_ab));
 
   T log_integral_b = detail::log_weighted_beta_integral(x, a, b, false);
-  T grad_b = g * (log_integral_b - I_x * (psi_b - psi_ab));
+  T grad_b = gradient * (log_integral_b - I_x * (psi_b - psi_ab));
 
   return {
     grad_x,
@@ -198,7 +198,7 @@ std::tuple<T, T, T> incomplete_beta_backward(T g, T x, T a, T b) {
 
 template <typename T>
 std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> incomplete_beta_backward(
-    c10::complex<T> g,
+    c10::complex<T> gradient,
     c10::complex<T> x,
     c10::complex<T> a,
     c10::complex<T> b
@@ -221,9 +221,9 @@ std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> incomplete_beta_ba
   c10::complex<T> psi_ab = digamma(a + b);
 
   return {
-    g * pdf,
-    -g * I_x * (digamma(a) - psi_ab),
-    -g * I_x * (digamma(b) - psi_ab)
+    gradient * pdf,
+    -gradient * I_x * (digamma(a) - psi_ab),
+    -gradient * I_x * (digamma(b) - psi_ab)
   };
 }
 
