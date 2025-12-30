@@ -98,17 +98,13 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> incomplete_bet
   const at::Tensor &a,
   const at::Tensor &b
 ) {
-  bool has_gg_x = gg_x.defined();
-  bool has_gg_a = gg_a.defined();
-  bool has_gg_b = gg_b.defined();
-
-  if (!has_gg_x && !has_gg_a && !has_gg_b) {
+  if (!gg_x.defined() && !gg_a.defined() && !gg_b.defined()) {
     return {at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};
   }
 
-  at::Tensor gg_x_safe = has_gg_x ? gg_x : at::zeros_like(grad);
-  at::Tensor gg_a_safe = has_gg_a ? gg_a : at::zeros_like(grad);
-  at::Tensor gg_b_safe = has_gg_b ? gg_b : at::zeros_like(grad);
+  at::Tensor gg_x_safe = gg_x.defined() ? gg_x : at::zeros_like(x);
+  at::Tensor gg_a_safe = gg_a.defined() ? gg_a : at::zeros_like(a);
+  at::Tensor gg_b_safe = gg_b.defined() ? gg_b : at::zeros_like(b);
 
   at::Tensor gg_out;
   at::Tensor new_grad_x;
@@ -139,14 +135,13 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> incomplete_bet
     [&] {
       at::native::cpu_kernel_multiple_outputs(
         iterator,
-        [has_gg_x, has_gg_a, has_gg_b](
-            scalar_t gg_x_val, scalar_t gg_a_val, scalar_t gg_b_val,
-            scalar_t g, scalar_t x_val, scalar_t a_val, scalar_t b_val)
-            -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+        [] (
+          scalar_t gg_x_val, scalar_t gg_a_val, scalar_t gg_b_val,
+          scalar_t g, scalar_t x_val, scalar_t a_val, scalar_t b_val
+        ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
           return kernel::special_functions::incomplete_beta_backward_backward(
             gg_x_val, gg_a_val, gg_b_val,
-            g, x_val, a_val, b_val,
-            has_gg_x, has_gg_a, has_gg_b
+            g, x_val, a_val, b_val
           );
         }
       );

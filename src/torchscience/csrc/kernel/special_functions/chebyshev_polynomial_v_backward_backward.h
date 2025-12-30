@@ -13,10 +13,9 @@ std::tuple<T, T, T> chebyshev_polynomial_v_backward_backward(
   T gradient_gradient_n,
   T gradient,
   T x,
-  T n,
-  bool has_gradient_gradient_x
+  T n
 ) {
-  if (!has_gradient_gradient_x || n < T(1)) {
+  if (n < T(1)) {
     return {T(0), T(0), T(0)};
   }
 
