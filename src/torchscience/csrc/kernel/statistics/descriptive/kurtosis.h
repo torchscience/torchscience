@@ -294,6 +294,13 @@ void kurtosis_backward_complex(
 
 /**
  * Compute second-order derivatives for kurtosis.
+ *
+ * Uses O(n) algorithm by precomputing weighted sums instead of O(n²) nested loops.
+ *
+ * The key insight is that the Hessian terms can be decomposed into:
+ *   Σᵢ gg_i * ∂²k/∂xᵢ∂xⱼ = f(j, precomputed_sums)
+ *
+ * where precomputed_sums = {Σgg, Σgg·d, Σgg·d², Σgg·d³} are computed once.
  */
 template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
@@ -316,23 +323,21 @@ void kurtosis_backward_backward(
         return;
     }
 
+    // Compute mean
     T sum = T(0);
     for (int64_t i = 0; i < n; ++i) {
         sum += data[i];
     }
     T mean = sum / T(n);
 
-    T m2 = T(0);
-    T m3 = T(0);
-    T m4 = T(0);
+    // Compute moments
+    T m2 = T(0), m3 = T(0), m4 = T(0);
     for (int64_t i = 0; i < n; ++i) {
         T d = data[i] - mean;
         T d2 = d * d;
-        T d3 = d2 * d;
-        T d4 = d2 * d2;
         m2 += d2;
-        m3 += d3;
-        m4 += d4;
+        m3 += d2 * d;
+        m4 += d2 * d2;
     }
     m2 /= T(n);
     m3 /= T(n);
@@ -343,10 +348,7 @@ void kurtosis_backward_backward(
     }
 
     T m2_sq = m2 * m2;
-    T g2 = m4 / m2_sq;
-    T g2_excess = g2 - T(3);
-    T k_for_grad = fisher ? g2_excess : g2;
-
+    T g2 = m4 / m2_sq;  // Pearson kurtosis
     T n_f = T(n);
     T coeff = T(4) / (n_f * m2_sq);
 
@@ -355,70 +357,82 @@ void kurtosis_backward_backward(
         dG2_dg2 = ((n_f - T(1)) * (n_f + T(1))) / ((n_f - T(2)) * (n_f - T(3)));
     }
 
+    // Precompute weighted sums - O(n)
+    T sum_gg = T(0);
+    T sum_gg_d = T(0);
+    T sum_gg_d2 = T(0);
+    T sum_gg_d3 = T(0);
     for (int64_t i = 0; i < n; ++i) {
         T d = data[i] - mean;
-        T d3 = d * d * d;
-        T dk_dxi = coeff * (d3 - m3 - T(2) * k_for_grad * m2 * d);
-        if (!bias) {
-            dk_dxi *= dG2_dg2;
-        }
-        grad_grad_output += grad_grad_input[i] * dk_dxi;
+        T d2 = d * d;
+        T d3 = d2 * d;
+        T gg = grad_grad_input[i];
+        sum_gg += gg;
+        sum_gg_d += gg * d;
+        sum_gg_d2 += gg * d2;
+        sum_gg_d3 += gg * d3;
     }
 
-    T sum_gg = T(0);
-    for (int64_t i = 0; i < n; ++i) {
-        sum_gg += grad_grad_input[i];
+    // grad_grad_output = Σᵢ gg_i * dk/dxᵢ
+    // where dk/dxᵢ = coeff * (dᵢ³ - m₃ - g₂·m₂·dᵢ)
+    T g2_m2 = g2 * m2;
+    T sum_f = sum_gg_d3 - m3 * sum_gg - g2_m2 * sum_gg_d;
+    grad_grad_output = coeff * sum_f;
+    if (!bias) {
+        grad_grad_output *= dG2_dg2;
     }
+
+    // Precompute constants for Hessian
+    T inv_n = T(1) / n_f;
+
+    // new_grad_input[j] = grad_output * Σᵢ(gg_i * ∂²k/∂xᵢ∂xⱼ)
+    //
+    // The Hessian decomposes into 4 terms (see derivation below).
+    // Each term becomes O(1) per j using precomputed sums.
+    //
+    // Term 1: ∂(dᵢ³)/∂xⱼ = 3dᵢ²(δᵢⱼ - 1/n)
+    //   → 3·gg_j·dⱼ² - (3/n)·sum_gg_d2
+    //
+    // Term 2: -∂m₃/∂xⱼ = -(3/n)(dⱼ² - m₂)
+    //   → -(3/n)(dⱼ² - m₂)·sum_gg
+    //
+    // Term 3: -∂(g₂·m₂·dᵢ)/∂xⱼ
+    //   → -dg₂/dxⱼ·m₂·sum_gg_d - g₂·dm₂/dxⱼ·sum_gg_d
+    //      - g₂·m₂·gg_j + (g₂·m₂/n)·sum_gg
+    //
+    // Term 4: (∂coeff/∂xⱼ)·Σᵢ gg_i·fᵢ = dcoeff/dxⱼ · sum_f
 
     for (int64_t j = 0; j < n; ++j) {
         T dj = data[j] - mean;
         T dj2 = dj * dj;
         T dj3 = dj2 * dj;
+        T gg_j = grad_grad_input[j];
 
-        T term1 = T(0);
-        for (int64_t i = 0; i < n; ++i) {
-            T di = data[i] - mean;
-            T di2 = di * di;
-            T kronecker = (i == j) ? T(1) : T(0);
-            term1 += grad_grad_input[i] * T(3) * di2 * (kronecker - T(1) / n_f);
-        }
+        // Term 1: ∂(dᵢ³)/∂xⱼ contribution
+        T term1 = T(3) * gg_j * dj2 - T(3) * inv_n * sum_gg_d2;
 
-        T dm3_dxj = (T(3) / n_f) * (dj2 - m2);
-        T term2 = -sum_gg * dm3_dxj;
+        // Term 2: -∂m₃/∂xⱼ contribution
+        T dm3_dxj = T(3) * inv_n * (dj2 - m2);
+        T term2 = -dm3_dxj * sum_gg;
 
-        T dk_dxj = coeff * (dj3 - m3 - T(2) * k_for_grad * m2 * dj);
-        T dm2_dxj = (T(2) / n_f) * dj;
+        // Term 3: -∂(g₂·m₂·dᵢ)/∂xⱼ contribution
+        T dg2_dxj = coeff * (dj3 - m3 - g2_m2 * dj);
+        T dm2_dxj = T(2) * inv_n * dj;
+        T term3 = -dg2_dxj * m2 * sum_gg_d
+                  - g2 * dm2_dxj * sum_gg_d
+                  - g2_m2 * gg_j
+                  + g2_m2 * inv_n * sum_gg;
 
-        T term3a = T(0);
-        T term3b = T(0);
-        T term3c = T(0);
-
-        for (int64_t i = 0; i < n; ++i) {
-            T di = data[i] - mean;
-            T kronecker = (i == j) ? T(1) : T(0);
-
-            term3a += grad_grad_input[i] * dk_dxj * m2 * di;
-            term3b += grad_grad_input[i] * k_for_grad * dm2_dxj * di;
-            term3c += grad_grad_input[i] * k_for_grad * m2 * (kronecker - T(1) / n_f);
-        }
-        T term3 = -T(2) * (term3a + term3b + term3c);
-
+        // Term 4: (∂coeff/∂xⱼ) · sum_f
         T dcoeff_dxj = -T(2) * coeff / m2 * dm2_dxj;
-        T term4 = T(0);
-        for (int64_t i = 0; i < n; ++i) {
-            T di = data[i] - mean;
-            T di3 = di * di * di;
-            term4 += grad_grad_input[i] * (di3 - m3 - T(2) * k_for_grad * m2 * di);
-        }
-        term4 *= dcoeff_dxj;
+        T term4 = dcoeff_dxj * sum_f;
 
-        T hessian_contribution = coeff * (term1 + term2 + term3) + term4;
-
+        T hessian_contrib = coeff * (term1 + term2 + term3) + term4;
         if (!bias) {
-            hessian_contribution *= dG2_dg2;
+            hessian_contrib *= dG2_dg2;
         }
 
-        new_grad_input[j] = grad_output * hessian_contribution;
+        new_grad_input[j] = grad_output * hessian_contrib;
     }
 }
 

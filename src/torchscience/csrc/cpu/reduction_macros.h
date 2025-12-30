@@ -280,8 +280,8 @@ inline at::Tensor name##_backward(                                              
                     grad_out_val,                                               \
                     data_ptr,                                                   \
                     arg##_contig.numel()                                        \
-                    EXTRA_ARGS,                                                 \
-                    grad_ptr                                                    \
+                    EXTRA_ARGS                                                  \
+                    , grad_ptr                                                  \
                 );                                                              \
             }                                                                   \
         );                                                                      \
@@ -328,8 +328,8 @@ inline at::Tensor name##_backward(                                              
                         grad_out_ptr[b],                                        \
                         data_ptr + b * reduce_size,                             \
                         reduce_size                                             \
-                        EXTRA_ARGS,                                             \
-                        grad_ptr + b * reduce_size                              \
+                        EXTRA_ARGS                                              \
+                        , grad_ptr + b * reduce_size                            \
                     );                                                          \
                 }                                                               \
             });                                                                 \
@@ -361,7 +361,8 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
     auto [reduce_size, batch_size] = compute_reduction_sizes(arg, dim);         \
                                                                                 \
     if (!dim.has_value() || dim->empty()) {                                     \
-        AT_DISPATCH_FLOATING_TYPES(                                             \
+        AT_DISPATCH_FLOATING_TYPES_AND2(                                        \
+            at::kBFloat16, at::kHalf,                                           \
             arg##_contig.scalar_type(),                                         \
             #name "_backward_backward_cpu_all",                                 \
             [&]() {                                                             \
@@ -377,9 +378,9 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
                     grad_out_val,                                               \
                     data_ptr,                                                   \
                     arg##_contig.numel()                                        \
-                    EXTRA_ARGS,                                                 \
-                    gg_output,                                                  \
-                    new_grad.data()                                             \
+                    EXTRA_ARGS                                                  \
+                    , gg_output                                                 \
+                    , new_grad.data()                                           \
                 );                                                              \
                                                                                 \
                 grad_grad_output.fill_(gg_output);                              \
@@ -394,7 +395,67 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
         return std::make_tuple(grad_grad_output, new_grad_input);               \
     }                                                                           \
                                                                                 \
-    /* Dimension-specific backward_backward - return zeros for now */           \
+    auto permutation = build_reduction_permutation(arg.dim(), dim);             \
+    auto permuted_input = arg##_contig.permute(permutation).contiguous();       \
+    auto permuted_gg_input = grad_grad_input_contig.permute(permutation).contiguous();\
+    auto permuted_input_view = permuted_input.view({batch_size, reduce_size});  \
+    auto permuted_gg_input_view = permuted_gg_input.view({batch_size, reduce_size});\
+                                                                                \
+    at::Tensor grad_output_expanded;                                            \
+    if (keepdim) {                                                              \
+        grad_output_expanded = grad_output.contiguous().view({batch_size});     \
+    } else {                                                                    \
+        int64_t ndim = arg.dim();                                               \
+        std::vector<bool> reduce_dim(ndim, false);                              \
+        for (int64_t d : *dim) {                                                \
+            int64_t pos_d = d >= 0 ? d : d + ndim;                              \
+            reduce_dim[pos_d] = true;                                           \
+        }                                                                       \
+        at::Tensor temp = grad_output;                                          \
+        for (int64_t i = 0; i < ndim; ++i) {                                    \
+            if (reduce_dim[i]) {                                                \
+                temp = temp.unsqueeze(i);                                       \
+            }                                                                   \
+        }                                                                       \
+        grad_output_expanded = temp.contiguous().view({batch_size});            \
+    }                                                                           \
+                                                                                \
+    at::Tensor new_grad_permuted = at::zeros({batch_size, reduce_size}, arg.options());\
+                                                                                \
+    AT_DISPATCH_FLOATING_TYPES_AND2(                                            \
+        at::kBFloat16, at::kHalf,                                               \
+        arg##_contig.scalar_type(),                                             \
+        #name "_backward_backward_cpu_dim",                                     \
+        [&]() {                                                                 \
+            const scalar_t* data_ptr = permuted_input_view.data_ptr<scalar_t>();\
+            const scalar_t* gg_input_ptr = permuted_gg_input_view.data_ptr<scalar_t>();\
+            const scalar_t* grad_out_ptr = grad_output_expanded.data_ptr<scalar_t>();\
+            scalar_t* gg_output_ptr = grad_grad_output.data_ptr<scalar_t>();    \
+            scalar_t* new_grad_ptr = new_grad_permuted.data_ptr<scalar_t>();    \
+                                                                                \
+            at::parallel_for(0, batch_size, 0, [&](int64_t begin, int64_t end) {\
+                for (int64_t b = begin; b < end; ++b) {                         \
+                    scalar_t gg_out;                                            \
+                    kernel::NS::name##_backward_backward<scalar_t>(             \
+                        gg_input_ptr + b * reduce_size,                         \
+                        grad_out_ptr[b],                                        \
+                        data_ptr + b * reduce_size,                             \
+                        reduce_size                                             \
+                        EXTRA_ARGS                                              \
+                        , gg_out                                                \
+                        , new_grad_ptr + b * reduce_size                        \
+                    );                                                          \
+                    gg_output_ptr[b] = gg_out;                                  \
+                }                                                               \
+            });                                                                 \
+        }                                                                       \
+    );                                                                          \
+                                                                                \
+    auto inverse_perm = build_inverse_permutation(permutation);                 \
+    new_grad_input = new_grad_permuted.view(permuted_input.sizes())             \
+        .permute(inverse_perm)                                                  \
+        .contiguous();                                                          \
+                                                                                \
     return std::make_tuple(grad_grad_output, new_grad_input);                   \
 }                                                                               \
                                                                                 \
@@ -453,6 +514,7 @@ inline at::Tensor name(                                                         
     auto arg##_contig = arg.contiguous();                                       \
                                                                                 \
     if constexpr (MODE == ReductionMode::ALL_DIMS) {                            \
+        TORCH_CHECK(arg.numel() > 0, #name ": input tensor must be non-empty"); \
         auto output = at::empty({}, arg##_contig.options());                    \
                                                                                 \
         AT_DISPATCH_FLOATING_TYPES_AND2(                                        \
@@ -528,8 +590,8 @@ inline at::Tensor name##_backward(                                              
                     grad_out_val,                                               \
                     data_ptr,                                                   \
                     arg##_contig.numel()                                        \
-                    EXTRA_ARGS,                                                 \
-                    grad_ptr                                                    \
+                    EXTRA_ARGS                                                  \
+                    , grad_ptr                                                  \
                 );                                                              \
             }                                                                   \
         );                                                                      \
@@ -554,8 +616,8 @@ inline at::Tensor name##_backward(                                              
                             grad_out_ptr[b],                                    \
                             data_ptr + b * reduce_size,                         \
                             reduce_size                                         \
-                            EXTRA_ARGS,                                         \
-                            grad_ptr + b * reduce_size                          \
+                            EXTRA_ARGS                                          \
+                            , grad_ptr + b * reduce_size                        \
                         );                                                      \
                     }                                                           \
                 });                                                             \
@@ -580,7 +642,8 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
     auto grad_grad_input_contig = grad_grad_input.contiguous();                 \
                                                                                 \
     if constexpr (MODE == ReductionMode::ALL_DIMS) {                            \
-        AT_DISPATCH_FLOATING_TYPES(                                             \
+        AT_DISPATCH_FLOATING_TYPES_AND2(                                        \
+            at::kBFloat16, at::kHalf,                                           \
             arg##_contig.scalar_type(),                                         \
             #name "_backward_backward_cpu_all",                                 \
             [&]() {                                                             \
@@ -596,9 +659,9 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
                     grad_out_val,                                               \
                     data_ptr,                                                   \
                     arg##_contig.numel()                                        \
-                    EXTRA_ARGS,                                                 \
-                    gg_output,                                                  \
-                    new_grad.data()                                             \
+                    EXTRA_ARGS                                                  \
+                    , gg_output                                                 \
+                    , new_grad.data()                                           \
                 );                                                              \
                                                                                 \
                 grad_grad_output.fill_(gg_output);                              \
@@ -616,7 +679,8 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
         auto grad_output_flat = grad_output.contiguous().view({batch_size});    \
         auto gg_input_view = grad_grad_input_contig.view({batch_size, reduce_size});\
                                                                                 \
-        AT_DISPATCH_FLOATING_TYPES(                                             \
+        AT_DISPATCH_FLOATING_TYPES_AND2(                                        \
+            at::kBFloat16, at::kHalf,                                           \
             arg##_contig.scalar_type(),                                         \
             #name "_backward_backward_cpu_last",                                \
             [&]() {                                                             \
@@ -634,9 +698,9 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
                             grad_out_ptr[b],                                    \
                             data_ptr + b * reduce_size,                         \
                             reduce_size                                         \
-                            EXTRA_ARGS,                                         \
-                            gg_out,                                             \
-                            new_grad_ptr + b * reduce_size                      \
+                            EXTRA_ARGS                                          \
+                            , gg_out                                            \
+                            , new_grad_ptr + b * reduce_size                    \
                         );                                                      \
                         gg_output_ptr[b] = gg_out;                              \
                     }                                                           \
