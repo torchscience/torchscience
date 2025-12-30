@@ -18,15 +18,9 @@ c10::complex<T> tanh_pi(c10::complex<T> z) {
   T two_pi_x = static_cast<T>(2 * M_PI) * x;
   T two_pi_y = static_cast<T>(2 * M_PI) * y;
 
-  T sinh_2x = std::sinh(two_pi_x);
-  T cosh_2x = std::cosh(two_pi_x);
+  T denom = std::cosh(two_pi_x) + std::cos(two_pi_y);
 
-  T sin_2y = std::sin(two_pi_y);
-  T cos_2y = std::cos(two_pi_y);
-
-  T denom = cosh_2x + cos_2y;
-
-  return c10::complex<T>(sinh_2x / denom, sin_2y / denom);
+  return c10::complex<T>(std::sinh(two_pi_x) / denom, std::sin(two_pi_y) / denom);
 }
 
 } // namespace torchscience::kernel::special_functions

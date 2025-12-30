@@ -15,16 +15,7 @@ c10::complex<T> cosh_pi(c10::complex<T> z) {
   T x = z.real();
   T y = z.imag();
 
-  T pi_x = static_cast<T>(M_PI) * x;
-  T pi_y = static_cast<T>(M_PI) * y;
-
-  T sinh_x = std::sinh(pi_x);
-  T cosh_x = std::cosh(pi_x);
-
-  T sin_y = std::sin(pi_y);
-  T cos_y = std::cos(pi_y);
-
-  return c10::complex<T>(cosh_x * cos_y, sinh_x * sin_y);
+  return c10::complex<T>(std::cosh(static_cast<T>(M_PI) * x) * std::cos(static_cast<T>(M_PI) * y), std::sinh(static_cast<T>(M_PI) * x) * std::sin(static_cast<T>(M_PI) * y));
 }
 
 } // namespace torchscience::kernel::special_functions
