@@ -164,9 +164,14 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> incomplete_bet
 } // namespace torchscience::cpu
 
 TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
-  module.impl("incomplete_beta", torchscience::cpu::incomplete_beta_forward);
+  module.impl(
+    "incomplete_beta",
+    torchscience::cpu::incomplete_beta_forward
+  );
 
-  module.impl("incomplete_beta_backward", torchscience::cpu::incomplete_beta_backward);
+  module.impl(
+    "incomplete_beta_backward", torchscience::cpu::incomplete_beta_backward);
 
-  module.impl("incomplete_beta_backward_backward", torchscience::cpu::incomplete_beta_backward_backward);
+  module.impl(
+    "incomplete_beta_backward_backward", torchscience::cpu::incomplete_beta_backward_backward);
 }

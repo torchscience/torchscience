@@ -33,9 +33,18 @@ inline at::Tensor chebyshev_polynomial_v_forward(
     iterator.common_dtype(),
     "chebyshev_polynomial_v_cpu",
     [&] {
-      at::native::cpu_kernel(iterator, [](scalar_t x, scalar_t n) -> scalar_t {
-        return kernel::special_functions::chebyshev_polynomial_v(x, n);
-      });
+      at::native::cpu_kernel(
+        iterator,
+        [](
+          scalar_t x,
+          scalar_t n
+        ) -> scalar_t {
+          return kernel::special_functions::chebyshev_polynomial_v(
+            x,
+            n
+          );
+        }
+      );
     }
   );
 
@@ -120,9 +129,20 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> chebyshev_polynomial_v_bac
     [&] {
       at::native::cpu_kernel_multiple_outputs(
         iterator,
-        [has_gg_x](scalar_t gg_x, scalar_t gg_n, scalar_t g, scalar_t x, scalar_t n) {
+        [has_gg_x](
+          scalar_t gg_x,
+          scalar_t gg_n,
+          scalar_t g,
+          scalar_t x,
+          scalar_t n
+        ) -> std::tuple<scalar_t, scalar_t, scalar_t> {
           return kernel::special_functions::chebyshev_polynomial_v_backward_backward<scalar_t>(
-            gg_x, gg_n, g, x, n, has_gg_x
+            gg_x,
+            gg_n,
+            g,
+            x,
+            n,
+            has_gg_x
           );
         }
       );
