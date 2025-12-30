@@ -31,6 +31,7 @@
 #include "autograd/statistics/descriptive/kurtosis.h"
 #include "autograd/integral_transform/hilbert_transform.h"
 #include "autograd/integral_transform/inverse_hilbert_transform.h"
+#include "autograd/test/sum_squares.h"
 
 #include "meta/distance/minkowski_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
@@ -46,6 +47,7 @@
 #include "autocast/statistics/descriptive/kurtosis.h"
 #include "autocast/integral_transform/hilbert_transform.h"
 #include "autocast/integral_transform/inverse_hilbert_transform.h"
+#include "autocast/test/sum_squares.h"
 
 #include "sparse/coo/cpu/optimization/test_functions.h"
 #include "sparse/coo/cpu/integral_transform/hilbert_transform.h"
