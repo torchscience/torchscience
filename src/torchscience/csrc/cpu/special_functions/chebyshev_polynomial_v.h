@@ -7,13 +7,13 @@
 #include <ATen/native/cpu/Loops.h>
 #include <torch/library.h>
 
-#include "../../kernel/special_functions/chebyshev_polynomial_t.h"
-#include "../../kernel/special_functions/chebyshev_polynomial_t_backward.h"
-#include "../../kernel/special_functions/chebyshev_polynomial_t_backward_backward.h"
+#include "../../kernel/special_functions/chebyshev_polynomial_v.h"
+#include "../../kernel/special_functions/chebyshev_polynomial_v_backward.h"
+#include "../../kernel/special_functions/chebyshev_polynomial_v_backward_backward.h"
 
 namespace torchscience::cpu {
 
-inline at::Tensor chebyshev_polynomial_t_forward(
+inline at::Tensor chebyshev_polynomial_v_forward(
   const at::Tensor &x,
   const at::Tensor &n
 ) {
@@ -31,10 +31,10 @@ inline at::Tensor chebyshev_polynomial_t_forward(
     at::kBFloat16,
     at::kHalf,
     iterator.common_dtype(),
-    "chebyshev_polynomial_t_cpu",
+    "chebyshev_polynomial_v_cpu",
     [&] {
       at::native::cpu_kernel(iterator, [](scalar_t x, scalar_t n) -> scalar_t {
-        return kernel::special_functions::chebyshev_polynomial_t(x, n);
+        return kernel::special_functions::chebyshev_polynomial_v(x, n);
       });
     }
   );
@@ -42,7 +42,7 @@ inline at::Tensor chebyshev_polynomial_t_forward(
   return iterator.output();
 }
 
-inline std::tuple<at::Tensor, at::Tensor> chebyshev_polynomial_t_backward(
+inline std::tuple<at::Tensor, at::Tensor> chebyshev_polynomial_v_backward(
   const at::Tensor &grad,
   const at::Tensor &x,
   const at::Tensor &n
@@ -64,12 +64,12 @@ inline std::tuple<at::Tensor, at::Tensor> chebyshev_polynomial_t_backward(
     at::kBFloat16,
     at::kHalf,
     iterator.common_dtype(),
-    "chebyshev_polynomial_t_backward_cpu",
+    "chebyshev_polynomial_v_backward_cpu",
     [&] {
       at::native::cpu_kernel_multiple_outputs(
         iterator,
         [](scalar_t g, scalar_t x, scalar_t n) -> std::tuple<scalar_t, scalar_t> {
-          return kernel::special_functions::chebyshev_polynomial_t_backward(g, x, n);
+          return kernel::special_functions::chebyshev_polynomial_v_backward(g, x, n);
         }
       );
     }
@@ -78,7 +78,7 @@ inline std::tuple<at::Tensor, at::Tensor> chebyshev_polynomial_t_backward(
   return {iterator.output(0), iterator.output(1)};
 }
 
-inline std::tuple<at::Tensor, at::Tensor, at::Tensor> chebyshev_polynomial_t_backward_backward(
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> chebyshev_polynomial_v_backward_backward(
   const at::Tensor &gg_x,
   const at::Tensor &gg_n,
   const at::Tensor &grad,
@@ -116,12 +116,12 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> chebyshev_polynomial_t_bac
     at::kBFloat16,
     at::kHalf,
     iterator.common_dtype(),
-    "chebyshev_polynomial_t_backward_backward_cpu",
+    "chebyshev_polynomial_v_backward_backward_cpu",
     [&] {
       at::native::cpu_kernel_multiple_outputs(
         iterator,
         [has_gg_x](scalar_t gg_x, scalar_t gg_n, scalar_t g, scalar_t x, scalar_t n) {
-          return kernel::special_functions::chebyshev_polynomial_t_backward_backward<scalar_t>(
+          return kernel::special_functions::chebyshev_polynomial_v_backward_backward<scalar_t>(
             gg_x, gg_n, g, x, n, has_gg_x
           );
         }
@@ -129,24 +129,28 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> chebyshev_polynomial_t_bac
     }
   );
 
-  return {iterator.output(0), iterator.output(1), iterator.output(2)};
+  return {
+    iterator.output(0),
+    iterator.output(1),
+    iterator.output(2)
+  };
 }
 
 } // namespace torchscience::cpu
 
 TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
   module.impl(
-    "chebyshev_polynomial_t",
-    torchscience::cpu::chebyshev_polynomial_t_forward
+    "chebyshev_polynomial_v",
+    torchscience::cpu::chebyshev_polynomial_v_forward
   );
 
   module.impl(
-    "chebyshev_polynomial_t_backward",
-    torchscience::cpu::chebyshev_polynomial_t_backward
+    "chebyshev_polynomial_v_backward",
+    torchscience::cpu::chebyshev_polynomial_v_backward
   );
 
   module.impl(
-    "chebyshev_polynomial_t_backward_backward",
-    torchscience::cpu::chebyshev_polynomial_t_backward_backward
+    "chebyshev_polynomial_v_backward_backward",
+    torchscience::cpu::chebyshev_polynomial_v_backward_backward
   );
 }

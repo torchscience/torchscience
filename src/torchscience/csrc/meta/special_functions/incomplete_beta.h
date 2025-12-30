@@ -9,17 +9,17 @@
 namespace torchscience::meta {
 
 inline at::Tensor incomplete_beta_forward(
+  const at::Tensor &x,
   const at::Tensor &a,
-  const at::Tensor &b,
-  const at::Tensor &x
+  const at::Tensor &b
 ) {
   at::Tensor output;
 
   return at::TensorIteratorConfig()
     .add_output(output)
+    .add_const_input(x)
     .add_const_input(a)
     .add_const_input(b)
-    .add_const_input(x)
     .promote_inputs_to_common_dtype(true)
     .cast_common_dtype_to_outputs(true)
     .build()
@@ -28,9 +28,9 @@ inline at::Tensor incomplete_beta_forward(
 
 inline std::tuple<at::Tensor, at::Tensor, at::Tensor> incomplete_beta_backward(
   const at::Tensor &grad,
+  const at::Tensor &x,
   const at::Tensor &a,
-  const at::Tensor &b,
-  const at::Tensor &x
+  const at::Tensor &b
 ) {
   at::Tensor o1;
   at::Tensor o2;
@@ -41,9 +41,9 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> incomplete_beta_backward(
     .add_output(o2)
     .add_output(o3)
     .add_const_input(grad)
+    .add_const_input(x)
     .add_const_input(a)
     .add_const_input(b)
-    .add_const_input(x)
     .promote_inputs_to_common_dtype(true)
     .cast_common_dtype_to_outputs(true)
     .build();
@@ -56,21 +56,27 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> incomplete_beta_backward(
 }
 
 inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> incomplete_beta_backward_backward(
+  const at::Tensor &gg_x,
   const at::Tensor &gg_a,
   const at::Tensor &gg_b,
-  const at::Tensor &gg_x,
   const at::Tensor &grad,
+  const at::Tensor &x,
   const at::Tensor &a,
-  const at::Tensor &b,
-  const at::Tensor &x
+  const at::Tensor &b
 ) {
-  if (!gg_a.defined() && !gg_b.defined() && !gg_x.defined()) {
+  if (!gg_x.defined() && !gg_a.defined() && !gg_b.defined()) {
     return {};
   }
 
+  at::Tensor gg_x_safe;
   at::Tensor gg_a_safe;
   at::Tensor gg_b_safe;
-  at::Tensor gg_x_safe;
+
+  if (gg_x.defined()) {
+    gg_x_safe = gg_x;
+  } else {
+    gg_x_safe = zeros_like(grad);
+  }
 
   if (gg_a.defined()) {
     gg_a_safe = gg_a;
@@ -84,12 +90,6 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> incomplete_bet
     gg_b_safe = zeros_like(grad);
   }
 
-  if (gg_x.defined()) {
-    gg_x_safe = gg_x;
-  } else {
-    gg_x_safe = zeros_like(grad);
-  }
-
   at::Tensor o1;
   at::Tensor o2;
   at::Tensor o3;
@@ -100,13 +100,13 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> incomplete_bet
     .add_output(o2)
     .add_output(o3)
     .add_output(o4)
+    .add_const_input(gg_x_safe)
     .add_const_input(gg_a_safe)
     .add_const_input(gg_b_safe)
-    .add_const_input(gg_x_safe)
     .add_const_input(grad)
+    .add_const_input(x)
     .add_const_input(a)
     .add_const_input(b)
-    .add_const_input(x)
     .promote_inputs_to_common_dtype(true)
     .cast_common_dtype_to_outputs(true)
     .build();

@@ -100,9 +100,9 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("chebyshev_polynomial_t_backward(Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor)");
   module.def("chebyshev_polynomial_t_backward_backward(Tensor gg_x, Tensor gg_n, Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor, Tensor)");
 
-  module.def("incomplete_beta(Tensor a, Tensor b, Tensor x) -> Tensor");
-  module.def("incomplete_beta_backward(Tensor grad_output, Tensor a, Tensor b, Tensor x) -> (Tensor, Tensor, Tensor)");
-  module.def("incomplete_beta_backward_backward(Tensor gg_a, Tensor gg_b, Tensor gg_x, Tensor grad_output, Tensor a, Tensor b, Tensor x) -> (Tensor, Tensor, Tensor, Tensor)");
+  module.def("incomplete_beta(Tensor x, Tensor a, Tensor b) -> Tensor");
+  module.def("incomplete_beta_backward(Tensor grad_output, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
+  module.def("incomplete_beta_backward_backward(Tensor gg_x, Tensor gg_a, Tensor gg_b, Tensor grad_output, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor, Tensor)");
 
   module.def("hypergeometric_2_f_1(Tensor a, Tensor b, Tensor c, Tensor z) -> Tensor");
   module.def("hypergeometric_2_f_1_backward(Tensor grad_output, Tensor a, Tensor b, Tensor c, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");

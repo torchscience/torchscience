@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cmath>
 #include <tuple>
 
 #include <ATen/ATen.h>
@@ -9,86 +8,11 @@
 #include <ATen/native/cpu/Loops.h>
 #include <torch/library.h>
 
+#include "../../kernel/special_functions/gamma.h"
+#include "../../kernel/special_functions/gamma_backward.h"
+#include "../../kernel/special_functions/gamma_backward_backward.h"
+
 namespace torchscience::cpu {
-
-namespace {
-
-template <typename T> T gamma_forward_kernel(T z) {
-  constexpr double kGammaG = 7.0;
-  constexpr double kGammaCoefficients[] = {
-      0.99999999999980993,  676.5203681218851,
-      -1259.1392167224028,  771.32342877765313,
-      -176.61502916214059,  12.507343278686905,
-      -0.13857109526572012, 9.9843695780195716e-6,
-      1.5056327351493116e-7};
-
-  if (z < T(0.5)) {
-    return static_cast<T>(M_PI) / (std::sin(static_cast<T>(M_PI) * z) * gamma_forward_kernel(T(1) - z));
-  }
-
-  T z_adj = z - T(1);
-  T x = static_cast<T>(kGammaCoefficients[0]);
-  for (int i = 1; i < 9; ++i) {
-    x += static_cast<T>(kGammaCoefficients[i]) / (z_adj + T(i));
-  }
-
-  const T g = static_cast<T>(kGammaG);
-  T t = z_adj + g + T(0.5);
-  return std::sqrt(static_cast<T>(2 * M_PI)) * std::pow(t, z_adj + T(0.5)) * std::exp(-t) * x;
-}
-
-template <typename T> T gamma_backward_kernel(T g, T z) {
-  // Compute gamma(z)
-  T gamma_z = gamma_forward_kernel(z);
-
-  // Compute digamma(z) - inlined
-  T psi = T(0);
-  T x = z;
-  while (x < T(6)) {
-    psi -= T(1) / x;
-    x += T(1);
-  }
-  T x2 = T(1) / (x * x);
-  psi += std::log(x) - T(0.5) / x -
-         x2 * (T(1.0 / 12) - x2 * (T(1.0 / 120) - x2 * T(1.0 / 252)));
-
-  return g * gamma_z * psi;
-}
-
-template <typename T>
-std::tuple<T, T> gamma_backward_backward_kernel(T gg, T g, T z) {
-  // Compute gamma(z)
-  T gamma_z = gamma_forward_kernel(z);
-
-  // Compute digamma(z) - inlined
-  T psi = T(0);
-  T x = z;
-  while (x < T(6)) {
-    psi -= T(1) / x;
-    x += T(1);
-  }
-  T x2 = T(1) / (x * x);
-  psi += std::log(x) - T(0.5) / x -
-         x2 * (T(1.0 / 12) - x2 * (T(1.0 / 120) - x2 * T(1.0 / 252)));
-
-  // Compute trigamma(z) - inlined
-  T psi1 = T(0);
-  T y = z;
-  while (y < T(6)) {
-    psi1 += T(1) / (y * y);
-    y += T(1);
-  }
-  T y2 = T(1) / (y * y);
-  psi1 += T(1) / y + T(0.5) * y2 +
-          y2 / y * (T(1.0 / 6) - y2 * (T(1.0 / 30) - y2 * T(1.0 / 42)));
-
-  T gg_out = gg * gamma_z * psi;
-  T new_grad = gg * g * gamma_z * (psi * psi + psi1);
-
-  return {gg_out, new_grad};
-}
-
-} // anonymous namespace
 
 inline at::Tensor gamma_forward(
   const at::Tensor &input
@@ -108,7 +32,12 @@ inline at::Tensor gamma_forward(
     iterator.common_dtype(),
     "gamma_cpu",
     [&] {
-      at::native::cpu_kernel(iterator, gamma_forward_kernel<scalar_t>);
+      at::native::cpu_kernel(
+        iterator,
+        [](scalar_t z) -> scalar_t {
+          return kernel::special_functions::gamma(z);
+        }
+      );
     }
   );
 
@@ -135,7 +64,12 @@ inline at::Tensor gamma_backward(
     iterator.common_dtype(),
     "gamma_backward_cpu",
     [&] {
-      at::native::cpu_kernel(iterator, gamma_backward_kernel<scalar_t>);
+      at::native::cpu_kernel(
+        iterator,
+        [](scalar_t g, scalar_t z) -> scalar_t {
+          return kernel::special_functions::gamma_backward(g, z);
+        }
+      );
     }
   );
 
@@ -172,12 +106,17 @@ inline std::tuple<at::Tensor, at::Tensor> gamma_backward_backward(
     [&] {
       at::native::cpu_kernel_multiple_outputs(
         iterator,
-        gamma_backward_backward_kernel<scalar_t>
+        [](scalar_t gg, scalar_t g, scalar_t z) -> std::tuple<scalar_t, scalar_t> {
+          return kernel::special_functions::gamma_backward_backward(gg, g, z);
+        }
       );
     }
   );
 
-  return {iterator.output(0), iterator.output(1)};
+  return {
+    iterator.output(0),
+    iterator.output(1)
+  };
 }
 
 } // namespace torchscience::cpu
