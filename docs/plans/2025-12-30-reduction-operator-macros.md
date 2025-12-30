@@ -21,14 +21,17 @@ Added `_EX` (extended) macro variants with explicit separation:
 | `EXTRA_PARAMS` | Function signatures | `TSCI_EXTRA(bool fisher, bool bias)` |
 | `EXTRA_ARGS` | Function calls | `TSCI_EXTRA(fisher, bias)` |
 | `EXTRA_TYPES` | Dispatcher `typed<>` | `TSCI_TYPES(bool, bool)` |
+| `EXTRA_SAVE` | Save to ctx in forward | `TSCI_SAVE(ctx->saved_data["fisher"] = fisher;)` |
+| `EXTRA_LOAD` | Load from ctx in backward | `TSCI_LOAD(bool fisher = ctx->saved_data["fisher"].toBool();)` |
+| `EXTRA_GRAD_PLACEHOLDERS` | Backward return placeholders | `TSCI_GRAD_PLACEHOLDERS(at::Tensor(), at::Tensor())` |
 
 **Kurtosis migration:**
 - CPU: Uses `_EX` macro (~525 lines → 14 lines)
 - Meta: Uses `_EX` macro (~130 lines → 14 lines)
 - Autocast: Uses `_EX` macro (~57 lines → 14 lines)
-- Autograd: Hand-written (macro can't save/restore extra params in backward)
+- Autograd: Uses `_EX` macro (~260 lines → 25 lines) - now supports extra params via SAVE/LOAD
 
-**Test results:** All 42 kurtosis tests pass, all 23 sum_squares tests pass.
+**Test results:** All 42 kurtosis tests pass (2 pre-existing complex number failures), all 23 sum_squares tests pass.
 
 ---
 

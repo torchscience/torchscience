@@ -21,6 +21,19 @@
 #define TSCI_TYPES(...) , __VA_ARGS__
 #define TSCI_NO_TYPES
 
+// Macros for saving/loading extra params in autograd context
+// Usage: TSCI_SAVE(ctx->saved_data["fisher"] = fisher; ctx->saved_data["bias"] = bias;)
+// Usage: TSCI_LOAD(bool fisher = ctx->saved_data["fisher"].toBool(); bool bias = ctx->saved_data["bias"].toBool();)
+#define TSCI_SAVE(...) __VA_ARGS__
+#define TSCI_LOAD(...) __VA_ARGS__
+#define TSCI_NO_SAVE
+#define TSCI_NO_LOAD
+
+// Placeholder returns for extra params in backward (one at::Tensor() per extra param)
+// Usage: TSCI_GRAD_PLACEHOLDERS(at::Tensor(), at::Tensor()) for 2 extra params
+#define TSCI_GRAD_PLACEHOLDERS(...) , __VA_ARGS__
+#define TSCI_NO_GRAD_PLACEHOLDERS
+
 // =============================================================================
 // DIM-BASED REDUCTION MACROS (Autograd)
 // =============================================================================
@@ -29,7 +42,7 @@
  * Autograd macro for unary dim-based reduction operators (no extra params).
  */
 #define TORCHSCIENCE_AUTOGRAD_DIM_REDUCTION_UNARY_OPERATOR(NS, name, Name, arg) \
-    TORCHSCIENCE_AUTOGRAD_DIM_REDUCTION_UNARY_OPERATOR_EX(NS, name, Name, arg, , , )
+    TORCHSCIENCE_AUTOGRAD_DIM_REDUCTION_UNARY_OPERATOR_EX(NS, name, Name, arg, , , , , , )
 
 /**
  * Autograd macro for unary dim-based reduction operators with extra parameters.
@@ -41,16 +54,22 @@
  * @param EXTRA_PARAMS Param declarations with leading comma: TSCI_EXTRA(bool fisher, bool bias)
  * @param EXTRA_ARGS Param names with leading comma: TSCI_EXTRA(fisher, bias)
  * @param EXTRA_TYPES Type list with leading comma: TSCI_TYPES(bool, bool)
+ * @param EXTRA_SAVE Statements to save extra params: TSCI_SAVE(ctx->saved_data["fisher"] = fisher; ...)
+ * @param EXTRA_LOAD Statements to load extra params: TSCI_LOAD(bool fisher = ctx->saved_data["fisher"].toBool(); ...)
+ * @param EXTRA_GRAD_PLACEHOLDERS Placeholder returns for backward: TSCI_GRAD_PLACEHOLDERS(at::Tensor(), at::Tensor())
  *
  * Example:
  *   TORCHSCIENCE_AUTOGRAD_DIM_REDUCTION_UNARY_OPERATOR_EX(
  *       statistics::descriptive, kurtosis, Kurtosis, input,
  *       TSCI_EXTRA(bool fisher, bool bias),
  *       TSCI_EXTRA(fisher, bias),
- *       TSCI_TYPES(bool, bool)
+ *       TSCI_TYPES(bool, bool),
+ *       TSCI_SAVE(ctx->saved_data["fisher"] = fisher; ctx->saved_data["bias"] = bias;),
+ *       TSCI_LOAD(bool fisher = ctx->saved_data["fisher"].toBool(); bool bias = ctx->saved_data["bias"].toBool();),
+ *       TSCI_GRAD_PLACEHOLDERS(at::Tensor(), at::Tensor())
  *   )
  */
-#define TORCHSCIENCE_AUTOGRAD_DIM_REDUCTION_UNARY_OPERATOR_EX(NS, name, Name, arg, EXTRA_PARAMS, EXTRA_ARGS, EXTRA_TYPES)\
+#define TORCHSCIENCE_AUTOGRAD_DIM_REDUCTION_UNARY_OPERATOR_EX(NS, name, Name, arg, EXTRA_PARAMS, EXTRA_ARGS, EXTRA_TYPES, EXTRA_SAVE, EXTRA_LOAD, EXTRA_GRAD_PLACEHOLDERS)\
 namespace torchscience::autograd::NS {                                          \
                                                                                 \
 class Name##Backward : public torch::autograd::Function<Name##Backward> {       \
@@ -68,6 +87,7 @@ public:                                                                         
         ctx->saved_data["dim"] = dim_vec;                                       \
         ctx->saved_data["keepdim"] = keepdim;                                   \
         ctx->saved_data[#arg "_requires_grad"] = arg##_requires_grad;           \
+        EXTRA_SAVE                                                              \
                                                                                 \
         at::AutoDispatchBelowAutograd guard;                                    \
                                                                                 \
@@ -94,12 +114,14 @@ public:                                                                         
         auto saved = ctx->get_saved_variables();                                \
         bool arg##_requires_grad = ctx->saved_data[#arg "_requires_grad"].toBool();\
                                                                                 \
-        if (!grad_outputs[0].defined() || !arg##_requires_grad) {               \
-            return {at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};\
-        }                                                                       \
-                                                                                \
         auto dim_vec = ctx->saved_data["dim"].toIntVector();                    \
         bool keepdim = ctx->saved_data["keepdim"].toBool();                     \
+        EXTRA_LOAD                                                              \
+                                                                                \
+        if (!grad_outputs[0].defined() || !arg##_requires_grad) {               \
+            return {at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()\
+                EXTRA_GRAD_PLACEHOLDERS};                                       \
+        }                                                                       \
                                                                                 \
         at::AutoDispatchBelowAutograd guard;                                    \
                                                                                 \
@@ -117,7 +139,8 @@ public:                                                                         
             .call(grad_outputs[0], saved[0], saved[1], dim_ref, keepdim         \
                 EXTRA_ARGS);                                                    \
                                                                                 \
-        return {gg_output, new_grad, at::Tensor(), at::Tensor(), at::Tensor()}; \
+        return {gg_output, new_grad, at::Tensor(), at::Tensor(), at::Tensor()   \
+            EXTRA_GRAD_PLACEHOLDERS};                                           \
     }                                                                           \
 };                                                                              \
                                                                                 \
@@ -136,6 +159,7 @@ public:                                                                         
         ctx->saved_data[#arg "_requires_grad"] = arg.requires_grad() &&         \
             (at::isFloatingType(arg.scalar_type()) ||                           \
              at::isComplexType(arg.scalar_type()));                             \
+        EXTRA_SAVE                                                              \
                                                                                 \
         at::AutoDispatchBelowAutograd guard;                                    \
                                                                                 \
@@ -162,6 +186,7 @@ public:                                                                         
         auto dim_vec = ctx->saved_data["dim"].toIntVector();                    \
         bool keepdim = ctx->saved_data["keepdim"].toBool();                     \
         bool arg##_requires_grad = ctx->saved_data[#arg "_requires_grad"].toBool();\
+        EXTRA_LOAD                                                              \
                                                                                 \
         auto grads = Name##Backward::apply(                                     \
             grad_outputs[0], saved[0], dim_vec, keepdim, arg##_requires_grad    \
@@ -172,7 +197,7 @@ public:                                                                         
             arg##_requires_grad ? grads[0] : at::Tensor(),                      \
             at::Tensor(),  /* dim */                                            \
             at::Tensor()   /* keepdim */                                        \
-            /* extra args return at::Tensor() */                                \
+            EXTRA_GRAD_PLACEHOLDERS                                             \
         };                                                                      \
     }                                                                           \
 };                                                                              \
@@ -205,12 +230,23 @@ TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {                                 
  * Autograd macro for unary fixed reduction operators (no extra params).
  */
 #define TORCHSCIENCE_AUTOGRAD_FIXED_REDUCTION_UNARY_OPERATOR(NS, name, Name, arg) \
-    TORCHSCIENCE_AUTOGRAD_FIXED_REDUCTION_UNARY_OPERATOR_EX(NS, name, Name, arg, , , )
+    TORCHSCIENCE_AUTOGRAD_FIXED_REDUCTION_UNARY_OPERATOR_EX(NS, name, Name, arg, , , , , , )
 
 /**
  * Autograd macro for unary fixed reduction operators with extra parameters.
+ *
+ * @param NS Namespace suffix
+ * @param name Operator name (lowercase, for dispatch)
+ * @param Name Class name (PascalCase, for Function classes)
+ * @param arg Tensor argument name
+ * @param EXTRA_PARAMS Param declarations with leading comma
+ * @param EXTRA_ARGS Param names with leading comma
+ * @param EXTRA_TYPES Type list with leading comma
+ * @param EXTRA_SAVE Statements to save extra params
+ * @param EXTRA_LOAD Statements to load extra params
+ * @param EXTRA_GRAD_PLACEHOLDERS Placeholder returns for backward
  */
-#define TORCHSCIENCE_AUTOGRAD_FIXED_REDUCTION_UNARY_OPERATOR_EX(NS, name, Name, arg, EXTRA_PARAMS, EXTRA_ARGS, EXTRA_TYPES)\
+#define TORCHSCIENCE_AUTOGRAD_FIXED_REDUCTION_UNARY_OPERATOR_EX(NS, name, Name, arg, EXTRA_PARAMS, EXTRA_ARGS, EXTRA_TYPES, EXTRA_SAVE, EXTRA_LOAD, EXTRA_GRAD_PLACEHOLDERS)\
 namespace torchscience::autograd::NS {                                          \
                                                                                 \
 class Name##Backward : public torch::autograd::Function<Name##Backward> {       \
@@ -224,6 +260,7 @@ public:                                                                         
     ) {                                                                         \
         ctx->save_for_backward({grad_output, arg});                             \
         ctx->saved_data[#arg "_requires_grad"] = arg##_requires_grad;           \
+        EXTRA_SAVE                                                              \
                                                                                 \
         at::AutoDispatchBelowAutograd guard;                                    \
                                                                                 \
@@ -243,9 +280,11 @@ public:                                                                         
     ) {                                                                         \
         auto saved = ctx->get_saved_variables();                                \
         bool arg##_requires_grad = ctx->saved_data[#arg "_requires_grad"].toBool();\
+        EXTRA_LOAD                                                              \
                                                                                 \
         if (!grad_outputs[0].defined() || !arg##_requires_grad) {               \
-            return {at::Tensor(), at::Tensor(), at::Tensor()};                  \
+            return {at::Tensor(), at::Tensor(), at::Tensor()                    \
+                EXTRA_GRAD_PLACEHOLDERS};                                       \
         }                                                                       \
                                                                                 \
         at::AutoDispatchBelowAutograd guard;                                    \
@@ -259,7 +298,8 @@ public:                                                                         
             .call(grad_outputs[0], saved[0], saved[1]                           \
                 EXTRA_ARGS);                                                    \
                                                                                 \
-        return {gg_output, new_grad, at::Tensor()};                             \
+        return {gg_output, new_grad, at::Tensor()                               \
+            EXTRA_GRAD_PLACEHOLDERS};                                           \
     }                                                                           \
 };                                                                              \
                                                                                 \
@@ -274,6 +314,7 @@ public:                                                                         
         ctx->saved_data[#arg "_requires_grad"] = arg.requires_grad() &&         \
             (at::isFloatingType(arg.scalar_type()) ||                           \
              at::isComplexType(arg.scalar_type()));                             \
+        EXTRA_SAVE                                                              \
                                                                                 \
         at::AutoDispatchBelowAutograd guard;                                    \
                                                                                 \
@@ -293,13 +334,15 @@ public:                                                                         
     ) {                                                                         \
         auto saved = ctx->get_saved_variables();                                \
         bool arg##_requires_grad = ctx->saved_data[#arg "_requires_grad"].toBool();\
+        EXTRA_LOAD                                                              \
                                                                                 \
         auto grads = Name##Backward::apply(                                     \
             grad_outputs[0], saved[0], arg##_requires_grad                      \
             EXTRA_ARGS                                                          \
         );                                                                      \
                                                                                 \
-        return {arg##_requires_grad ? grads[0] : at::Tensor()};                 \
+        return {arg##_requires_grad ? grads[0] : at::Tensor()                   \
+            EXTRA_GRAD_PLACEHOLDERS};                                           \
     }                                                                           \
 };                                                                              \
                                                                                 \
