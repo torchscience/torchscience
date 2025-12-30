@@ -23,7 +23,7 @@ inline at::Tensor name(                                                        \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  AT_DISPATCH_FLOATING_TYPES_AND2(                                             \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -59,7 +59,7 @@ inline at::Tensor name##_backward(                                             \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  AT_DISPATCH_FLOATING_TYPES_AND2(                                 \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -108,7 +108,7 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(            \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  AT_DISPATCH_FLOATING_TYPES_AND2(                                 \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -176,7 +176,7 @@ inline at::Tensor name(                                                        \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  AT_DISPATCH_FLOATING_TYPES_AND2(                                 \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -218,7 +218,7 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward(                     \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  AT_DISPATCH_FLOATING_TYPES_AND2(                                 \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -287,7 +287,7 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> name##_backward_backward(\
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  AT_DISPATCH_FLOATING_TYPES_AND2(                                 \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -359,7 +359,7 @@ inline at::Tensor name(                                                        \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  AT_DISPATCH_FLOATING_TYPES_AND2(                                 \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -407,7 +407,7 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> name##_backward(         \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  AT_DISPATCH_FLOATING_TYPES_AND2(                                 \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -492,7 +492,7 @@ inline std::tuple<                                                             \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  AT_DISPATCH_FLOATING_TYPES_AND2(                                 \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -571,7 +571,7 @@ inline at::Tensor name(                                                        \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  AT_DISPATCH_FLOATING_TYPES_AND2(                                 \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -626,7 +626,7 @@ name##_backward(                                                               \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  AT_DISPATCH_FLOATING_TYPES_AND2(                                 \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -725,7 +725,7 @@ inline std::tuple<                                                             \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  AT_DISPATCH_FLOATING_TYPES_AND2(                                 \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \

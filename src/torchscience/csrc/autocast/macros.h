@@ -47,8 +47,10 @@ inline at::Tensor name(                                                        \
     c10::DispatchKey::Autocast                                                 \
   );                                                                           \
                                                                                \
+  auto device_type = arg1.device().type();                                      \
   auto target_type = at::autocast::promote_type(                               \
     at::kFloat,                                                                \
+    device_type,                                                               \
     arg1,                                                                      \
     arg2                                                                       \
   );                                                                           \
@@ -87,8 +89,10 @@ inline at::Tensor name(                                                        \
     c10::DispatchKey::Autocast                                                 \
   );                                                                           \
                                                                                \
+  auto device_type = arg1.device().type();                                      \
   auto target_type = at::autocast::promote_type(                               \
     at::kFloat,                                                                \
+    device_type,                                                               \
     arg1,                                                                      \
     arg2,                                                                      \
     arg3                                                                       \
@@ -131,8 +135,10 @@ inline at::Tensor name(                                                        \
     c10::DispatchKey::Autocast                                                 \
   );                                                                           \
                                                                                \
+  auto device_type = arg1.device().type();                                      \
   auto target_type = at::autocast::promote_type(                               \
     at::kFloat,                                                                \
+    device_type,                                                               \
     arg1,                                                                      \
     arg2,                                                                      \
     arg3,                                                                      \
