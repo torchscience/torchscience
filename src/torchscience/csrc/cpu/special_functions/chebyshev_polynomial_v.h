@@ -52,17 +52,17 @@ inline at::Tensor chebyshev_polynomial_v_forward(
 }
 
 inline std::tuple<at::Tensor, at::Tensor> chebyshev_polynomial_v_backward(
-  const at::Tensor &grad,
+  const at::Tensor &gradient,
   const at::Tensor &x,
   const at::Tensor &n
 ) {
-  at::Tensor grad_x;
-  at::Tensor grad_n;
+  at::Tensor x_gradient_output;
+  at::Tensor n_gradient_output;
 
   auto iterator = at::TensorIteratorConfig()
-    .add_output(grad_x)
-    .add_output(grad_n)
-    .add_const_input(grad)
+    .add_output(x_gradient_output)
+    .add_output(n_gradient_output)
+    .add_const_input(gradient)
     .add_const_input(x)
     .add_const_input(n)
     .promote_inputs_to_common_dtype(true)
@@ -77,8 +77,19 @@ inline std::tuple<at::Tensor, at::Tensor> chebyshev_polynomial_v_backward(
     [&] {
       at::native::cpu_kernel_multiple_outputs(
         iterator,
-        [](scalar_t g, scalar_t x, scalar_t n) -> std::tuple<scalar_t, scalar_t> {
-          return kernel::special_functions::chebyshev_polynomial_v_backward(g, x, n);
+        [] (
+          scalar_t g,
+          scalar_t x,
+          scalar_t n
+        ) -> std::tuple<
+          scalar_t,
+          scalar_t
+        > {
+          return kernel::special_functions::chebyshev_polynomial_v_backward(
+            g,
+            x,
+            n
+          );
         }
       );
     }
