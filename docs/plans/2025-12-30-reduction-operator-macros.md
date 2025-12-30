@@ -1,6 +1,19 @@
 # Reduction Operator Macros Implementation Plan
 
+> **Status:** COMPLETED (2025-12-30)
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+
+## Completion Summary
+
+- **Tasks 1-6:** Core infrastructure (CPU, Meta, Autograd, Autocast macros) and test operator (sum_squares) - COMPLETE
+- **Task 7:** Comprehensive test suite (23 tests) - COMPLETE
+- **Task 8:** Binary macros - SKIPPED (not needed for kurtosis)
+- **Task 9:** Kurtosis kernel extraction - COMPLETE (kernel extracted to separate header, CPU impl uses kernel)
+
+**Note:** Full macro migration for kurtosis was deferred due to macro design limitation - the `__VA_ARGS__` mechanism doesn't properly support extra parameters (like `fisher`, `bias`). This can be addressed with macro enhancements in the future.
+
+---
 
 **Goal:** Create macro infrastructure for reduction operators that parallels the existing pointwise operator macros, reducing boilerplate when adding new reduction operators.
 
