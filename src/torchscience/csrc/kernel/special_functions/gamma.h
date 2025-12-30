@@ -48,9 +48,7 @@ T gamma(T z) {
     x += static_cast<T>(coefficients[i]) / (z_adj + T(i));
   }
 
-  const T g = static_cast<T>(kGammaG);
-
-  T t = z_adj + g + T(0.5);
+  T t = z_adj + static_cast<T>(kGammaG) + T(0.5);
 
   return std::sqrt(static_cast<T>(2 * M_PI)) * std::pow(t, z_adj + T(0.5)) * std::exp(-t) * x;
 }
@@ -82,9 +80,7 @@ c10::complex<T> gamma(c10::complex<T> z) {
   }
 
   if (z.real() < T(0.5)) {
-    auto sin_piz = sin_pi(z);
-
-    return static_cast<T>(M_PI) / (sin_piz * gamma(c10::complex<T>(T(1), T(0)) - z));
+    return static_cast<T>(M_PI) / (sin_pi(z) * gamma(c10::complex<T>(T(1), T(0)) - z));
   }
 
   c10::complex<T> z_adj = z - c10::complex<T>(T(1), T(0));
@@ -95,9 +91,7 @@ c10::complex<T> gamma(c10::complex<T> z) {
     x += static_cast<T>(coefficients[i]) / (z_adj + c10::complex<T>(T(i), T(0)));
   }
 
-  const T g = static_cast<T>(kGammaG);
-
-  c10::complex<T> t = z_adj + c10::complex<T>(g + T(0.5), T(0));
+  c10::complex<T> t = z_adj + c10::complex<T>(static_cast<T>(kGammaG) + T(0.5), T(0));
 
   return std::sqrt(static_cast<T>(2 * M_PI)) * std::pow(t, z_adj + c10::complex<T>(T(0.5), T(0))) * std::exp(-t) * x;
 }
