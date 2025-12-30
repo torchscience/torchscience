@@ -22,6 +22,7 @@
 #include "cpu/statistics/descriptive/histogram.h"
 #include "cpu/integral_transform/hilbert_transform.h"
 #include "cpu/integral_transform/inverse_hilbert_transform.h"
+#include "cpu/test/sum_squares.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -39,6 +40,7 @@
 #include "meta/statistics/descriptive/histogram.h"
 #include "meta/integral_transform/hilbert_transform.h"
 #include "meta/integral_transform/inverse_hilbert_transform.h"
+#include "meta/test/sum_squares.h"
 
 #include "autocast/signal_processing/filter.h"
 #include "autocast/statistics/descriptive/kurtosis.h"
@@ -149,4 +151,9 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("inverse_hilbert_transform(Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
   module.def("inverse_hilbert_transform_backward(Tensor grad_output, Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
   module.def("inverse_hilbert_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> (Tensor, Tensor)");
+
+  // test (for validating reduction macros)
+  module.def("sum_squares(Tensor input, int[]? dim, bool keepdim) -> Tensor");
+  module.def("sum_squares_backward(Tensor grad_output, Tensor input, int[]? dim, bool keepdim) -> Tensor");
+  module.def("sum_squares_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int[]? dim, bool keepdim) -> (Tensor, Tensor)");
 }
