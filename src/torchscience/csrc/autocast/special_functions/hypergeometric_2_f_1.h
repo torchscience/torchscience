@@ -1,53 +1,5 @@
 #pragma once
 
-#include <ATen/autocast_mode.h>
-#include <torch/library.h>
+#include "macros.h"
 
-namespace torchscience::autocast {
-
-inline at::Tensor hypergeometric_2_f_1(
-  const at::Tensor &a,
-  const at::Tensor &b,
-  const at::Tensor &c,
-  const at::Tensor &z
-) {
-  c10::impl::ExcludeDispatchKeyGuard no_autocast(
-    c10::DispatchKey::Autocast
-  );
-
-  auto dtype = at::autocast::promote_type(
-    at::kFloat,
-    a.device().type(),
-    a,
-    b,
-    c,
-    z
-  );
-
-  return c10::Dispatcher::singleton()
-    .findSchemaOrThrow(
-      "torchscience::hypergeometric_2_f_1",
-      ""
-    )
-    .typed<at::Tensor(
-      const at::Tensor &,
-      const at::Tensor &,
-      const at::Tensor &,
-      const at::Tensor &
-    )>()
-    .call(
-      at::autocast::cached_cast(dtype, a),
-      at::autocast::cached_cast(dtype, b),
-      at::autocast::cached_cast(dtype, c),
-      at::autocast::cached_cast(dtype, z)
-    );
-}
-
-} // namespace torchscience::autocast
-
-TORCH_LIBRARY_IMPL(torchscience, Autocast, module) {
-  module.impl(
-    "hypergeometric_2_f_1",
-    torchscience::autocast::hypergeometric_2_f_1
-  );
-}
+TORCHSCIENCE_AUTOCAST_QUATERNARY_OPERATOR(hypergeometric_2_f_1, a, b, c, z)
