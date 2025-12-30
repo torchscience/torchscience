@@ -170,7 +170,7 @@ std::tuple<T, T, T> incomplete_beta_backward(T gradient, T x, T a, T b) {
     return {T(0), T(0), T(0)};
   }
 
-  T log_beta_val = detail::log_beta(a, b);
+  T log_beta_val = log_beta(a, b);
   T beta_val = std::exp(log_beta_val);
 
   T log_pdf = (a - T(1)) * std::log(x) + (b - T(1)) * std::log(T(1) - x) - log_beta_val;
@@ -206,12 +206,12 @@ std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> incomplete_beta_ba
   c10::complex<T> zero(T(0), T(0));
   c10::complex<T> one(T(1), T(0));
 
-  T eps = detail::incomplete_beta_eps<T>();
+  T eps = detail::beta_eps<T>();
   if (std::abs(x) < eps || std::abs(x - one) < eps) {
     return {zero, zero, zero};
   }
 
-  c10::complex<T> log_beta_val = detail::log_beta(a, b);
+  c10::complex<T> log_beta_val = log_beta(a, b);
 
   c10::complex<T> log_pdf = (a - one) * std::log(x) + (b - one) * std::log(one - x) - log_beta_val;
   c10::complex<T> pdf = std::exp(log_pdf);
