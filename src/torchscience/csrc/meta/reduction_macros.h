@@ -56,17 +56,47 @@ enum class ReductionMode {
 }  // namespace torchscience::meta::reduction_detail
 
 // =============================================================================
+// HELPER MACROS
+// =============================================================================
+
+// For Meta backend, extra params are unused - add [[maybe_unused]] attribute
+#define TSCI_EXTRA_UNUSED(...) , [[maybe_unused]] __VA_ARGS__
+#define TSCI_NO_EXTRA_UNUSED
+
+// =============================================================================
 // DIM-BASED REDUCTION MACROS (Meta)
 // =============================================================================
 
-#define TORCHSCIENCE_META_DIM_REDUCTION_UNARY_OPERATOR(NS, name, arg, ...)      \
+/**
+ * Meta macro for unary dim-based reduction operators (no extra params).
+ */
+#define TORCHSCIENCE_META_DIM_REDUCTION_UNARY_OPERATOR(NS, name, arg) \
+    TORCHSCIENCE_META_DIM_REDUCTION_UNARY_OPERATOR_EX(NS, name, arg, , )
+
+/**
+ * Meta macro for unary dim-based reduction operators with extra parameters.
+ *
+ * @param NS Namespace suffix
+ * @param name Operator name
+ * @param arg Tensor argument name
+ * @param EXTRA_PARAMS Extra param declarations (use TSCI_EXTRA_UNUSED for meta)
+ * @param EXTRA_ARGS Ignored for meta backend (shape inference only)
+ *
+ * Example:
+ *   TORCHSCIENCE_META_DIM_REDUCTION_UNARY_OPERATOR_EX(
+ *       statistics::descriptive, kurtosis, input,
+ *       TSCI_EXTRA_UNUSED(bool fisher, bool bias),
+ *       TSCI_EXTRA(fisher, bias)  // ignored
+ *   )
+ */
+#define TORCHSCIENCE_META_DIM_REDUCTION_UNARY_OPERATOR_EX(NS, name, arg, EXTRA_PARAMS, EXTRA_ARGS)\
 namespace torchscience::meta::NS {                                              \
                                                                                 \
 inline at::Tensor name(                                                         \
     const at::Tensor& arg,                                                      \
     at::OptionalIntArrayRef dim,                                                \
     bool keepdim                                                                \
-    __VA_OPT__(, [[maybe_unused]] __VA_ARGS__)                                  \
+    EXTRA_PARAMS                                                                \
 ) {                                                                             \
     using namespace torchscience::meta::reduction_detail;                       \
                                                                                 \
@@ -87,7 +117,7 @@ inline at::Tensor name##_backward(                                              
     const at::Tensor& arg,                                                      \
     [[maybe_unused]] at::OptionalIntArrayRef dim,                               \
     [[maybe_unused]] bool keepdim                                               \
-    __VA_OPT__(, [[maybe_unused]] __VA_ARGS__)                                  \
+    EXTRA_PARAMS                                                                \
 ) {                                                                             \
     return at::empty_like(arg);                                                 \
 }                                                                               \
@@ -98,7 +128,7 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
     const at::Tensor& arg,                                                      \
     [[maybe_unused]] at::OptionalIntArrayRef dim,                               \
     [[maybe_unused]] bool keepdim                                               \
-    __VA_OPT__(, [[maybe_unused]] __VA_ARGS__)                                  \
+    EXTRA_PARAMS                                                                \
 ) {                                                                             \
     return std::make_tuple(                                                     \
         at::empty_like(grad_output),                                            \
@@ -118,12 +148,21 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, m) {                                     
 // FIXED REDUCTION MACROS (Meta)
 // =============================================================================
 
-#define TORCHSCIENCE_META_FIXED_REDUCTION_UNARY_OPERATOR(NS, name, MODE, arg, ...)\
+/**
+ * Meta macro for unary fixed reduction operators (no extra params).
+ */
+#define TORCHSCIENCE_META_FIXED_REDUCTION_UNARY_OPERATOR(NS, name, MODE, arg) \
+    TORCHSCIENCE_META_FIXED_REDUCTION_UNARY_OPERATOR_EX(NS, name, MODE, arg, , )
+
+/**
+ * Meta macro for unary fixed reduction operators with extra parameters.
+ */
+#define TORCHSCIENCE_META_FIXED_REDUCTION_UNARY_OPERATOR_EX(NS, name, MODE, arg, EXTRA_PARAMS, EXTRA_ARGS)\
 namespace torchscience::meta::NS {                                              \
                                                                                 \
 inline at::Tensor name(                                                         \
     const at::Tensor& arg                                                       \
-    __VA_OPT__(, [[maybe_unused]] __VA_ARGS__)                                  \
+    EXTRA_PARAMS                                                                \
 ) {                                                                             \
     using namespace torchscience::meta::reduction_detail;                       \
                                                                                 \
@@ -143,7 +182,7 @@ inline at::Tensor name(                                                         
 inline at::Tensor name##_backward(                                              \
     [[maybe_unused]] const at::Tensor& grad_output,                             \
     const at::Tensor& arg                                                       \
-    __VA_OPT__(, [[maybe_unused]] __VA_ARGS__)                                  \
+    EXTRA_PARAMS                                                                \
 ) {                                                                             \
     return at::empty_like(arg);                                                 \
 }                                                                               \
@@ -152,7 +191,7 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
     [[maybe_unused]] const at::Tensor& grad_grad_input,                         \
     const at::Tensor& grad_output,                                              \
     const at::Tensor& arg                                                       \
-    __VA_OPT__(, [[maybe_unused]] __VA_ARGS__)                                  \
+    EXTRA_PARAMS                                                                \
 ) {                                                                             \
     return std::make_tuple(                                                     \
         at::empty_like(grad_output),                                            \

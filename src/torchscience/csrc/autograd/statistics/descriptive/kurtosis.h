@@ -1,3 +1,9 @@
+// src/torchscience/csrc/autograd/statistics/descriptive/kurtosis.h
+//
+// NOTE: Hand-written implementation because the autograd reduction macro
+// doesn't properly save/restore extra params (fisher, bias) in backward().
+// The macro's backward() method doesn't have fisher/bias in scope since
+// they were forward() parameters.
 #pragma once
 
 #include <tuple>
@@ -5,7 +11,7 @@
 
 #include <torch/extension.h>
 
-namespace torchscience::autograd::descriptive {
+namespace torchscience::autograd::statistics::descriptive {
 
 /**
  * Backward function class for double-backward support.
@@ -240,11 +246,11 @@ inline at::Tensor kurtosis(
     return Kurtosis::apply(input, dim, keepdim, fisher, bias);
 }
 
-}  // namespace torchscience::autograd::descriptive
+}  // namespace torchscience::autograd::statistics::descriptive
 
 TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {
     module.impl(
         "kurtosis",
-        &torchscience::autograd::descriptive::kurtosis
+        &torchscience::autograd::statistics::descriptive::kurtosis
     );
 }

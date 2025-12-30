@@ -9,9 +9,26 @@
 - **Tasks 1-6:** Core infrastructure (CPU, Meta, Autograd, Autocast macros) and test operator (sum_squares) - COMPLETE
 - **Task 7:** Comprehensive test suite (23 tests) - COMPLETE
 - **Task 8:** Binary macros - SKIPPED (not needed for kurtosis)
-- **Task 9:** Kurtosis kernel extraction - COMPLETE (kernel extracted to separate header, CPU impl uses kernel)
+- **Task 9:** Kurtosis macro migration - COMPLETE
 
-**Note:** Full macro migration for kurtosis was deferred due to macro design limitation - the `__VA_ARGS__` mechanism doesn't properly support extra parameters (like `fisher`, `bias`). This can be addressed with macro enhancements in the future.
+## Extra Parameters Fix (2025-12-30)
+
+The original `__VA_ARGS__` design couldn't properly separate parameter declarations from names.
+Added `_EX` (extended) macro variants with explicit separation:
+
+| Parameter | Purpose | Example |
+|-----------|---------|---------|
+| `EXTRA_PARAMS` | Function signatures | `TSCI_EXTRA(bool fisher, bool bias)` |
+| `EXTRA_ARGS` | Function calls | `TSCI_EXTRA(fisher, bias)` |
+| `EXTRA_TYPES` | Dispatcher `typed<>` | `TSCI_TYPES(bool, bool)` |
+
+**Kurtosis migration:**
+- CPU: Uses `_EX` macro (~525 lines → 14 lines)
+- Meta: Uses `_EX` macro (~130 lines → 14 lines)
+- Autocast: Uses `_EX` macro (~57 lines → 14 lines)
+- Autograd: Hand-written (macro can't save/restore extra params in backward)
+
+**Test results:** All 42 kurtosis tests pass, all 23 sum_squares tests pass.
 
 ---
 

@@ -136,7 +136,7 @@ enum class ReductionMode {
 // =============================================================================
 
 /**
- * CPU macro for unary dim-based reduction operators.
+ * CPU macro for unary dim-based reduction operators (no extra params).
  *
  * Generates forward, backward, and backward_backward functions that:
  * - Handle arbitrary dim/keepdim combinations
@@ -146,23 +146,48 @@ enum class ReductionMode {
  * - Register with TORCH_LIBRARY_IMPL
  *
  * Kernel interface (in namespace torchscience::kernel::NS):
- *   template<T> T name(const T* data, int64_t n, EXTRA_ARGS...)
- *   template<T> void name_backward(T grad_out, const T* data, int64_t n, EXTRA_ARGS..., T* grad_input)
- *   template<T> void name_backward_backward(const T* gg_input, T grad_out, const T* data, int64_t n, EXTRA_ARGS..., T& gg_output, T* new_grad_input)
+ *   template<T> T name(const T* data, int64_t n)
+ *   template<T> void name_backward(T grad_out, const T* data, int64_t n, T* grad_input)
+ *   template<T> void name_backward_backward(const T* gg_input, T grad_out, const T* data, int64_t n, T& gg_output, T* new_grad_input)
  *
  * @param NS Namespace suffix (e.g., statistics::descriptive)
  * @param name Operator name (e.g., kurtosis)
  * @param arg Tensor argument name (e.g., input)
- * @param ... Extra arguments with types (e.g., bool fisher, bool bias)
+ *
+ * For operators with extra parameters (like bool fisher, bool bias), use
+ * TORCHSCIENCE_CPU_DIM_REDUCTION_UNARY_OPERATOR_EX instead.
  */
-#define TORCHSCIENCE_CPU_DIM_REDUCTION_UNARY_OPERATOR(NS, name, arg, ...)       \
+#define TORCHSCIENCE_CPU_DIM_REDUCTION_UNARY_OPERATOR(NS, name, arg) \
+    TORCHSCIENCE_CPU_DIM_REDUCTION_UNARY_OPERATOR_EX(NS, name, arg, , )
+
+/**
+ * CPU macro for unary dim-based reduction operators with extra parameters.
+ *
+ * @param NS Namespace suffix (e.g., statistics::descriptive)
+ * @param name Operator name (e.g., kurtosis)
+ * @param arg Tensor argument name (e.g., input)
+ * @param EXTRA_PARAMS Extra param declarations with leading comma, or empty
+ * @param EXTRA_ARGS Extra param names with leading comma, or empty
+ *
+ * Example:
+ *   TORCHSCIENCE_CPU_DIM_REDUCTION_UNARY_OPERATOR_EX(
+ *       statistics::descriptive, kurtosis, input,
+ *       TSCI_EXTRA(bool fisher, bool bias),  // EXTRA_PARAMS
+ *       TSCI_EXTRA(fisher, bias)             // EXTRA_ARGS
+ *   )
+ *
+ * Use TSCI_EXTRA(...) wrapper for extra params, or TSCI_NO_EXTRA for none.
+ */
+#define TSCI_EXTRA(...) , __VA_ARGS__
+#define TSCI_NO_EXTRA
+#define TORCHSCIENCE_CPU_DIM_REDUCTION_UNARY_OPERATOR_EX(NS, name, arg, EXTRA_PARAMS, EXTRA_ARGS)       \
 namespace torchscience::cpu::NS {                                               \
                                                                                 \
 inline at::Tensor name(                                                         \
     const at::Tensor& arg,                                                      \
     at::OptionalIntArrayRef dim,                                                \
     bool keepdim                                                                \
-    __VA_OPT__(, __VA_ARGS__)                                                   \
+    EXTRA_PARAMS                                                                \
 ) {                                                                             \
     TORCH_CHECK(arg.numel() > 0, #name ": input tensor must be non-empty");     \
                                                                                 \
@@ -191,7 +216,7 @@ inline at::Tensor name(                                                         
                 const scalar_t* data_ptr = arg##_contig.data_ptr<scalar_t>();   \
                 scalar_t result = kernel::NS::name<scalar_t>(                   \
                     data_ptr, arg##_contig.numel()                              \
-                    __VA_OPT__(, __VA_ARGS__)                                   \
+                    EXTRA_ARGS                                                  \
                 );                                                              \
                 output.fill_(result);                                           \
             }                                                                   \
@@ -216,7 +241,7 @@ inline at::Tensor name(                                                         
                     output_ptr[b] = kernel::NS::name<scalar_t>(                 \
                         data_ptr + b * reduce_size,                             \
                         reduce_size                                             \
-                        __VA_OPT__(, __VA_ARGS__)                               \
+                        EXTRA_ARGS                                              \
                     );                                                          \
                 }                                                               \
             });                                                                 \
@@ -231,7 +256,7 @@ inline at::Tensor name##_backward(                                              
     const at::Tensor& arg,                                                      \
     at::OptionalIntArrayRef dim,                                                \
     bool keepdim                                                                \
-    __VA_OPT__(, __VA_ARGS__)                                                   \
+    EXTRA_PARAMS                                                                \
 ) {                                                                             \
     using namespace torchscience::cpu::reduction_detail;                        \
                                                                                 \
@@ -255,7 +280,7 @@ inline at::Tensor name##_backward(                                              
                     grad_out_val,                                               \
                     data_ptr,                                                   \
                     arg##_contig.numel()                                        \
-                    __VA_OPT__(, __VA_ARGS__),                                  \
+                    EXTRA_ARGS,                                                 \
                     grad_ptr                                                    \
                 );                                                              \
             }                                                                   \
@@ -303,7 +328,7 @@ inline at::Tensor name##_backward(                                              
                         grad_out_ptr[b],                                        \
                         data_ptr + b * reduce_size,                             \
                         reduce_size                                             \
-                        __VA_OPT__(, __VA_ARGS__),                              \
+                        EXTRA_ARGS,                                             \
                         grad_ptr + b * reduce_size                              \
                     );                                                          \
                 }                                                               \
@@ -323,9 +348,9 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
     const at::Tensor& arg,                                                      \
     at::OptionalIntArrayRef dim,                                                \
     bool keepdim                                                                \
-    __VA_OPT__(, __VA_ARGS__)                                                   \
+    EXTRA_PARAMS                                                                \
 ) {                                                                             \
-    using namespace torchscience::cpu::reduction_detail;                                         \
+    using namespace torchscience::cpu::reduction_detail;                        \
                                                                                 \
     at::Tensor grad_grad_output = at::zeros_like(grad_output);                  \
     at::Tensor new_grad_input = at::zeros_like(arg);                            \
@@ -352,7 +377,7 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
                     grad_out_val,                                               \
                     data_ptr,                                                   \
                     arg##_contig.numel()                                        \
-                    __VA_OPT__(, __VA_ARGS__),                                  \
+                    EXTRA_ARGS,                                                 \
                     gg_output,                                                  \
                     new_grad.data()                                             \
                 );                                                              \
@@ -386,22 +411,44 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, m) {                                      
 // =============================================================================
 
 /**
- * CPU macro for unary fixed reduction operators.
+ * CPU macro for unary fixed reduction operators (no extra params).
  *
  * @param NS Namespace suffix
  * @param name Operator name
  * @param MODE ReductionMode::LAST_DIM or ReductionMode::ALL_DIMS
  * @param arg Tensor argument name
- * @param ... Extra arguments with types
+ *
+ * For operators with extra parameters, use
+ * TORCHSCIENCE_CPU_FIXED_REDUCTION_UNARY_OPERATOR_EX instead.
  */
-#define TORCHSCIENCE_CPU_FIXED_REDUCTION_UNARY_OPERATOR(NS, name, MODE, arg, ...)\
+#define TORCHSCIENCE_CPU_FIXED_REDUCTION_UNARY_OPERATOR(NS, name, MODE, arg) \
+    TORCHSCIENCE_CPU_FIXED_REDUCTION_UNARY_OPERATOR_EX(NS, name, MODE, arg, , )
+
+/**
+ * CPU macro for unary fixed reduction operators with extra parameters.
+ *
+ * @param NS Namespace suffix
+ * @param name Operator name
+ * @param MODE ReductionMode::LAST_DIM or ReductionMode::ALL_DIMS
+ * @param arg Tensor argument name
+ * @param EXTRA_PARAMS Extra param declarations with leading comma, or empty
+ * @param EXTRA_ARGS Extra param names with leading comma, or empty
+ *
+ * Example:
+ *   TORCHSCIENCE_CPU_FIXED_REDUCTION_UNARY_OPERATOR_EX(
+ *       NS, name, ReductionMode::ALL_DIMS, input,
+ *       TSCI_EXTRA(bool normalize),
+ *       TSCI_EXTRA(normalize)
+ *   )
+ */
+#define TORCHSCIENCE_CPU_FIXED_REDUCTION_UNARY_OPERATOR_EX(NS, name, MODE, arg, EXTRA_PARAMS, EXTRA_ARGS)\
 namespace torchscience::cpu::NS {                                               \
                                                                                 \
 inline at::Tensor name(                                                         \
     const at::Tensor& arg                                                       \
-    __VA_OPT__(, __VA_ARGS__)                                                   \
+    EXTRA_PARAMS                                                                \
 ) {                                                                             \
-    using namespace torchscience::cpu::reduction_detail;                                         \
+    using namespace torchscience::cpu::reduction_detail;                        \
                                                                                 \
     auto arg##_contig = arg.contiguous();                                       \
                                                                                 \
@@ -416,7 +463,7 @@ inline at::Tensor name(                                                         
                 const scalar_t* data_ptr = arg##_contig.data_ptr<scalar_t>();   \
                 scalar_t result = kernel::NS::name<scalar_t>(                   \
                     data_ptr, arg##_contig.numel()                              \
-                    __VA_OPT__(, __VA_ARGS__)                                   \
+                    EXTRA_ARGS                                                  \
                 );                                                              \
                 output.fill_(result);                                           \
             }                                                                   \
@@ -447,7 +494,7 @@ inline at::Tensor name(                                                         
                         output_ptr[b] = kernel::NS::name<scalar_t>(             \
                             data_ptr + b * reduce_size,                         \
                             reduce_size                                         \
-                            __VA_OPT__(, __VA_ARGS__)                           \
+                            EXTRA_ARGS                                          \
                         );                                                      \
                     }                                                           \
                 });                                                             \
@@ -460,7 +507,7 @@ inline at::Tensor name(                                                         
 inline at::Tensor name##_backward(                                              \
     const at::Tensor& grad_output,                                              \
     const at::Tensor& arg                                                       \
-    __VA_OPT__(, __VA_ARGS__)                                                   \
+    EXTRA_PARAMS                                                                \
 ) {                                                                             \
     using namespace torchscience::cpu::reduction_detail;                        \
                                                                                 \
@@ -481,7 +528,7 @@ inline at::Tensor name##_backward(                                              
                     grad_out_val,                                               \
                     data_ptr,                                                   \
                     arg##_contig.numel()                                        \
-                    __VA_OPT__(, __VA_ARGS__),                                  \
+                    EXTRA_ARGS,                                                 \
                     grad_ptr                                                    \
                 );                                                              \
             }                                                                   \
@@ -507,7 +554,7 @@ inline at::Tensor name##_backward(                                              
                             grad_out_ptr[b],                                    \
                             data_ptr + b * reduce_size,                         \
                             reduce_size                                         \
-                            __VA_OPT__(, __VA_ARGS__),                          \
+                            EXTRA_ARGS,                                         \
                             grad_ptr + b * reduce_size                          \
                         );                                                      \
                     }                                                           \
@@ -522,9 +569,9 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
     const at::Tensor& grad_grad_input,                                          \
     const at::Tensor& grad_output,                                              \
     const at::Tensor& arg                                                       \
-    __VA_OPT__(, __VA_ARGS__)                                                   \
+    EXTRA_PARAMS                                                                \
 ) {                                                                             \
-    using namespace torchscience::cpu::reduction_detail;                                         \
+    using namespace torchscience::cpu::reduction_detail;                        \
                                                                                 \
     at::Tensor grad_grad_output = at::zeros_like(grad_output);                  \
     at::Tensor new_grad_input = at::zeros_like(arg);                            \
@@ -549,7 +596,7 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
                     grad_out_val,                                               \
                     data_ptr,                                                   \
                     arg##_contig.numel()                                        \
-                    __VA_OPT__(, __VA_ARGS__),                                  \
+                    EXTRA_ARGS,                                                 \
                     gg_output,                                                  \
                     new_grad.data()                                             \
                 );                                                              \
@@ -587,7 +634,7 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(             
                             grad_out_ptr[b],                                    \
                             data_ptr + b * reduce_size,                         \
                             reduce_size                                         \
-                            __VA_OPT__(, __VA_ARGS__),                          \
+                            EXTRA_ARGS,                                         \
                             gg_out,                                             \
                             new_grad_ptr + b * reduce_size                      \
                         );                                                      \
