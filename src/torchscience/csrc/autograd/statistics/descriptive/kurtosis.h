@@ -4,12 +4,15 @@
 #include "../../reduction_macros.h"
 
 // Use the reduction macro with extra parameters (fisher, bias)
-// TSCI_EXTRA_2BOOL bundles EXTRA_PARAMS, EXTRA_ARGS, EXTRA_TYPES,
-// EXTRA_SAVE, EXTRA_LOAD, and EXTRA_GRAD_PLACEHOLDERS into one macro
 TORCHSCIENCE_AUTOGRAD_DIM_REDUCTION_UNARY_OPERATOR_EX(
     statistics::descriptive,
     kurtosis,
     Kurtosis,
     input,
-    TSCI_EXTRA_2BOOL(fisher, bias)
+    TSCI_EXTRA(bool fisher, bool bias),
+    TSCI_EXTRA(fisher, bias),
+    TSCI_TYPES(bool, bool),
+    TSCI_SAVE(ctx->saved_data["fisher"] = fisher; ctx->saved_data["bias"] = bias;),
+    TSCI_LOAD(bool fisher = ctx->saved_data["fisher"].toBool(); bool bias = ctx->saved_data["bias"].toBool();),
+    TSCI_GRAD_PLACEHOLDERS(at::Tensor(), at::Tensor())
 )
