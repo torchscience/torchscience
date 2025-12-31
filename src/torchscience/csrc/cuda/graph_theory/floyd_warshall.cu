@@ -29,15 +29,15 @@ __global__ void floyd_warshall_init_kernel(
     const scalar_t inf = std::numeric_limits<scalar_t>::infinity();
     int64_t idx = batch_offset + i * N + j;
 
-    // Symmetrize if undirected
-    if (!directed && i < j) {
+    // Symmetrize if undirected: each thread reads both (i,j) and (j,i),
+    // computes the min, and writes ONLY to its own position (i,j).
+    // This eliminates the race condition where multiple threads could
+    // write to the same location when N > BLOCK_SIZE.
+    if (!directed) {
         scalar_t val_ij = dist[idx];
         scalar_t val_ji = dist[batch_offset + j * N + i];
-        scalar_t min_val = min(val_ij, val_ji);
-        dist[idx] = min_val;
-        dist[batch_offset + j * N + i] = min_val;
+        dist[idx] = min(val_ij, val_ji);
     }
-    __syncthreads();
 
     // Initialize predecessors
     if (i == j) {
