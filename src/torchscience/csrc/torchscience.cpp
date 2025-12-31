@@ -29,6 +29,9 @@
 #include "cpu/optimization/test_functions.h"
 #include "cpu/statistics/descriptive/kurtosis.h"
 #include "cpu/statistics/descriptive/histogram.h"
+#include "cpu/statistics/hypothesis_test/one_sample_t_test.h"
+#include "cpu/statistics/hypothesis_test/two_sample_t_test.h"
+#include "cpu/statistics/hypothesis_test/paired_t_test.h"
 #include "cpu/integral_transform/hilbert_transform.h"
 #include "cpu/integral_transform/inverse_hilbert_transform.h"
 #include "cpu/test/sum_squares.h"
@@ -53,6 +56,9 @@
 #include "meta/optimization/test_functions.h"
 #include "meta/statistics/descriptive/kurtosis.h"
 #include "meta/statistics/descriptive/histogram.h"
+#include "meta/statistics/hypothesis_test/one_sample_t_test.h"
+#include "meta/statistics/hypothesis_test/two_sample_t_test.h"
+#include "meta/statistics/hypothesis_test/paired_t_test.h"
 #include "meta/integral_transform/hilbert_transform.h"
 #include "meta/integral_transform/inverse_hilbert_transform.h"
 #include "meta/test/sum_squares.h"
@@ -191,6 +197,11 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("histogram(Tensor input, int bins, float[]? range, Tensor? weight, bool density, str closed, str out_of_bounds) -> (Tensor, Tensor)");
   module.def("histogram_edges(Tensor input, Tensor bins, Tensor? weight, bool density, str closed, str out_of_bounds) -> (Tensor, Tensor)");
+
+  // statistics.hypothesis_test
+  module.def("one_sample_t_test(Tensor input, float popmean, str alternative) -> (Tensor, Tensor, Tensor)");
+  module.def("two_sample_t_test(Tensor input1, Tensor input2, bool equal_var, str alternative) -> (Tensor, Tensor, Tensor)");
+  module.def("paired_t_test(Tensor input1, Tensor input2, str alternative) -> (Tensor, Tensor, Tensor)");
 
   // integral_transform
   module.def("hilbert_transform(Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
