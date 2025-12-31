@@ -56,3 +56,29 @@ def test_cpu_simple_graph():
         ]
     )
     assert torch.allclose(dist, expected_dist)
+
+
+def test_python_api_basic():
+    """Python API returns correct results."""
+    from torchscience.graph_theory import floyd_warshall
+
+    inf = float("inf")
+    adj = torch.tensor(
+        [
+            [0.0, 1.0, 3.0],
+            [inf, 0.0, 1.0],
+            [inf, inf, 0.0],
+        ]
+    )
+
+    dist, pred = floyd_warshall(adj)
+
+    expected_dist = torch.tensor(
+        [
+            [0.0, 1.0, 2.0],
+            [inf, 0.0, 1.0],
+            [inf, inf, 0.0],
+        ]
+    )
+    assert torch.allclose(dist, expected_dist)
+    assert pred.dtype == torch.int64
