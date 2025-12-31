@@ -68,6 +68,7 @@
 #include "cuda/statistics/descriptive/histogram.cu"
 #include "cuda/integral_transform/hilbert_transform.cu"
 #include "cuda/integral_transform/inverse_hilbert_transform.cu"
+#include "cuda/graph_theory/floyd_warshall.cu"
 #include "sparse/coo/cuda/special_functions.h"
 #include "sparse/coo/cuda/optimization/test_functions.h"
 #include "sparse/coo/cuda/integral_transform/hilbert_transform.h"
