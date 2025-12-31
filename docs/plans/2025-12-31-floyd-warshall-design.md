@@ -1,6 +1,6 @@
 # Floyd-Warshall All-Pairs Shortest Paths Design
 
-**Status:** Approved
+**Status:** Complete
 **Date:** 2025-12-31
 
 ## Overview
