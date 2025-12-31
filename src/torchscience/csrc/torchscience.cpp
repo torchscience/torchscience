@@ -36,6 +36,8 @@
 #include "cpu/integral_transform/inverse_hilbert_transform.h"
 #include "cpu/test/sum_squares.h"
 #include "cpu/graph_theory/floyd_warshall.h"
+#include "cpu/information_theory/kullback_leibler_divergence.h"
+#include "cpu/information_theory/jensen_shannon_divergence.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -47,6 +49,8 @@
 #include "autograd/integral_transform/hilbert_transform.h"
 #include "autograd/integral_transform/inverse_hilbert_transform.h"
 #include "autograd/test/sum_squares.h"
+#include "autograd/information_theory/kullback_leibler_divergence.h"
+#include "autograd/information_theory/jensen_shannon_divergence.h"
 
 #include "meta/distance/minkowski_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
@@ -63,6 +67,8 @@
 #include "meta/integral_transform/inverse_hilbert_transform.h"
 #include "meta/test/sum_squares.h"
 #include "meta/graph_theory/floyd_warshall.h"
+#include "meta/information_theory/kullback_leibler_divergence.h"
+#include "meta/information_theory/jensen_shannon_divergence.h"
 
 #include "autocast/signal_processing/filter.h"
 #include "autocast/statistics/descriptive/kurtosis.h"
@@ -227,4 +233,13 @@ TORCH_LIBRARY(torchscience, module) {
 
   // signal_processing.noise
   module.def("pink_noise(int[] size, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False, Generator? generator=None) -> Tensor");
+
+  // information_theory
+  module.def("kullback_leibler_divergence(Tensor p, Tensor q, int dim, str input_type, str reduction, bool pairwise) -> Tensor");
+  module.def("kullback_leibler_divergence_backward(Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, bool pairwise) -> (Tensor, Tensor)");
+  module.def("kullback_leibler_divergence_backward_backward(Tensor gg_p, Tensor gg_q, Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, bool pairwise) -> (Tensor, Tensor, Tensor)");
+
+  module.def("jensen_shannon_divergence(Tensor p, Tensor q, int dim, str input_type, str reduction, float? base, bool pairwise) -> Tensor");
+  module.def("jensen_shannon_divergence_backward(Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, float? base, bool pairwise) -> (Tensor, Tensor)");
+  module.def("jensen_shannon_divergence_backward_backward(Tensor gg_p, Tensor gg_q, Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, float? base, bool pairwise) -> (Tensor, Tensor, Tensor)");
 }
