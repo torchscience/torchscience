@@ -188,4 +188,7 @@ TORCH_LIBRARY(torchscience, module) {
 
   // graph_theory
   module.def("floyd_warshall(Tensor input, bool directed) -> (Tensor, Tensor, bool)");
+
+  // signal_processing.noise
+  module.def("pink_noise(int[] size, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False, Generator? generator=None) -> Tensor");
 }
