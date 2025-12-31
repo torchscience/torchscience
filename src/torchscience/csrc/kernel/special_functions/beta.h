@@ -135,8 +135,11 @@ c10::complex<T> beta_continued_fraction(c10::complex<T> a, c10::complex<T> b, c1
     if (std::abs(d) < eps) d = c10::complex<T>(eps, T(0));
     c = one + aa / c;
     if (std::abs(c) < eps) c = c10::complex<T>(eps, T(0));
+
     d = one / d;
+
     c10::complex<T> delta = d * c;
+
     h *= delta;
 
     if (std::abs(delta - one) < eps) break;

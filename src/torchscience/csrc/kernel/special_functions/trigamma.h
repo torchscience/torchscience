@@ -21,9 +21,7 @@ T trigamma(T z) {
 
   T y2 = T(1) / (y * y);
 
-  psi1 += T(1) / y + T(0.5) * y2 + y2 / y * (T(1.0 / 6) - y2 * (T(1.0 / 30) - y2 * T(1.0 / 42)));
-
-  return psi1;
+  return psi1 + (T(1) / y + T(0.5) * y2 + y2 / y * (T(1.0 / 6) - y2 * (T(1.0 / 30) - y2 * T(1.0 / 42))));
 }
 
 template <typename T>

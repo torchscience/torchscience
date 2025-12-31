@@ -36,13 +36,7 @@ c10::complex<T> tetragamma(c10::complex<T> z) {
   c10::complex<T> y = z;
 
   if (y.real() < T(0.5)) {
-    // Reflection formula: psi''(z) + psi''(1-z) = 2*pi^3*cos(pi*z)/sin^3(pi*z)
-    auto sin_piz = sin_pi(y);
-    auto cos_piz = cos_pi(y);
-    auto sin_piz_cubed = sin_piz * sin_piz * sin_piz;
-    auto pi_cubed = static_cast<T>(M_PI * M_PI * M_PI);
-
-    return pi_cubed * static_cast<T>(2) * cos_piz / sin_piz_cubed - tetragamma(c10::complex<T>(T(1), T(0)) - y);
+    return static_cast<T>(M_PI * M_PI * M_PI) * static_cast<T>(2) * cos_pi(y) / (sin_pi(y) * sin_pi(y) * sin_pi(y)) - tetragamma(c10::complex<T>(T(1), T(0)) - y);
   }
 
   while (std::abs(y) < T(6)) {
