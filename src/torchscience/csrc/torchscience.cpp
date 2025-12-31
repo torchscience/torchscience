@@ -18,6 +18,7 @@
 // other operators - Phase 2
 #include "composite/signal_processing/window_functions.h"
 #include "composite/signal_processing/waveform.h"
+#include "composite/signal_processing/noise.h"
 #include "composite/optimization/test_functions.h"
 
 #include "cpu/distance/minkowski_distance.h"
@@ -212,4 +213,7 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("binomial_coefficient(Tensor n, Tensor k) -> Tensor");
   module.def("binomial_coefficient_backward(Tensor grad_output, Tensor n, Tensor k) -> (Tensor, Tensor)");
   module.def("binomial_coefficient_backward_backward(Tensor gg_n, Tensor gg_k, Tensor grad_output, Tensor n, Tensor k) -> (Tensor, Tensor, Tensor)");
+
+  // signal_processing.noise
+  module.def("pink_noise(int[] size, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False, Generator? generator=None) -> Tensor");
 }
