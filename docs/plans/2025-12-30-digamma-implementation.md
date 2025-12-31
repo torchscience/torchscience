@@ -1,6 +1,6 @@
 # Digamma Function Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+**Status:** Complete
 
 **Goal:** Implement `torchscience.special_functions.digamma` with full autograd support including second-order gradients.
 
