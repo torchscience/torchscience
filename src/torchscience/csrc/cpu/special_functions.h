@@ -8,6 +8,12 @@
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR(gamma, z)
 
+#include "../kernel/special_functions/digamma.h"
+#include "../kernel/special_functions/digamma_backward.h"
+#include "../kernel/special_functions/digamma_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR(digamma, z)
+
 #include "../kernel/special_functions/beta.h"
 #include "../kernel/special_functions/beta_backward.h"
 #include "../kernel/special_functions/beta_backward_backward.h"
