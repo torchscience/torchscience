@@ -100,6 +100,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("gamma_backward(Tensor grad_output, Tensor z) -> Tensor");
   module.def("gamma_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
 
+  module.def("digamma(Tensor z) -> Tensor");
+  module.def("digamma_backward(Tensor grad_output, Tensor z) -> Tensor");
+  module.def("digamma_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
   module.def("beta(Tensor a, Tensor b) -> Tensor");
   module.def("beta_backward(Tensor grad_output, Tensor a, Tensor b) -> (Tensor, Tensor)");
   module.def("beta_backward_backward(Tensor gg_a, Tensor gg_b, Tensor grad_output, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
