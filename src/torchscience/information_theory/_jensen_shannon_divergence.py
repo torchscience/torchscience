@@ -126,5 +126,5 @@ def jensen_shannon_divergence(
         q = q.to(target_dtype)
 
     return torch.ops.torchscience.jensen_shannon_divergence(
-        p, q, dim, input_type, reduction, pairwise, base
+        p, q, dim, input_type, reduction, base, pairwise
     )

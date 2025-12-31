@@ -10,9 +10,9 @@
 #include <c10/util/Optional.h>
 #include <torch/library.h>
 
-#include "torchscience/csrc/kernel/information_theory/kullback_leibler_divergence.h"
-#include "torchscience/csrc/kernel/information_theory/jensen_shannon_divergence_backward.h"
-#include "torchscience/csrc/kernel/information_theory/jensen_shannon_divergence_backward_backward.h"
+#include "../../kernel/information_theory/kullback_leibler_divergence.h"
+#include "../../kernel/information_theory/jensen_shannon_divergence_backward.h"
+#include "../../kernel/information_theory/jensen_shannon_divergence_backward_backward.h"
 
 namespace torchscience::cpu::information_theory {
 
