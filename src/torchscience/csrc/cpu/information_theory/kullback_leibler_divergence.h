@@ -64,6 +64,10 @@ inline at::Tensor apply_reduction(
     } else if (reduction == "mean") {
         return output.mean();
     } else if (reduction == "batchmean") {
+        // Handle empty tensor case to avoid division by zero
+        if (batch_size == 0) {
+            return output.sum();
+        }
         return output.sum() / static_cast<double>(batch_size);
     } else if (reduction == "sum") {
         return output.sum();
@@ -535,14 +539,33 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> kullback_leibler_divergenc
                 scalar_t* grad_q_ptr = grad_q_t.data_ptr<scalar_t>();
                 scalar_t scale_t = static_cast<scalar_t>(scale);
 
-                at::parallel_for(0, batch_size, 0, [&](int64_t begin, int64_t end) {
-                    for (int64_t idx = begin; idx < end; ++idx) {
-                        scalar_t grad_val;
-                        if (reduction == "none") {
-                            grad_val = grad_out_ptr[idx];
-                        } else {
-                            grad_val = grad_out_ptr[0] * scale_t;
+                if (reduction == "none") {
+                    // For "none" reduction, each element is independent - safe to parallelize
+                    at::parallel_for(0, batch_size, 0, [&](int64_t begin, int64_t end) {
+                        for (int64_t idx = begin; idx < end; ++idx) {
+                            scalar_t grad_val = grad_out_ptr[idx];
+
+                            scalar_t grad_grad_out_val = scalar_t(0);
+                            torchscience::kernel::information_theory::kl_divergence_backward_backward_kernel<scalar_t>(
+                                gg_p_ptr ? gg_p_ptr + idx * feature_size : nullptr,
+                                gg_q_ptr ? gg_q_ptr + idx * feature_size : nullptr,
+                                grad_val,
+                                p_ptr + idx * feature_size,
+                                q_ptr + idx * feature_size,
+                                feature_size,
+                                grad_grad_out_val,
+                                grad_p_ptr + idx * feature_size,
+                                grad_q_ptr + idx * feature_size
+                            );
+
+                            grad_grad_out_ptr[idx] = grad_grad_out_val;
                         }
+                    });
+                } else {
+                    // For reduction modes, accumulate serially to avoid race condition
+                    scalar_t total_grad_grad_out = scalar_t(0);
+                    for (int64_t idx = 0; idx < batch_size; ++idx) {
+                        scalar_t grad_val = grad_out_ptr[0] * scale_t;
 
                         scalar_t grad_grad_out_val = scalar_t(0);
                         torchscience::kernel::information_theory::kl_divergence_backward_backward_kernel<scalar_t>(
@@ -557,15 +580,10 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> kullback_leibler_divergenc
                             grad_q_ptr + idx * feature_size
                         );
 
-                        if (reduction == "none") {
-                            grad_grad_out_ptr[idx] = grad_grad_out_val;
-                        } else {
-                            // Thread-safe accumulation would be needed here for parallel_for
-                            // For now, this is a simplification
-                            grad_grad_out_ptr[0] += grad_grad_out_val * scale_t;
-                        }
+                        total_grad_grad_out += grad_grad_out_val * scale_t;
                     }
-                });
+                    grad_grad_out_ptr[0] = total_grad_grad_out;
+                }
             }
         );
 
