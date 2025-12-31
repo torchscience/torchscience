@@ -1,6 +1,6 @@
 # Design: `torchscience.signal_processing.noise.pink_noise`
 
-**Status:** Complete
+**Status:** Implemented
 **Date:** 2025-12-31
 
 ## Overview
