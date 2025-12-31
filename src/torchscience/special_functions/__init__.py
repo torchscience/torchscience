@@ -4,6 +4,8 @@ from ._digamma import digamma
 from ._gamma import gamma
 from ._hypergeometric_2_f_1 import hypergeometric_2_f_1
 from ._incomplete_beta import incomplete_beta
+from ._log_beta import log_beta
+from ._log_gamma import log_gamma
 from ._polygamma import polygamma
 from ._trigamma import trigamma
 
@@ -14,6 +16,8 @@ __all__ = [
     "gamma",
     "hypergeometric_2_f_1",
     "incomplete_beta",
+    "log_beta",
+    "log_gamma",
     "polygamma",
     "trigamma",
 ]

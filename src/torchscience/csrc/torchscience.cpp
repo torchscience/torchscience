@@ -128,6 +128,14 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("polygamma_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
   module.def("polygamma_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
 
+  module.def("log_beta(Tensor a, Tensor b) -> Tensor");
+  module.def("log_beta_backward(Tensor grad_output, Tensor a, Tensor b) -> (Tensor, Tensor)");
+  module.def("log_beta_backward_backward(Tensor gg_a, Tensor gg_b, Tensor grad_output, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
+
+  module.def("log_gamma(Tensor z) -> Tensor");
+  module.def("log_gamma_backward(Tensor grad_output, Tensor z) -> Tensor");
+  module.def("log_gamma_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
   // distance
   module.def("minkowski_distance(Tensor x, Tensor y, float p, Tensor? weight) -> Tensor");
   module.def("minkowski_distance_backward(Tensor grad_output, Tensor x, Tensor y, float p, Tensor? weight, Tensor dist_output) -> (Tensor, Tensor, Tensor)");

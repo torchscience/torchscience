@@ -49,3 +49,15 @@ TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR(hypergeometric_2_f_1, a, b, c, z)
 #include "../kernel/special_functions/polygamma_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(polygamma, n, z)
+
+#include "../kernel/special_functions/log_beta.h"
+#include "../kernel/special_functions/log_beta_backward.h"
+#include "../kernel/special_functions/log_beta_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(log_beta, a, b)
+
+#include "../kernel/special_functions/log_gamma.h"
+#include "../kernel/special_functions/log_gamma_backward.h"
+#include "../kernel/special_functions/log_gamma_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR(log_gamma, z)
