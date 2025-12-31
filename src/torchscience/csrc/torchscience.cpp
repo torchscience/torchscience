@@ -12,6 +12,7 @@
 // other operators - Phase 2
 #include "composite/signal_processing/window_functions.h"
 #include "composite/signal_processing/waveform.h"
+#include "composite/signal_processing/noise.h"
 #include "composite/optimization/test_functions.h"
 
 #include "cpu/distance/minkowski_distance.h"
