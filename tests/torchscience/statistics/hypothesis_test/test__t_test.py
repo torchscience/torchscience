@@ -151,14 +151,14 @@ class TestOneSampleTTest:
         )
 
     def test_insufficient_samples(self):
-        """Test that n=1 returns NaN for statistic and p-value."""
+        """Test that n=1 returns NaN for statistic, p-value, and df."""
         sample = torch.tensor([1.0], dtype=torch.float64)
 
         t_stat, p_value, df = one_sample_t_test(sample)
 
         assert torch.isnan(t_stat)
         assert torch.isnan(p_value)
-        assert torch.allclose(df, torch.tensor(0.0, dtype=torch.float64))
+        assert torch.isnan(df)
 
     def test_zero_variance(self):
         """Test that all same values returns NaN."""
@@ -442,7 +442,7 @@ class TestPairedTTest:
 
         assert torch.isnan(t_stat)
         assert torch.isnan(p_value)
-        assert torch.allclose(df, torch.tensor(0.0, dtype=torch.float64))
+        assert torch.isnan(df)
 
     def test_shape_mismatch_error(self):
         """Test that different shapes raise RuntimeError."""
