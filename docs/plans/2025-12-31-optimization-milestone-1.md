@@ -2,11 +2,12 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Establish implementation patterns in the `minimization/` and `combinatorial/` submodules.
+**Goal:** Establish implementation patterns in the `minimization/`, `combinatorial/`, and `constrained/` submodules.
 
 **Architecture:**
 - `levenberg_marquardt`: Pure Python with implicit differentiation (requires function evaluation through autograd)
 - `sinkhorn`: C++ implementation (operates on tensors only, no function evaluation)
+- `augmented_lagrangian`: Pure Python with implicit differentiation through KKT conditions
 
 **Tech Stack:** PyTorch, torch.func, torch.autograd.Function, ATen, TORCH_LIBRARY
 
@@ -18,6 +19,7 @@
 |-----------|----------|----------------|---------|
 | `minimization/` | `levenberg_marquardt` | Pure Python | Iterative solver with implicit diff |
 | `combinatorial/` | `sinkhorn` | C++ | Iterative, naturally differentiable |
+| `constrained/` | `augmented_lagrangian` | Pure Python | Constrained solver with KKT implicit diff |
 
 **Already complete:**
 - `test_functions/rosenbrock` - reduction pattern established
@@ -1048,19 +1050,587 @@ Implement entropy-regularized optimal transport via Sinkhorn iterations:
 
 ---
 
+## Task 3: Augmented Lagrangian Method
+
+The augmented Lagrangian method solves constrained optimization problems by converting them to a sequence of unconstrained problems. It handles both equality and inequality constraints.
+
+**Mathematical definition:**
+```
+Minimize f(x)
+subject to: h(x) = 0  (equality constraints)
+            g(x) <= 0 (inequality constraints)
+
+Augmented Lagrangian:
+    L_ρ(x, λ, μ) = f(x) + λᵀh(x) + (ρ/2)||h(x)||²
+                  + Σᵢ (1/2ρ)[max(0, μᵢ + ρgᵢ(x))² - μᵢ²]
+
+Update:
+    x_{k+1} = argmin_x L_ρ(x, λ_k, μ_k)  [inner loop: unconstrained minimization]
+    λ_{k+1} = λ_k + ρ h(x_{k+1})
+    μ_{k+1} = max(0, μ_k + ρ g(x_{k+1}))
+
+Implicit gradient via KKT conditions at optimum:
+    ∇f + Jₕᵀλ* + Jᵧᵀμ* = 0
+    h(x*) = 0
+    μ* ⊙ g(x*) = 0, μ* >= 0, g(x*) <= 0
+```
+
+**Files:**
+- Create: `src/torchscience/optimization/constrained/__init__.py`
+- Create: `src/torchscience/optimization/constrained/_augmented_lagrangian.py`
+- Modify: `src/torchscience/optimization/__init__.py`
+- Create: `tests/torchscience/optimization/constrained/__init__.py`
+- Create: `tests/torchscience/optimization/constrained/test__augmented_lagrangian.py`
+
+### Step 1: Create test directory structure
+
+```bash
+mkdir -p tests/torchscience/optimization/constrained
+touch tests/torchscience/optimization/constrained/__init__.py
+```
+
+### Step 2: Write failing test
+
+Create `tests/torchscience/optimization/constrained/test__augmented_lagrangian.py`:
+
+```python
+import pytest
+import torch
+import torch.testing
+
+import torchscience.optimization.constrained
+
+
+class TestAugmentedLagrangian:
+    def test_unconstrained_quadratic(self):
+        """Without constraints, should minimize f(x) = ||x - target||²."""
+        target = torch.tensor([1.0, 2.0])
+
+        def objective(x):
+            return torch.sum((x - target) ** 2)
+
+        x0 = torch.zeros(2)
+        result = torchscience.optimization.constrained.augmented_lagrangian(
+            objective, x0
+        )
+        torch.testing.assert_close(result, target, atol=1e-4, rtol=1e-4)
+
+    def test_equality_constraint(self):
+        """Minimize x² + y² subject to x + y = 1."""
+
+        def objective(x):
+            return torch.sum(x**2)
+
+        def eq_constraints(x):
+            return x.sum() - 1.0  # h(x) = x + y - 1 = 0
+
+        x0 = torch.zeros(2)
+        result = torchscience.optimization.constrained.augmented_lagrangian(
+            objective, x0, eq_constraints=eq_constraints
+        )
+        # Optimal: x = y = 0.5
+        expected = torch.tensor([0.5, 0.5])
+        torch.testing.assert_close(result, expected, atol=1e-3, rtol=1e-3)
+
+    def test_inequality_constraint(self):
+        """Minimize -x subject to x <= 2."""
+
+        def objective(x):
+            return -x.sum()
+
+        def ineq_constraints(x):
+            return x - 2.0  # g(x) = x - 2 <= 0
+
+        x0 = torch.zeros(1)
+        result = torchscience.optimization.constrained.augmented_lagrangian(
+            objective, x0, ineq_constraints=ineq_constraints
+        )
+        # Optimal: x = 2 (at the constraint boundary)
+        expected = torch.tensor([2.0])
+        torch.testing.assert_close(result, expected, atol=1e-3, rtol=1e-3)
+
+    def test_mixed_constraints(self):
+        """Minimize x² + y² subject to x + y = 1, x >= 0.3."""
+
+        def objective(x):
+            return torch.sum(x**2)
+
+        def eq_constraints(x):
+            return x.sum() - 1.0
+
+        def ineq_constraints(x):
+            return 0.3 - x[0]  # -x + 0.3 <= 0, i.e., x >= 0.3
+
+        x0 = torch.tensor([0.5, 0.5])
+        result = torchscience.optimization.constrained.augmented_lagrangian(
+            objective,
+            x0,
+            eq_constraints=eq_constraints,
+            ineq_constraints=ineq_constraints,
+        )
+        # Without inequality: x=y=0.5. With x>=0.3, constraint is inactive.
+        # If we had x>=0.6, then x=0.6, y=0.4
+        expected = torch.tensor([0.5, 0.5])
+        torch.testing.assert_close(result, expected, atol=1e-3, rtol=1e-3)
+
+    def test_active_inequality(self):
+        """Minimize x² + y² subject to x + y = 1, x >= 0.6."""
+
+        def objective(x):
+            return torch.sum(x**2)
+
+        def eq_constraints(x):
+            return x.sum() - 1.0
+
+        def ineq_constraints(x):
+            return 0.6 - x[0]  # x >= 0.6
+
+        x0 = torch.tensor([0.7, 0.3])
+        result = torchscience.optimization.constrained.augmented_lagrangian(
+            objective,
+            x0,
+            eq_constraints=eq_constraints,
+            ineq_constraints=ineq_constraints,
+        )
+        # Constrained optimum: x=0.6, y=0.4
+        expected = torch.tensor([0.6, 0.4])
+        torch.testing.assert_close(result, expected, atol=1e-3, rtol=1e-3)
+
+    def test_implicit_differentiation(self):
+        """Test gradient through constrained optimizer."""
+        target = torch.tensor([1.0], requires_grad=True)
+
+        def objective(x):
+            return (x - target) ** 2
+
+        def eq_constraints(x):
+            return x - 0.5  # x = 0.5
+
+        x0 = torch.zeros(1)
+        result = torchscience.optimization.constrained.augmented_lagrangian(
+            objective, x0, eq_constraints=eq_constraints
+        )
+        # Result is always 0.5 regardless of target, so gradient should be 0
+        loss = result.sum()
+        loss.backward()
+        torch.testing.assert_close(
+            target.grad, torch.tensor([0.0]), atol=1e-4, rtol=1e-4
+        )
+
+    def test_rosenbrock_constrained(self):
+        """Minimize Rosenbrock subject to x² + y² <= 2."""
+
+        def objective(x):
+            return (1 - x[0]) ** 2 + 100 * (x[1] - x[0] ** 2) ** 2
+
+        def ineq_constraints(x):
+            return torch.sum(x**2) - 2.0  # ||x||² <= 2
+
+        x0 = torch.tensor([0.0, 0.0])
+        result = torchscience.optimization.constrained.augmented_lagrangian(
+            objective, x0, ineq_constraints=ineq_constraints, maxiter=50
+        )
+        # Unconstrained optimum is (1, 1) with ||x||² = 2, exactly on boundary
+        expected = torch.tensor([1.0, 1.0])
+        torch.testing.assert_close(result, expected, atol=1e-2, rtol=1e-2)
+
+
+class TestAugmentedLagrangianDtypes:
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
+    def test_dtype_preservation(self, dtype):
+        """Test that output dtype matches input."""
+
+        def objective(x):
+            return torch.sum(x**2)
+
+        x0 = torch.ones(2, dtype=dtype)
+        result = torchscience.optimization.constrained.augmented_lagrangian(
+            objective, x0
+        )
+        assert result.dtype == dtype
+```
+
+### Step 3: Run test to verify it fails
+
+```bash
+uv run pytest tests/torchscience/optimization/constrained/test__augmented_lagrangian.py -v
+```
+
+Expected: FAIL with `ModuleNotFoundError: No module named 'torchscience.optimization.constrained'`
+
+### Step 4: Create constrained module directory
+
+```bash
+mkdir -p src/torchscience/optimization/constrained
+```
+
+### Step 5: Implement augmented_lagrangian
+
+Create `src/torchscience/optimization/constrained/_augmented_lagrangian.py`:
+
+```python
+from typing import Callable, Optional
+
+import torch
+from torch import Tensor
+
+
+class _ALImplicitGrad(torch.autograd.Function):
+    """
+    Implicit differentiation through augmented Lagrangian optimum via KKT conditions.
+
+    At the optimum (x*, λ*, μ*), the KKT conditions hold:
+        ∇f(x*) + Jₕᵀλ* + Jᵧᵀμ* = 0  (stationarity)
+        h(x*) = 0                      (primal feasibility - equality)
+        g(x*) <= 0, μ* >= 0            (primal feasibility - inequality)
+        μ* ⊙ g(x*) = 0                 (complementary slackness)
+
+    Differentiating these conditions gives the implicit gradient.
+    """
+
+    @staticmethod
+    def forward(
+        ctx,
+        result: Tensor,
+        objective: Callable[[Tensor], Tensor],
+        eq_constraints: Optional[Callable[[Tensor], Tensor]],
+        ineq_constraints: Optional[Callable[[Tensor], Tensor]],
+        lambda_eq: Optional[Tensor],
+        mu_ineq: Optional[Tensor],
+    ) -> Tensor:
+        ctx.objective = objective
+        ctx.eq_constraints = eq_constraints
+        ctx.ineq_constraints = ineq_constraints
+        ctx.save_for_backward(result, lambda_eq, mu_ineq)
+        return result.clone()
+
+    @staticmethod
+    def backward(ctx, grad_output: Tensor):
+        result, lambda_eq, mu_ineq = ctx.saved_tensors
+
+        with torch.enable_grad():
+            x = result.detach().requires_grad_(True)
+
+            # Compute gradient of Lagrangian w.r.t. x
+            f = ctx.objective(x)
+            grad_f = torch.autograd.grad(f, x, create_graph=True)[0]
+
+            total_grad = grad_f.clone()
+
+            if ctx.eq_constraints is not None and lambda_eq is not None:
+                h = ctx.eq_constraints(x)
+                if h.dim() == 0:
+                    h = h.unsqueeze(0)
+                for i in range(h.numel()):
+                    grad_hi = torch.autograd.grad(
+                        h.flatten()[i], x, retain_graph=True, create_graph=True
+                    )[0]
+                    total_grad = total_grad + lambda_eq.flatten()[i] * grad_hi
+
+            if ctx.ineq_constraints is not None and mu_ineq is not None:
+                g = ctx.ineq_constraints(x)
+                if g.dim() == 0:
+                    g = g.unsqueeze(0)
+                for i in range(g.numel()):
+                    if mu_ineq.flatten()[i] > 1e-8:  # Active constraint
+                        grad_gi = torch.autograd.grad(
+                            g.flatten()[i], x, retain_graph=True, create_graph=True
+                        )[0]
+                        total_grad = total_grad + mu_ineq.flatten()[i] * grad_gi
+
+            # Compute Hessian of Lagrangian (for implicit function theorem)
+            hess_rows = []
+            for i in range(x.numel()):
+                grad_i = torch.autograd.grad(
+                    total_grad.flatten()[i],
+                    x,
+                    retain_graph=True,
+                    allow_unused=True,
+                )[0]
+                if grad_i is None:
+                    grad_i = torch.zeros_like(x)
+                hess_rows.append(grad_i.flatten())
+
+            H = torch.stack(hess_rows)
+
+            # Add regularization for numerical stability
+            reg = 1e-4 * torch.eye(H.shape[0], dtype=H.dtype, device=H.device)
+            H = H + reg
+
+            # Solve H @ v = grad_output for implicit gradient
+            try:
+                v = torch.linalg.solve(H, grad_output.flatten())
+            except RuntimeError:
+                v = torch.linalg.lstsq(H, grad_output.flatten()).solution
+
+            # Backpropagate through objective
+            f.backward(-v @ grad_f)
+
+        return None, None, None, None, None, None
+
+
+def augmented_lagrangian(
+    objective: Callable[[Tensor], Tensor],
+    x0: Tensor,
+    *,
+    eq_constraints: Optional[Callable[[Tensor], Tensor]] = None,
+    ineq_constraints: Optional[Callable[[Tensor], Tensor]] = None,
+    tol: Optional[float] = None,
+    maxiter: int = 50,
+    inner_maxiter: int = 100,
+    rho: float = 1.0,
+    rho_max: float = 1e6,
+) -> Tensor:
+    r"""
+    Augmented Lagrangian method for constrained optimization.
+
+    Solves the constrained optimization problem:
+
+    .. math::
+
+        \min_x f(x) \quad \text{s.t.} \quad h(x) = 0, \; g(x) \leq 0
+
+    by iteratively solving unconstrained subproblems with the augmented
+    Lagrangian:
+
+    .. math::
+
+        L_\rho(x, \lambda, \mu) = f(x) + \lambda^T h(x) + \frac{\rho}{2}\|h(x)\|^2
+        + \sum_i \frac{1}{2\rho}[\max(0, \mu_i + \rho g_i(x))^2 - \mu_i^2]
+
+    Parameters
+    ----------
+    objective : Callable[[Tensor], Tensor]
+        Objective function f(x) to minimize. Takes parameters of shape ``(n,)``
+        and returns a scalar.
+    x0 : Tensor
+        Initial guess of shape ``(n,)``.
+    eq_constraints : Callable, optional
+        Equality constraint function h(x). Returns tensor where h(x) = 0 is required.
+    ineq_constraints : Callable, optional
+        Inequality constraint function g(x). Returns tensor where g(x) <= 0 is required.
+    tol : float, optional
+        Convergence tolerance on constraint violation. Default: ``sqrt(eps)`` for dtype.
+    maxiter : int
+        Maximum outer iterations (Lagrange multiplier updates). Default: 50.
+    inner_maxiter : int
+        Maximum inner iterations per subproblem. Default: 100.
+    rho : float
+        Initial penalty parameter. Default: 1.0.
+    rho_max : float
+        Maximum penalty parameter. Default: 1e6.
+
+    Returns
+    -------
+    Tensor
+        Optimized parameters of shape ``(n,)``.
+
+    Examples
+    --------
+    Minimize x² + y² subject to x + y = 1:
+
+    >>> def objective(x):
+    ...     return torch.sum(x**2)
+    >>> def eq_constraint(x):
+    ...     return x.sum() - 1.0
+    >>> x0 = torch.zeros(2)
+    >>> result = augmented_lagrangian(objective, x0, eq_constraints=eq_constraint)
+    >>> result
+    tensor([0.5, 0.5])
+
+    With inequality constraints (x >= 0.6):
+
+    >>> def ineq_constraint(x):
+    ...     return 0.6 - x[0]  # -x + 0.6 <= 0
+    >>> result = augmented_lagrangian(
+    ...     objective, x0, eq_constraints=eq_constraint, ineq_constraints=ineq_constraint
+    ... )
+    >>> result
+    tensor([0.6, 0.4])
+
+    References
+    ----------
+    - Nocedal, J. and Wright, S.J. "Numerical Optimization." Chapter 17.
+    - Bertsekas, D.P. "Constrained Optimization and Lagrange Multiplier Methods."
+
+    See Also
+    --------
+    https://en.wikipedia.org/wiki/Augmented_Lagrangian_method
+    """
+    if tol is None:
+        tol = torch.finfo(x0.dtype).eps ** 0.5
+
+    x = x0.clone()
+    n = x.numel()
+
+    # Initialize Lagrange multipliers
+    lambda_eq = None
+    mu_ineq = None
+
+    if eq_constraints is not None:
+        h0 = eq_constraints(x0)
+        if h0.dim() == 0:
+            h0 = h0.unsqueeze(0)
+        lambda_eq = torch.zeros(h0.numel(), dtype=x0.dtype, device=x0.device)
+
+    if ineq_constraints is not None:
+        g0 = ineq_constraints(x0)
+        if g0.dim() == 0:
+            g0 = g0.unsqueeze(0)
+        mu_ineq = torch.zeros(g0.numel(), dtype=x0.dtype, device=x0.device)
+
+    for outer_iter in range(maxiter):
+        # Define augmented Lagrangian for inner minimization
+        def augmented_lagrangian_func(x_inner):
+            L = objective(x_inner)
+
+            if eq_constraints is not None:
+                h = eq_constraints(x_inner)
+                if h.dim() == 0:
+                    h = h.unsqueeze(0)
+                L = L + torch.dot(lambda_eq, h) + (rho / 2) * torch.sum(h**2)
+
+            if ineq_constraints is not None:
+                g = ineq_constraints(x_inner)
+                if g.dim() == 0:
+                    g = g.unsqueeze(0)
+                # Powell-Hestenes-Rockafellar formulation
+                for i in range(g.numel()):
+                    slack = torch.clamp(mu_ineq[i] + rho * g[i], min=0.0)
+                    L = L + (1 / (2 * rho)) * (slack**2 - mu_ineq[i] ** 2)
+
+            return L
+
+        # Inner loop: minimize augmented Lagrangian using gradient descent
+        x_inner = x.clone().requires_grad_(True)
+
+        for inner_iter in range(inner_maxiter):
+            L = augmented_lagrangian_func(x_inner)
+            grad = torch.autograd.grad(L, x_inner, create_graph=False)[0]
+
+            if torch.norm(grad) < tol:
+                break
+
+            # Simple gradient descent with line search
+            alpha = 1.0
+            x_new = x_inner.detach() - alpha * grad
+
+            # Backtracking line search
+            for _ in range(20):
+                with torch.no_grad():
+                    L_new = augmented_lagrangian_func(x_new)
+                    L_old = augmented_lagrangian_func(x_inner.detach())
+                if L_new < L_old:
+                    break
+                alpha *= 0.5
+                x_new = x_inner.detach() - alpha * grad
+
+            x_inner = x_new.requires_grad_(True)
+
+        x = x_inner.detach()
+
+        # Check constraint satisfaction
+        max_violation = 0.0
+
+        if eq_constraints is not None:
+            h = eq_constraints(x)
+            if h.dim() == 0:
+                h = h.unsqueeze(0)
+            max_violation = max(max_violation, torch.max(torch.abs(h)).item())
+            # Update equality multipliers
+            lambda_eq = lambda_eq + rho * h.detach()
+
+        if ineq_constraints is not None:
+            g = ineq_constraints(x)
+            if g.dim() == 0:
+                g = g.unsqueeze(0)
+            max_violation = max(max_violation, torch.max(torch.clamp(g, min=0)).item())
+            # Update inequality multipliers
+            mu_ineq = torch.clamp(mu_ineq + rho * g.detach(), min=0.0)
+
+        if max_violation < tol:
+            break
+
+        # Increase penalty if constraints not satisfied
+        if max_violation > 0.25 * tol:
+            rho = min(rho * 2, rho_max)
+
+    # Attach implicit gradient for backpropagation
+    return _ALImplicitGrad.apply(
+        x, objective, eq_constraints, ineq_constraints, lambda_eq, mu_ineq
+    )
+```
+
+### Step 6: Create module __init__.py
+
+Create `src/torchscience/optimization/constrained/__init__.py`:
+
+```python
+from ._augmented_lagrangian import augmented_lagrangian
+
+__all__ = [
+    "augmented_lagrangian",
+]
+```
+
+### Step 7: Update optimization __init__.py
+
+Modify `src/torchscience/optimization/__init__.py`:
+
+```python
+from . import combinatorial, constrained, minimization, root_finding, test_functions
+
+__all__ = [
+    "combinatorial",
+    "constrained",
+    "minimization",
+    "root_finding",
+    "test_functions",
+]
+```
+
+### Step 8: Run tests
+
+```bash
+uv run pytest tests/torchscience/optimization/constrained/test__augmented_lagrangian.py -v
+```
+
+Expected: All tests pass
+
+### Step 9: Commit
+
+```bash
+git add src/torchscience/optimization/constrained/ \
+        src/torchscience/optimization/__init__.py \
+        tests/torchscience/optimization/constrained/
+git commit -m "feat(constrained): add augmented_lagrangian method
+
+Implement augmented Lagrangian for constrained optimization:
+- Equality constraints (h(x) = 0)
+- Inequality constraints (g(x) <= 0)
+- Powell-Hestenes-Rockafellar penalty formulation
+- Implicit differentiation through KKT conditions
+- Adaptive penalty parameter updates"
+```
+
+---
+
 ## Summary
 
-After completing both tasks, the optimization module structure is:
+After completing all three tasks, the optimization module structure is:
 
 ```
 torchscience.optimization/
 ├── __init__.py
 ├── combinatorial/
 │   ├── __init__.py
-│   └── _sinkhorn.py          [NEW]
+│   └── _sinkhorn.py              [NEW]
+├── constrained/
+│   ├── __init__.py               [NEW]
+│   └── _augmented_lagrangian.py  [NEW]
 ├── minimization/
-│   ├── __init__.py           [NEW]
-│   └── _levenberg_marquardt.py [NEW]
+│   ├── __init__.py               [NEW]
+│   └── _levenberg_marquardt.py   [NEW]
 ├── root_finding/
 │   ├── __init__.py
 │   └── _brent.py
@@ -1075,10 +1645,12 @@ torchscience.optimization/
 | `root_finding/` | brent | C++ | Done |
 | `minimization/` | levenberg_marquardt | Python | NEW |
 | `combinatorial/` | sinkhorn | C++ | NEW |
-| `constrained/` | (none yet) | - | Milestone 2 |
+| `constrained/` | augmented_lagrangian | Python | NEW |
 
 **Key patterns established:**
 
-1. **Python-only solvers** (levenberg_marquardt): Use `torch.func.jacobian` for derivatives and `torch.autograd.Function` for implicit differentiation through the optimum.
+1. **Python-only solvers** (levenberg_marquardt, augmented_lagrangian): Use `torch.func.jacobian` for derivatives and `torch.autograd.Function` for implicit differentiation through the optimum.
 
 2. **C++ tensor operators** (sinkhorn): Full C++ implementation with CPU, Meta, and Autograd backends following the rosenbrock pattern.
+
+3. **Constrained optimization** (augmented_lagrangian): Equality and inequality constraints with implicit differentiation through KKT conditions.
