@@ -182,4 +182,7 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("sum_squares(Tensor input, int[]? dim, bool keepdim) -> Tensor");
   module.def("sum_squares_backward(Tensor grad_output, Tensor input, int[]? dim, bool keepdim) -> Tensor");
   module.def("sum_squares_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int[]? dim, bool keepdim) -> (Tensor, Tensor)");
+
+  // graph_theory
+  module.def("floyd_warshall(Tensor input, bool directed) -> (Tensor, Tensor, bool)");
 }
