@@ -14,6 +14,12 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR(gamma, z)
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR(digamma, z)
 
+#include "../kernel/special_functions/trigamma.h"
+#include "../kernel/special_functions/trigamma_backward.h"
+#include "../kernel/special_functions/trigamma_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR(trigamma, z)
+
 #include "../kernel/special_functions/beta.h"
 #include "../kernel/special_functions/beta_backward.h"
 #include "../kernel/special_functions/beta_backward_backward.h"
@@ -37,3 +43,9 @@ TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR(incomplete_beta, x, a, b)
 #include "../kernel/special_functions/hypergeometric_2_f_1_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR(hypergeometric_2_f_1, a, b, c, z)
+
+#include "../kernel/special_functions/polygamma.h"
+#include "../kernel/special_functions/polygamma_backward.h"
+#include "../kernel/special_functions/polygamma_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(polygamma, n, z)

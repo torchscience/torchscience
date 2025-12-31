@@ -104,6 +104,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("digamma_backward(Tensor grad_output, Tensor z) -> Tensor");
   module.def("digamma_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
 
+  module.def("trigamma(Tensor z) -> Tensor");
+  module.def("trigamma_backward(Tensor grad_output, Tensor z) -> Tensor");
+  module.def("trigamma_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
   module.def("beta(Tensor a, Tensor b) -> Tensor");
   module.def("beta_backward(Tensor grad_output, Tensor a, Tensor b) -> (Tensor, Tensor)");
   module.def("beta_backward_backward(Tensor gg_a, Tensor gg_b, Tensor grad_output, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
@@ -119,6 +123,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("hypergeometric_2_f_1(Tensor a, Tensor b, Tensor c, Tensor z) -> Tensor");
   module.def("hypergeometric_2_f_1_backward(Tensor grad_output, Tensor a, Tensor b, Tensor c, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
   module.def("hypergeometric_2_f_1_backward_backward(Tensor gg_a, Tensor gg_b, Tensor gg_c, Tensor gg_z, Tensor grad_output, Tensor a, Tensor b, Tensor c, Tensor z) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  module.def("polygamma(Tensor n, Tensor z) -> Tensor");
+  module.def("polygamma_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
+  module.def("polygamma_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
 
   // distance
   module.def("minkowski_distance(Tensor x, Tensor y, float p, Tensor? weight) -> Tensor");
