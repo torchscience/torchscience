@@ -23,6 +23,7 @@
 #include "cpu/integral_transform/hilbert_transform.h"
 #include "cpu/integral_transform/inverse_hilbert_transform.h"
 #include "cpu/test/sum_squares.h"
+#include "cpu/graph_theory/floyd_warshall.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -42,6 +43,7 @@
 #include "meta/integral_transform/hilbert_transform.h"
 #include "meta/integral_transform/inverse_hilbert_transform.h"
 #include "meta/test/sum_squares.h"
+#include "meta/graph_theory/floyd_warshall.h"
 
 #include "autocast/signal_processing/filter.h"
 #include "autocast/statistics/descriptive/kurtosis.h"
