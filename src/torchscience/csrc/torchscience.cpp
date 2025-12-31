@@ -5,6 +5,12 @@
 #include "meta/special_functions.h"
 #include "autograd/special_functions.h"
 #include "autocast/special_functions.h"
+
+// combinatorics
+#include "cpu/combinatorics.h"
+#include "meta/combinatorics.h"
+#include "autograd/combinatorics.h"
+#include "autocast/combinatorics.h"
 #include "sparse/coo/cpu/special_functions.h"
 #include "sparse/csr/cpu/special_functions.h"
 #include "quantized/cpu/special_functions.h"
@@ -188,4 +194,9 @@ TORCH_LIBRARY(torchscience, module) {
 
   // graph_theory
   module.def("floyd_warshall(Tensor input, bool directed) -> (Tensor, Tensor, bool)");
+
+  // combinatorics
+  module.def("binomial_coefficient(Tensor n, Tensor k) -> Tensor");
+  module.def("binomial_coefficient_backward(Tensor grad_output, Tensor n, Tensor k) -> (Tensor, Tensor)");
+  module.def("binomial_coefficient_backward_backward(Tensor gg_n, Tensor gg_k, Tensor grad_output, Tensor n, Tensor k) -> (Tensor, Tensor, Tensor)");
 }
