@@ -6,7 +6,7 @@ This module provides differentiable ODE solvers for PyTorch tensors and TensorDi
 Available Solvers
 -----------------
 euler
-    Forward Euler method (1st order, fixed step).
+    Forward Euler method (1st order, fixed step, explicit).
     Simplest method, educational baseline.
 
 midpoint
@@ -14,24 +14,27 @@ midpoint
     Good accuracy/cost tradeoff for smooth problems.
 
 runge_kutta_4
-    Classic 4th-order Runge-Kutta (fixed step).
+    Classic 4th-order Runge-Kutta (fixed step, explicit).
     Widely used workhorse, excellent for non-stiff problems.
 
 dormand_prince_5
-    Dormand-Prince 5(4) adaptive method.
+    Dormand-Prince 5(4) adaptive method (explicit).
     Production-quality solver with error control.
+
+backward_euler
+    Backward Euler method (1st order, fixed step, implicit).
+    A-stable, suitable for stiff problems.
 
 Examples
 --------
 >>> import torch
->>> from torchscience.integration.initial_value_problem import runge_kutta_4
+>>> from torchscience.integration.initial_value_problem import backward_euler
 >>>
->>> def decay(t, y):
-...     return -y
+>>> def stiff_decay(t, y):
+...     return -1000 * y  # Stiff coefficient
 >>>
 >>> y0 = torch.tensor([1.0])
->>> y_final, interp = runge_kutta_4(decay, y0, t_span=(0.0, 5.0), dt=0.01)
->>> trajectory = interp(torch.linspace(0, 5, 100))
+>>> y_final, interp = backward_euler(stiff_decay, y0, t_span=(0.0, 1.0), dt=0.1)
 """
 
 from torchscience.integration.initial_value_problem._backward_euler import (
