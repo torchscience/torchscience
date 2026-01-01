@@ -44,6 +44,7 @@
 #include "cpu/graph_theory/floyd_warshall.h"
 #include "cpu/information_theory/kullback_leibler_divergence.h"
 #include "cpu/information_theory/jensen_shannon_divergence.h"
+#include "cpu/space_partitioning/kd_tree.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
