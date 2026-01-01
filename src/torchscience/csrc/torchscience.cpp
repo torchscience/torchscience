@@ -24,6 +24,7 @@
 #include "cpu/distance/minkowski_distance.h"
 #include "cpu/graphics/shading/cook_torrance.h"
 #include "cpu/graphics/shading/phong.h"
+#include "cpu/graphics/lighting/spotlight.h"
 #include "cpu/graphics/color/srgb_to_hsv.h"
 #include "cpu/graphics/color/hsv_to_srgb.h"
 #include "cpu/signal_processing/filter.h"
@@ -43,6 +44,7 @@
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
 #include "autograd/graphics/shading/phong.h"
+#include "autograd/graphics/lighting/spotlight.h"
 #include "autograd/graphics/color/srgb_to_hsv.h"
 #include "autograd/graphics/color/hsv_to_srgb.h"
 #include "autograd/signal_processing/filter.h"
@@ -57,6 +59,7 @@
 #include "meta/distance/minkowski_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
 #include "meta/graphics/shading/phong.h"
+#include "meta/graphics/lighting/spotlight.h"
 #include "meta/graphics/color/srgb_to_hsv.h"
 #include "meta/graphics/color/hsv_to_srgb.h"
 #include "meta/signal_processing/filter.h"
@@ -179,6 +182,10 @@ TORCH_LIBRARY(torchscience, module) {
   // Phong shading
   module.def("phong(Tensor normal, Tensor view, Tensor light, Tensor shininess) -> Tensor");
   module.def("phong_backward(Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor shininess) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // graphics.lighting
+  module.def("spotlight(Tensor light_pos, Tensor surface_pos, Tensor spot_direction, Tensor intensity, Tensor inner_angle, Tensor outer_angle) -> (Tensor, Tensor)");
+  module.def("spotlight_backward(Tensor grad_irradiance, Tensor light_pos, Tensor surface_pos, Tensor spot_direction, Tensor intensity, Tensor inner_angle, Tensor outer_angle) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
 
   // graphics.color
   module.def("srgb_to_hsv(Tensor input) -> Tensor");
