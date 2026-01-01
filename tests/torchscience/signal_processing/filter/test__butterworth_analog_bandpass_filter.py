@@ -6,7 +6,7 @@ import pytest
 import torch
 import torch.testing
 
-import torchscience.signal_processing.filters
+import torchscience.signal_processing.filter
 
 
 class TestButterworthAnalogBandpassFilter:

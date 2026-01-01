@@ -1,4 +1,4 @@
-"""Tests for torchscience.signal_processing.transforms.hilbert_transform.
+"""Tests for torchscience.signal_processing.transform.hilbert_transform.
 
 This test file includes tests for padding_mode and window parameters.
 """
@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 import torch
 
-import torchscience.signal_processing.transforms
+import torchscience.signal_processing.transform
 
 # Check if scipy is available for reference tests
 try:
@@ -29,7 +29,7 @@ class TestHilbertTransformPaddingMode:
     def test_padding_modes_work(self, mode):
         """Test all padding modes work without error."""
         x = torch.randn(64, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=128, padding_mode=mode
         )
         assert result.shape == (128,)
@@ -39,14 +39,14 @@ class TestHilbertTransformPaddingMode:
         """Test invalid padding_mode raises error."""
         x = torch.randn(64)
         with pytest.raises(ValueError, match="padding_mode"):
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, padding_mode="invalid"
             )
 
     def test_padding_value_constant(self):
         """Test padding_value with constant mode."""
         x = torch.randn(64, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=128, padding_mode="constant", padding_value=1.0
         )
         assert result.shape == (128,)
@@ -57,12 +57,12 @@ class TestHilbertTransformPaddingMode:
         x = torch.randn(64, dtype=torch.float64)
 
         result_zero = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, n=128, padding_mode="constant", padding_value=0.0
             )
         )
         result_one = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, n=128, padding_mode="constant", padding_value=1.0
             )
         )
@@ -75,12 +75,12 @@ class TestHilbertTransformPaddingMode:
         x = torch.randn(64, dtype=torch.float64)
 
         result_constant = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, n=128, padding_mode="constant"
             )
         )
         result_reflect = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, n=128, padding_mode="reflect"
             )
         )
@@ -96,7 +96,7 @@ class TestHilbertTransformPaddingMode:
         x = torch.sin(t)
 
         # Circular padding should work well for periodic signals
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=128, padding_mode="circular"
         )
         assert result.shape == (128,)
@@ -105,7 +105,7 @@ class TestHilbertTransformPaddingMode:
     def test_replicate_padding(self):
         """Test replicate padding mode."""
         x = torch.randn(64, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=128, padding_mode="replicate"
         )
         assert result.shape == (128,)
@@ -117,7 +117,7 @@ class TestHilbertTransformPaddingMode:
 
         for mode in ["constant", "reflect", "replicate", "circular"]:
             result = (
-                torchscience.signal_processing.transforms.hilbert_transform(
+                torchscience.signal_processing.transform.hilbert_transform(
                     x, n=128, dim=-1, padding_mode=mode
                 )
             )
@@ -129,10 +129,10 @@ class TestHilbertTransformPaddingMode:
         x = torch.randn(64, dtype=torch.float64)
 
         result_default = (
-            torchscience.signal_processing.transforms.hilbert_transform(x)
+            torchscience.signal_processing.transform.hilbert_transform(x)
         )
         result_explicit = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, n=64, padding_mode="reflect"
             )
         )
@@ -146,7 +146,7 @@ class TestHilbertTransformPaddingMode:
 
         for mode in ["constant", "reflect", "replicate", "circular"]:
             result = (
-                torchscience.signal_processing.transforms.hilbert_transform(
+                torchscience.signal_processing.transform.hilbert_transform(
                     x, n=64, padding_mode=mode
                 )
             )
@@ -162,7 +162,7 @@ class TestHilbertTransformWindow:
         x = torch.randn(64, dtype=torch.float64)
         window = torch.hann_window(64, dtype=torch.float64)
 
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, window=window
         )
         assert result.shape == x.shape
@@ -173,7 +173,7 @@ class TestHilbertTransformWindow:
         x = torch.randn(64, dtype=torch.float64)
         window = torch.hamming_window(64, dtype=torch.float64)
 
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, window=window
         )
         assert result.shape == x.shape
@@ -184,7 +184,7 @@ class TestHilbertTransformWindow:
         x = torch.randn(64, dtype=torch.float64)
         window = torch.blackman_window(64, dtype=torch.float64)
 
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, window=window
         )
         assert result.shape == x.shape
@@ -196,10 +196,10 @@ class TestHilbertTransformWindow:
         window = torch.ones(64, dtype=torch.float64)
 
         result_no_window = (
-            torchscience.signal_processing.transforms.hilbert_transform(x)
+            torchscience.signal_processing.transform.hilbert_transform(x)
         )
         result_with_window = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, window=window
             )
         )
@@ -212,7 +212,7 @@ class TestHilbertTransformWindow:
         window = torch.ones(32)  # Wrong size
 
         with pytest.raises(RuntimeError, match="window"):
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, window=window
             )
 
@@ -222,7 +222,7 @@ class TestHilbertTransformWindow:
         # Window must match padded size
         window = torch.hann_window(128, dtype=torch.float64)
 
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=128, padding_mode="reflect", window=window
         )
         assert result.shape == (128,)
@@ -233,7 +233,7 @@ class TestHilbertTransformWindow:
         x = torch.randn(3, 4, 64, dtype=torch.float64)
         window = torch.hann_window(64, dtype=torch.float64)
 
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, dim=-1, window=window
         )
         assert result.shape == (3, 4, 64)
@@ -245,7 +245,7 @@ class TestHilbertTransformWindow:
         window = torch.ones(8, 8)  # 2-D window
 
         with pytest.raises(RuntimeError, match="1-D"):
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, window=window
             )
 
@@ -255,10 +255,10 @@ class TestHilbertTransformWindow:
         window = torch.hann_window(64, dtype=torch.float64)
 
         result_no_window = (
-            torchscience.signal_processing.transforms.hilbert_transform(x)
+            torchscience.signal_processing.transform.hilbert_transform(x)
         )
         result_with_window = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, window=window
             )
         )
@@ -273,7 +273,7 @@ class TestHilbertTransformGradientWithNewParams:
     def test_gradient_with_padding(self):
         """Test gradient works with padding."""
         x = torch.randn(64, requires_grad=True, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=128, padding_mode="reflect"
         )
         loss = result.sum()
@@ -288,7 +288,7 @@ class TestHilbertTransformGradientWithNewParams:
         x = torch.randn(64, requires_grad=True, dtype=torch.float64)
         window = torch.hann_window(64, dtype=torch.float64)
 
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, window=window
         )
         loss = result.sum()
@@ -302,7 +302,7 @@ class TestHilbertTransformGradientWithNewParams:
         x = torch.randn(64, requires_grad=True, dtype=torch.float64)
         window = torch.hann_window(128, dtype=torch.float64)
 
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=128, padding_mode="reflect", window=window
         )
         loss = result.sum()
@@ -317,7 +317,7 @@ class TestHilbertTransformGradientWithNewParams:
         x = torch.randn(32, requires_grad=True, dtype=torch.float64)
 
         def fn(input_tensor):
-            return torchscience.signal_processing.transforms.hilbert_transform(
+            return torchscience.signal_processing.transform.hilbert_transform(
                 input_tensor, n=64, padding_mode="reflect"
             )
 
@@ -331,7 +331,7 @@ class TestHilbertTransformGradientWithNewParams:
         window = torch.hann_window(32, dtype=torch.float64)
 
         def fn(input_tensor):
-            return torchscience.signal_processing.transforms.hilbert_transform(
+            return torchscience.signal_processing.transform.hilbert_transform(
                 input_tensor, window=window
             )
 
@@ -347,7 +347,7 @@ class TestHilbertTransformGradientWithNewParams:
         x = torch.randn(32, requires_grad=True, dtype=torch.float64)
 
         def fn(input_tensor):
-            return torchscience.signal_processing.transforms.hilbert_transform(
+            return torchscience.signal_processing.transform.hilbert_transform(
                 input_tensor, n=64, padding_mode=mode
             )
 
@@ -362,7 +362,7 @@ class TestHilbertTransformDevice:
     def test_cpu_with_padding(self):
         """Test CPU computation with padding."""
         x = torch.randn(64, device="cpu", dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=128, padding_mode="reflect"
         )
         assert result.device.type == "cpu"
@@ -372,7 +372,7 @@ class TestHilbertTransformDevice:
         """Test CPU computation with window."""
         x = torch.randn(64, device="cpu", dtype=torch.float64)
         window = torch.hann_window(64, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, window=window
         )
         assert result.device.type == "cpu"
@@ -383,7 +383,7 @@ class TestHilbertTransformDevice:
     def test_cuda_with_padding(self):
         """Test CUDA computation with padding."""
         x = torch.randn(64, device="cuda", dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=128, padding_mode="reflect"
         )
         assert result.device.type == "cuda"
@@ -396,7 +396,7 @@ class TestHilbertTransformDevice:
         """Test CUDA computation with window."""
         x = torch.randn(64, device="cuda", dtype=torch.float64)
         window = torch.hann_window(64, dtype=torch.float64, device="cuda")
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, window=window
         )
         assert result.device.type == "cuda"
@@ -411,12 +411,12 @@ class TestHilbertTransformDevice:
         x_cuda = x_cpu.cuda()
 
         result_cpu = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x_cpu, n=128, padding_mode="reflect"
             )
         )
         result_cuda = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x_cuda, n=128, padding_mode="reflect"
             )
         )
@@ -432,7 +432,7 @@ class TestHilbertTransformMeta:
     def test_meta_with_padding(self):
         """Test meta tensor shape inference with padding."""
         x_meta = torch.empty(64, device="meta")
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x_meta, n=128, padding_mode="reflect"
         )
         assert result.shape == (128,)
@@ -442,7 +442,7 @@ class TestHilbertTransformMeta:
         """Test meta tensor shape inference with window."""
         x_meta = torch.empty(64, device="meta")
         window_meta = torch.empty(64, device="meta")
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x_meta, window=window_meta
         )
         assert result.shape == (64,)
@@ -458,7 +458,7 @@ class TestHilbertTransformBackwardCompatibility:
 
         # New API with explicit defaults
         result_new = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, n=128, padding_mode="constant", padding_value=0.0
             )
         )
@@ -472,10 +472,10 @@ class TestHilbertTransformBackwardCompatibility:
         x = torch.randn(64, dtype=torch.float64)
 
         result_default = (
-            torchscience.signal_processing.transforms.hilbert_transform(x)
+            torchscience.signal_processing.transform.hilbert_transform(x)
         )
         result_explicit = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, window=None
             )
         )
@@ -491,7 +491,7 @@ class TestHilbertTransformEdgeCasesNewParams:
         x = torch.tensor([1.0], dtype=torch.float64)
         window = torch.ones(1, dtype=torch.float64)
 
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, window=window
         )
         assert result.shape == (1,)
@@ -499,7 +499,7 @@ class TestHilbertTransformEdgeCasesNewParams:
     def test_large_padding_factor(self):
         """Test with large padding factor."""
         x = torch.randn(32, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=1024, padding_mode="reflect"
         )
         assert result.shape == (1024,)
@@ -517,14 +517,14 @@ class TestHilbertTransformEdgeCasesNewParams:
         with pytest.raises(
             RuntimeError, match="Cannot use reflect/replicate/circular padding"
         ):
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, n=10, padding_mode=mode
             )
 
     def test_size_one_with_constant_padding_works(self):
         """Test that size-1 dimension with constant padding works."""
         x = torch.tensor([1.0], dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=10, padding_mode="constant"
         )
         assert result.shape == (10,)
@@ -542,8 +542,10 @@ class TestHilbertTransformEdgeCasesNewParams:
                     else None
                 )
 
-                result = torchscience.signal_processing.transforms.hilbert_transform(
-                    x, n=n, padding_mode=mode, window=window
+                result = (
+                    torchscience.signal_processing.transform.hilbert_transform(
+                        x, n=n, padding_mode=mode, window=window
+                    )
                 )
 
                 expected_size = n if n is not None else 64
@@ -560,7 +562,7 @@ class TestHilbertTransformComplexInput:
     def test_complex_input_with_padding_modes(self, mode):
         """Test complex input works with all padding modes."""
         x = torch.randn(64, dtype=torch.complex128)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=128, padding_mode=mode
         )
         assert result.shape == (128,)
@@ -571,7 +573,7 @@ class TestHilbertTransformComplexInput:
     def test_complex_input_batched_with_padding(self):
         """Test complex batched input with padding."""
         x = torch.randn(3, 4, 64, dtype=torch.complex128)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=128, dim=-1, padding_mode="reflect"
         )
         assert result.shape == (3, 4, 128)
@@ -580,7 +582,7 @@ class TestHilbertTransformComplexInput:
     def test_complex_input_gradient_with_padding(self):
         """Test gradient works for complex input with padding."""
         x = torch.randn(32, dtype=torch.complex128, requires_grad=True)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=64, padding_mode="reflect"
         )
         loss = result.abs().sum()
@@ -596,7 +598,7 @@ class TestHilbertTransformTruncation:
     def test_truncation_basic(self):
         """Test basic truncation."""
         x = torch.randn(128, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=64
         )
         assert result.shape == (64,)
@@ -605,7 +607,7 @@ class TestHilbertTransformTruncation:
     def test_truncation_gradient(self):
         """Test gradient with truncation."""
         x = torch.randn(128, requires_grad=True, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=64
         )
         loss = result.sum()
@@ -620,7 +622,7 @@ class TestHilbertTransformTruncation:
         x = torch.randn(64, requires_grad=True, dtype=torch.float64)
 
         def fn(input_tensor):
-            return torchscience.signal_processing.transforms.hilbert_transform(
+            return torchscience.signal_processing.transform.hilbert_transform(
                 input_tensor, n=32
             )
 
@@ -631,7 +633,7 @@ class TestHilbertTransformTruncation:
     def test_truncation_batched(self):
         """Test truncation with batched input."""
         x = torch.randn(3, 4, 128, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=64, dim=-1
         )
         assert result.shape == (3, 4, 64)
@@ -644,7 +646,7 @@ class TestHilbertTransformMultiDimensional:
     def test_3d_all_dims(self, dim):
         """Test 3D input with transform along all possible dimensions."""
         x = torch.randn(16, 32, 64, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, dim=dim
         )
 
@@ -657,7 +659,7 @@ class TestHilbertTransformMultiDimensional:
         """Test padding along non-last dimension."""
         x = torch.randn(16, 32, 64, dtype=torch.float64)
         n = x.size(dim) * 2  # Double the size along dim
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=n, dim=dim, padding_mode="reflect"
         )
 
@@ -669,7 +671,7 @@ class TestHilbertTransformMultiDimensional:
     def test_dim_0_gradient(self):
         """Test gradient with dim=0."""
         x = torch.randn(32, 64, requires_grad=True, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, dim=0
         )
         loss = result.sum()
@@ -683,12 +685,12 @@ class TestHilbertTransformMultiDimensional:
         x = torch.randn(16, 32, 64, dtype=torch.float64)
 
         result_neg = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, dim=-2
             )
         )
         result_pos = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, dim=1
             )
         )
@@ -702,13 +704,13 @@ class TestHilbertTransformZeroSignal:
     def test_zero_signal(self):
         """Test that zero input produces zero output."""
         x = torch.zeros(64, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(x)
+        result = torchscience.signal_processing.transform.hilbert_transform(x)
         torch.testing.assert_close(result, x)
 
     def test_zero_signal_with_padding(self):
         """Test zero signal with padding."""
         x = torch.zeros(64, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(
+        result = torchscience.signal_processing.transform.hilbert_transform(
             x, n=128, padding_mode="constant"
         )
         assert torch.allclose(result, torch.zeros(128, dtype=torch.float64))
@@ -716,7 +718,7 @@ class TestHilbertTransformZeroSignal:
     def test_zero_signal_gradient(self):
         """Test gradient for zero signal."""
         x = torch.zeros(64, requires_grad=True, dtype=torch.float64)
-        result = torchscience.signal_processing.transforms.hilbert_transform(x)
+        result = torchscience.signal_processing.transform.hilbert_transform(x)
         loss = result.sum()
         loss.backward()
 
@@ -736,7 +738,7 @@ class TestHilbertTransformDeviceMismatch:
         window = torch.hann_window(64, dtype=torch.float64, device="cpu")
 
         with pytest.raises(RuntimeError, match="same device"):
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, window=window
             )
 
@@ -749,7 +751,7 @@ class TestHilbertTransformDeviceMismatch:
         window = torch.hann_window(64, dtype=torch.float64, device="cuda")
 
         with pytest.raises(RuntimeError, match="same device"):
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x, window=window
             )
 
@@ -766,7 +768,7 @@ class TestHilbertTransformGradcheckPaddingWindow:
         window = torch.hann_window(64, dtype=torch.float64)
 
         def fn(input_tensor):
-            return torchscience.signal_processing.transforms.hilbert_transform(
+            return torchscience.signal_processing.transform.hilbert_transform(
                 input_tensor, n=64, padding_mode=mode, window=window
             )
 
@@ -780,7 +782,7 @@ class TestHilbertTransformGradcheckPaddingWindow:
         window = torch.hann_window(64, dtype=torch.float64)
 
         def fn(input_tensor):
-            return torchscience.signal_processing.transforms.hilbert_transform(
+            return torchscience.signal_processing.transform.hilbert_transform(
                 input_tensor, n=64, padding_mode="reflect", window=window
             )
 
@@ -804,7 +806,7 @@ class TestHilbertTransformScipyReference:
         scipy_result = scipy_hilbert(x_np).imag
 
         torch_result = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x_torch
             ).numpy()
         )
@@ -822,7 +824,7 @@ class TestHilbertTransformScipyReference:
 
             scipy_result = scipy_hilbert(x_np).imag
             torch_result = (
-                torchscience.signal_processing.transforms.hilbert_transform(
+                torchscience.signal_processing.transform.hilbert_transform(
                     x_torch
                 ).numpy()
             )
@@ -844,7 +846,7 @@ class TestHilbertTransformScipyReference:
 
         scipy_result = scipy_hilbert(x_np).imag
         torch_result = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x_torch
             ).numpy()
         )
@@ -868,7 +870,7 @@ class TestHilbertTransformScipyReference:
 
         scipy_result = scipy_hilbert(x_np).imag
         torch_result = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x_torch
             ).numpy()
         )
@@ -892,7 +894,7 @@ class TestHilbertTransformScipyReference:
         # With n > input_size, both should zero-pad
         scipy_result = scipy_hilbert(x_np, N=128).imag
         torch_result = (
-            torchscience.signal_processing.transforms.hilbert_transform(
+            torchscience.signal_processing.transform.hilbert_transform(
                 x_torch, n=128, padding_mode="constant", padding_value=0.0
             ).numpy()
         )
@@ -916,10 +918,10 @@ class TestHilbertTransformScipyReference:
         x_periodic = np.sin(t)
         x_torch = torch.from_numpy(x_periodic)
 
-        h1 = torchscience.signal_processing.transforms.hilbert_transform(
+        h1 = torchscience.signal_processing.transform.hilbert_transform(
             x_torch
         )
-        h2 = torchscience.signal_processing.transforms.hilbert_transform(h1)
+        h2 = torchscience.signal_processing.transform.hilbert_transform(h1)
 
         # For periodic signals, property should hold well
         np.testing.assert_allclose(
@@ -931,15 +933,11 @@ class TestHilbertTransformScipyReference:
         x_random = np.random.randn(128)
         x_torch_random = torch.from_numpy(x_random)
 
-        h1_random = (
-            torchscience.signal_processing.transforms.hilbert_transform(
-                x_torch_random
-            )
+        h1_random = torchscience.signal_processing.transform.hilbert_transform(
+            x_torch_random
         )
-        h2_random = (
-            torchscience.signal_processing.transforms.hilbert_transform(
-                h1_random
-            )
+        h2_random = torchscience.signal_processing.transform.hilbert_transform(
+            h1_random
         )
 
         # For random signals, verify the central region (avoiding edge effects)

@@ -3,7 +3,7 @@ import math
 import torch
 import torch.testing
 
-import torchscience.signal_processing.waveforms
+import torchscience.signal_processing.waveform
 from torchscience.testing import (
     CreationOpDescriptor,
     CreationOpTestCase,
