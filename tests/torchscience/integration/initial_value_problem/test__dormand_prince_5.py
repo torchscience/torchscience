@@ -1,7 +1,12 @@
+import pytest
 import torch
 from tensordict import TensorDict
 
-from torchscience.integration.initial_value_problem import dormand_prince_5
+from torchscience.integration.initial_value_problem import (
+    MaxStepsExceeded,
+    StepSizeError,
+    dormand_prince_5,
+)
 
 
 class TestDormandPrince5Basic:
@@ -174,3 +179,51 @@ class TestDormandPrince5TensorDict:
         state_mid = interp(0.5)
         assert isinstance(state_mid, TensorDict)
         assert "x" in state_mid.keys()
+
+
+class TestDormandPrince5ErrorHandling:
+    def test_max_steps_exceeded_throws(self):
+        def f(t, y):
+            return -y
+
+        y0 = torch.tensor([1.0])
+
+        with pytest.raises(MaxStepsExceeded):
+            dormand_prince_5(f, y0, t_span=(0.0, 1000.0), max_steps=5)
+
+    def test_max_steps_exceeded_no_throw(self):
+        def f(t, y):
+            return -y
+
+        y0 = torch.tensor([1.0])
+
+        y_final, interp = dormand_prince_5(
+            f, y0, t_span=(0.0, 1000.0), max_steps=5, throw=False
+        )
+
+        assert torch.isnan(y_final).all()
+        assert interp.success is not None
+        assert not interp.success.all()
+
+    def test_step_size_error_throws(self):
+        # Stiff problem that requires tiny steps
+        def stiff(t, y):
+            return -1000 * y
+
+        y0 = torch.tensor([1.0])
+
+        with pytest.raises(StepSizeError):
+            dormand_prince_5(stiff, y0, t_span=(0.0, 1.0), dt_min=0.1)
+
+    def test_interpolant_out_of_bounds(self):
+        def f(t, y):
+            return -y
+
+        y0 = torch.tensor([1.0])
+        _, interp = dormand_prince_5(f, y0, t_span=(0.0, 1.0))
+
+        with pytest.raises(ValueError, match="outside"):
+            interp(-0.1)
+
+        with pytest.raises(ValueError, match="outside"):
+            interp(1.1)
