@@ -44,6 +44,7 @@
 #include "cpu/graph_theory/floyd_warshall.h"
 #include "cpu/information_theory/kullback_leibler_divergence.h"
 #include "cpu/information_theory/jensen_shannon_divergence.h"
+#include "cpu/space_partitioning/kd_tree.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -86,12 +87,14 @@
 #include "meta/graph_theory/floyd_warshall.h"
 #include "meta/information_theory/kullback_leibler_divergence.h"
 #include "meta/information_theory/jensen_shannon_divergence.h"
+#include "meta/space_partitioning/kd_tree.h"
 
 #include "autocast/signal_processing/filter.h"
 #include "autocast/statistics/descriptive/kurtosis.h"
 #include "autocast/integral_transform/hilbert_transform.h"
 #include "autocast/integral_transform/inverse_hilbert_transform.h"
 #include "autocast/test/sum_squares.h"
+#include "autocast/space_partitioning/kd_tree.h"
 
 #include "sparse/coo/cpu/optimization/test_functions.h"
 #include "sparse/coo/cpu/integral_transform/hilbert_transform.h"
@@ -123,6 +126,7 @@
 #include "quantized/cuda/optimization/test_functions.h"
 #include "quantized/cuda/integral_transform/hilbert_transform.h"
 #include "quantized/cuda/integral_transform/inverse_hilbert_transform.h"
+#include "cuda/space_partitioning/kd_tree.cuh"
 #endif
 
 extern "C" {
@@ -282,4 +286,11 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("jensen_shannon_divergence(Tensor p, Tensor q, int dim, str input_type, str reduction, float? base, bool pairwise) -> Tensor");
   module.def("jensen_shannon_divergence_backward(Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, float? base, bool pairwise) -> (Tensor, Tensor)");
   module.def("jensen_shannon_divergence_backward_backward(Tensor gg_p, Tensor gg_q, Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, float? base, bool pairwise) -> (Tensor, Tensor, Tensor)");
+
+  // space_partitioning
+  // Batched tree build - always use this, even for single trees (pass B=1)
+  // Input: points (B, n, d), leaf_size
+  // Returns: tuple of pre-padded (B, max_*) tensors for efficient consumption
+  // (points, split_dim, split_val, left, right, indices, leaf_starts, leaf_counts)
+  module.def("kd_tree_build_batched(Tensor points, int leaf_size) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
 }
