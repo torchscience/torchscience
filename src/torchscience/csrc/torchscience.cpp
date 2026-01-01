@@ -23,6 +23,11 @@
 
 #include "cpu/distance/minkowski_distance.h"
 #include "cpu/graphics/shading/cook_torrance.h"
+#include "cpu/graphics/shading/phong.h"
+#include "cpu/graphics/lighting/spotlight.h"
+#include "cpu/graphics/tone_mapping/reinhard.h"
+#include "cpu/graphics/texture_mapping/cube_mapping.h"
+#include "cpu/graphics/projection/perspective_projection.h"
 #include "cpu/graphics/color/srgb_to_hsv.h"
 #include "cpu/graphics/color/hsv_to_srgb.h"
 #include "cpu/signal_processing/filter.h"
@@ -42,6 +47,10 @@
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
+#include "autograd/graphics/shading/phong.h"
+#include "autograd/graphics/lighting/spotlight.h"
+#include "autograd/graphics/tone_mapping/reinhard.h"
+#include "autograd/graphics/projection/perspective_projection.h"
 #include "autograd/graphics/color/srgb_to_hsv.h"
 #include "autograd/graphics/color/hsv_to_srgb.h"
 #include "autograd/signal_processing/filter.h"
@@ -56,6 +65,11 @@
 
 #include "meta/distance/minkowski_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
+#include "meta/graphics/shading/phong.h"
+#include "meta/graphics/lighting/spotlight.h"
+#include "meta/graphics/tone_mapping/reinhard.h"
+#include "meta/graphics/texture_mapping/cube_mapping.h"
+#include "meta/graphics/projection/perspective_projection.h"
 #include "meta/graphics/color/srgb_to_hsv.h"
 #include "meta/graphics/color/hsv_to_srgb.h"
 #include "meta/signal_processing/filter.h"
@@ -176,12 +190,31 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("cook_torrance_backward(Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
   module.def("cook_torrance_backward_backward(Tensor gg_normal, Tensor gg_view, Tensor gg_light, Tensor gg_roughness, Tensor gg_f0, Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
 
+  // Phong shading
+  module.def("phong(Tensor normal, Tensor view, Tensor light, Tensor shininess) -> Tensor");
+  module.def("phong_backward(Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor shininess) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // graphics.lighting
+  module.def("spotlight(Tensor light_pos, Tensor surface_pos, Tensor spot_direction, Tensor intensity, Tensor inner_angle, Tensor outer_angle) -> (Tensor, Tensor)");
+  module.def("spotlight_backward(Tensor grad_irradiance, Tensor light_pos, Tensor surface_pos, Tensor spot_direction, Tensor intensity, Tensor inner_angle, Tensor outer_angle) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // graphics.tone_mapping
+  module.def("reinhard(Tensor input, Tensor? white_point) -> Tensor");
+  module.def("reinhard_backward(Tensor grad_output, Tensor input, Tensor? white_point) -> (Tensor, Tensor)");
+
   // graphics.color
   module.def("srgb_to_hsv(Tensor input) -> Tensor");
   module.def("srgb_to_hsv_backward(Tensor grad_output, Tensor input) -> Tensor");
 
   module.def("hsv_to_srgb(Tensor input) -> Tensor");
   module.def("hsv_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  // graphics.texture_mapping
+  module.def("cube_mapping(Tensor direction) -> (Tensor, Tensor, Tensor)");
+
+  // graphics.projection
+  module.def("perspective_projection(Tensor fov, Tensor aspect, Tensor near, Tensor far) -> Tensor");
+  module.def("perspective_projection_backward(Tensor grad_output, Tensor fov, Tensor aspect, Tensor near, Tensor far) -> (Tensor, Tensor, Tensor, Tensor)");
 
   // optimization.test_functions
   module.def("rosenbrock(Tensor x, Tensor a, Tensor b) -> Tensor");
