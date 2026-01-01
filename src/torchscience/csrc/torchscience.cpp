@@ -282,4 +282,11 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("jensen_shannon_divergence(Tensor p, Tensor q, int dim, str input_type, str reduction, float? base, bool pairwise) -> Tensor");
   module.def("jensen_shannon_divergence_backward(Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, float? base, bool pairwise) -> (Tensor, Tensor)");
   module.def("jensen_shannon_divergence_backward_backward(Tensor gg_p, Tensor gg_q, Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, float? base, bool pairwise) -> (Tensor, Tensor, Tensor)");
+
+  // space_partitioning
+  // Batched tree build - always use this, even for single trees (pass B=1)
+  // Input: points (B, n, d), leaf_size
+  // Returns: tuple of pre-padded (B, max_*) tensors for efficient consumption
+  // (points, split_dim, split_val, left, right, indices, leaf_starts, leaf_counts)
+  module.def("kd_tree_build_batched(Tensor points, int leaf_size) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
 }
