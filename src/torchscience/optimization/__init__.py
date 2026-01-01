@@ -1,6 +1,7 @@
-from . import root_finding, test_functions
+from . import minimization, root_finding, test_functions
 
 __all__ = [
+    "minimization",
     "root_finding",
     "test_functions",
 ]
