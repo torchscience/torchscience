@@ -32,6 +32,7 @@ from torchscience.integration.initial_value_problem._exceptions import (
     ODESolverError,
     StepSizeError,
 )
+from torchscience.integration.initial_value_problem._midpoint import midpoint
 
 __all__ = [
     "ConvergenceError",
@@ -40,4 +41,5 @@ __all__ = [
     "StepSizeError",
     "dormand_prince_5",
     "euler",
+    "midpoint",
 ]
