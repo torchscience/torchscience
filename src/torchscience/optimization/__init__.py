@@ -3,7 +3,7 @@ from . import (
     constrained,
     minimization,
     root_finding,
-    test_functions,
+    test_function,
 )
 
 __all__ = [
@@ -11,5 +11,5 @@ __all__ = [
     "constrained",
     "minimization",
     "root_finding",
-    "test_functions",
+    "test_function",
 ]
