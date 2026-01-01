@@ -126,6 +126,7 @@
 #include "quantized/cuda/optimization/test_functions.h"
 #include "quantized/cuda/integral_transform/hilbert_transform.h"
 #include "quantized/cuda/integral_transform/inverse_hilbert_transform.h"
+#include "cuda/space_partitioning/kd_tree.cuh"
 #endif
 
 extern "C" {
