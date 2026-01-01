@@ -11,7 +11,7 @@ Spatial data structures for efficient neighbor search, range queries, and spatia
 
 **In scope:**
 - k-d tree — Low-dimensional k-NN and range queries
-- BVH — Bounding volume hierarchy for ray tracing and collision
+- Bounding volume hierarchy — For ray tracing and collision
 - Octree — 3D uniform spatial partitioning
 
 **Out of scope (for now):**
@@ -66,7 +66,7 @@ def kd_tree(
 ```
 
 ```python
-def bvh(
+def bounding_volume_hierarchy(
     bounds: Tensor,  # (n, 2, d)
     *,
     leaf_size: int = 4,
@@ -87,7 +87,7 @@ def bvh(
     Returns
     -------
     TensorDict
-        Tree structure with '_type' = 'bvh'.
+        Tree structure with '_type' = 'bounding_volume_hierarchy'.
     """
 ```
 
@@ -124,7 +124,7 @@ def octree(
 Query functions dispatch based on the `'_type'` field in the TensorDict:
 
 ```python
-def query(
+def k_nearest_neighbors(
     tree: TensorDict,
     queries: Tensor,  # (m, d)
     k: int,
@@ -136,7 +136,7 @@ def query(
     Parameters
     ----------
     tree : TensorDict
-        Spatial index built by kd_tree(), bvh(), or octree().
+        Spatial index built by kd_tree(), bounding_volume_hierarchy(), or octree().
     queries : Tensor, shape (m, d)
         Query points.
     k : int
@@ -167,7 +167,7 @@ def radius_query(
     Parameters
     ----------
     tree : TensorDict
-        Spatial index built by kd_tree(), bvh(), or octree().
+        Spatial index built by kd_tree(), bounding_volume_hierarchy(), or octree().
     queries : Tensor, shape (m, d)
         Query points.
     radius : float
@@ -198,7 +198,7 @@ def ray_query(
     Parameters
     ----------
     tree : TensorDict
-        BVH built by bvh(). Raises TypeError for other tree types.
+        BVH built by bounding_volume_hierarchy(). Raises TypeError for other tree types.
     origins : Tensor, shape (m, 3)
         Ray origins.
     directions : Tensor, shape (m, 3)
@@ -238,11 +238,11 @@ TensorDict({
 })
 ```
 
-### BVH
+### Bounding Volume Hierarchy
 
 ```python
 TensorDict({
-    '_type': 'bvh',
+    '_type': 'bounding_volume_hierarchy',
     'bounds': Tensor,            # (n, 2, d) original primitive bounds
     'node_bounds': Tensor,       # (n_nodes, 2, d) node bounding boxes
     'left': Tensor,              # (n_nodes,) left child index
@@ -278,27 +278,29 @@ TensorDict({
 
 ```
 torchscience/space_partitioning/
-├── __init__.py          # Public API exports
-├── _kd_tree.py          # kd_tree() build function
-├── _bvh.py              # bvh() build function
-├── _octree.py           # octree() build function
-├── _query.py            # query(), radius_query()
-└── _ray_query.py        # ray_query()
+├── __init__.py                      # Public API exports
+├── _kd_tree.py                      # kd_tree() build function
+├── _bounding_volume_hierarchy.py    # bounding_volume_hierarchy() build function
+├── _octree.py                       # octree() build function
+├── _k_nearest_neighbors.py          # k_nearest_neighbors()
+├── _radius_query.py                 # radius_query()
+└── _ray_query.py                    # ray_query()
 ```
 
 **`__init__.py` exports:**
 ```python
 from ._kd_tree import kd_tree
-from ._bvh import bvh
+from ._bounding_volume_hierarchy import bounding_volume_hierarchy
 from ._octree import octree
-from ._query import query, radius_query
+from ._k_nearest_neighbors import k_nearest_neighbors
+from ._radius_query import radius_query
 from ._ray_query import ray_query
 
 __all__ = [
     "kd_tree",
-    "bvh",
+    "bounding_volume_hierarchy",
     "octree",
-    "query",
+    "k_nearest_neighbors",
     "radius_query",
     "ray_query",
 ]
@@ -310,7 +312,7 @@ __all__ = [
 
 ### Gradient Support
 
-- `query()` and `radius_query()` return distances that support autograd
+- `k_nearest_neighbors()` and `radius_query()` return distances that support autograd
 - Gradients flow through distance computation to query points
 - Indices are discrete and non-differentiable
 - Tree structure is built without gradient tracking
@@ -337,7 +339,7 @@ else:
 | Structure | Algorithm |
 |-----------|-----------|
 | k-d tree | Median split, cycle through dimensions |
-| BVH | Surface area heuristic (SAH) or median split |
+| Bounding volume hierarchy | Surface area heuristic (SAH) or median split |
 | Octree | Recursive octant subdivision |
 
 ### Future CUDA Support
@@ -345,7 +347,7 @@ else:
 When adding CUDA:
 1. Query kernels first (build can stay on CPU)
 2. Use warp-level primitives for tree traversal
-3. Consider stackless traversal for BVH
+3. Consider stackless traversal for bounding volume hierarchy
 
 ---
 
@@ -354,21 +356,21 @@ When adding CUDA:
 ### Phase 1: k-d Tree (MVP)
 
 1. `kd_tree()` build function
-2. `query()` for k-NN
+2. `k_nearest_neighbors()` for k-NN
 3. `radius_query()` with nested tensor output
 4. Tests and documentation
 
-### Phase 2: BVH
+### Phase 2: Bounding Volume Hierarchy
 
-1. `bvh()` build function with SAH
+1. `bounding_volume_hierarchy()` build function with SAH
 2. `ray_query()` for ray-primitive intersection
-3. Extend `query()`/`radius_query()` to BVH (box centers)
+3. Extend `k_nearest_neighbors()`/`radius_query()` to BVH (box centers)
 4. Tests and documentation
 
 ### Phase 3: Octree
 
 1. `octree()` build function
-2. Extend `query()`/`radius_query()` to octree
+2. Extend `k_nearest_neighbors()`/`radius_query()` to octree
 3. Tests and documentation
 
 ### Future Phases
