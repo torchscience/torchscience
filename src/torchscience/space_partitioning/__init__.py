@@ -11,9 +11,11 @@ differentiable. Query operations (k_nearest_neighbors, range_search)
 support autograd through the returned distances.
 """
 
+from ._k_nearest_neighbors import k_nearest_neighbors
 from ._kd_tree import KdTree, kd_tree
 
 __all__ = [
     "KdTree",
+    "k_nearest_neighbors",
     "kd_tree",
 ]

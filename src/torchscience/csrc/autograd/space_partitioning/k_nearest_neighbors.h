@@ -8,7 +8,7 @@ namespace torchscience::autograd::space_partitioning {
 class KNearestNeighbors
     : public torch::autograd::Function<KNearestNeighbors> {
 public:
-    static std::tuple<at::Tensor, at::Tensor> forward(
+    static std::vector<at::Tensor> forward(
         torch::autograd::AutogradContext* ctx,
         const at::Tensor& points,
         const at::Tensor& split_dim,
@@ -41,12 +41,12 @@ public:
 
         ctx->save_for_backward({points, queries, result_indices, result_distances});
 
-        return std::make_tuple(result_indices, result_distances);
+        return {result_indices, result_distances};
     }
 
-    static torch::autograd::variable_list backward(
+    static std::vector<at::Tensor> backward(
         torch::autograd::AutogradContext* ctx,
-        const torch::autograd::variable_list& grad_outputs
+        const std::vector<at::Tensor>& grad_outputs
     ) {
         const auto saved = ctx->get_saved_variables();
         at::Tensor points = saved[0];
@@ -115,10 +115,11 @@ inline std::tuple<at::Tensor, at::Tensor> k_nearest_neighbors(
     int64_t k,
     double p
 ) {
-    return KNearestNeighbors::apply(
+    auto results = KNearestNeighbors::apply(
         points, split_dim, split_val, left, right, indices,
         leaf_starts, leaf_counts, queries, k, p
     );
+    return std::make_tuple(results[0], results[1]);
 }
 
 }  // namespace torchscience::autograd::space_partitioning
