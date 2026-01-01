@@ -7,7 +7,7 @@ namespace torchscience::autograd::space_partitioning {
 class RangeSearch
     : public torch::autograd::Function<RangeSearch> {
 public:
-    static std::tuple<at::Tensor, at::Tensor> forward(
+    static std::vector<at::Tensor> forward(
         torch::autograd::AutogradContext* ctx,
         const at::Tensor& points,
         const at::Tensor& split_dim,
@@ -37,20 +37,27 @@ public:
             .call(points, split_dim, split_val, left, right, indices_tree,
                   leaf_starts, leaf_counts, queries, radius, p);
 
-        ctx->save_for_backward({points, queries, result_indices, result_distances});
+        // Save regular tensors via save_for_backward
+        ctx->save_for_backward({points, queries});
 
-        return std::make_tuple(result_indices, result_distances);
+        // Store nested tensors in saved_data (IValue can hold any tensor)
+        ctx->saved_data["result_indices"] = result_indices;
+        ctx->saved_data["result_distances"] = result_distances;
+
+        return {result_indices, result_distances};
     }
 
-    static torch::autograd::variable_list backward(
+    static std::vector<at::Tensor> backward(
         torch::autograd::AutogradContext* ctx,
-        const torch::autograd::variable_list& grad_outputs
+        const std::vector<at::Tensor>& grad_outputs
     ) {
         const auto saved = ctx->get_saved_variables();
         at::Tensor points = saved[0];
         at::Tensor queries = saved[1];
-        at::Tensor result_indices = saved[2];  // nested tensor
-        at::Tensor result_distances = saved[3];  // nested tensor
+
+        // Retrieve nested tensors from saved_data
+        at::Tensor result_indices = ctx->saved_data["result_indices"].toTensor();
+        at::Tensor result_distances = ctx->saved_data["result_distances"].toTensor();
 
         bool queries_requires_grad = ctx->saved_data["queries_requires_grad"].toBool();
 
@@ -118,10 +125,11 @@ inline std::tuple<at::Tensor, at::Tensor> range_search(
     double radius,
     double p
 ) {
-    return RangeSearch::apply(
+    auto results = RangeSearch::apply(
         points, split_dim, split_val, left, right, indices_tree,
         leaf_starts, leaf_counts, queries, radius, p
     );
+    return std::make_tuple(results[0], results[1]);
 }
 
 }  // namespace torchscience::autograd::space_partitioning
