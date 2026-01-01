@@ -155,7 +155,7 @@ def k_nearest_neighbors(
 ```
 
 ```python
-def radius_query(
+def range_search(
     tree: TensorDict,
     queries: Tensor,  # (m, d)
     radius: float,
@@ -181,40 +181,6 @@ def radius_query(
         'indices': NestedTensor, shape (m, *) — neighbor indices
         'distances': NestedTensor, shape (m, *) — neighbor distances
         'counts': Tensor, shape (m,) — number of neighbors per query
-    """
-```
-
-```python
-def ray_query(
-    tree: TensorDict,
-    origins: Tensor,     # (m, 3)
-    directions: Tensor,  # (m, 3)
-    *,
-    t_min: float = 0.0,
-    t_max: float = float('inf'),
-) -> TensorDict:
-    """Find primitives intersected by each ray (BVH only).
-
-    Parameters
-    ----------
-    tree : TensorDict
-        BVH built by bounding_volume_hierarchy(). Raises TypeError for other tree types.
-    origins : Tensor, shape (m, 3)
-        Ray origins.
-    directions : Tensor, shape (m, 3)
-        Ray directions (need not be normalized).
-    t_min : float, default=0.0
-        Minimum ray parameter.
-    t_max : float, default=inf
-        Maximum ray parameter.
-
-    Returns
-    -------
-    TensorDict
-        'indices': NestedTensor, shape (m, *) — primitive indices hit
-        'counts': Tensor, shape (m,) — number of hits per ray
-        't_near': NestedTensor, shape (m, *) — entry distances
-        't_far': NestedTensor, shape (m, *) — exit distances
     """
 ```
 
@@ -283,8 +249,7 @@ torchscience/space_partitioning/
 ├── _bounding_volume_hierarchy.py    # bounding_volume_hierarchy() build function
 ├── _octree.py                       # octree() build function
 ├── _k_nearest_neighbors.py          # k_nearest_neighbors()
-├── _radius_query.py                 # radius_query()
-└── _ray_query.py                    # ray_query()
+└── _range_search.py                 # range_search()
 ```
 
 **`__init__.py` exports:**
@@ -293,16 +258,14 @@ from ._kd_tree import kd_tree
 from ._bounding_volume_hierarchy import bounding_volume_hierarchy
 from ._octree import octree
 from ._k_nearest_neighbors import k_nearest_neighbors
-from ._radius_query import radius_query
-from ._ray_query import ray_query
+from ._range_search import range_search
 
 __all__ = [
     "kd_tree",
     "bounding_volume_hierarchy",
     "octree",
     "k_nearest_neighbors",
-    "radius_query",
-    "ray_query",
+    "range_search",
 ]
 ```
 
@@ -312,7 +275,7 @@ __all__ = [
 
 ### Gradient Support
 
-- `k_nearest_neighbors()` and `radius_query()` return distances that support autograd
+- `k_nearest_neighbors()` and `range_search()` return distances that support autograd
 - Gradients flow through distance computation to query points
 - Indices are discrete and non-differentiable
 - Tree structure is built without gradient tracking
@@ -347,7 +310,6 @@ else:
 When adding CUDA:
 1. Query kernels first (build can stay on CPU)
 2. Use warp-level primitives for tree traversal
-3. Consider stackless traversal for bounding volume hierarchy
 
 ---
 
@@ -357,20 +319,19 @@ When adding CUDA:
 
 1. `kd_tree()` build function
 2. `k_nearest_neighbors()` for k-NN
-3. `radius_query()` with nested tensor output
+3. `range_search()` with nested tensor output
 4. Tests and documentation
 
 ### Phase 2: Bounding Volume Hierarchy
 
 1. `bounding_volume_hierarchy()` build function with SAH
-2. `ray_query()` for ray-primitive intersection
-3. Extend `k_nearest_neighbors()`/`radius_query()` to BVH (box centers)
-4. Tests and documentation
+2. Extend `k_nearest_neighbors()`/`range_search()` to BVH (box centers)
+3. Tests and documentation
 
 ### Phase 3: Octree
 
 1. `octree()` build function
-2. Extend `k_nearest_neighbors()`/`radius_query()` to octree
+2. Extend `k_nearest_neighbors()`/`range_search()` to octree
 3. Tests and documentation
 
 ### Future Phases
