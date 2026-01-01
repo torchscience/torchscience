@@ -46,6 +46,7 @@
 #include "cpu/information_theory/jensen_shannon_divergence.h"
 #include "cpu/space_partitioning/kd_tree.h"
 #include "cpu/space_partitioning/k_nearest_neighbors.h"
+#include "cpu/space_partitioning/range_search.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -90,7 +91,9 @@
 #include "meta/information_theory/jensen_shannon_divergence.h"
 #include "meta/space_partitioning/kd_tree.h"
 #include "meta/space_partitioning/k_nearest_neighbors.h"
+#include "meta/space_partitioning/range_search.h"
 #include "autograd/space_partitioning/k_nearest_neighbors.h"
+#include "autograd/space_partitioning/range_search.h"
 
 #include "autocast/signal_processing/filter.h"
 #include "autocast/statistics/descriptive/kurtosis.h"
@@ -99,6 +102,7 @@
 #include "autocast/test/sum_squares.h"
 #include "autocast/space_partitioning/kd_tree.h"
 #include "autocast/space_partitioning/k_nearest_neighbors.h"
+#include "autocast/space_partitioning/range_search.h"
 
 #include "sparse/coo/cpu/optimization/test_functions.h"
 #include "sparse/coo/cpu/integral_transform/hilbert_transform.h"
@@ -300,4 +304,7 @@ TORCH_LIBRARY(torchscience, module) {
 
   // k-nearest neighbors query
   module.def("k_nearest_neighbors(Tensor points, Tensor split_dim, Tensor split_val, Tensor left, Tensor right, Tensor indices, Tensor leaf_starts, Tensor leaf_counts, Tensor queries, int k, float p) -> (Tensor, Tensor)");
+
+  // range search query (returns nested tensors)
+  module.def("range_search(Tensor points, Tensor split_dim, Tensor split_val, Tensor left, Tensor right, Tensor indices, Tensor leaf_starts, Tensor leaf_counts, Tensor queries, float radius, float p) -> (Tensor, Tensor)");
 }
