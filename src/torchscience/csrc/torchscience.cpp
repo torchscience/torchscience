@@ -102,6 +102,7 @@
 #include "autocast/test/sum_squares.h"
 #include "autocast/space_partitioning/kd_tree.h"
 #include "autocast/space_partitioning/k_nearest_neighbors.h"
+#include "autocast/space_partitioning/range_search.h"
 
 #include "sparse/coo/cpu/optimization/test_functions.h"
 #include "sparse/coo/cpu/integral_transform/hilbert_transform.h"
