@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 import torch
 
-import torchscience.signal_processing.transform
+import torchscience.signal_processing.transforms
 
 # Check if scipy is available for reference tests
 try:

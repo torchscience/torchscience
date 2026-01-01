@@ -1,7 +1,7 @@
 import torch
 import torch.testing
 
-import torchscience.signal_processing.window_function
+import torchscience.signal_processing.window_functions
 from torchscience.testing import (
     CreationOpDescriptor,
     CreationOpTestCase,
