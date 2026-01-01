@@ -46,6 +46,7 @@
 #include "cpu/information_theory/jensen_shannon_divergence.h"
 #include "cpu/space_partitioning/kd_tree.h"
 #include "cpu/space_partitioning/k_nearest_neighbors.h"
+#include "cpu/space_partitioning/range_search.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -300,4 +301,7 @@ TORCH_LIBRARY(torchscience, module) {
 
   // k-nearest neighbors query
   module.def("k_nearest_neighbors(Tensor points, Tensor split_dim, Tensor split_val, Tensor left, Tensor right, Tensor indices, Tensor leaf_starts, Tensor leaf_counts, Tensor queries, int k, float p) -> (Tensor, Tensor)");
+
+  // range search query (returns nested tensors)
+  module.def("range_search(Tensor points, Tensor split_dim, Tensor split_val, Tensor left, Tensor right, Tensor indices, Tensor leaf_starts, Tensor leaf_counts, Tensor queries, float radius, float p) -> (Tensor, Tensor)");
 }
