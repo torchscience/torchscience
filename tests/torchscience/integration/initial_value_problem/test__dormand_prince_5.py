@@ -254,3 +254,70 @@ class TestDormandPrince5BackwardIntegration:
         # Should be able to query anywhere in [0, 1]
         y_mid = interp(0.5)
         assert not torch.isnan(y_mid).any()
+
+
+scipy = pytest.importorskip("scipy")
+from scipy.integrate import solve_ivp
+
+
+class TestDormandPrince5SciPyComparison:
+    def test_exponential_decay_matches_scipy(self):
+        def f_torch(t, y):
+            return -y
+
+        def f_scipy(t, y):
+            return -y
+
+        y0_val = 1.0
+        t_span = (0.0, 5.0)
+
+        # Solve with torchscience
+        y0_torch = torch.tensor([y0_val], dtype=torch.float64)
+        y_torch, _ = dormand_prince_5(
+            f_torch, y0_torch, t_span, rtol=1e-8, atol=1e-10
+        )
+
+        # Solve with scipy
+        sol_scipy = solve_ivp(
+            f_scipy, t_span, [y0_val], method="DOP853", rtol=1e-8, atol=1e-10
+        )
+
+        assert torch.allclose(
+            y_torch,
+            torch.tensor(sol_scipy.y[:, -1], dtype=torch.float64),
+            rtol=1e-5,
+        )
+
+    def test_lotka_volterra_matches_scipy(self):
+        """Lotka-Volterra predator-prey model"""
+        alpha, beta, gamma, delta = 1.5, 1.0, 3.0, 1.0
+
+        def f_torch(t, y):
+            x, p = y[..., 0], y[..., 1]
+            dx = alpha * x - beta * x * p
+            dp = delta * x * p - gamma * p
+            return torch.stack([dx, dp], dim=-1)
+
+        def f_scipy(t, y):
+            x, p = y
+            dx = alpha * x - beta * x * p
+            dp = delta * x * p - gamma * p
+            return [dx, dp]
+
+        y0_val = [10.0, 5.0]
+        t_span = (0.0, 10.0)
+
+        y0_torch = torch.tensor(y0_val, dtype=torch.float64)
+        y_torch, _ = dormand_prince_5(
+            f_torch, y0_torch, t_span, rtol=1e-8, atol=1e-10
+        )
+
+        sol_scipy = solve_ivp(
+            f_scipy, t_span, y0_val, method="DOP853", rtol=1e-8, atol=1e-10
+        )
+
+        assert torch.allclose(
+            y_torch,
+            torch.tensor(sol_scipy.y[:, -1], dtype=torch.float64),
+            rtol=1e-4,
+        )
