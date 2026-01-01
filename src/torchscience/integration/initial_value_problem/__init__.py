@@ -37,6 +37,7 @@ Examples
 >>> y_final, interp = backward_euler(stiff_decay, y0, t_span=(0.0, 1.0), dt=0.1)
 """
 
+from torchscience.integration.initial_value_problem._adjoint import adjoint
 from torchscience.integration.initial_value_problem._backward_euler import (
     backward_euler,
 )
@@ -68,4 +69,6 @@ __all__ = [
     "dormand_prince_5",
     # Implicit solvers
     "backward_euler",
+    # Wrappers
+    "adjoint",
 ]
