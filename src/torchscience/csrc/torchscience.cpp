@@ -27,6 +27,7 @@
 #include "cpu/graphics/color/hsv_to_srgb.h"
 #include "cpu/signal_processing/filter.h"
 #include "cpu/optimization/test_functions.h"
+#include "cpu/optimization/combinatorial.h"
 #include "cpu/statistics/descriptive/kurtosis.h"
 #include "cpu/statistics/descriptive/histogram.h"
 #include "cpu/statistics/hypothesis_test/one_sample_t_test.h"
@@ -45,6 +46,7 @@
 #include "autograd/graphics/color/hsv_to_srgb.h"
 #include "autograd/signal_processing/filter.h"
 #include "autograd/optimization/test_functions.h"
+#include "autograd/optimization/combinatorial.h"
 #include "autograd/statistics/descriptive/kurtosis.h"
 #include "autograd/integral_transform/hilbert_transform.h"
 #include "autograd/integral_transform/inverse_hilbert_transform.h"
@@ -58,6 +60,7 @@
 #include "meta/graphics/color/hsv_to_srgb.h"
 #include "meta/signal_processing/filter.h"
 #include "meta/optimization/test_functions.h"
+#include "meta/optimization/combinatorial.h"
 #include "meta/statistics/descriptive/kurtosis.h"
 #include "meta/statistics/descriptive/histogram.h"
 #include "meta/statistics/hypothesis_test/one_sample_t_test.h"
@@ -184,6 +187,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("rosenbrock(Tensor x, Tensor a, Tensor b) -> Tensor");
   module.def("rosenbrock_backward(Tensor grad_output, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
   module.def("rosenbrock_backward_backward(Tensor gg_x, Tensor gg_a, Tensor gg_b, Tensor grad_output, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // optimization.combinatorial
+  module.def("sinkhorn(Tensor C, Tensor a, Tensor b, float epsilon, int maxiter, float tol) -> Tensor");
+  module.def("sinkhorn_backward(Tensor grad_output, Tensor P, Tensor C, float epsilon) -> Tensor");
 
   // signal_processing.filter
   module.def("butterworth_analog_bandpass_filter(int n, Tensor omega_p1, Tensor omega_p2) -> Tensor");
