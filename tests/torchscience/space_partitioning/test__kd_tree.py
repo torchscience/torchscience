@@ -359,3 +359,59 @@ class TestKdTreeCompile:
         # Meta tensors should have symbolic shapes
         assert tree.points.shape == (100, 3)
         assert tree.indices.shape[0] == 100
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+class TestKdTreeCUDA:
+    """Tests for CUDA kd_tree implementation."""
+
+    def test_cuda_basic(self):
+        """kd_tree works on CUDA tensors."""
+        points = torch.randn(100, 3, device="cuda")
+        tree = kd_tree(points)
+        assert isinstance(tree, KdTree)
+        assert tree.points.device.type == "cuda"
+
+    def test_cuda_indices_coverage(self):
+        """CUDA tree contains all point indices."""
+        torch.manual_seed(42)
+        points_cuda = torch.randn(100, 3, device="cuda")
+        tree_cuda = kd_tree(points_cuda)
+
+        # All indices should be present
+        sorted_indices = torch.sort(tree_cuda.indices)[0]
+        expected = torch.arange(100, device="cuda")
+        torch.testing.assert_close(sorted_indices, expected)
+
+    # NOTE: CPU and CUDA use different algorithms (L1 extent heuristic vs Morton code radix tree)
+    # so tree *structures* will differ. Query equivalence tests in Phase 1B/1C will verify
+    # that both produce correct nearest neighbor and range search results.
+
+    def test_cuda_split_val_dtype(self):
+        """CUDA split_val matches input dtype."""
+        points = torch.randn(100, 3, dtype=torch.float16, device="cuda")
+        tree = kd_tree(points)
+        assert tree.split_val.dtype == torch.float16
+
+    def test_cuda_batched(self):
+        """Batched CUDA construction works."""
+        points = torch.randn(4, 100, 3, device="cuda")
+        tree = kd_tree(points)
+        assert tree.batch_size == torch.Size([4])
+        assert tree.points.device.type == "cuda"
+
+    @pytest.mark.parametrize(
+        "dtype", [torch.float16, torch.bfloat16, torch.float32]
+    )
+    def test_cuda_dtypes(self, dtype):
+        """CUDA supports float16, bfloat16, float32."""
+        points = torch.randn(50, 3, dtype=dtype, device="cuda")
+        tree = kd_tree(points)
+        assert tree.points.dtype == dtype
+        assert tree.split_val.dtype == dtype
+
+    def test_cuda_large_pointcloud(self):
+        """CUDA handles large point clouds efficiently."""
+        points = torch.randn(100000, 3, device="cuda")
+        tree = kd_tree(points, leaf_size=32)
+        assert tree.indices.shape[0] == 100000
