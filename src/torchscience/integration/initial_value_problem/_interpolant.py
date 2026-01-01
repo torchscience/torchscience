@@ -4,6 +4,101 @@ from typing import Optional, Union
 
 import torch
 
+
+class LinearInterpolant:
+    """
+    Linear interpolant for ODE dense output.
+
+    Uses piecewise linear interpolation between grid points.
+    The interpolant is differentiable and supports backpropagation.
+
+    Parameters
+    ----------
+    t_points : Tensor
+        Time points, shape (N,), must be monotonically increasing.
+    y_points : Tensor
+        State values at time points, shape (N, *state_shape).
+    success : Tensor, optional
+        Boolean mask indicating which batch elements succeeded.
+        Shape (*batch_shape,). Only set when throw=False.
+    """
+
+    def __init__(
+        self,
+        t_points: torch.Tensor,
+        y_points: torch.Tensor,
+        success: Optional[torch.Tensor] = None,
+    ):
+        self.t_points = t_points
+        self.y_points = y_points
+        self.success = success
+        self._t_min = t_points[0].item()
+        self._t_max = t_points[-1].item()
+
+    def __call__(self, t: Union[float, torch.Tensor]) -> torch.Tensor:
+        """
+        Evaluate the interpolant at time(s) t.
+
+        Parameters
+        ----------
+        t : float or Tensor
+            Time(s) to query. Scalar or 1D tensor.
+
+        Returns
+        -------
+        y : Tensor
+            State at time(s) t.
+            If t is scalar: shape (*state_shape) or (*batch_shape, *state_shape)
+            If t is 1D tensor of length T: shape (T, *batch_shape, *state_shape)
+        """
+        if isinstance(t, (int, float)):
+            t = torch.tensor(
+                t, dtype=self.t_points.dtype, device=self.t_points.device
+            )
+
+        scalar_query = t.dim() == 0
+        if scalar_query:
+            t = t.unsqueeze(0)
+
+        # Validate bounds
+        t_min_query = t.min().item()
+        t_max_query = t.max().item()
+        if (
+            t_min_query < self._t_min - 1e-6
+            or t_max_query > self._t_max + 1e-6
+        ):
+            raise ValueError(
+                f"Query time(s) outside interpolant range [{self._t_min}, {self._t_max}]"
+            )
+
+        # Find interval for each query point
+        indices = torch.searchsorted(self.t_points, t.contiguous())
+        indices = indices.clamp(1, len(self.t_points) - 1)
+
+        # Get interval endpoints
+        t0 = self.t_points[indices - 1]
+        t1 = self.t_points[indices]
+        y0 = self.y_points[indices - 1]
+        y1 = self.y_points[indices]
+
+        # Linear interpolation weight
+        h = t1 - t0
+        alpha = (t - t0) / h
+
+        # Expand alpha for broadcasting with state dimensions
+        state_dims = y0.dim() - 1
+        for _ in range(state_dims):
+            alpha = alpha.unsqueeze(-1)
+
+        # Linear interpolation
+        y = (1 - alpha) * y0 + alpha * y1
+
+        if scalar_query:
+            y = y.squeeze(0)
+
+        return y
+
+
 # DP5 dense output coefficients
 # Reference: SciPy RK45 implementation (scipy.integrate._ivp.rk)
 # The dense output formula is:

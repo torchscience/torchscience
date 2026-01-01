@@ -4,6 +4,7 @@ import torch
 from torchscience.integration.initial_value_problem._interpolant import (
     _DP5_P,
     DP5Interpolant,
+    LinearInterpolant,
 )
 
 
@@ -256,3 +257,78 @@ class TestDP5DenseOutputCoefficients:
         assert abs(total - theta) < 1e-6, (
             f"sum(b_i(0.5)) = {total}, expected ~0.5"
         )
+
+
+class TestLinearInterpolant:
+    def test_basic_interpolation(self):
+        t_points = torch.tensor([0.0, 1.0, 2.0])
+        y_points = torch.tensor([[0.0], [1.0], [2.0]])
+
+        interp = LinearInterpolant(t_points, y_points)
+
+        # Query at midpoints
+        y_half = interp(0.5)
+        assert torch.allclose(y_half, torch.tensor([0.5]), atol=1e-6)
+
+        y_1_5 = interp(1.5)
+        assert torch.allclose(y_1_5, torch.tensor([1.5]), atol=1e-6)
+
+    def test_endpoints(self):
+        t_points = torch.tensor([0.0, 1.0])
+        y_points = torch.tensor([[0.0], [1.0]])
+
+        interp = LinearInterpolant(t_points, y_points)
+
+        assert torch.allclose(interp(0.0), torch.tensor([0.0]), atol=1e-6)
+        assert torch.allclose(interp(1.0), torch.tensor([1.0]), atol=1e-6)
+
+    def test_multiple_queries(self):
+        t_points = torch.tensor([0.0, 1.0])
+        y_points = torch.tensor([[0.0], [2.0]])
+
+        interp = LinearInterpolant(t_points, y_points)
+
+        t_query = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0])
+        y_query = interp(t_query)
+        assert y_query.shape == (5, 1)
+        expected = torch.tensor([[0.0], [0.5], [1.0], [1.5], [2.0]])
+        assert torch.allclose(y_query, expected, atol=1e-6)
+
+    def test_out_of_bounds_raises(self):
+        t_points = torch.tensor([0.0, 1.0])
+        y_points = torch.tensor([[0.0], [1.0]])
+
+        interp = LinearInterpolant(t_points, y_points)
+
+        with pytest.raises(ValueError, match="outside"):
+            interp(-0.1)
+
+        with pytest.raises(ValueError, match="outside"):
+            interp(1.1)
+
+    def test_differentiable(self):
+        t_points = torch.tensor([0.0, 1.0])
+        y_points = torch.tensor([[0.0], [1.0]], requires_grad=True)
+
+        interp = LinearInterpolant(t_points, y_points)
+
+        y_mid = interp(0.5)
+        loss = y_mid.sum()
+        loss.backward()
+
+        assert y_points.grad is not None
+
+    def test_batched_state(self):
+        t_points = torch.tensor([0.0, 1.0])
+        y_points = torch.randn(2, 3, 2)  # (T, B, D)
+
+        interp = LinearInterpolant(t_points, y_points)
+
+        # Query single time
+        y_mid = interp(0.5)
+        assert y_mid.shape == (3, 2)
+
+        # Query multiple times
+        t_query = torch.tensor([0.25, 0.5, 0.75])
+        y_query = interp(t_query)
+        assert y_query.shape == (3, 3, 2)  # (T_query, B, D)
