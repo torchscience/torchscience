@@ -30,10 +30,10 @@ struct L1ExtentSplitFinder {
     int64_t d;
     const std::vector<int64_t>& indices;
 
-    // Cost of traversing a node
-    static constexpr scalar_t TRAVERSAL_COST = scalar_t(1);
+    // Cost of traversing a node (inline function for Half/BFloat16 compatibility)
+    static inline scalar_t traversal_cost() { return scalar_t(1); }
     // Cost of intersecting a point
-    static constexpr scalar_t INTERSECTION_COST = scalar_t(1);
+    static inline scalar_t intersection_cost() { return scalar_t(1); }
 
     struct SplitResult {
         int64_t dim;
@@ -142,9 +142,9 @@ struct L1ExtentSplitFinder {
                 scalar_t right_extent = compute_l1_extent(suffix.mins, suffix.maxs);
 
                 // L1 extent cost (analogous to SAH)
-                scalar_t cost = TRAVERSAL_COST +
-                    (left_extent / parent_extent) * n_left * INTERSECTION_COST +
-                    (right_extent / parent_extent) * n_right * INTERSECTION_COST;
+                scalar_t cost = traversal_cost() +
+                    (left_extent / parent_extent) * n_left * intersection_cost() +
+                    (right_extent / parent_extent) * n_right * intersection_cost();
 
                 if (cost < best.cost) {
                     best.dim = dim;
@@ -158,7 +158,7 @@ struct L1ExtentSplitFinder {
         if (best.cost == std::numeric_limits<scalar_t>::max()) {
             best.dim = 0;
             best.value = (mins[0] + maxs[0]) / scalar_t(2);
-            best.cost = count * INTERSECTION_COST;
+            best.cost = count * intersection_cost();
         }
 
         return best;
