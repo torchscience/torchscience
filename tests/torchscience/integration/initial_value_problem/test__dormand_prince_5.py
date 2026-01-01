@@ -1,4 +1,5 @@
 import torch
+from tensordict import TensorDict
 
 from torchscience.integration.initial_value_problem import dormand_prince_5
 
@@ -114,3 +115,62 @@ class TestDormandPrince5Complex:
         loss.backward()
 
         assert theta.grad is not None
+
+
+class TestDormandPrince5TensorDict:
+    def test_simple_tensordict(self):
+        def f(t, state):
+            return TensorDict({"x": state["v"], "v": -state["x"]})
+
+        state0 = TensorDict(
+            {"x": torch.tensor([1.0]), "v": torch.tensor([0.0])}
+        )
+        state_final, interp = dormand_prince_5(
+            f, state0, t_span=(0.0, 2 * torch.pi)
+        )
+
+        # After one period, should return to initial state
+        assert isinstance(state_final, TensorDict)
+        assert torch.allclose(state_final["x"], state0["x"], atol=1e-3)
+        assert torch.allclose(state_final["v"], state0["v"], atol=1e-3)
+
+    def test_nested_tensordict(self):
+        def f(t, state):
+            return TensorDict(
+                {
+                    "robot": TensorDict(
+                        {
+                            "q": state["robot"]["dq"],
+                            "dq": -state["robot"]["q"],
+                        }
+                    )
+                }
+            )
+
+        state0 = TensorDict(
+            {
+                "robot": TensorDict(
+                    {
+                        "q": torch.tensor([1.0, 0.0]),
+                        "dq": torch.tensor([0.0, 1.0]),
+                    }
+                )
+            }
+        )
+
+        state_final, interp = dormand_prince_5(f, state0, t_span=(0.0, 1.0))
+
+        assert isinstance(state_final, TensorDict)
+        assert "robot" in state_final.keys()
+        assert state_final["robot", "q"].shape == (2,)
+
+    def test_tensordict_interpolant(self):
+        def f(t, state):
+            return TensorDict({"x": -state["x"]})
+
+        state0 = TensorDict({"x": torch.tensor([1.0])})
+        _, interp = dormand_prince_5(f, state0, t_span=(0.0, 1.0))
+
+        state_mid = interp(0.5)
+        assert isinstance(state_mid, TensorDict)
+        assert "x" in state_mid.keys()
