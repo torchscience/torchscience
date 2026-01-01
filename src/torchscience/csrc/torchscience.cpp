@@ -45,6 +45,7 @@
 #include "cpu/information_theory/kullback_leibler_divergence.h"
 #include "cpu/information_theory/jensen_shannon_divergence.h"
 #include "cpu/space_partitioning/kd_tree.h"
+#include "cpu/space_partitioning/k_nearest_neighbors.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -293,4 +294,7 @@ TORCH_LIBRARY(torchscience, module) {
   // Returns: tuple of pre-padded (B, max_*) tensors for efficient consumption
   // (points, split_dim, split_val, left, right, indices, leaf_starts, leaf_counts)
   module.def("kd_tree_build_batched(Tensor points, int leaf_size) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // k-nearest neighbors query
+  module.def("k_nearest_neighbors(Tensor points, Tensor split_dim, Tensor split_val, Tensor left, Tensor right, Tensor indices, Tensor leaf_starts, Tensor leaf_counts, Tensor queries, int k, float p) -> (Tensor, Tensor)");
 }
