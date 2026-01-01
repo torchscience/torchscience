@@ -26,6 +26,7 @@
 #include "cpu/graphics/shading/phong.h"
 #include "cpu/graphics/lighting/spotlight.h"
 #include "cpu/graphics/tone_mapping/reinhard.h"
+#include "cpu/graphics/texture_mapping/cube_mapping.h"
 #include "cpu/graphics/color/srgb_to_hsv.h"
 #include "cpu/graphics/color/hsv_to_srgb.h"
 #include "cpu/signal_processing/filter.h"
@@ -63,6 +64,7 @@
 #include "meta/graphics/shading/phong.h"
 #include "meta/graphics/lighting/spotlight.h"
 #include "meta/graphics/tone_mapping/reinhard.h"
+#include "meta/graphics/texture_mapping/cube_mapping.h"
 #include "meta/graphics/color/srgb_to_hsv.h"
 #include "meta/graphics/color/hsv_to_srgb.h"
 #include "meta/signal_processing/filter.h"
@@ -200,6 +202,9 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("hsv_to_srgb(Tensor input) -> Tensor");
   module.def("hsv_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  // graphics.texture_mapping
+  module.def("cube_mapping(Tensor direction) -> (Tensor, Tensor, Tensor)");
 
   // optimization.test_functions
   module.def("rosenbrock(Tensor x, Tensor a, Tensor b) -> Tensor");
