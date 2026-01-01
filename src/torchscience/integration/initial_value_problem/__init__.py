@@ -34,6 +34,9 @@ Examples
 >>> trajectory = interp(torch.linspace(0, 5, 100))
 """
 
+from torchscience.integration.initial_value_problem._backward_euler import (
+    backward_euler,
+)
 from torchscience.integration.initial_value_problem._dormand_prince_5 import (
     dormand_prince_5,
 )
@@ -55,9 +58,11 @@ __all__ = [
     "MaxStepsExceeded",
     "ODESolverError",
     "StepSizeError",
-    # Solvers (ordered by complexity)
+    # Explicit solvers (ordered by complexity)
     "euler",
     "midpoint",
     "runge_kutta_4",
     "dormand_prince_5",
+    # Implicit solvers
+    "backward_euler",
 ]
