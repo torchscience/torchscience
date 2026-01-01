@@ -89,6 +89,8 @@
 #include "meta/information_theory/kullback_leibler_divergence.h"
 #include "meta/information_theory/jensen_shannon_divergence.h"
 #include "meta/space_partitioning/kd_tree.h"
+#include "meta/space_partitioning/k_nearest_neighbors.h"
+#include "autograd/space_partitioning/k_nearest_neighbors.h"
 
 #include "autocast/signal_processing/filter.h"
 #include "autocast/statistics/descriptive/kurtosis.h"
