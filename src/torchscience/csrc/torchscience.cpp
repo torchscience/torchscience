@@ -87,12 +87,14 @@
 #include "meta/graph_theory/floyd_warshall.h"
 #include "meta/information_theory/kullback_leibler_divergence.h"
 #include "meta/information_theory/jensen_shannon_divergence.h"
+#include "meta/space_partitioning/kd_tree.h"
 
 #include "autocast/signal_processing/filter.h"
 #include "autocast/statistics/descriptive/kurtosis.h"
 #include "autocast/integral_transform/hilbert_transform.h"
 #include "autocast/integral_transform/inverse_hilbert_transform.h"
 #include "autocast/test/sum_squares.h"
+#include "autocast/space_partitioning/kd_tree.h"
 
 #include "sparse/coo/cpu/optimization/test_functions.h"
 #include "sparse/coo/cpu/integral_transform/hilbert_transform.h"
