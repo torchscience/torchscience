@@ -171,20 +171,27 @@ def dormand_prince_5(
     # Estimate initial step size if not provided
     if dt0 is None:
         scale = atol + rtol * torch.abs(y_flat)
-        d0 = torch.sqrt(torch.mean((y_flat / scale) ** 2))
-        d1 = torch.sqrt(torch.mean((k1 / scale) ** 2))
-        if d0 < 1e-5 or d1 < 1e-5:
+        # Use abs() for complex support - RMS of absolute values
+        d0 = torch.sqrt(torch.mean(torch.abs(y_flat / scale) ** 2))
+        d1 = torch.sqrt(torch.mean(torch.abs(k1 / scale) ** 2))
+        if d0.real < 1e-5 or d1.real < 1e-5:
             dt0 = 1e-6
         else:
-            dt0 = 0.01 * (d0 / d1).item()
+            dt0 = 0.01 * (d0 / d1).real.item()
     dt = dt0
 
     # Apply dt_max
     if dt_max is not None:
         dt = min(dt, dt_max)
 
-    # Dtype-aware completion tolerance
-    t_tol = 100 * torch.finfo(dtype).eps * max(abs(t0), abs(t1), 1.0)
+    # Dtype-aware completion tolerance (use real dtype for complex)
+    if dtype.is_complex:
+        real_dtype = (
+            torch.float64 if dtype == torch.complex128 else torch.float32
+        )
+    else:
+        real_dtype = dtype
+    t_tol = 100 * torch.finfo(real_dtype).eps * max(abs(t0), abs(t1), 1.0)
 
     # Storage for interpolant
     t_segments = []
@@ -242,15 +249,19 @@ def dormand_prince_5(
         scale = atol + rtol * torch.maximum(torch.abs(y), torch.abs(y_new))
         scaled_error = error / scale
 
-        # Compute error norm
+        # Compute error norm (use abs() for complex support)
         if batch_shape:
             state_dims = tuple(range(len(batch_shape), scaled_error.dim()))
-            err_norm = torch.sqrt(torch.mean(scaled_error**2, dim=state_dims))
+            err_norm = torch.sqrt(
+                torch.mean(torch.abs(scaled_error) ** 2, dim=state_dims)
+            )
             accept_mask = err_norm <= 1.0
             step_accepted = accept_mask.any()
             err_norm_scalar = err_norm.max().item()
         else:
-            err_norm_scalar = torch.sqrt(torch.mean(scaled_error**2)).item()
+            err_norm_scalar = torch.sqrt(
+                torch.mean(torch.abs(scaled_error) ** 2)
+            ).item()
             step_accepted = err_norm_scalar <= 1.0
             accept_mask = None
 
