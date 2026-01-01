@@ -27,6 +27,7 @@
 #include "cpu/graphics/lighting/spotlight.h"
 #include "cpu/graphics/tone_mapping/reinhard.h"
 #include "cpu/graphics/texture_mapping/cube_mapping.h"
+#include "cpu/graphics/projection/perspective_projection.h"
 #include "cpu/graphics/color/srgb_to_hsv.h"
 #include "cpu/graphics/color/hsv_to_srgb.h"
 #include "cpu/signal_processing/filter.h"
@@ -48,6 +49,7 @@
 #include "autograd/graphics/shading/phong.h"
 #include "autograd/graphics/lighting/spotlight.h"
 #include "autograd/graphics/tone_mapping/reinhard.h"
+#include "autograd/graphics/projection/perspective_projection.h"
 #include "autograd/graphics/color/srgb_to_hsv.h"
 #include "autograd/graphics/color/hsv_to_srgb.h"
 #include "autograd/signal_processing/filter.h"
@@ -65,6 +67,7 @@
 #include "meta/graphics/lighting/spotlight.h"
 #include "meta/graphics/tone_mapping/reinhard.h"
 #include "meta/graphics/texture_mapping/cube_mapping.h"
+#include "meta/graphics/projection/perspective_projection.h"
 #include "meta/graphics/color/srgb_to_hsv.h"
 #include "meta/graphics/color/hsv_to_srgb.h"
 #include "meta/signal_processing/filter.h"
@@ -205,6 +208,10 @@ TORCH_LIBRARY(torchscience, module) {
 
   // graphics.texture_mapping
   module.def("cube_mapping(Tensor direction) -> (Tensor, Tensor, Tensor)");
+
+  // graphics.projection
+  module.def("perspective_projection(Tensor fov, Tensor aspect, Tensor near, Tensor far) -> Tensor");
+  module.def("perspective_projection_backward(Tensor grad_output, Tensor fov, Tensor aspect, Tensor near, Tensor far) -> (Tensor, Tensor, Tensor, Tensor)");
 
   // optimization.test_functions
   module.def("rosenbrock(Tensor x, Tensor a, Tensor b) -> Tensor");
