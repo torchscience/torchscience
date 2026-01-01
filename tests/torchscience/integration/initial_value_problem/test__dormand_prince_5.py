@@ -227,3 +227,30 @@ class TestDormandPrince5ErrorHandling:
 
         with pytest.raises(ValueError, match="outside"):
             interp(1.1)
+
+
+class TestDormandPrince5BackwardIntegration:
+    def test_backward_exponential(self):
+        """Integrate backwards: y(1) = e^-1 => y(0) = 1"""
+
+        def f(t, y):
+            return -y
+
+        y1 = torch.tensor([torch.exp(torch.tensor(-1.0))])
+        y0_recovered, interp = dormand_prince_5(f, y1, t_span=(1.0, 0.0))
+
+        expected = torch.tensor([1.0])
+        assert torch.allclose(y0_recovered, expected, rtol=1e-4)
+
+    def test_backward_interpolant_range(self):
+        """Interpolant should cover [0, 1] regardless of direction"""
+
+        def f(t, y):
+            return -y
+
+        y0 = torch.tensor([1.0])
+        _, interp = dormand_prince_5(f, y0, t_span=(1.0, 0.0))
+
+        # Should be able to query anywhere in [0, 1]
+        y_mid = interp(0.5)
+        assert not torch.isnan(y_mid).any()
