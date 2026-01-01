@@ -23,6 +23,7 @@
 
 #include "cpu/distance/minkowski_distance.h"
 #include "cpu/graphics/shading/cook_torrance.h"
+#include "cpu/graphics/shading/phong.h"
 #include "cpu/graphics/color/srgb_to_hsv.h"
 #include "cpu/graphics/color/hsv_to_srgb.h"
 #include "cpu/signal_processing/filter.h"
@@ -41,6 +42,7 @@
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
+#include "autograd/graphics/shading/phong.h"
 #include "autograd/graphics/color/srgb_to_hsv.h"
 #include "autograd/graphics/color/hsv_to_srgb.h"
 #include "autograd/signal_processing/filter.h"
@@ -54,6 +56,7 @@
 
 #include "meta/distance/minkowski_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
+#include "meta/graphics/shading/phong.h"
 #include "meta/graphics/color/srgb_to_hsv.h"
 #include "meta/graphics/color/hsv_to_srgb.h"
 #include "meta/signal_processing/filter.h"
@@ -172,6 +175,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("cook_torrance(Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> Tensor");
   module.def("cook_torrance_backward(Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
   module.def("cook_torrance_backward_backward(Tensor gg_normal, Tensor gg_view, Tensor gg_light, Tensor gg_roughness, Tensor gg_f0, Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // Phong shading
+  module.def("phong(Tensor normal, Tensor view, Tensor light, Tensor shininess) -> Tensor");
+  module.def("phong_backward(Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor shininess) -> (Tensor, Tensor, Tensor, Tensor)");
 
   // graphics.color
   module.def("srgb_to_hsv(Tensor input) -> Tensor");
