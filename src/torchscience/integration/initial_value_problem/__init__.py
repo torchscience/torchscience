@@ -33,6 +33,9 @@ from torchscience.integration.initial_value_problem._exceptions import (
     StepSizeError,
 )
 from torchscience.integration.initial_value_problem._midpoint import midpoint
+from torchscience.integration.initial_value_problem._runge_kutta_4 import (
+    runge_kutta_4,
+)
 
 __all__ = [
     "ConvergenceError",
@@ -42,4 +45,5 @@ __all__ = [
     "dormand_prince_5",
     "euler",
     "midpoint",
+    "runge_kutta_4",
 ]
