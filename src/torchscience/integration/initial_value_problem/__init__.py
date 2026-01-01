@@ -3,8 +3,8 @@ Initial value problem solvers for ordinary differential equations.
 
 This module provides differentiable ODE solvers for PyTorch tensors and TensorDict.
 
-Available Solvers
------------------
+Solvers
+-------
 euler
     Forward Euler method (1st order, fixed step, explicit).
     Simplest method, educational baseline.
@@ -25,16 +25,86 @@ backward_euler
     Backward Euler method (1st order, fixed step, implicit).
     A-stable, suitable for stiff problems.
 
+Wrappers
+--------
+adjoint
+    Wrap any solver to use the continuous adjoint method for
+    memory-efficient gradients. Uses O(1) memory for the autograd
+    graph instead of O(n_steps).
+
+Exceptions
+----------
+ODESolverError
+    Base exception for ODE solver errors.
+
+MaxStepsExceeded
+    Raised when adaptive solver exceeds max_steps.
+
+StepSizeError
+    Raised when adaptive step size falls below dt_min.
+
+ConvergenceError
+    Raised when implicit solver Newton iteration fails to converge.
+
 Examples
 --------
+Basic usage with adaptive solver:
+
 >>> import torch
->>> from torchscience.integration.initial_value_problem import backward_euler
+>>> from torchscience.integration.initial_value_problem import dormand_prince_5
 >>>
+>>> def decay(t, y):
+...     return -y
+>>>
+>>> y0 = torch.tensor([1.0])
+>>> y_final, interp = dormand_prince_5(decay, y0, t_span=(0.0, 5.0))
+>>> trajectory = interp(torch.linspace(0, 5, 100))
+
+With learnable parameters (Neural ODE style):
+
+>>> theta = torch.tensor([1.5], requires_grad=True)
+>>> def dynamics(t, y):
+...     return -theta * y
+>>>
+>>> y_final, _ = dormand_prince_5(dynamics, y0, t_span=(0.0, 1.0))
+>>> loss = y_final.sum()
+>>> loss.backward()
+>>> print(theta.grad)  # gradient of loss w.r.t. theta
+
+Memory-efficient gradients with adjoint method:
+
+>>> from torchscience.integration.initial_value_problem import adjoint
+>>>
+>>> adjoint_solver = adjoint(dormand_prince_5)
+>>> y_final, _ = adjoint_solver(dynamics, y0, t_span=(0.0, 100.0))
+>>> loss = y_final.sum()
+>>> loss.backward()  # Uses O(1) memory for autograd graph
+
+With TensorDict state:
+
+>>> from tensordict import TensorDict
+>>> def robot_dynamics(t, state):
+...     return TensorDict({
+...         "position": state["velocity"],
+...         "velocity": -state["position"],
+...     })
+>>>
+>>> state0 = TensorDict({
+...     "position": torch.tensor([1.0]),
+...     "velocity": torch.tensor([0.0]),
+... })
+>>> state_final, interp = runge_kutta_4(
+...     robot_dynamics, state0, t_span=(0.0, 10.0), dt=0.01
+... )
+
+Stiff problems with implicit solver:
+
 >>> def stiff_decay(t, y):
 ...     return -1000 * y  # Stiff coefficient
 >>>
->>> y0 = torch.tensor([1.0])
->>> y_final, interp = backward_euler(stiff_decay, y0, t_span=(0.0, 1.0), dt=0.1)
+>>> y_final, _ = backward_euler(
+...     stiff_decay, y0, t_span=(0.0, 1.0), dt=0.1
+... )
 """
 
 from torchscience.integration.initial_value_problem._adjoint import adjoint
