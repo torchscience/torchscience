@@ -718,3 +718,77 @@ class TestSineWave(CreationOpTestCase):
         """Test that output tensor is contiguous."""
         result = torchscience.signal_processing.waveform.sine_wave(100)
         assert result.is_contiguous()
+
+
+class TestSineWaveTensorParameters:
+    """Tests for tensor parameter support."""
+
+    def test_frequency_tensor_1d(self):
+        """Test 1D frequency tensor produces batched output."""
+        n = 100
+        freqs = torch.tensor([1.0, 2.0, 5.0])
+        result = torchscience.signal_processing.waveform.sine_wave(
+            n, frequency=freqs, sample_rate=100.0
+        )
+        assert result.shape == (3, 100)
+
+    def test_amplitude_tensor_1d(self):
+        """Test 1D amplitude tensor produces batched output."""
+        n = 100
+        amps = torch.tensor([0.5, 1.0, 2.0])
+        result = torchscience.signal_processing.waveform.sine_wave(
+            n, amplitude=amps, sample_rate=100.0
+        )
+        assert result.shape == (3, 100)
+
+    def test_phase_tensor_1d(self):
+        """Test 1D phase tensor produces batched output."""
+        n = 100
+        phases = torch.tensor([0.0, math.pi / 2, math.pi])
+        result = torchscience.signal_processing.waveform.sine_wave(
+            n, phase=phases, sample_rate=100.0
+        )
+        assert result.shape == (3, 100)
+
+    def test_broadcasting_2d(self):
+        """Test 2D broadcasting of parameters."""
+        n = 100
+        freqs = torch.tensor([[100.0], [200.0]])  # shape (2, 1)
+        amps = torch.tensor([0.5, 1.0, 1.5])  # shape (3,)
+        result = torchscience.signal_processing.waveform.sine_wave(
+            n, frequency=freqs, amplitude=amps, sample_rate=1000.0
+        )
+        assert result.shape == (2, 3, 100)
+
+    def test_gradient_through_frequency(self):
+        """Test gradients flow through frequency tensor."""
+        n = 100
+        freq = torch.tensor([1.0], requires_grad=True)
+        result = torchscience.signal_processing.waveform.sine_wave(
+            n, frequency=freq, sample_rate=100.0
+        )
+        loss = result.sum()
+        loss.backward()
+        assert freq.grad is not None
+
+    def test_gradient_through_amplitude(self):
+        """Test gradients flow through amplitude tensor."""
+        n = 100
+        amp = torch.tensor([1.0], requires_grad=True)
+        result = torchscience.signal_processing.waveform.sine_wave(
+            n, amplitude=amp, sample_rate=100.0
+        )
+        loss = result.sum()
+        loss.backward()
+        assert amp.grad is not None
+
+    def test_gradient_through_phase(self):
+        """Test gradients flow through phase tensor."""
+        n = 100
+        phase = torch.tensor([0.0], requires_grad=True)
+        result = torchscience.signal_processing.waveform.sine_wave(
+            n, phase=phase, sample_rate=100.0
+        )
+        loss = result.sum()
+        loss.backward()
+        assert phase.grad is not None
