@@ -303,3 +303,215 @@ class TestCubicSplineEvaluate:
         y_scipy = torch.from_numpy(scipy_spline(x_query.numpy()))
 
         torch.testing.assert_close(y_torch, y_scipy, atol=1e-10, rtol=1e-10)
+
+
+class TestCubicSplineDerivative:
+    """Tests for cubic_spline_derivative function."""
+
+    def test_derivative_of_cubic(self):
+        """Test that derivative of x^3 should be 3x^2."""
+        from torchscience.spline import (
+            cubic_spline_derivative,
+            cubic_spline_evaluate,
+            cubic_spline_fit,
+        )
+
+        # Fit x^3 with appropriate boundary conditions
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = x**3
+
+        # Use clamped boundary with correct derivatives for exact representation
+        # dy/dx = 3x^2, so at x=0: 0, at x=1: 3
+        boundary_values = torch.tensor([0.0, 3.0], dtype=torch.float64)
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
+
+        # Get derivative spline
+        deriv_spline = cubic_spline_derivative(spline, order=1)
+
+        # Evaluate derivative at test points
+        x_test = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0], dtype=torch.float64)
+        deriv_eval = cubic_spline_evaluate(deriv_spline, x_test)
+
+        # Expected: 3x^2
+        expected = 3 * x_test**2
+        torch.testing.assert_close(deriv_eval, expected, atol=1e-6, rtol=1e-6)
+
+    def test_derivative_of_quadratic(self):
+        """Test that derivative of x^2 should be 2x."""
+        from torchscience.spline import (
+            cubic_spline_derivative,
+            cubic_spline_evaluate,
+            cubic_spline_fit,
+        )
+
+        # Fit x^2
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = x**2
+
+        # Use clamped boundary with correct derivatives
+        # dy/dx = 2x, so at x=0: 0, at x=1: 2
+        boundary_values = torch.tensor([0.0, 2.0], dtype=torch.float64)
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
+
+        # Get derivative spline
+        deriv_spline = cubic_spline_derivative(spline, order=1)
+
+        # Evaluate derivative at test points
+        x_test = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0], dtype=torch.float64)
+        deriv_eval = cubic_spline_evaluate(deriv_spline, x_test)
+
+        # Expected: 2x
+        expected = 2 * x_test
+        torch.testing.assert_close(deriv_eval, expected, atol=1e-6, rtol=1e-6)
+
+    def test_second_derivative(self):
+        """Test that second derivative of x^3 should be 6x."""
+        from torchscience.spline import (
+            cubic_spline_derivative,
+            cubic_spline_evaluate,
+            cubic_spline_fit,
+        )
+
+        # Fit x^3
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = x**3
+
+        # Use clamped boundary with correct derivatives
+        boundary_values = torch.tensor([0.0, 3.0], dtype=torch.float64)
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
+
+        # Get second derivative spline
+        deriv_spline = cubic_spline_derivative(spline, order=2)
+
+        # Evaluate second derivative at test points
+        x_test = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0], dtype=torch.float64)
+        deriv_eval = cubic_spline_evaluate(deriv_spline, x_test)
+
+        # Expected: 6x
+        expected = 6 * x_test
+        torch.testing.assert_close(deriv_eval, expected, atol=1e-6, rtol=1e-6)
+
+    def test_third_derivative(self):
+        """Test that third derivative of x^3 should be 6 (constant)."""
+        from torchscience.spline import (
+            cubic_spline_derivative,
+            cubic_spline_evaluate,
+            cubic_spline_fit,
+        )
+
+        # Fit x^3
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = x**3
+
+        # Use clamped boundary with correct derivatives
+        boundary_values = torch.tensor([0.0, 3.0], dtype=torch.float64)
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
+
+        # Get third derivative spline
+        deriv_spline = cubic_spline_derivative(spline, order=3)
+
+        # Evaluate third derivative at test points
+        x_test = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0], dtype=torch.float64)
+        deriv_eval = cubic_spline_evaluate(deriv_spline, x_test)
+
+        # Expected: constant 6
+        expected = torch.full_like(x_test, 6.0)
+        torch.testing.assert_close(deriv_eval, expected, atol=1e-6, rtol=1e-6)
+
+    def test_derivative_at_points(self):
+        """Test derivative evaluation against analytical derivative of sin(x)."""
+        from torchscience.spline import (
+            cubic_spline_derivative,
+            cubic_spline_evaluate,
+            cubic_spline_fit,
+        )
+
+        # Fit sin(x)
+        x = torch.linspace(0, 2 * math.pi, 20, dtype=torch.float64)
+        y = torch.sin(x)
+
+        spline = cubic_spline_fit(x, y, boundary="natural")
+
+        # Get derivative spline
+        deriv_spline = cubic_spline_derivative(spline, order=1)
+
+        # Evaluate derivative at interior test points (avoid boundary effects)
+        x_test = torch.linspace(
+            0.5, 2 * math.pi - 0.5, 10, dtype=torch.float64
+        )
+        deriv_eval = cubic_spline_evaluate(deriv_spline, x_test)
+
+        # Expected: cos(x)
+        expected = torch.cos(x_test)
+
+        # Use looser tolerance since spline approximation isn't exact
+        torch.testing.assert_close(deriv_eval, expected, atol=1e-3, rtol=1e-3)
+
+    def test_derivative_invalid_order(self):
+        """Test that invalid derivative order raises ValueError."""
+        from torchscience.spline import (
+            cubic_spline_derivative,
+            cubic_spline_fit,
+        )
+
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = x**2
+        spline = cubic_spline_fit(x, y)
+
+        # Order 0 is invalid
+        with pytest.raises(ValueError):
+            cubic_spline_derivative(spline, order=0)
+
+        # Order > 3 is invalid
+        with pytest.raises(ValueError):
+            cubic_spline_derivative(spline, order=4)
+
+        # Negative order is invalid
+        with pytest.raises(ValueError):
+            cubic_spline_derivative(spline, order=-1)
+
+    def test_derivative_preserves_knots(self):
+        """Test that derivative preserves the knot vector."""
+        from torchscience.spline import (
+            cubic_spline_derivative,
+            cubic_spline_fit,
+        )
+
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = x**3
+        spline = cubic_spline_fit(x, y)
+
+        deriv_spline = cubic_spline_derivative(spline, order=1)
+
+        torch.testing.assert_close(deriv_spline.knots, spline.knots)
+
+    def test_derivative_multidimensional(self):
+        """Test derivative with multi-dimensional y values."""
+        from torchscience.spline import (
+            cubic_spline_derivative,
+            cubic_spline_evaluate,
+            cubic_spline_fit,
+        )
+
+        # Fit a 2D curve: (t^2, t^3)
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = torch.stack([x**2, x**3], dim=-1)  # (5, 2)
+
+        spline = cubic_spline_fit(x, y)
+        deriv_spline = cubic_spline_derivative(spline, order=1)
+
+        # Evaluate derivative at test points
+        x_test = torch.tensor([0.5], dtype=torch.float64)
+        deriv_eval = cubic_spline_evaluate(deriv_spline, x_test)
+
+        # Expected: (2t, 3t^2) at t=0.5: (1.0, 0.75)
+        expected = torch.tensor([[1.0, 0.75]], dtype=torch.float64)
+        torch.testing.assert_close(deriv_eval, expected, atol=1e-4, rtol=1e-4)
