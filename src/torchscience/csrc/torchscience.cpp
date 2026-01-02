@@ -22,6 +22,7 @@
 #include "autograd/signal_processing/window_functions.h"
 #include "cpu/signal_processing/waveform/sine_wave.h"
 #include "cpu/signal_processing/waveform/sine_wave_backward.h"
+#include "cpu/signal_processing/waveform/square_wave.h"
 #include "meta/signal_processing/waveform/sine_wave.h"
 #include "autograd/signal_processing/waveform/sine_wave.h"
 // noise - CompositeExplicitAutograd
@@ -263,6 +264,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("sine_wave_backward(Tensor grad_output, int? n, Tensor? t, "
              "Tensor frequency, float sample_rate, Tensor amplitude, Tensor phase) -> "
              "(Tensor, Tensor, Tensor, Tensor)");
+
+  module.def("square_wave(int? n=None, Tensor? t=None, *, "
+             "Tensor frequency, float sample_rate=1.0, Tensor amplitude, Tensor phase, Tensor duty, "
+             "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
 
   // signal_processing.window_function
   module.def("rectangular_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
