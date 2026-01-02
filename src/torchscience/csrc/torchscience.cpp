@@ -17,6 +17,9 @@
 
 // other operators - Phase 2
 #include "composite/signal_processing/window_functions.h"
+#include "cpu/signal_processing/window_functions.h"
+#include "meta/signal_processing/window_functions.h"
+#include "autograd/signal_processing/window_functions.h"
 #include "composite/signal_processing/waveform.h"
 // noise - CompositeExplicitAutograd
 #include "cpu/signal_processing/noise/white_noise.h"
@@ -260,6 +263,38 @@ TORCH_LIBRARY(torchscience, module) {
 
   // signal_processing.window_function
   module.def("rectangular_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+
+  // Parameterless windows
+  module.def("hann_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("periodic_hann_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("hamming_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("periodic_hamming_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("blackman_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("periodic_blackman_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("bartlett_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("periodic_bartlett_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("cosine_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("periodic_cosine_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("nuttall_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("periodic_nuttall_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+
+  // Parameterized windows: Gaussian
+  module.def("gaussian_window(int n, Tensor std, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_gaussian_window(int n, Tensor std, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("gaussian_window_backward(Tensor grad_output, Tensor output, int n, Tensor std) -> Tensor");
+  module.def("periodic_gaussian_window_backward(Tensor grad_output, Tensor output, int n, Tensor std) -> Tensor");
+
+  // Parameterized windows: General Hamming
+  module.def("general_hamming_window(int n, Tensor alpha, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_general_hamming_window(int n, Tensor alpha, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("general_hamming_window_backward(Tensor grad_output, Tensor output, int n, Tensor alpha) -> Tensor");
+  module.def("periodic_general_hamming_window_backward(Tensor grad_output, Tensor output, int n, Tensor alpha) -> Tensor");
+
+  // Parameterized windows: General Cosine
+  module.def("general_cosine_window(int n, Tensor coeffs, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_general_cosine_window(int n, Tensor coeffs, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("general_cosine_window_backward(Tensor grad_output, Tensor output, int n, Tensor coeffs) -> Tensor");
+  module.def("periodic_general_cosine_window_backward(Tensor grad_output, Tensor output, int n, Tensor coeffs) -> Tensor");
 
   // statistics.descriptive
   module.def("kurtosis(Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");
