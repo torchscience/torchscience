@@ -64,10 +64,7 @@ def cosine_wave(
     >>> freqs = torch.tensor([220.0, 440.0, 880.0])
     >>> cosine_wave(n=1000, frequency=freqs, sample_rate=44100.0)  # shape (3, 1000)
     """
-    if isinstance(phase, Tensor):
-        adjusted_phase = phase + math.pi / 2
-    else:
-        adjusted_phase = phase + math.pi / 2
+    adjusted_phase = phase + math.pi / 2
 
     return sine_wave(
         n=n,
