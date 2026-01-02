@@ -251,7 +251,12 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("butterworth_analog_bandpass_filter_backward_backward(Tensor gg_omega_p1, Tensor gg_omega_p2, Tensor grad_output, int n, Tensor omega_p1, Tensor omega_p2) -> (Tensor, Tensor, Tensor)");
 
   // signal_processing.waveform
-  module.def("sine_wave(int n, float frequency, float sample_rate, float amplitude, float phase, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("sine_wave(int? n=None, Tensor? t=None, *, "
+             "Tensor frequency, float sample_rate=1.0, Tensor amplitude, Tensor phase, "
+             "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
+  module.def("sine_wave_backward(Tensor grad_output, int? n, Tensor? t, "
+             "Tensor frequency, float sample_rate, Tensor amplitude, Tensor phase) -> "
+             "(Tensor, Tensor, Tensor, Tensor)");
 
   // signal_processing.window_function
   module.def("rectangular_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
