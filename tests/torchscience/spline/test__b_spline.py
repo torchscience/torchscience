@@ -1367,3 +1367,186 @@ class TestBSplineConvenience:
         # Should work and produce reasonable results
         y_eval = f(x)
         torch.testing.assert_close(y_eval, y, atol=1e-2, rtol=1e-2)
+
+
+class TestBSplineBatching:
+    """Tests for batched B-spline operations."""
+
+    def test_basis_batched_query(self):
+        """Test basis evaluation with batched query points (2D query shape)."""
+        from torchscience.spline import b_spline_basis
+
+        # Clamped cubic knot vector
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        degree = 3
+
+        # n_basis = 9 - 3 - 1 = 5
+
+        # Query with shape (3, 4) - 3 batches, 4 queries each
+        t = torch.linspace(0.1, 0.9, 12, dtype=torch.float64).reshape(3, 4)
+        basis = b_spline_basis(t, knots, degree)
+
+        # Output shape should be (3, 4, 5)
+        assert basis.shape == (3, 4, 5)
+
+        # Verify partition of unity (sum of basis functions = 1)
+        basis_sum = basis.sum(dim=-1)
+        expected = torch.ones(3, 4, dtype=torch.float64)
+        torch.testing.assert_close(basis_sum, expected, atol=1e-10, rtol=1e-10)
+
+        # Verify values match flat evaluation
+        t_flat = t.flatten()
+        basis_flat = b_spline_basis(t_flat, knots, degree)
+        torch.testing.assert_close(
+            basis, basis_flat.reshape(3, 4, 5), atol=1e-10, rtol=1e-10
+        )
+
+    def test_fit_batched_y(self):
+        """Test fitting with batched y values (multiple curves)."""
+        from torchscience.spline import b_spline_evaluate, b_spline_fit
+
+        # Create data for 3 curves
+        x = torch.linspace(0.0, 2 * torch.pi, 30, dtype=torch.float64)
+        # y has shape (30, 3) - 3 curves
+        y = torch.stack(
+            [
+                torch.sin(x),
+                torch.cos(x),
+                x / (2 * torch.pi),  # Linear 0 to 1
+            ],
+            dim=-1,
+        )
+
+        spline = b_spline_fit(x, y, degree=3, n_knots=8)
+
+        # Control points should have shape (n_control, 3)
+        n_knots = spline.knots.shape[0]
+        n_control = n_knots - 3 - 1
+        assert spline.control_points.shape == (n_control, 3)
+
+        # Evaluate at test points
+        t = torch.tensor([0.5, 1.0, 2.0, 3.0], dtype=torch.float64)
+        y_eval = b_spline_evaluate(spline, t)
+
+        # Should have shape (4, 3) - 4 query points, 3 curves
+        assert y_eval.shape == (4, 3)
+
+        # Verify each curve matches individual fit
+        for i in range(3):
+            y_col = y[:, i]
+            spline_single = b_spline_fit(x, y_col, degree=3, n_knots=8)
+            y_single = b_spline_evaluate(spline_single, t)
+            torch.testing.assert_close(
+                y_eval[:, i], y_single, atol=1e-8, rtol=1e-8
+            )
+
+    def test_evaluate_batched_query(self):
+        """Test evaluation with batched query points (2D query shape)."""
+        from torchscience.spline import BSpline, b_spline_evaluate
+
+        # Create a simple cubic B-spline
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        control_points = torch.tensor(
+            [0.0, 1.0, 2.0, 1.0, 0.5], dtype=torch.float64
+        )
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=3,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Query with shape (batch, n_queries) = (4, 5)
+        t = torch.linspace(0.1, 0.9, 20, dtype=torch.float64).reshape(4, 5)
+        y_eval = b_spline_evaluate(spline, t)
+
+        # Output shape should match query shape
+        assert y_eval.shape == (4, 5)
+
+        # Verify values match flat evaluation
+        t_flat = t.flatten()
+        y_flat = b_spline_evaluate(spline, t_flat)
+        torch.testing.assert_close(
+            y_eval, y_flat.reshape(4, 5), atol=1e-10, rtol=1e-10
+        )
+
+    def test_derivative_batched(self):
+        """Test derivative of batched B-spline (multiple curves)."""
+        from torchscience.spline import (
+            b_spline_derivative,
+            b_spline_evaluate,
+            b_spline_fit,
+        )
+
+        # Fit two curves: x^2 and x^3
+        x = torch.linspace(0.0, 2.0, 30, dtype=torch.float64)
+        y = torch.stack([x**2, x**3], dim=-1)
+
+        spline = b_spline_fit(x, y, degree=3, n_knots=8)
+
+        # Get derivative
+        deriv_spline = b_spline_derivative(spline, order=1)
+
+        # Evaluate at interior test points
+        t = torch.linspace(0.2, 1.8, 10, dtype=torch.float64)
+        deriv_eval = b_spline_evaluate(deriv_spline, t)
+
+        # Should have shape (10, 2) - 10 query points, 2 curves
+        assert deriv_eval.shape == (10, 2)
+
+        # Expected: derivative of x^2 is 2x, derivative of x^3 is 3x^2
+        expected_col0 = 2 * t  # d/dx(x^2) = 2x
+        expected_col1 = 3 * t**2  # d/dx(x^3) = 3x^2
+
+        # Use looser tolerance since B-spline is an approximation
+        torch.testing.assert_close(
+            deriv_eval[:, 0], expected_col0, atol=5e-2, rtol=5e-2
+        )
+        torch.testing.assert_close(
+            deriv_eval[:, 1], expected_col1, atol=5e-2, rtol=5e-2
+        )
+
+    def test_gradcheck_batched(self):
+        """Test that gradients flow correctly through batched B-spline operations."""
+        from torch.autograd import gradcheck
+
+        from torchscience.spline import BSpline, b_spline_evaluate
+
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        # Multi-dimensional control points (5, 2) - 2 curves
+        control_points = torch.tensor(
+            [[0.0, 1.0], [1.0, 2.0], [2.0, 1.5], [1.0, 0.5], [0.5, 0.0]],
+            dtype=torch.float64,
+            requires_grad=True,
+        )
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=3,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Query points (avoid knots where gradient may be discontinuous)
+        t = torch.tensor([0.2, 0.4, 0.6, 0.8], dtype=torch.float64)
+
+        def eval_fn(cp):
+            s = BSpline(
+                knots=knots,
+                control_points=cp,
+                degree=3,
+                extrapolate="error",
+                batch_size=[],
+            )
+            return b_spline_evaluate(s, t)
+
+        assert gradcheck(eval_fn, (control_points,), eps=1e-6, atol=1e-4)

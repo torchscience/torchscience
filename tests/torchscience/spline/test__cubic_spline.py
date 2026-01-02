@@ -901,3 +901,161 @@ class TestCubicSplineConvenience:
         # Evaluate at single point
         y_mid = f(torch.tensor([0.5], dtype=torch.float64))
         assert y_mid.shape == (1, 2)
+
+
+class TestCubicSplineBatching:
+    """Tests for batched cubic spline operations."""
+
+    def test_fit_batched_y(self):
+        """Test fitting with batched y values (e.g., multiple curves)."""
+        from torchscience.spline import cubic_spline_evaluate, cubic_spline_fit
+
+        x = torch.linspace(0, 1, 10, dtype=torch.float64)
+        # y has shape (10, 3) - 3 curves
+        y = torch.stack(
+            [
+                torch.sin(x * 2 * math.pi),
+                torch.cos(x * 2 * math.pi),
+                x**2,
+            ],
+            dim=-1,
+        )
+
+        spline = cubic_spline_fit(x, y)
+
+        # Coefficients should have shape (n_segments, 4, 3)
+        assert spline.coefficients.shape == (9, 4, 3)
+
+        t = torch.tensor([0.25, 0.5, 0.75], dtype=torch.float64)
+        y_eval = cubic_spline_evaluate(spline, t)
+
+        # Should have shape (3, 3) - 3 query points, 3 curves
+        assert y_eval.shape == (3, 3)
+
+        # Verify each curve matches individual fit
+        for i in range(3):
+            y_col = y[:, i]
+            spline_single = cubic_spline_fit(x, y_col)
+            y_single = cubic_spline_evaluate(spline_single, t)
+            torch.testing.assert_close(
+                y_eval[:, i], y_single, atol=1e-10, rtol=1e-10
+            )
+
+    def test_evaluate_batched_query(self):
+        """Test evaluation with batched query points (2D query shape)."""
+        from torchscience.spline import cubic_spline_evaluate, cubic_spline_fit
+
+        x = torch.linspace(0, 1, 10, dtype=torch.float64)
+        y = torch.sin(x * 2 * math.pi)
+
+        spline = cubic_spline_fit(x, y)
+
+        # Query with shape (batch, n_queries) = (4, 5)
+        t = torch.linspace(0.1, 0.9, 20, dtype=torch.float64).reshape(4, 5)
+        y_eval = cubic_spline_evaluate(spline, t)
+
+        # Output shape should match query shape
+        assert y_eval.shape == (4, 5)
+
+        # Verify values match flat evaluation
+        t_flat = t.flatten()
+        y_flat = cubic_spline_evaluate(spline, t_flat)
+        torch.testing.assert_close(
+            y_eval, y_flat.reshape(4, 5), atol=1e-10, rtol=1e-10
+        )
+
+    def test_derivative_batched(self):
+        """Test derivative of batched spline (multiple curves)."""
+        from torchscience.spline import (
+            cubic_spline_derivative,
+            cubic_spline_evaluate,
+            cubic_spline_fit,
+        )
+
+        x = torch.linspace(0, 1, 10, dtype=torch.float64)
+        # Two curves: x^2 and x^3
+        y = torch.stack([x**2, x**3], dim=-1)
+
+        # Use clamped boundary with correct derivatives for exact representation
+        # dy/dx for x^2 at x=0: 0, at x=1: 2
+        # dy/dx for x^3 at x=0: 0, at x=1: 3
+        boundary_values = torch.tensor(
+            [[0.0, 0.0], [2.0, 3.0]], dtype=torch.float64
+        )
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
+
+        # Get derivative
+        deriv_spline = cubic_spline_derivative(spline, order=1)
+
+        # Evaluate at test points
+        t = torch.tensor([0.25, 0.5, 0.75], dtype=torch.float64)
+        deriv_eval = cubic_spline_evaluate(deriv_spline, t)
+
+        # Should have shape (3, 2) - 3 query points, 2 curves
+        assert deriv_eval.shape == (3, 2)
+
+        # Expected: derivative of x^2 is 2x, derivative of x^3 is 3x^2
+        expected_col0 = 2 * t  # d/dx(x^2) = 2x
+        expected_col1 = 3 * t**2  # d/dx(x^3) = 3x^2
+
+        torch.testing.assert_close(
+            deriv_eval[:, 0], expected_col0, atol=1e-6, rtol=1e-6
+        )
+        torch.testing.assert_close(
+            deriv_eval[:, 1], expected_col1, atol=1e-6, rtol=1e-6
+        )
+
+    def test_integral_batched(self):
+        """Test integral of batched spline (multiple curves)."""
+        from torchscience.spline import cubic_spline_fit, cubic_spline_integral
+
+        x = torch.linspace(0, 1, 10, dtype=torch.float64)
+        # Two curves: x and x^2
+        y = torch.stack([x, x**2], dim=-1)
+
+        # Use clamped boundary with correct derivatives for exact representation
+        # dy/dx for x at x=0: 1, at x=1: 1
+        # dy/dx for x^2 at x=0: 0, at x=1: 2
+        boundary_values = torch.tensor(
+            [[1.0, 0.0], [1.0, 2.0]], dtype=torch.float64
+        )
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
+
+        # Compute integral from 0 to 1
+        integral = cubic_spline_integral(spline, 0.0, 1.0)
+
+        # Should have shape (2,) - one integral per curve
+        assert integral.shape == (2,)
+
+        # Expected: integral of x from 0 to 1 = 0.5
+        #           integral of x^2 from 0 to 1 = 1/3
+        expected = torch.tensor([0.5, 1.0 / 3.0], dtype=torch.float64)
+        torch.testing.assert_close(integral, expected, atol=1e-10, rtol=1e-10)
+
+    def test_gradcheck_batched(self):
+        """Test that gradients flow correctly through batched operations."""
+        from torch.autograd import gradcheck
+
+        from torchscience.spline import cubic_spline_evaluate, cubic_spline_fit
+
+        x = torch.linspace(0, 1, 8, dtype=torch.float64)
+        # Batched y values with shape (8, 2)
+        y = torch.stack(
+            [torch.sin(x * math.pi), torch.cos(x * math.pi)], dim=-1
+        )
+
+        spline = cubic_spline_fit(x, y)
+
+        # Query points need gradients
+        t = torch.tensor(
+            [0.2, 0.5, 0.8], dtype=torch.float64, requires_grad=True
+        )
+
+        def eval_fn(xq):
+            return cubic_spline_evaluate(spline, xq)
+
+        assert gradcheck(eval_fn, (t,), eps=1e-6, atol=1e-4)
