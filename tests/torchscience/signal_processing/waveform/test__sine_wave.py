@@ -850,3 +850,72 @@ class TestSineWaveExplicitTime:
         loss = result.sum()
         loss.backward()
         assert t.grad is not None
+
+
+class TestSineWaveGradcheck:
+    """Gradient verification tests using torch.autograd.gradcheck."""
+
+    def test_gradcheck_frequency(self):
+        """Verify gradients w.r.t. frequency using gradcheck."""
+
+        def func(freq):
+            return torchscience.signal_processing.waveform.sine_wave(
+                n=50, frequency=freq, sample_rate=100.0
+            )
+
+        freq = torch.tensor([1.0], dtype=torch.float64, requires_grad=True)
+        assert torch.autograd.gradcheck(
+            func, freq, eps=1e-6, atol=1e-4, rtol=1e-3
+        )
+
+    def test_gradcheck_amplitude(self):
+        """Verify gradients w.r.t. amplitude using gradcheck."""
+
+        def func(amp):
+            return torchscience.signal_processing.waveform.sine_wave(
+                n=50, amplitude=amp, sample_rate=100.0
+            )
+
+        amp = torch.tensor([1.0], dtype=torch.float64, requires_grad=True)
+        assert torch.autograd.gradcheck(
+            func, amp, eps=1e-6, atol=1e-4, rtol=1e-3
+        )
+
+    def test_gradcheck_phase(self):
+        """Verify gradients w.r.t. phase using gradcheck."""
+
+        def func(ph):
+            return torchscience.signal_processing.waveform.sine_wave(
+                n=50, phase=ph, sample_rate=100.0
+            )
+
+        ph = torch.tensor([0.5], dtype=torch.float64, requires_grad=True)
+        assert torch.autograd.gradcheck(
+            func, ph, eps=1e-6, atol=1e-4, rtol=1e-3
+        )
+
+    def test_gradcheck_explicit_t(self):
+        """Verify gradients w.r.t. explicit time tensor."""
+
+        def func(t):
+            return torchscience.signal_processing.waveform.sine_wave(
+                t=t, frequency=1.0
+            )
+
+        t = torch.linspace(0, 1, 50, dtype=torch.float64, requires_grad=True)
+        assert torch.autograd.gradcheck(
+            func, t, eps=1e-6, atol=1e-4, rtol=1e-3
+        )
+
+    def test_gradgradcheck_amplitude(self):
+        """Verify second-order gradients w.r.t. amplitude."""
+
+        def func(amp):
+            return torchscience.signal_processing.waveform.sine_wave(
+                n=50, amplitude=amp, sample_rate=100.0
+            )
+
+        amp = torch.tensor([1.0], dtype=torch.float64, requires_grad=True)
+        assert torch.autograd.gradgradcheck(
+            func, amp, eps=1e-6, atol=1e-4, rtol=1e-3
+        )
