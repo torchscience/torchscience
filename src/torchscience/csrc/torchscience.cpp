@@ -20,7 +20,6 @@
 #include "cpu/signal_processing/window_functions.h"
 #include "meta/signal_processing/window_functions.h"
 #include "autograd/signal_processing/window_functions.h"
-// #include "composite/signal_processing/waveform.h"  // Replaced by CPU kernel
 #include "cpu/signal_processing/waveform/sine_wave.h"
 // noise - CompositeExplicitAutograd
 #include "cpu/signal_processing/noise/white_noise.h"

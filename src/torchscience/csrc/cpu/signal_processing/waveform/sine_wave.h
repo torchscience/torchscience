@@ -1,12 +1,11 @@
 #pragma once
 
 #include <ATen/ATen.h>
+#include <ATen/Parallel.h>
 #include <torch/library.h>
 #include "../../../kernel/signal_processing/waveform/sine_wave.h"
 
-namespace torchscience {
-namespace cpu {
-namespace waveform {
+namespace torchscience::cpu::signal_processing::waveform {
 
 inline at::Tensor sine_wave(
     c10::optional<int64_t> n,
@@ -23,6 +22,18 @@ inline at::Tensor sine_wave(
   TORCH_CHECK(
       n.has_value() != t.has_value(),
       "sine_wave: Exactly one of n or t must be provided");
+
+  if (n.has_value()) {
+    TORCH_CHECK(n.value() >= 0, "sine_wave: n must be non-negative, got ", n.value());
+  }
+
+  // Early return for n == 0
+  if (n.has_value() && n.value() == 0) {
+    auto options = at::TensorOptions()
+        .dtype(dtype.value_or(at::kFloat))
+        .device(device.value_or(at::kCPU));
+    return at::empty({0}, options);
+  }
 
   // Determine time tensor
   at::Tensor time;
@@ -67,25 +78,25 @@ inline at::Tensor sine_wave(
     auto phase_data = phase_exp.data_ptr<scalar_t>();
     auto out_data = output.data_ptr<scalar_t>();
 
-    for (int64_t b = 0; b < batch_size; ++b) {
-      scalar_t freq = freq_data[b];
-      scalar_t amp = amp_data[b];
-      scalar_t ph = phase_data[b];
+    at::parallel_for(0, batch_size, 0, [&](int64_t begin, int64_t end) {
+      for (int64_t b = begin; b < end; ++b) {
+        scalar_t freq = freq_data[b];
+        scalar_t amp = amp_data[b];
+        scalar_t ph = phase_data[b];
 
-      for (int64_t i = 0; i < n_samples; ++i) {
-        out_data[b * n_samples + i] = kernel::sine_wave_kernel(
-            time_data[i], freq, amp, ph);
+        for (int64_t i = 0; i < n_samples; ++i) {
+          out_data[b * n_samples + i] = kernel::sine_wave_kernel(
+              time_data[i], freq, amp, ph);
+        }
       }
-    }
+    });
   });
 
   return output;
 }
 
-}  // namespace waveform
-}  // namespace cpu
-}  // namespace torchscience
+}  // namespace torchscience::cpu::signal_processing::waveform
 
 TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
-  m.impl("sine_wave", &torchscience::cpu::waveform::sine_wave);
+  m.impl("sine_wave", &torchscience::cpu::signal_processing::waveform::sine_wave);
 }
