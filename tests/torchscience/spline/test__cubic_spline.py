@@ -759,3 +759,145 @@ class TestCubicSplineIntegral:
         integral = cubic_spline_integral(spline, 0.5, 0.5)
         expected = torch.tensor(0.0, dtype=torch.float64)
         torch.testing.assert_close(integral, expected, atol=1e-12, rtol=1e-12)
+
+
+class TestCubicSplineConvenience:
+    """Tests for cubic_spline convenience function."""
+
+    def test_cubic_spline_convenience(self):
+        """Test basic usage of cubic_spline convenience function."""
+        from torchscience.spline import cubic_spline
+
+        # Create data from sin(x)
+        x = torch.linspace(0, 2 * math.pi, 20, dtype=torch.float64)
+        y = torch.sin(x)
+
+        # Create callable using convenience function
+        f = cubic_spline(x, y)
+
+        # Evaluate at original points - should match original y values
+        y_eval = f(x)
+        torch.testing.assert_close(y_eval, y, atol=1e-12, rtol=1e-12)
+
+        # Evaluate at intermediate points
+        x_mid = torch.tensor([0.5, 1.0, 2.0, 3.0], dtype=torch.float64)
+        y_mid = f(x_mid)
+
+        # Results should be reasonable (close to sin values)
+        y_expected = torch.sin(x_mid)
+        torch.testing.assert_close(y_mid, y_expected, atol=1e-2, rtol=1e-2)
+
+    def test_cubic_spline_convenience_boundary(self):
+        """Test that boundary conditions are passed correctly."""
+        from torchscience.spline import cubic_spline
+
+        x = torch.linspace(0, 1, 10, dtype=torch.float64)
+        y = x**2
+
+        # Test with natural boundary
+        f_natural = cubic_spline(x, y, boundary="natural")
+        result = f_natural(torch.tensor([0.5], dtype=torch.float64))
+        assert result.shape == (1,)
+
+        # Test with periodic boundary
+        x_periodic = torch.linspace(0, 2 * math.pi, 20, dtype=torch.float64)
+        y_periodic = torch.sin(x_periodic)
+        f_periodic = cubic_spline(x_periodic, y_periodic, boundary="periodic")
+        result_periodic = f_periodic(
+            torch.tensor([math.pi], dtype=torch.float64)
+        )
+        assert result_periodic.shape == (1,)
+
+    def test_cubic_spline_convenience_extrapolate_error(self):
+        """Test that extrapolate='error' raises ExtrapolationError."""
+        from torchscience.spline import ExtrapolationError, cubic_spline
+
+        x = torch.linspace(0, 1, 10, dtype=torch.float64)
+        y = torch.sin(x)
+
+        # Default extrapolate='error' should raise on out-of-domain query
+        f = cubic_spline(x, y, extrapolate="error")
+
+        # Query below domain
+        with pytest.raises(ExtrapolationError):
+            f(torch.tensor([-0.1], dtype=torch.float64))
+
+        # Query above domain
+        with pytest.raises(ExtrapolationError):
+            f(torch.tensor([1.1], dtype=torch.float64))
+
+    def test_cubic_spline_convenience_extrapolate_clamp(self):
+        """Test that extrapolate='clamp' clamps to boundary values."""
+        from torchscience.spline import cubic_spline
+
+        x = torch.linspace(0, 1, 10, dtype=torch.float64)
+        y = torch.linspace(0, 2, 10, dtype=torch.float64)  # y = 2*x
+
+        f = cubic_spline(x, y, extrapolate="clamp")
+
+        # Query outside domain should return boundary values
+        y_outside = f(torch.tensor([-1.0, 2.0], dtype=torch.float64))
+        y_at_0 = f(torch.tensor([0.0], dtype=torch.float64))
+        y_at_1 = f(torch.tensor([1.0], dtype=torch.float64))
+
+        torch.testing.assert_close(
+            y_outside[0], y_at_0.squeeze(), atol=1e-12, rtol=1e-12
+        )
+        torch.testing.assert_close(
+            y_outside[1], y_at_1.squeeze(), atol=1e-12, rtol=1e-12
+        )
+
+    def test_cubic_spline_convenience_extrapolate_extend(self):
+        """Test that extrapolate='extend' extrapolates using boundary polynomial."""
+        from torchscience.spline import cubic_spline
+
+        # Use a linear function - extrapolation should follow the line
+        x = torch.linspace(0, 1, 10, dtype=torch.float64)
+        y = 2 * x + 1  # y = 2x + 1
+
+        f = cubic_spline(x, y, extrapolate="extend")
+
+        # Query outside domain
+        x_query = torch.tensor([-0.5, 1.5], dtype=torch.float64)
+        y_eval = f(x_query)
+
+        # For a linear function, extrapolation should be exact
+        y_expected = 2 * x_query + 1
+        torch.testing.assert_close(y_eval, y_expected, atol=1e-6, rtol=1e-6)
+
+    def test_cubic_spline_convenience_returns_callable(self):
+        """Test that cubic_spline returns a callable."""
+        from torchscience.spline import cubic_spline
+
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = x**2
+
+        f = cubic_spline(x, y)
+
+        # Should be callable
+        assert callable(f)
+
+        # Should accept tensor input
+        result = f(torch.tensor([0.5], dtype=torch.float64))
+        assert isinstance(result, torch.Tensor)
+
+    def test_cubic_spline_convenience_multidimensional(self):
+        """Test cubic_spline with multi-dimensional y values."""
+        from torchscience.spline import cubic_spline
+
+        x = torch.linspace(0, 1, 10, dtype=torch.float64)
+        # 2D curve: (sin(t), cos(t))
+        y = torch.stack(
+            [torch.sin(x * math.pi), torch.cos(x * math.pi)], dim=-1
+        )  # (10, 2)
+
+        f = cubic_spline(x, y)
+
+        # Evaluate at original points
+        y_eval = f(x)
+        assert y_eval.shape == (10, 2)
+        torch.testing.assert_close(y_eval, y, atol=1e-12, rtol=1e-12)
+
+        # Evaluate at single point
+        y_mid = f(torch.tensor([0.5], dtype=torch.float64))
+        assert y_mid.shape == (1, 2)

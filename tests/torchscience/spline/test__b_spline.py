@@ -1215,3 +1215,155 @@ class TestBSplineDerivative:
             atol=1e-10,
             rtol=1e-10,
         )
+
+
+class TestBSplineConvenience:
+    """Tests for b_spline convenience function."""
+
+    def test_b_spline_convenience(self):
+        """Test basic usage of b_spline convenience function."""
+        from torchscience.spline import b_spline
+
+        # Create data from sin(x)
+        x = torch.linspace(0, 2 * torch.pi, 30, dtype=torch.float64)
+        y = torch.sin(x)
+
+        # Create callable using convenience function
+        f = b_spline(x, y, degree=3, n_knots=8)
+
+        # Evaluate at original points - should approximately match original y values
+        y_eval = f(x)
+        torch.testing.assert_close(y_eval, y, atol=1e-3, rtol=1e-3)
+
+        # Evaluate at intermediate points
+        x_mid = torch.tensor([0.5, 1.0, 2.0, 3.0], dtype=torch.float64)
+        y_mid = f(x_mid)
+
+        # Results should be reasonable (close to sin values)
+        y_expected = torch.sin(x_mid)
+        torch.testing.assert_close(y_mid, y_expected, atol=1e-2, rtol=1e-2)
+
+    def test_b_spline_convenience_default_degree(self):
+        """Test that default degree=3 works correctly."""
+        from torchscience.spline import b_spline
+
+        x = torch.linspace(0, 1, 20, dtype=torch.float64)
+        y = x**2
+
+        # Create without specifying degree (default is 3)
+        f = b_spline(x, y, n_knots=5)
+
+        # Should work and produce reasonable results
+        result = f(torch.tensor([0.5], dtype=torch.float64))
+        expected = torch.tensor([0.25], dtype=torch.float64)
+        torch.testing.assert_close(result, expected, atol=1e-2, rtol=1e-2)
+
+    def test_b_spline_convenience_different_degrees(self):
+        """Test b_spline with different degrees."""
+        from torchscience.spline import b_spline
+
+        x = torch.linspace(0, 1, 30, dtype=torch.float64)
+        y = x**2
+
+        # Test degrees 1, 2, 3
+        for degree in [1, 2, 3]:
+            f = b_spline(x, y, degree=degree, n_knots=5)
+            result = f(torch.tensor([0.5], dtype=torch.float64))
+            assert result.shape == (1,)
+            # Quadratic function should be well-approximated by degree >= 2
+            if degree >= 2:
+                expected = torch.tensor([0.25], dtype=torch.float64)
+                torch.testing.assert_close(
+                    result, expected, atol=5e-2, rtol=5e-2
+                )
+
+    def test_b_spline_convenience_extrapolate_error(self):
+        """Test that extrapolate='error' raises ExtrapolationError."""
+        from torchscience.spline import ExtrapolationError, b_spline
+
+        x = torch.linspace(0, 1, 20, dtype=torch.float64)
+        y = x**2
+
+        # Default extrapolate='error' should raise on out-of-domain query
+        f = b_spline(x, y, n_knots=5, extrapolate="error")
+
+        # Query below domain
+        with pytest.raises(ExtrapolationError):
+            f(torch.tensor([-0.1], dtype=torch.float64))
+
+        # Query above domain
+        with pytest.raises(ExtrapolationError):
+            f(torch.tensor([1.1], dtype=torch.float64))
+
+    def test_b_spline_convenience_extrapolate_clamp(self):
+        """Test that extrapolate='clamp' clamps to boundary values."""
+        from torchscience.spline import b_spline
+
+        x = torch.linspace(0, 1, 20, dtype=torch.float64)
+        y = torch.linspace(0, 2, 20, dtype=torch.float64)  # y = 2*x
+
+        f = b_spline(x, y, n_knots=5, extrapolate="clamp")
+
+        # Query outside domain should return boundary values
+        y_outside = f(torch.tensor([-1.0, 2.0], dtype=torch.float64))
+        y_at_0 = f(torch.tensor([0.0], dtype=torch.float64))
+        y_at_1 = f(torch.tensor([1.0], dtype=torch.float64))
+
+        torch.testing.assert_close(
+            y_outside[0], y_at_0.squeeze(), atol=1e-10, rtol=1e-10
+        )
+        torch.testing.assert_close(
+            y_outside[1], y_at_1.squeeze(), atol=1e-10, rtol=1e-10
+        )
+
+    def test_b_spline_convenience_returns_callable(self):
+        """Test that b_spline returns a callable."""
+        from torchscience.spline import b_spline
+
+        x = torch.linspace(0, 1, 20, dtype=torch.float64)
+        y = x**2
+
+        f = b_spline(x, y, n_knots=5)
+
+        # Should be callable
+        assert callable(f)
+
+        # Should accept tensor input
+        result = f(torch.tensor([0.5], dtype=torch.float64))
+        assert isinstance(result, torch.Tensor)
+
+    def test_b_spline_convenience_multidimensional(self):
+        """Test b_spline with multi-dimensional y values."""
+        from torchscience.spline import b_spline
+
+        # 2D curve: circle in 2D
+        t = torch.linspace(0, 2 * torch.pi, 30, dtype=torch.float64)
+        x = t  # Parameter values
+        y = torch.stack([torch.cos(t), torch.sin(t)], dim=-1)  # (30, 2)
+
+        f = b_spline(x, y, degree=3, n_knots=8)
+
+        # Evaluate at original points
+        y_eval = f(x)
+        assert y_eval.shape == (30, 2)
+
+        # Should be a good approximation
+        torch.testing.assert_close(y_eval, y, atol=1e-3, rtol=1e-3)
+
+        # Evaluate at single point
+        y_mid = f(torch.tensor([torch.pi], dtype=torch.float64))
+        assert y_mid.shape == (1, 2)
+
+    def test_b_spline_convenience_default_n_knots(self):
+        """Test that n_knots=None uses a reasonable default."""
+        from torchscience.spline import b_spline
+
+        x = torch.linspace(0, 1, 50, dtype=torch.float64)
+        y = torch.sin(x * torch.pi)
+
+        # Create without specifying n_knots
+        f = b_spline(x, y, degree=3)
+
+        # Should work and produce reasonable results
+        y_eval = f(x)
+        torch.testing.assert_close(y_eval, y, atol=1e-2, rtol=1e-2)
