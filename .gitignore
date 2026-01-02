@@ -70,6 +70,7 @@ develop-eggs/
 dist/
 dmypy.json
 docs/_build/
+docs/plans/
 downloads/
 eggs/
 env.bak/
