@@ -50,6 +50,7 @@ DegreeError
 from torchscience.spline._b_spline import (
     BSpline,
     b_spline_basis,
+    b_spline_derivative,
     b_spline_evaluate,
     b_spline_fit,
 )
@@ -78,6 +79,7 @@ __all__ = [
     "cubic_spline_integral",
     # B-spline functions
     "b_spline_basis",
+    "b_spline_derivative",
     "b_spline_evaluate",
     "b_spline_fit",
     # Exceptions

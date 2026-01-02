@@ -985,3 +985,233 @@ class TestBSplineFit:
         torch.testing.assert_close(
             y_clamp[1], y_at_1.squeeze(), atol=1e-10, rtol=1e-10
         )
+
+
+class TestBSplineDerivative:
+    """Tests for b_spline_derivative function."""
+
+    def test_derivative_of_linear(self):
+        """Derivative of linear spline is constant.
+
+        A linear B-spline (degree 1) has piecewise constant derivative.
+        For a linear spline that interpolates y = 2*x on [0, 1],
+        the derivative should be 2 everywhere.
+        """
+        from torchscience.spline import (
+            BSpline,
+            b_spline_derivative,
+            b_spline_evaluate,
+        )
+
+        # Degree 1 (linear) B-spline with clamped knots
+        # n_knots = n_control + degree + 1 = 2 + 1 + 1 = 4
+        # For y = 2*x on [0, 1]: control points at [0, 2]
+        knots = torch.tensor([0.0, 0.0, 1.0, 1.0], dtype=torch.float64)
+        control_points = torch.tensor([0.0, 2.0], dtype=torch.float64)
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=1,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Compute derivative
+        derivative = b_spline_derivative(spline)
+
+        # The derivative of a degree 1 spline is a degree 0 spline (constant)
+        assert derivative.degree == 0
+
+        # Evaluate derivative at multiple points
+        t = torch.linspace(0.0, 1.0, 10, dtype=torch.float64)
+        dy = b_spline_evaluate(derivative, t)
+
+        # Derivative of y = 2*x should be 2
+        expected = torch.full((10,), 2.0, dtype=torch.float64)
+        torch.testing.assert_close(dy, expected, atol=1e-10, rtol=1e-10)
+
+    def test_derivative_of_quadratic(self):
+        """Derivative of quadratic spline is linear.
+
+        A quadratic B-spline (degree 2) has piecewise linear derivative.
+        For a quadratic spline representing x^2, the derivative should be 2*x.
+        """
+        from torchscience.spline import (
+            b_spline_derivative,
+            b_spline_evaluate,
+            b_spline_fit,
+        )
+
+        # Fit a quadratic B-spline to x^2 data
+        x = torch.linspace(0.0, 2.0, 20, dtype=torch.float64)
+        y = x**2
+
+        spline = b_spline_fit(x, y, degree=2, n_knots=5)
+
+        # Compute derivative
+        derivative = b_spline_derivative(spline)
+
+        # The derivative of a degree 2 spline is a degree 1 spline (linear)
+        assert derivative.degree == 1
+
+        # Evaluate derivative at interior points
+        t = torch.linspace(0.1, 1.9, 15, dtype=torch.float64)
+        dy = b_spline_evaluate(derivative, t)
+
+        # Derivative of x^2 should be approximately 2*x
+        expected = 2 * t
+        torch.testing.assert_close(dy, expected, atol=1e-2, rtol=1e-2)
+
+    def test_derivative_of_cubic(self):
+        """Derivative of x^3 is 3x^2.
+
+        A cubic B-spline (degree 3) representing x^3 should have derivative 3*x^2.
+        """
+        from torchscience.spline import (
+            b_spline_derivative,
+            b_spline_evaluate,
+            b_spline_fit,
+        )
+
+        # Fit a cubic B-spline to x^3 data
+        x = torch.linspace(0.0, 2.0, 30, dtype=torch.float64)
+        y = x**3
+
+        spline = b_spline_fit(x, y, degree=3, n_knots=8)
+
+        # Compute derivative
+        derivative = b_spline_derivative(spline)
+
+        # The derivative of a degree 3 spline is a degree 2 spline (quadratic)
+        assert derivative.degree == 2
+
+        # Evaluate derivative at interior points
+        t = torch.linspace(0.1, 1.9, 20, dtype=torch.float64)
+        dy = b_spline_evaluate(derivative, t)
+
+        # Derivative of x^3 should be approximately 3*x^2
+        expected = 3 * t**2
+        torch.testing.assert_close(dy, expected, atol=5e-2, rtol=5e-2)
+
+    def test_second_derivative(self):
+        """Second derivative of cubic is linear.
+
+        The second derivative of x^3 is 6*x.
+        """
+        from torchscience.spline import (
+            b_spline_derivative,
+            b_spline_evaluate,
+            b_spline_fit,
+        )
+
+        # Fit a cubic B-spline to x^3 data
+        x = torch.linspace(0.0, 2.0, 30, dtype=torch.float64)
+        y = x**3
+
+        spline = b_spline_fit(x, y, degree=3, n_knots=8)
+
+        # Compute second derivative
+        second_derivative = b_spline_derivative(spline, order=2)
+
+        # The second derivative of a degree 3 spline is a degree 1 spline (linear)
+        assert second_derivative.degree == 1
+
+        # Evaluate second derivative at interior points
+        t = torch.linspace(0.2, 1.8, 15, dtype=torch.float64)
+        d2y = b_spline_evaluate(second_derivative, t)
+
+        # Second derivative of x^3 should be approximately 6*x
+        expected = 6 * t
+        torch.testing.assert_close(d2y, expected, atol=1e-1, rtol=1e-1)
+
+    def test_derivative_preserves_domain(self):
+        """Derivative has same valid domain as original spline.
+
+        The derivative spline should be evaluable over the same domain
+        as the original spline.
+        """
+        from torchscience.spline import (
+            BSpline,
+            b_spline_derivative,
+            b_spline_evaluate,
+        )
+
+        # Clamped cubic B-spline on [0, 1]
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        control_points = torch.tensor(
+            [0.0, 1.0, 2.0, 1.0, 0.0], dtype=torch.float64
+        )
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=3,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Compute derivative
+        derivative = b_spline_derivative(spline)
+
+        # Should be able to evaluate at the original domain endpoints
+        t_endpoints = torch.tensor([0.0, 1.0], dtype=torch.float64)
+        dy = b_spline_evaluate(derivative, t_endpoints)
+
+        # Should not raise and should return valid values
+        assert dy.shape == (2,)
+        assert torch.isfinite(dy).all()
+
+        # Should also evaluate at interior points
+        t_interior = torch.linspace(0.0, 1.0, 50, dtype=torch.float64)
+        dy_interior = b_spline_evaluate(derivative, t_interior)
+        assert dy_interior.shape == (50,)
+        assert torch.isfinite(dy_interior).all()
+
+    def test_scipy_comparison(self):
+        """Compare with scipy BSpline derivative."""
+        scipy = pytest.importorskip("scipy")
+        from scipy.interpolate import BSpline as ScipyBSpline
+
+        from torchscience.spline import (
+            BSpline,
+            b_spline_derivative,
+            b_spline_evaluate,
+        )
+
+        # Clamped cubic B-spline
+        knots_np = [0.0, 0.0, 0.0, 0.0, 0.25, 0.5, 0.75, 1.0, 1.0, 1.0, 1.0]
+        control_np = [0.0, 0.5, 1.0, 0.8, 0.3, 0.1, 0.5]
+        degree = 3
+
+        knots = torch.tensor(knots_np, dtype=torch.float64)
+        control_points = torch.tensor(control_np, dtype=torch.float64)
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=degree,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Create scipy equivalent and compute derivative
+        scipy_spline = ScipyBSpline(knots_np, control_np, degree)
+        scipy_derivative = scipy_spline.derivative()
+
+        # Compute our derivative
+        torch_derivative = b_spline_derivative(spline)
+
+        # Evaluate at many points in the interior
+        t = torch.linspace(0.01, 0.99, 50, dtype=torch.float64)
+        y_torch = b_spline_evaluate(torch_derivative, t)
+        y_scipy = scipy_derivative(t.numpy())
+
+        torch.testing.assert_close(
+            y_torch,
+            torch.tensor(y_scipy, dtype=torch.float64),
+            atol=1e-10,
+            rtol=1e-10,
+        )
