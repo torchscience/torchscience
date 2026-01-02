@@ -8,6 +8,8 @@ PyTorch operators for mathematics, science, and engineering.
    :caption: Contents:
 
    installation
+   roadmap
+   architecture
    api/index
 
 Indices and tables
