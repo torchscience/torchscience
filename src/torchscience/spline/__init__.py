@@ -52,6 +52,7 @@ from torchscience.spline._cubic_spline import (
     cubic_spline_derivative,
     cubic_spline_evaluate,
     cubic_spline_fit,
+    cubic_spline_integral,
 )
 from torchscience.spline._exceptions import (
     DegreeError,
@@ -67,6 +68,7 @@ __all__ = [
     "cubic_spline_derivative",
     "cubic_spline_evaluate",
     "cubic_spline_fit",
+    "cubic_spline_integral",
     # Exceptions
     "SplineError",
     "ExtrapolationError",

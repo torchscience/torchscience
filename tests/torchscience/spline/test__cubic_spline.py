@@ -515,3 +515,247 @@ class TestCubicSplineDerivative:
         # Expected: (2t, 3t^2) at t=0.5: (1.0, 0.75)
         expected = torch.tensor([[1.0, 0.75]], dtype=torch.float64)
         torch.testing.assert_close(deriv_eval, expected, atol=1e-4, rtol=1e-4)
+
+
+class TestCubicSplineIntegral:
+    """Tests for cubic_spline_integral function."""
+
+    def test_integral_of_constant(self):
+        """Test that integral of constant = constant * (b - a)."""
+        from torchscience.spline import (
+            cubic_spline_fit,
+            cubic_spline_integral,
+        )
+
+        # Create a spline that represents a constant function y = 5
+        x = torch.linspace(0, 2, 5, dtype=torch.float64)
+        y = torch.full_like(x, 5.0)
+
+        spline = cubic_spline_fit(x, y, boundary="natural")
+
+        # Integral of constant 5 from 0 to 2 should be 5 * 2 = 10
+        integral = cubic_spline_integral(spline, 0.0, 2.0)
+        expected = torch.tensor(10.0, dtype=torch.float64)
+        torch.testing.assert_close(integral, expected, atol=1e-10, rtol=1e-10)
+
+        # Integral from 0.5 to 1.5 should be 5 * 1 = 5
+        integral_partial = cubic_spline_integral(spline, 0.5, 1.5)
+        expected_partial = torch.tensor(5.0, dtype=torch.float64)
+        torch.testing.assert_close(
+            integral_partial, expected_partial, atol=1e-10, rtol=1e-10
+        )
+
+    def test_integral_of_linear(self):
+        """Test that integral of x from 0 to 1 = 0.5."""
+        from torchscience.spline import (
+            cubic_spline_fit,
+            cubic_spline_integral,
+        )
+
+        # Create a spline that represents y = x
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = x.clone()
+
+        # Use clamped boundary with correct derivatives (dy/dx = 1)
+        boundary_values = torch.tensor([1.0, 1.0], dtype=torch.float64)
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
+
+        # Integral of x from 0 to 1 = x^2/2 |_0^1 = 0.5
+        integral = cubic_spline_integral(spline, 0.0, 1.0)
+        expected = torch.tensor(0.5, dtype=torch.float64)
+        torch.testing.assert_close(integral, expected, atol=1e-10, rtol=1e-10)
+
+    def test_integral_of_quadratic(self):
+        """Test that integral of x^2 from 0 to 1 = 1/3."""
+        from torchscience.spline import (
+            cubic_spline_fit,
+            cubic_spline_integral,
+        )
+
+        # Create a spline that represents y = x^2
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = x**2
+
+        # Use clamped boundary with correct derivatives (dy/dx = 2x)
+        # At x=0: 0, at x=1: 2
+        boundary_values = torch.tensor([0.0, 2.0], dtype=torch.float64)
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
+
+        # Integral of x^2 from 0 to 1 = x^3/3 |_0^1 = 1/3
+        integral = cubic_spline_integral(spline, 0.0, 1.0)
+        expected = torch.tensor(1.0 / 3.0, dtype=torch.float64)
+        torch.testing.assert_close(integral, expected, atol=1e-10, rtol=1e-10)
+
+    def test_integral_of_cubic(self):
+        """Test that integral of x^3 from 0 to 1 = 1/4."""
+        from torchscience.spline import (
+            cubic_spline_fit,
+            cubic_spline_integral,
+        )
+
+        # Create a spline that represents y = x^3
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = x**3
+
+        # Use clamped boundary with correct derivatives (dy/dx = 3x^2)
+        # At x=0: 0, at x=1: 3
+        boundary_values = torch.tensor([0.0, 3.0], dtype=torch.float64)
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
+
+        # Integral of x^3 from 0 to 1 = x^4/4 |_0^1 = 1/4
+        integral = cubic_spline_integral(spline, 0.0, 1.0)
+        expected = torch.tensor(0.25, dtype=torch.float64)
+        torch.testing.assert_close(integral, expected, atol=1e-10, rtol=1e-10)
+
+    def test_integral_negative_bounds(self):
+        """Test that integral from b to a = -integral from a to b."""
+        from torchscience.spline import (
+            cubic_spline_fit,
+            cubic_spline_integral,
+        )
+
+        # Create a spline for y = x^2
+        x = torch.linspace(0, 2, 5, dtype=torch.float64)
+        y = x**2
+
+        spline = cubic_spline_fit(x, y, boundary="natural")
+
+        # Integral from 0 to 1
+        integral_forward = cubic_spline_integral(spline, 0.0, 1.0)
+
+        # Integral from 1 to 0 should be the negative
+        integral_backward = cubic_spline_integral(spline, 1.0, 0.0)
+
+        torch.testing.assert_close(
+            integral_backward, -integral_forward, atol=1e-10, rtol=1e-10
+        )
+
+    def test_integral_partial_domain(self):
+        """Test integral over a subset of the spline domain."""
+        from torchscience.spline import (
+            cubic_spline_fit,
+            cubic_spline_integral,
+        )
+
+        # Create a spline for y = x (linear)
+        x = torch.linspace(0, 4, 9, dtype=torch.float64)
+        y = x.clone()
+
+        # Use clamped boundary for exact linear representation
+        boundary_values = torch.tensor([1.0, 1.0], dtype=torch.float64)
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
+
+        # Integral of x from 1 to 3 = x^2/2 |_1^3 = 9/2 - 1/2 = 4
+        integral = cubic_spline_integral(spline, 1.0, 3.0)
+        expected = torch.tensor(4.0, dtype=torch.float64)
+        torch.testing.assert_close(integral, expected, atol=1e-10, rtol=1e-10)
+
+    def test_integral_scipy_comparison(self):
+        """Compare integral to scipy.integrate.quad."""
+        scipy = pytest.importorskip("scipy")
+        from scipy.integrate import quad
+        from scipy.interpolate import CubicSpline as ScipyCubicSpline
+
+        from torchscience.spline import (
+            cubic_spline_fit,
+            cubic_spline_integral,
+        )
+
+        # Create a spline for sin(x)
+        x = torch.linspace(0, 2 * math.pi, 20, dtype=torch.float64)
+        y = torch.sin(x)
+
+        spline = cubic_spline_fit(x, y, boundary="natural")
+
+        # Create scipy spline for comparison
+        scipy_spline = ScipyCubicSpline(
+            x.numpy(), y.numpy(), bc_type="natural"
+        )
+
+        # Compute integrals
+        a, b = 0.5, 2.0
+        torch_integral = cubic_spline_integral(spline, a, b)
+        scipy_integral, _ = quad(scipy_spline, a, b)
+
+        torch.testing.assert_close(
+            torch_integral,
+            torch.tensor(scipy_integral, dtype=torch.float64),
+            atol=1e-8,
+            rtol=1e-8,
+        )
+
+    def test_integral_tensor_bounds(self):
+        """Test that tensor bounds work correctly."""
+        from torchscience.spline import (
+            cubic_spline_fit,
+            cubic_spline_integral,
+        )
+
+        # Create a spline for y = x
+        x = torch.linspace(0, 2, 5, dtype=torch.float64)
+        y = x.clone()
+
+        boundary_values = torch.tensor([1.0, 1.0], dtype=torch.float64)
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
+
+        # Use tensor bounds
+        a = torch.tensor(0.0, dtype=torch.float64)
+        b = torch.tensor(1.0, dtype=torch.float64)
+
+        integral = cubic_spline_integral(spline, a, b)
+        expected = torch.tensor(0.5, dtype=torch.float64)
+        torch.testing.assert_close(integral, expected, atol=1e-10, rtol=1e-10)
+
+    def test_integral_multidimensional(self):
+        """Test integral with multi-dimensional y values."""
+        from torchscience.spline import (
+            cubic_spline_fit,
+            cubic_spline_integral,
+        )
+
+        # Create a 2D spline: (t, t^2)
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = torch.stack([x, x**2], dim=-1)  # (5, 2)
+
+        # Use clamped boundary with correct derivatives for exact representation
+        # For (t, t^2): derivatives are (1, 2t)
+        # At t=0: (1, 0), at t=1: (1, 2)
+        boundary_values = torch.tensor(
+            [[1.0, 0.0], [1.0, 2.0]], dtype=torch.float64
+        )
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
+
+        # Integral from 0 to 1
+        integral = cubic_spline_integral(spline, 0.0, 1.0)
+
+        # Expected: integral of (t, t^2) = (t^2/2, t^3/3) |_0^1 = (0.5, 1/3)
+        expected = torch.tensor([0.5, 1.0 / 3.0], dtype=torch.float64)
+        torch.testing.assert_close(integral, expected, atol=1e-10, rtol=1e-10)
+
+    def test_integral_same_bounds(self):
+        """Test that integral with a == b returns zero."""
+        from torchscience.spline import (
+            cubic_spline_fit,
+            cubic_spline_integral,
+        )
+
+        x = torch.linspace(0, 1, 5, dtype=torch.float64)
+        y = x**2
+
+        spline = cubic_spline_fit(x, y)
+
+        integral = cubic_spline_integral(spline, 0.5, 0.5)
+        expected = torch.tensor(0.0, dtype=torch.float64)
+        torch.testing.assert_close(integral, expected, atol=1e-12, rtol=1e-12)
