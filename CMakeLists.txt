@@ -1,16 +1,12 @@
-cmake_minimum_required(
-  VERSION 3.15
-)
+cmake_minimum_required(VERSION 3.18)
 
 if(NOT DEFINED SKBUILD_PROJECT_NAME)
   set(SKBUILD_PROJECT_NAME "torchscience")
 endif()
 
-project(
-  ${SKBUILD_PROJECT_NAME}
-  LANGUAGES CXX
-)
+project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
 
+# Build options
 option(TORCHSCIENCE_BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(TORCHSCIENCE_BUILD_TESTS "Build tests" OFF)
 
@@ -18,57 +14,35 @@ if((TORCHSCIENCE_BUILD_BENCHMARKS OR TORCHSCIENCE_BUILD_TESTS) AND NOT CMAKE_BUI
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
-find_package(
-  Python
-  REQUIRED COMPONENTS
-  Interpreter
-  Development.Module
-)
+# Core dependencies
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(Torch REQUIRED)
 
-find_package(
-  Torch
-  REQUIRED
-)
+# Backend detection (sets TORCHSCIENCE_ENABLE_CUDA, TORCHSCIENCE_ENABLE_MPS)
+include(cmake/backend_detection.cmake)
 
-set(TORCHSCIENCE_SOURCES
-  src/torchscience/csrc/torchscience.cpp
-)
+# Base sources
+set(TORCHSCIENCE_SOURCES src/torchscience/csrc/torchscience.cpp)
 
-if(TORCH_CUDA_LIBRARIES)
-  enable_language(CUDA)
-  list(APPEND TORCHSCIENCE_SOURCES
-    src/torchscience/csrc/cuda/special_functions/chebyshev_polynomial_t.cu
-    src/torchscience/csrc/cuda/special_functions/gamma.cu
-    src/torchscience/csrc/cuda/signal_processing/filter.cu
-    src/torchscience/csrc/cuda/statistics/descriptive/kurtosis.cu
-    src/torchscience/csrc/cuda/integral_transform/hilbert_transform.cu
-    src/torchscience/csrc/cuda/integral_transform/inverse_hilbert_transform.cu
-  )
-  add_definitions(-DTORCHSCIENCE_CUDA)
+# Create library target
+add_library(_csrc MODULE ${TORCHSCIENCE_SOURCES})
+
+# Include backend configurations
+include(cmake/cpu.cmake)
+
+if(TORCHSCIENCE_ENABLE_CUDA)
+  include(cmake/cuda.cmake)
 endif()
 
-add_library(
-  _csrc
-  MODULE
-  ${TORCHSCIENCE_SOURCES}
-)
+if(TORCHSCIENCE_ENABLE_MPS)
+  include(cmake/mps.cmake)
+endif()
 
-target_include_directories(
-  _csrc
-  PRIVATE
-  ${Python_INCLUDE_DIRS}
-)
+# Common configuration
+target_include_directories(_csrc PRIVATE ${Python_INCLUDE_DIRS})
+target_link_libraries(_csrc PRIVATE ${TORCH_LIBRARIES} Python::Module)
 
-target_link_libraries(
-  _csrc
-  PRIVATE
-  ${TORCH_LIBRARIES}
-  Python::Module
-)
-
-set_target_properties(
-  _csrc
-  PROPERTIES
+set_target_properties(_csrc PROPERTIES
   BUILD_WITH_INSTALL_RPATH TRUE
   CXX_STANDARD 17
   INSTALL_RPATH_USE_LINK_PATH TRUE
@@ -76,54 +50,42 @@ set_target_properties(
 )
 
 if(APPLE)
-  set_target_properties(
-    _csrc
-    PROPERTIES
+  set_target_properties(_csrc PROPERTIES
     INSTALL_RPATH "@loader_path;@loader_path/../torch/lib"
     SUFFIX ".so"
   )
 endif()
 
+# Install
 if(SKBUILD)
-  install(
-    TARGETS _csrc
-    DESTINATION ${SKBUILD_PROJECT_NAME}
-  )
+  install(TARGETS _csrc DESTINATION ${SKBUILD_PROJECT_NAME})
 endif()
 
+# Benchmarks and tests
 if(TORCHSCIENCE_BUILD_BENCHMARKS OR TORCHSCIENCE_BUILD_TESTS)
   include(FetchContent)
 endif()
 
 if(TORCHSCIENCE_BUILD_BENCHMARKS)
-  FetchContent_Declare(
-    benchmark
+  FetchContent_Declare(benchmark
     GIT_REPOSITORY https://github.com/google/benchmark.git
     GIT_TAG v1.9.1
   )
-
   set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
   set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
   set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
-
   FetchContent_MakeAvailable(benchmark)
-
   add_subdirectory(benchmark)
 endif()
 
 if(TORCHSCIENCE_BUILD_TESTS)
-  FetchContent_Declare(
-    googletest
+  FetchContent_Declare(googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
     GIT_TAG v1.15.2
   )
-
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
   set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-
   FetchContent_MakeAvailable(googletest)
-
   enable_testing()
-
   add_subdirectory(test)
 endif()
