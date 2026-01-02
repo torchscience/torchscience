@@ -1,5 +1,6 @@
 import math
 
+import pytest
 import torch
 import torch.testing
 
@@ -792,3 +793,60 @@ class TestSineWaveTensorParameters:
         loss = result.sum()
         loss.backward()
         assert phase.grad is not None
+
+
+class TestSineWaveExplicitTime:
+    """Tests for explicit time tensor (t parameter)."""
+
+    def test_explicit_time_basic(self):
+        """Test explicit time tensor produces correct output."""
+        t = torch.linspace(0, 1, 100)
+        result = torchscience.signal_processing.waveform.sine_wave(
+            t=t, frequency=1.0
+        )
+        assert result.shape == (100,)
+        # First sample at t=0 should be sin(0) = 0
+        torch.testing.assert_close(
+            result[0], torch.tensor(0.0), atol=1e-6, rtol=1e-6
+        )
+
+    def test_explicit_time_with_batched_freq(self):
+        """Test explicit time with batched frequency."""
+        t = torch.linspace(0, 1, 100)
+        freqs = torch.tensor([1.0, 2.0, 5.0])
+        result = torchscience.signal_processing.waveform.sine_wave(
+            t=t, frequency=freqs
+        )
+        assert result.shape == (3, 100)
+
+    def test_n_and_t_mutually_exclusive(self):
+        """Test that providing both n and t raises error."""
+        t = torch.linspace(0, 1, 100)
+        with pytest.raises(ValueError, match="mutually exclusive"):
+            torchscience.signal_processing.waveform.sine_wave(n=100, t=t)
+
+    def test_neither_n_nor_t_raises(self):
+        """Test that providing neither n nor t raises error."""
+        with pytest.raises(ValueError, match="Either n or t"):
+            torchscience.signal_processing.waveform.sine_wave()
+
+    def test_sample_rate_ignored_with_t(self):
+        """Test that sample_rate is ignored when t is provided."""
+        t = torch.linspace(0, 1, 100)
+        result1 = torchscience.signal_processing.waveform.sine_wave(
+            t=t, frequency=1.0, sample_rate=1.0
+        )
+        result2 = torchscience.signal_processing.waveform.sine_wave(
+            t=t, frequency=1.0, sample_rate=44100.0
+        )
+        torch.testing.assert_close(result1, result2)
+
+    def test_gradient_through_t(self):
+        """Test gradients flow through explicit time tensor."""
+        t = torch.linspace(0, 1, 100, requires_grad=True)
+        result = torchscience.signal_processing.waveform.sine_wave(
+            t=t, frequency=1.0
+        )
+        loss = result.sum()
+        loss.backward()
+        assert t.grad is not None
