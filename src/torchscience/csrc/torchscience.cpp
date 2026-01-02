@@ -21,6 +21,7 @@
 #include "meta/signal_processing/window_functions.h"
 #include "autograd/signal_processing/window_functions.h"
 #include "cpu/signal_processing/waveform/sine_wave.h"
+#include "cpu/signal_processing/waveform/sine_wave_backward.h"
 #include "meta/signal_processing/waveform/sine_wave.h"
 #include "autograd/signal_processing/waveform/sine_wave.h"
 // noise - CompositeExplicitAutograd
