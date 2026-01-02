@@ -15,7 +15,7 @@ src/torchscience/polynomial/
 ├── __init__.py
 ├── _exceptions.py          # PolynomialError, DegreeError
 ├── _polynomial.py          # Polynomial tensorclass + core functions
-└── _roots.py               # poly_roots (companion matrix)
+└── _roots.py               # polynomial_roots (companion matrix)
 
 tests/torchscience/polynomial/
 ├── __init__.py
@@ -51,8 +51,43 @@ class Polynomial:
     Batch of 2 polynomials:
         Polynomial(coeffs=torch.tensor([[1.0, 2.0], [3.0, 4.0]]))
         # First: 1 + 2x, Second: 3 + 4x
+
+    Operator overloading:
+        p + q    # polynomial_add(p, q)
+        p - q    # polynomial_subtract(p, q)
+        p * q    # polynomial_multiply(p, q)
+        -p       # polynomial_negate(p)
+        p(x)     # polynomial_evaluate(p, x)
     """
     coeffs: Tensor
+
+    def __add__(self, other: "Polynomial") -> "Polynomial":
+        return polynomial_add(self, other)
+
+    def __radd__(self, other: "Polynomial") -> "Polynomial":
+        return polynomial_add(other, self)
+
+    def __sub__(self, other: "Polynomial") -> "Polynomial":
+        return polynomial_subtract(self, other)
+
+    def __rsub__(self, other: "Polynomial") -> "Polynomial":
+        return polynomial_subtract(other, self)
+
+    def __mul__(self, other: Union["Polynomial", Tensor]) -> "Polynomial":
+        if isinstance(other, Polynomial):
+            return polynomial_multiply(self, other)
+        return polynomial_scale(self, other)
+
+    def __rmul__(self, other: Union["Polynomial", Tensor]) -> "Polynomial":
+        if isinstance(other, Polynomial):
+            return polynomial_multiply(other, self)
+        return polynomial_scale(self, other)
+
+    def __neg__(self) -> "Polynomial":
+        return polynomial_negate(self)
+
+    def __call__(self, x: Tensor) -> Tensor:
+        return polynomial_evaluate(self, x)
 ```
 
 **Design decisions:**
@@ -107,7 +142,7 @@ def polynomial(coeffs: Tensor) -> Polynomial:
     tensor([1., 2., 3.])
     """
 
-def poly_from_roots(roots: Tensor) -> Polynomial:
+def polynomial_from_roots(roots: Tensor) -> Polynomial:
     """Construct monic polynomial from its roots.
 
     Constructs (x - r_0)(x - r_1)...(x - r_{n-1}).
@@ -125,7 +160,7 @@ def poly_from_roots(roots: Tensor) -> Polynomial:
     Examples
     --------
     >>> roots = torch.tensor([1.0, 2.0])  # (x-1)(x-2) = x^2 - 3x + 2
-    >>> p = poly_from_roots(roots)
+    >>> p = polynomial_from_roots(roots)
     >>> p.coeffs
     tensor([2., -3., 1.])
     """
@@ -134,7 +169,7 @@ def poly_from_roots(roots: Tensor) -> Polynomial:
 ### Arithmetic Operations
 
 ```python
-def poly_add(p: Polynomial, q: Polynomial) -> Polynomial:
+def polynomial_add(p: Polynomial, q: Polynomial) -> Polynomial:
     """Add two polynomials.
 
     Broadcasts batch dimensions. Result degree is max(deg(p), deg(q)).
@@ -150,7 +185,7 @@ def poly_add(p: Polynomial, q: Polynomial) -> Polynomial:
         Sum p + q.
     """
 
-def poly_sub(p: Polynomial, q: Polynomial) -> Polynomial:
+def polynomial_subtract(p: Polynomial, q: Polynomial) -> Polynomial:
     """Subtract q from p.
 
     Broadcasts batch dimensions. Result degree is max(deg(p), deg(q)).
@@ -166,7 +201,7 @@ def poly_sub(p: Polynomial, q: Polynomial) -> Polynomial:
         Difference p - q.
     """
 
-def poly_mul(p: Polynomial, q: Polynomial) -> Polynomial:
+def polynomial_multiply(p: Polynomial, q: Polynomial) -> Polynomial:
     """Multiply two polynomials.
 
     Computes convolution of coefficients. Result degree is deg(p) + deg(q).
@@ -182,7 +217,7 @@ def poly_mul(p: Polynomial, q: Polynomial) -> Polynomial:
         Product p * q.
     """
 
-def poly_scale(p: Polynomial, c: Tensor) -> Polynomial:
+def polynomial_scale(p: Polynomial, c: Tensor) -> Polynomial:
     """Multiply polynomial by scalar(s).
 
     Parameters
@@ -198,7 +233,7 @@ def poly_scale(p: Polynomial, c: Tensor) -> Polynomial:
         Scaled polynomial c * p.
     """
 
-def poly_neg(p: Polynomial) -> Polynomial:
+def polynomial_negate(p: Polynomial) -> Polynomial:
     """Negate polynomial.
 
     Returns
@@ -209,15 +244,15 @@ def poly_neg(p: Polynomial) -> Polynomial:
 ```
 
 **Implementation notes:**
-- `poly_add`/`poly_sub`: Pad shorter coefficient tensor with zeros, then add/subtract
-- `poly_mul`: Use explicit convolution loop or `torch.conv1d` for batched case
+- `polynomial_add`/`polynomial_subtract`: Pad shorter coefficient tensor with zeros, then add/subtract
+- `polynomial_multiply`: Use explicit convolution loop or `torch.conv1d` for batched case
 - All operations preserve dtype and device from inputs
 - Autograd flows through naturally
 
 ### Evaluation and Calculus
 
 ```python
-def poly_evaluate(p: Polynomial, x: Tensor) -> Tensor:
+def polynomial_evaluate(p: Polynomial, x: Tensor) -> Tensor:
     """Evaluate polynomial at points using Horner's method.
 
     Parameters
@@ -235,11 +270,11 @@ def poly_evaluate(p: Polynomial, x: Tensor) -> Tensor:
     Examples
     --------
     >>> p = polynomial(torch.tensor([1.0, 2.0, 3.0]))  # 1 + 2x + 3x^2
-    >>> poly_evaluate(p, torch.tensor([0.0, 1.0, 2.0]))
+    >>> polynomial_evaluate(p, torch.tensor([0.0, 1.0, 2.0]))
     tensor([ 1.,  6., 17.])
     """
 
-def poly_derivative(p: Polynomial, order: int = 1) -> Polynomial:
+def polynomial_derivative(p: Polynomial, order: int = 1) -> Polynomial:
     """Compute derivative of polynomial.
 
     Parameters
@@ -257,11 +292,11 @@ def poly_derivative(p: Polynomial, order: int = 1) -> Polynomial:
     Examples
     --------
     >>> p = polynomial(torch.tensor([1.0, 2.0, 3.0]))  # 1 + 2x + 3x^2
-    >>> poly_derivative(p).coeffs  # 2 + 6x
+    >>> polynomial_derivative(p).coeffs  # 2 + 6x
     tensor([2., 6.])
     """
 
-def poly_antiderivative(p: Polynomial, constant: Tensor = 0.0) -> Polynomial:
+def polynomial_antiderivative(p: Polynomial, constant: Tensor = 0.0) -> Polynomial:
     """Compute antiderivative (indefinite integral).
 
     Parameters
@@ -279,11 +314,11 @@ def poly_antiderivative(p: Polynomial, constant: Tensor = 0.0) -> Polynomial:
     Examples
     --------
     >>> p = polynomial(torch.tensor([2.0, 6.0]))  # 2 + 6x
-    >>> poly_antiderivative(p).coeffs  # 0 + 2x + 3x^2
+    >>> polynomial_antiderivative(p).coeffs  # 0 + 2x + 3x^2
     tensor([0., 2., 3.])
     """
 
-def poly_integral(p: Polynomial, a: Tensor, b: Tensor) -> Tensor:
+def polynomial_integral(p: Polynomial, a: Tensor, b: Tensor) -> Tensor:
     """Compute definite integral.
 
     Parameters
@@ -301,7 +336,7 @@ def poly_integral(p: Polynomial, a: Tensor, b: Tensor) -> Tensor:
     Examples
     --------
     >>> p = polynomial(torch.tensor([1.0, 0.0, 1.0]))  # 1 + x^2
-    >>> poly_integral(p, torch.tensor(0.0), torch.tensor(1.0))
+    >>> polynomial_integral(p, torch.tensor(0.0), torch.tensor(1.0))
     tensor(1.3333)  # 1 + 1/3
     """
 ```
@@ -315,7 +350,7 @@ def poly_integral(p: Polynomial, a: Tensor, b: Tensor) -> Tensor:
 ### Root Finding
 
 ```python
-def poly_roots(p: Polynomial) -> Tensor:
+def polynomial_roots(p: Polynomial) -> Tensor:
     """Find polynomial roots via companion matrix eigenvalues.
 
     Parameters
@@ -337,7 +372,7 @@ def poly_roots(p: Polynomial) -> Tensor:
     Examples
     --------
     >>> p = polynomial(torch.tensor([2.0, -3.0, 1.0]))  # (x-1)(x-2)
-    >>> poly_roots(p)
+    >>> polynomial_roots(p)
     tensor([1.+0.j, 2.+0.j])
 
     Notes
@@ -367,7 +402,7 @@ Eigenvalues of C are roots of p(x).
 ### Utilities
 
 ```python
-def poly_degree(p: Polynomial) -> Tensor:
+def polynomial_degree(p: Polynomial) -> Tensor:
     """Return degree of polynomial(s).
 
     Parameters
@@ -382,7 +417,7 @@ def poly_degree(p: Polynomial) -> Tensor:
         Zero polynomial has degree 0 (or -1, TBD).
     """
 
-def poly_trim(p: Polynomial, tol: float = 0.0) -> Polynomial:
+def polynomial_trim(p: Polynomial, tol: float = 0.0) -> Polynomial:
     """Remove trailing near-zero coefficients.
 
     Parameters
@@ -398,7 +433,7 @@ def poly_trim(p: Polynomial, tol: float = 0.0) -> Polynomial:
         Trimmed polynomial with at least one coefficient.
     """
 
-def poly_equal(p: Polynomial, q: Polynomial, tol: float = 1e-8) -> Tensor:
+def polynomial_equal(p: Polynomial, q: Polynomial, tol: float = 1e-8) -> Tensor:
     """Check polynomial equality within tolerance.
 
     Parameters
@@ -421,11 +456,11 @@ def poly_equal(p: Polynomial, q: Polynomial, tol: float = 1e-8) -> Tensor:
 
 **Strict on construction:**
 - `polynomial()` raises `PolynomialError` if coefficients tensor is empty
-- `poly_roots()` raises `DegreeError` for constant/zero polynomials
+- `polynomial_roots()` raises `DegreeError` for constant/zero polynomials
 
 **Natural results from operations:**
-- `poly_derivative()` of constant returns `Polynomial([0.0])`
-- `poly_add()` with different degrees pads with zeros
+- `polynomial_derivative()` of constant returns `Polynomial([0.0])`
+- `polynomial_add()` with different degrees pads with zeros
 - Operations always return valid `Polynomial` instances
 
 ---
@@ -434,8 +469,8 @@ def poly_equal(p: Polynomial, q: Polynomial, tol: float = 1e-8) -> Tensor:
 
 **Correctness tests:**
 - Compare against `numpy.polynomial.Polynomial` for all operations
-- Property-based tests: `poly_evaluate(poly_derivative(p), x)` equals finite difference
-- Round-trip: `poly_from_roots(poly_roots(p))` recovers `p` (up to scaling)
+- Property-based tests: `polynomial_evaluate(polynomial_derivative(p), x)` equals finite difference
+- Round-trip: `polynomial_from_roots(polynomial_roots(p))` recovers `p` (up to scaling)
 
 **Autograd tests:**
 - `torch.autograd.gradcheck` for all differentiable operations
@@ -453,12 +488,12 @@ def poly_equal(p: Polynomial, q: Polynomial, tol: float = 1e-8) -> Tensor:
 
 ## Future Extensions (Not in Initial Scope)
 
-- **Division:** `poly_divmod`, `poly_mod`, `poly_gcd`
-- **Composition:** `poly_compose(p, q)` for `p(q(x))`
-- **Power:** `poly_pow(p, n)` for `p(x)^n`
+- **Division:** `polynomial_divmod`, `polynomial_mod`, `polynomial_gcd`
+- **Composition:** `polynomial_compose(p, q)` for `p(q(x))`
+- **Power:** `polynomial_pow(p, n)` for `p(x)^n`
 - **Orthogonal polynomials:** Legendre, Hermite, Laguerre, Jacobi families
-- **Basis conversion:** `poly_from_chebyshev`, `poly_to_chebyshev`
-- **Fitting:** `poly_fit` for least-squares polynomial fitting
+- **Basis conversion:** `polynomial_from_chebyshev`, `polynomial_to_chebyshev`
+- **Fitting:** `polynomial_fit` for least-squares polynomial fitting
 - **Rational functions:** `RationalFunction` for p(x)/q(x)
 
 ---
@@ -472,19 +507,19 @@ def poly_equal(p: Polynomial, q: Polynomial, tol: float = 1e-8) -> Tensor:
 - Implement `polynomial()` constructor
 
 ### Phase 2: Core Arithmetic
-- `poly_add`, `poly_sub`, `poly_neg`
-- `poly_scale`, `poly_mul`
-- `poly_degree`
+- `polynomial_add`, `polynomial_subtract`, `polynomial_negate`
+- `polynomial_scale`, `polynomial_multiply`
+- `polynomial_degree`
 
 ### Phase 3: Evaluation and Calculus
-- `poly_evaluate` (Horner's method)
-- `poly_derivative`, `poly_antiderivative`
-- `poly_integral`
+- `polynomial_evaluate` (Horner's method)
+- `polynomial_derivative`, `polynomial_antiderivative`
+- `polynomial_integral`
 
 ### Phase 4: Root Finding and Utilities
-- `poly_roots` (companion matrix)
-- `poly_from_roots`
-- `poly_trim`, `poly_equal`
+- `polynomial_roots` (companion matrix)
+- `polynomial_from_roots`
+- `polynomial_trim`, `polynomial_equal`
 
 ### Phase 5: Testing and Polish
 - Comprehensive test suite

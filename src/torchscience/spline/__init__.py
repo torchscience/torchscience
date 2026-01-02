@@ -47,7 +47,11 @@ DegreeError
     Invalid degree for given knots.
 """
 
-from torchscience.spline._b_spline import b_spline_basis
+from torchscience.spline._b_spline import (
+    BSpline,
+    b_spline_basis,
+    b_spline_evaluate,
+)
 from torchscience.spline._cubic_spline import (
     CubicSpline,
     cubic_spline_derivative,
@@ -64,6 +68,7 @@ from torchscience.spline._exceptions import (
 
 __all__ = [
     # Data types
+    "BSpline",
     "CubicSpline",
     # Cubic spline functions
     "cubic_spline_derivative",
@@ -72,6 +77,7 @@ __all__ = [
     "cubic_spline_integral",
     # B-spline functions
     "b_spline_basis",
+    "b_spline_evaluate",
     # Exceptions
     "SplineError",
     "ExtrapolationError",

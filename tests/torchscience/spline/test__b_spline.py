@@ -4,6 +4,378 @@ import pytest
 import torch
 
 
+class TestBSpline:
+    """Tests for BSpline tensorclass."""
+
+    def test_bspline_creation(self):
+        """Can create BSpline with valid inputs."""
+        from torchscience.spline import BSpline
+
+        # Clamped cubic B-spline with 5 control points
+        # n_knots = n_control + degree + 1 = 5 + 3 + 1 = 9
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        control_points = torch.tensor(
+            [[0.0, 0.0], [0.25, 0.5], [0.5, 1.0], [0.75, 0.5], [1.0, 0.0]],
+            dtype=torch.float64,
+        )
+        degree = 3
+        extrapolate = "error"
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=degree,
+            extrapolate=extrapolate,
+            batch_size=[],
+        )
+
+        assert isinstance(spline, BSpline)
+        assert spline.knots.shape == (9,)
+        assert spline.control_points.shape == (5, 2)
+        assert spline.degree == 3
+        assert spline.extrapolate == "error"
+
+
+class TestBSplineEvaluate:
+    """Tests for b_spline_evaluate function."""
+
+    def test_evaluate_linear(self):
+        """Linear B-spline (degree 1) interpolates control points.
+
+        For degree 1, with clamped knots, the spline passes through
+        all control points at the corresponding knots.
+        """
+        from torchscience.spline import BSpline, b_spline_evaluate
+
+        # Degree 1 with 3 control points
+        # n_knots = n_control + degree + 1 = 3 + 1 + 1 = 5
+        # Clamped: [0, 0, 0.5, 1, 1]
+        knots = torch.tensor([0.0, 0.0, 0.5, 1.0, 1.0], dtype=torch.float64)
+        control_points = torch.tensor([0.0, 1.0, 0.0], dtype=torch.float64)
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=1,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Evaluate at knot positions (interior knots)
+        t = torch.tensor([0.0, 0.5, 1.0], dtype=torch.float64)
+        y = b_spline_evaluate(spline, t)
+
+        # For clamped linear spline, should pass through control points
+        expected = torch.tensor([0.0, 1.0, 0.0], dtype=torch.float64)
+        torch.testing.assert_close(y, expected, atol=1e-10, rtol=1e-10)
+
+    def test_evaluate_cubic(self):
+        """Cubic B-spline (degree 3) is smooth."""
+        from torchscience.spline import BSpline, b_spline_evaluate
+
+        # Clamped cubic B-spline
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        control_points = torch.tensor(
+            [0.0, 1.0, 1.0, 0.0], dtype=torch.float64
+        )
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=3,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Evaluate at multiple points
+        t = torch.linspace(0.0, 1.0, 50, dtype=torch.float64)
+        y = b_spline_evaluate(spline, t)
+
+        # Check shape
+        assert y.shape == (50,)
+
+        # Check smoothness: values should vary continuously
+        # The curve should be bell-shaped (starts at 0, goes to ~0.67, back to 0)
+        assert y[0].item() == pytest.approx(0.0, abs=1e-10)
+        assert y[-1].item() == pytest.approx(0.0, abs=1e-10)
+        assert y[25].item() > 0.5  # Peak should be positive
+
+    def test_evaluate_at_endpoints(self):
+        """Clamped knots: spline passes through first/last control points."""
+        from torchscience.spline import BSpline, b_spline_evaluate
+
+        # Clamped cubic B-spline with 5 control points
+        # n_knots = 5 + 3 + 1 = 9
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        control_points = torch.tensor(
+            [1.0, 2.0, 3.0, 2.0, 1.5], dtype=torch.float64
+        )
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=3,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Evaluate at endpoints
+        t = torch.tensor([0.0, 1.0], dtype=torch.float64)
+        y = b_spline_evaluate(spline, t)
+
+        # For clamped B-splines, endpoints equal first/last control points
+        torch.testing.assert_close(
+            y[0], control_points[0], atol=1e-10, rtol=1e-10
+        )
+        torch.testing.assert_close(
+            y[1], control_points[-1], atol=1e-10, rtol=1e-10
+        )
+
+    def test_evaluate_extrapolate_error(self):
+        """Out-of-domain raises ExtrapolationError."""
+        from torchscience.spline import (
+            BSpline,
+            ExtrapolationError,
+            b_spline_evaluate,
+        )
+
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        control_points = torch.tensor(
+            [0.0, 1.0, 1.0, 0.0], dtype=torch.float64
+        )
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=3,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Query outside domain should raise
+        with pytest.raises(ExtrapolationError):
+            b_spline_evaluate(
+                spline, torch.tensor([-0.1], dtype=torch.float64)
+            )
+
+        with pytest.raises(ExtrapolationError):
+            b_spline_evaluate(spline, torch.tensor([1.1], dtype=torch.float64))
+
+    def test_evaluate_extrapolate_clamp(self):
+        """Clamp mode works."""
+        from torchscience.spline import BSpline, b_spline_evaluate
+
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        control_points = torch.tensor(
+            [1.0, 2.0, 2.0, 3.0], dtype=torch.float64
+        )
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=3,
+            extrapolate="clamp",
+            batch_size=[],
+        )
+
+        # Query outside domain should clamp to boundary values
+        t_outside = torch.tensor([-1.0, 2.0], dtype=torch.float64)
+        y = b_spline_evaluate(spline, t_outside)
+
+        # Should equal endpoint values
+        y_at_0 = b_spline_evaluate(
+            spline, torch.tensor([0.0], dtype=torch.float64)
+        )
+        y_at_1 = b_spline_evaluate(
+            spline, torch.tensor([1.0], dtype=torch.float64)
+        )
+
+        torch.testing.assert_close(
+            y[0], y_at_0.squeeze(), atol=1e-10, rtol=1e-10
+        )
+        torch.testing.assert_close(
+            y[1], y_at_1.squeeze(), atol=1e-10, rtol=1e-10
+        )
+
+    def test_evaluate_multidimensional(self):
+        """Multi-dimensional control points work."""
+        from torchscience.spline import BSpline, b_spline_evaluate
+
+        # 2D curve in 3D space
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        # 4 control points, each in 3D
+        control_points = torch.tensor(
+            [
+                [0.0, 0.0, 0.0],
+                [1.0, 2.0, 0.0],
+                [2.0, 2.0, 1.0],
+                [3.0, 0.0, 1.0],
+            ],
+            dtype=torch.float64,
+        )
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=3,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Evaluate at multiple points
+        t = torch.linspace(0.0, 1.0, 10, dtype=torch.float64)
+        y = b_spline_evaluate(spline, t)
+
+        # Output shape should be (10, 3)
+        assert y.shape == (10, 3)
+
+        # Endpoints should equal first/last control points (clamped)
+        torch.testing.assert_close(
+            y[0], control_points[0], atol=1e-10, rtol=1e-10
+        )
+        torch.testing.assert_close(
+            y[-1], control_points[-1], atol=1e-10, rtol=1e-10
+        )
+
+    def test_scipy_comparison(self):
+        """Compare with scipy.interpolate.BSpline."""
+        scipy = pytest.importorskip("scipy")
+        from scipy.interpolate import BSpline as ScipyBSpline
+
+        from torchscience.spline import BSpline, b_spline_evaluate
+
+        # Clamped cubic B-spline
+        knots_np = [0.0, 0.0, 0.0, 0.0, 0.25, 0.5, 0.75, 1.0, 1.0, 1.0, 1.0]
+        control_np = [0.0, 0.5, 1.0, 0.8, 0.3, 0.1, 0.5]
+        degree = 3
+
+        knots = torch.tensor(knots_np, dtype=torch.float64)
+        control_points = torch.tensor(control_np, dtype=torch.float64)
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=degree,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Create scipy equivalent
+        scipy_spline = ScipyBSpline(knots_np, control_np, degree)
+
+        # Evaluate at many points
+        t = torch.linspace(0.0, 1.0, 100, dtype=torch.float64)
+        y_torch = b_spline_evaluate(spline, t)
+        y_scipy = scipy_spline(t.numpy())
+
+        torch.testing.assert_close(
+            y_torch,
+            torch.tensor(y_scipy, dtype=torch.float64),
+            atol=1e-10,
+            rtol=1e-10,
+        )
+
+    def test_evaluate_scalar_input(self):
+        """Scalar input returns scalar output."""
+        from torchscience.spline import BSpline, b_spline_evaluate
+
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        control_points = torch.tensor(
+            [0.0, 1.0, 1.0, 0.0], dtype=torch.float64
+        )
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=3,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Scalar input
+        t = torch.tensor(0.5, dtype=torch.float64)
+        y = b_spline_evaluate(spline, t)
+
+        # Should be scalar (0-d tensor)
+        assert y.dim() == 0
+
+    def test_evaluate_batch_query_shape(self):
+        """Arbitrary query shapes are preserved."""
+        from torchscience.spline import BSpline, b_spline_evaluate
+
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        control_points = torch.tensor(
+            [0.0, 1.0, 1.0, 0.0], dtype=torch.float64
+        )
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=3,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # 2D query shape
+        t = torch.linspace(0.0, 1.0, 12, dtype=torch.float64).reshape(3, 4)
+        y = b_spline_evaluate(spline, t)
+
+        # Output shape should match query shape
+        assert y.shape == (3, 4)
+
+    def test_gradcheck(self):
+        """Verify that gradients work correctly."""
+        from torch.autograd import gradcheck
+
+        from torchscience.spline import BSpline, b_spline_evaluate
+
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        control_points = torch.tensor(
+            [1.0, 2.0, 3.0, 2.0, 1.5], dtype=torch.float64, requires_grad=True
+        )
+
+        spline = BSpline(
+            knots=knots,
+            control_points=control_points,
+            degree=3,
+            extrapolate="error",
+            batch_size=[],
+        )
+
+        # Query points (avoid knots where gradient may be discontinuous)
+        t = torch.tensor([0.2, 0.4, 0.6, 0.8], dtype=torch.float64)
+
+        def eval_fn(cp):
+            s = BSpline(
+                knots=knots,
+                control_points=cp,
+                degree=3,
+                extrapolate="error",
+                batch_size=[],
+            )
+            return b_spline_evaluate(s, t)
+
+        assert gradcheck(eval_fn, (control_points,), eps=1e-6, atol=1e-4)
+
+
 class TestBSplineBasis:
     """Tests for b_spline_basis function with Cox-de Boor recursion."""
 
