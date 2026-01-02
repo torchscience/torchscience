@@ -90,7 +90,7 @@ inline at::Tensor gaussian_window_backward(
   (void)grad_output;
   (void)output;
   (void)n;
-  return at::empty_like(std_input, at::TensorOptions().device(at::kMeta));
+  return at::empty_like(std_input, at::TensorOptions().dtype(std_input.scalar_type()).device(at::kMeta));
 }
 
 inline at::Tensor periodic_gaussian_window_backward(
@@ -141,7 +141,7 @@ inline at::Tensor general_hamming_window_backward(
   (void)grad_output;
   (void)output;
   (void)n;
-  return at::empty_like(alpha_input, at::TensorOptions().device(at::kMeta));
+  return at::empty_like(alpha_input, at::TensorOptions().dtype(alpha_input.scalar_type()).device(at::kMeta));
 }
 
 inline at::Tensor periodic_general_hamming_window_backward(
@@ -192,7 +192,7 @@ inline at::Tensor general_cosine_window_backward(
   (void)grad_output;
   (void)output;
   (void)n;
-  return at::empty_like(coeffs_input, at::TensorOptions().device(at::kMeta));
+  return at::empty_like(coeffs_input, at::TensorOptions().dtype(coeffs_input.scalar_type()).device(at::kMeta));
 }
 
 inline at::Tensor periodic_general_cosine_window_backward(
