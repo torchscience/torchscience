@@ -21,9 +21,10 @@ public:
       c10::optional<at::Device> device) {
 
     at::AutoDispatchBelowAutograd guard;
-    auto output = at::redispatch::sine_wave(
-        c10::DispatchKeySet({c10::DispatchKey::CPU, c10::DispatchKey::CUDA}),
-        n, t, frequency, sample_rate, amplitude, phase, dtype, layout, device);
+    auto output = c10::Dispatcher::singleton()
+        .findSchemaOrThrow("torchscience::sine_wave", "")
+        .typed<at::Tensor(c10::optional<int64_t>, c10::optional<at::Tensor>, const at::Tensor&, double, const at::Tensor&, const at::Tensor&, c10::optional<at::ScalarType>, c10::optional<at::Layout>, c10::optional<at::Device>)>()
+        .call(n, t, frequency, sample_rate, amplitude, phase, dtype, layout, device);
 
     // Save for backward
     ctx->saved_data["n"] = n;
@@ -61,10 +62,11 @@ public:
     }
 
     // Call backward kernel
-    auto grads = at::redispatch::sine_wave_backward(
-        c10::DispatchKeySet({c10::DispatchKey::CPU, c10::DispatchKey::CUDA}),
-        grad_output, n, t_saved.defined() ? c10::optional<at::Tensor>(t_saved) : c10::nullopt,
-        frequency, sample_rate, amplitude, phase);
+    auto grads = c10::Dispatcher::singleton()
+        .findSchemaOrThrow("torchscience::sine_wave_backward", "")
+        .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor>(const at::Tensor&, c10::optional<int64_t>, c10::optional<at::Tensor>, const at::Tensor&, double, const at::Tensor&, const at::Tensor&)>()
+        .call(grad_output, n, t_saved.defined() ? c10::optional<at::Tensor>(t_saved) : c10::nullopt,
+              frequency, sample_rate, amplitude, phase);
 
     // Return: n, t, frequency, sample_rate, amplitude, phase, dtype, layout, device
     return {

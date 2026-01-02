@@ -5,7 +5,7 @@
 #include "../../cpu/creation_operators.h"
 #include "../../meta/creation_operators.h"
 
-namespace torchscience::window_function {
+namespace torchscience::composite::window_function {
 
 namespace {
 
@@ -33,10 +33,8 @@ inline at::Tensor rectangular_window(
   const c10::optional<at::Device> device,
   const bool requires_grad
 ) {
-  // Determine target device
   at::Device target_device = device.value_or(at::kCPU);
 
-  // Dispatch to appropriate implementation
   if (target_device.type() == at::kMeta) {
     return torchscience::meta::MetaCreationOperator<RectangularWindowTraits>::forward<int64_t>(
       n, dtype, layout, device, requires_grad
@@ -48,9 +46,197 @@ inline at::Tensor rectangular_window(
   }
 }
 
-} // namespace torchscience::window_function
+// =============================================================================
+// Routing macros for parameterless windows
+// =============================================================================
 
-// CompositeExplicitAutograd implementation for operators with no tensor arguments
+#define DEFINE_PARAMETERLESS_WINDOW_ROUTER(name)                                \
+inline at::Tensor name##_window(                                                \
+  int64_t n,                                                                    \
+  c10::optional<at::ScalarType> dtype,                                          \
+  c10::optional<at::Layout> layout,                                             \
+  c10::optional<at::Device> device,                                             \
+  bool requires_grad                                                            \
+) {                                                                             \
+  at::Device target_device = device.value_or(at::kCPU);                         \
+  c10::DispatchKeySet ks = target_device.type() == at::kMeta                    \
+    ? c10::DispatchKeySet(c10::DispatchKey::Meta)                               \
+    : c10::DispatchKeySet(c10::DispatchKey::CPU);                               \
+  return c10::Dispatcher::singleton()                                           \
+    .findSchemaOrThrow("torchscience::" #name "_window", "")                    \
+    .typed<at::Tensor(int64_t, c10::optional<at::ScalarType>,                   \
+                      c10::optional<at::Layout>, c10::optional<at::Device>,     \
+                      bool)>()                                                  \
+    .redispatch(ks, n, dtype, layout, device, requires_grad);                   \
+}                                                                               \
+                                                                                \
+inline at::Tensor periodic_##name##_window(                                     \
+  int64_t n,                                                                    \
+  c10::optional<at::ScalarType> dtype,                                          \
+  c10::optional<at::Layout> layout,                                             \
+  c10::optional<at::Device> device,                                             \
+  bool requires_grad                                                            \
+) {                                                                             \
+  at::Device target_device = device.value_or(at::kCPU);                         \
+  c10::DispatchKeySet ks = target_device.type() == at::kMeta                    \
+    ? c10::DispatchKeySet(c10::DispatchKey::Meta)                               \
+    : c10::DispatchKeySet(c10::DispatchKey::CPU);                               \
+  return c10::Dispatcher::singleton()                                           \
+    .findSchemaOrThrow("torchscience::periodic_" #name "_window", "")           \
+    .typed<at::Tensor(int64_t, c10::optional<at::ScalarType>,                   \
+                      c10::optional<at::Layout>, c10::optional<at::Device>,     \
+                      bool)>()                                                  \
+    .redispatch(ks, n, dtype, layout, device, requires_grad);                   \
+}
+
+DEFINE_PARAMETERLESS_WINDOW_ROUTER(hann)
+DEFINE_PARAMETERLESS_WINDOW_ROUTER(hamming)
+DEFINE_PARAMETERLESS_WINDOW_ROUTER(blackman)
+DEFINE_PARAMETERLESS_WINDOW_ROUTER(bartlett)
+DEFINE_PARAMETERLESS_WINDOW_ROUTER(cosine)
+DEFINE_PARAMETERLESS_WINDOW_ROUTER(nuttall)
+
+#undef DEFINE_PARAMETERLESS_WINDOW_ROUTER
+
+// =============================================================================
+// Routing for parameterized windows
+// =============================================================================
+
+inline at::Tensor gaussian_window(
+  int64_t n,
+  const at::Tensor& std_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  // For parameterized windows, device from tensor or explicit device param
+  at::Device target_device = device.value_or(std_input.device());
+  c10::DispatchKeySet ks = target_device.type() == at::kMeta
+    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
+    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  return c10::Dispatcher::singleton()
+    .findSchemaOrThrow("torchscience::gaussian_window", "")
+    .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
+                      c10::optional<at::Layout>, c10::optional<at::Device>)>()
+    .redispatch(ks, n, std_input, dtype, layout, device);
+}
+
+inline at::Tensor periodic_gaussian_window(
+  int64_t n,
+  const at::Tensor& std_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  at::Device target_device = device.value_or(std_input.device());
+  c10::DispatchKeySet ks = target_device.type() == at::kMeta
+    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
+    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  return c10::Dispatcher::singleton()
+    .findSchemaOrThrow("torchscience::periodic_gaussian_window", "")
+    .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
+                      c10::optional<at::Layout>, c10::optional<at::Device>)>()
+    .redispatch(ks, n, std_input, dtype, layout, device);
+}
+
+inline at::Tensor general_hamming_window(
+  int64_t n,
+  const at::Tensor& alpha_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  at::Device target_device = device.value_or(alpha_input.device());
+  c10::DispatchKeySet ks = target_device.type() == at::kMeta
+    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
+    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  return c10::Dispatcher::singleton()
+    .findSchemaOrThrow("torchscience::general_hamming_window", "")
+    .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
+                      c10::optional<at::Layout>, c10::optional<at::Device>)>()
+    .redispatch(ks, n, alpha_input, dtype, layout, device);
+}
+
+inline at::Tensor periodic_general_hamming_window(
+  int64_t n,
+  const at::Tensor& alpha_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  at::Device target_device = device.value_or(alpha_input.device());
+  c10::DispatchKeySet ks = target_device.type() == at::kMeta
+    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
+    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  return c10::Dispatcher::singleton()
+    .findSchemaOrThrow("torchscience::periodic_general_hamming_window", "")
+    .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
+                      c10::optional<at::Layout>, c10::optional<at::Device>)>()
+    .redispatch(ks, n, alpha_input, dtype, layout, device);
+}
+
+inline at::Tensor general_cosine_window(
+  int64_t n,
+  const at::Tensor& coeffs_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  at::Device target_device = device.value_or(coeffs_input.device());
+  c10::DispatchKeySet ks = target_device.type() == at::kMeta
+    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
+    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  return c10::Dispatcher::singleton()
+    .findSchemaOrThrow("torchscience::general_cosine_window", "")
+    .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
+                      c10::optional<at::Layout>, c10::optional<at::Device>)>()
+    .redispatch(ks, n, coeffs_input, dtype, layout, device);
+}
+
+inline at::Tensor periodic_general_cosine_window(
+  int64_t n,
+  const at::Tensor& coeffs_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  at::Device target_device = device.value_or(coeffs_input.device());
+  c10::DispatchKeySet ks = target_device.type() == at::kMeta
+    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
+    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  return c10::Dispatcher::singleton()
+    .findSchemaOrThrow("torchscience::periodic_general_cosine_window", "")
+    .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
+                      c10::optional<at::Layout>, c10::optional<at::Device>)>()
+    .redispatch(ks, n, coeffs_input, dtype, layout, device);
+}
+
+} // namespace torchscience::composite::window_function
+
+// =============================================================================
+// CompositeExplicitAutograd registrations
+// =============================================================================
+
 TORCH_LIBRARY_IMPL(torchscience, CompositeExplicitAutograd, module) {
-  module.impl("rectangular_window", &torchscience::window_function::rectangular_window);
+  module.impl("rectangular_window", &torchscience::composite::window_function::rectangular_window);
+
+  module.impl("hann_window", &torchscience::composite::window_function::hann_window);
+  module.impl("periodic_hann_window", &torchscience::composite::window_function::periodic_hann_window);
+  module.impl("hamming_window", &torchscience::composite::window_function::hamming_window);
+  module.impl("periodic_hamming_window", &torchscience::composite::window_function::periodic_hamming_window);
+  module.impl("blackman_window", &torchscience::composite::window_function::blackman_window);
+  module.impl("periodic_blackman_window", &torchscience::composite::window_function::periodic_blackman_window);
+  module.impl("bartlett_window", &torchscience::composite::window_function::bartlett_window);
+  module.impl("periodic_bartlett_window", &torchscience::composite::window_function::periodic_bartlett_window);
+  module.impl("cosine_window", &torchscience::composite::window_function::cosine_window);
+  module.impl("periodic_cosine_window", &torchscience::composite::window_function::periodic_cosine_window);
+  module.impl("nuttall_window", &torchscience::composite::window_function::nuttall_window);
+  module.impl("periodic_nuttall_window", &torchscience::composite::window_function::periodic_nuttall_window);
+
+  module.impl("gaussian_window", &torchscience::composite::window_function::gaussian_window);
+  module.impl("periodic_gaussian_window", &torchscience::composite::window_function::periodic_gaussian_window);
+  module.impl("general_hamming_window", &torchscience::composite::window_function::general_hamming_window);
+  module.impl("periodic_general_hamming_window", &torchscience::composite::window_function::periodic_general_hamming_window);
+  module.impl("general_cosine_window", &torchscience::composite::window_function::general_cosine_window);
+  module.impl("periodic_general_cosine_window", &torchscience::composite::window_function::periodic_general_cosine_window);
 }

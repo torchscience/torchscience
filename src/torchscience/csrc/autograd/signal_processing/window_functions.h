@@ -33,7 +33,7 @@ public:
       : "torchscience::gaussian_window_backward";
 
     auto grad_std = c10::Dispatcher::singleton()
-      .findSchemaOrThrow(op_name, "")
+      .findSchemaOrThrow(op_name.c_str(), "")
       .typed<at::Tensor(const at::Tensor&, const at::Tensor&, int64_t, const at::Tensor&)>()
       .call(grad_output, output, n, std_input);
 
@@ -69,7 +69,7 @@ public:
       : "torchscience::gaussian_window";
 
     auto output = c10::Dispatcher::singleton()
-      .findSchemaOrThrow(op_name, "")
+      .findSchemaOrThrow(op_name.c_str(), "")
       .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>, c10::optional<at::Layout>, c10::optional<at::Device>)>()
       .call(n, std_input, dtype, layout, device);
 
@@ -149,7 +149,7 @@ public:
       : "torchscience::general_hamming_window_backward";
 
     auto grad_alpha = c10::Dispatcher::singleton()
-      .findSchemaOrThrow(op_name, "")
+      .findSchemaOrThrow(op_name.c_str(), "")
       .typed<at::Tensor(const at::Tensor&, const at::Tensor&, int64_t, const at::Tensor&)>()
       .call(grad_output, output, n, alpha_input);
 
@@ -185,7 +185,7 @@ public:
       : "torchscience::general_hamming_window";
 
     auto output = c10::Dispatcher::singleton()
-      .findSchemaOrThrow(op_name, "")
+      .findSchemaOrThrow(op_name.c_str(), "")
       .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>, c10::optional<at::Layout>, c10::optional<at::Device>)>()
       .call(n, alpha_input, dtype, layout, device);
 
@@ -265,7 +265,7 @@ public:
       : "torchscience::general_cosine_window_backward";
 
     auto grad_coeffs = c10::Dispatcher::singleton()
-      .findSchemaOrThrow(op_name, "")
+      .findSchemaOrThrow(op_name.c_str(), "")
       .typed<at::Tensor(const at::Tensor&, const at::Tensor&, int64_t, const at::Tensor&)>()
       .call(grad_output, output, n, coeffs_input);
 
@@ -301,7 +301,7 @@ public:
       : "torchscience::general_cosine_window";
 
     auto output = c10::Dispatcher::singleton()
-      .findSchemaOrThrow(op_name, "")
+      .findSchemaOrThrow(op_name.c_str(), "")
       .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>, c10::optional<at::Layout>, c10::optional<at::Device>)>()
       .call(n, coeffs_input, dtype, layout, device);
 
