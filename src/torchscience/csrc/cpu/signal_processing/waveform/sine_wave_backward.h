@@ -49,11 +49,11 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> sine_wave_back
     auto phase_data = phase_exp.data_ptr<scalar_t>();
     auto grad_out_data = grad_output.data_ptr<scalar_t>();
 
-    scalar_t* grad_t_data = grad_t.defined() ? grad_t.data_ptr<scalar_t>() : nullptr;
     auto grad_freq_data = grad_freq.data_ptr<scalar_t>();
     auto grad_amp_data = grad_amp.data_ptr<scalar_t>();
     auto grad_phase_data = grad_phase.data_ptr<scalar_t>();
 
+    // Parallelize batch parameter gradients (no race condition)
     at::parallel_for(0, batch_size, 0, [&](int64_t begin, int64_t end) {
       for (int64_t b = begin; b < end; ++b) {
         scalar_t freq = freq_data[b];
@@ -69,11 +69,6 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> sine_wave_back
               grad_out_data[b * n_samples + i],
               g_t, g_f, g_a, g_p);
 
-          if (grad_t_data) {
-            // Note: Atomics needed if parallel, but grad_t accumulation
-            // is across batch dimension. For now, accumulate locally.
-            grad_t_data[i] += g_t;
-          }
           acc_freq += g_f;
           acc_amp += g_a;
           acc_phase += g_p;
@@ -84,6 +79,25 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> sine_wave_back
         grad_phase_data[b] = acc_phase;
       }
     });
+
+    // Compute grad_t separately (parallelize over samples to avoid race condition)
+    if (grad_t.defined()) {
+      auto grad_t_data = grad_t.data_ptr<scalar_t>();
+      at::parallel_for(0, n_samples, 0, [&](int64_t begin, int64_t end) {
+        for (int64_t i = begin; i < end; ++i) {
+          scalar_t acc_t = 0;
+          for (int64_t b = 0; b < batch_size; ++b) {
+            scalar_t g_t, g_f, g_a, g_p;
+            kernel::sine_wave_backward_kernel(
+                time_data[i], freq_data[b], amp_data[b], phase_data[b],
+                grad_out_data[b * n_samples + i],
+                g_t, g_f, g_a, g_p);
+            acc_t += g_t;
+          }
+          grad_t_data[i] = acc_t;
+        }
+      });
+    }
   });
 
   // Reduce gradients back to original shapes
