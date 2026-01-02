@@ -51,6 +51,7 @@ from torchscience.spline._b_spline import (
     BSpline,
     b_spline_basis,
     b_spline_evaluate,
+    b_spline_fit,
 )
 from torchscience.spline._cubic_spline import (
     CubicSpline,
@@ -78,6 +79,7 @@ __all__ = [
     # B-spline functions
     "b_spline_basis",
     "b_spline_evaluate",
+    "b_spline_fit",
     # Exceptions
     "SplineError",
     "ExtrapolationError",

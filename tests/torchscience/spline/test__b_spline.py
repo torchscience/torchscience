@@ -730,3 +730,258 @@ class TestBSplineBasis:
 
         # Partition of unity
         assert basis.sum().item() == pytest.approx(1.0)
+
+
+class TestBSplineFit:
+    """Tests for b_spline_fit function."""
+
+    def test_fit_exact_polynomial(self):
+        """Fitting a polynomial of degree d with degree d spline should be exact.
+
+        A B-spline of degree d can exactly represent any polynomial of degree <= d.
+        """
+        from torchscience.spline import b_spline_evaluate, b_spline_fit
+
+        # Create data from a quadratic polynomial: y = x^2
+        x = torch.linspace(0.0, 2.0, 20, dtype=torch.float64)
+        y = x**2
+
+        # Fit with degree 2 (quadratic) spline
+        spline = b_spline_fit(x, y, degree=2, n_knots=5)
+
+        # Evaluate at the original points - should be exact
+        y_fit = b_spline_evaluate(spline, x)
+        torch.testing.assert_close(y_fit, y, atol=1e-10, rtol=1e-10)
+
+        # Also evaluate at intermediate points
+        x_test = torch.linspace(0.0, 2.0, 50, dtype=torch.float64)
+        y_expected = x_test**2
+        y_test = b_spline_evaluate(spline, x_test)
+        torch.testing.assert_close(y_test, y_expected, atol=1e-8, rtol=1e-8)
+
+    def test_fit_sine(self):
+        """Fitting sin(x) should give good approximation."""
+        from torchscience.spline import b_spline_evaluate, b_spline_fit
+
+        # Create data from sin(x)
+        x = torch.linspace(0.0, 2 * torch.pi, 50, dtype=torch.float64)
+        y = torch.sin(x)
+
+        # Fit with cubic spline
+        spline = b_spline_fit(x, y, degree=3, n_knots=10)
+
+        # Evaluate at test points
+        x_test = torch.linspace(0.0, 2 * torch.pi, 100, dtype=torch.float64)
+        y_expected = torch.sin(x_test)
+        y_fit = b_spline_evaluate(spline, x_test)
+
+        # Should be a good approximation
+        torch.testing.assert_close(y_fit, y_expected, atol=1e-3, rtol=1e-3)
+
+    def test_fit_with_explicit_knots(self):
+        """Can provide custom knot vector."""
+        from torchscience.spline import b_spline_evaluate, b_spline_fit
+
+        # Create data from a simple function
+        x = torch.linspace(0.0, 1.0, 30, dtype=torch.float64)
+        y = x * (1 - x)  # Parabola with peak at 0.5
+
+        # Provide explicit clamped knot vector for degree 3
+        # n_control = n_knots - degree - 1
+        # With 12 knots and degree 3: n_control = 12 - 3 - 1 = 8
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.0, 0.25, 0.5, 0.75, 1.0, 1.0, 1.0, 1.0],
+            dtype=torch.float64,
+        )
+
+        spline = b_spline_fit(x, y, degree=3, knots=knots)
+
+        # Should be able to evaluate
+        y_fit = b_spline_evaluate(spline, x)
+
+        # Should be a good approximation
+        torch.testing.assert_close(y_fit, y, atol=1e-4, rtol=1e-4)
+
+    def test_fit_multidimensional(self):
+        """Fitting multi-dimensional y values works."""
+        from torchscience.spline import b_spline_evaluate, b_spline_fit
+
+        # Create 2D curve data: circle in 2D
+        t = torch.linspace(0.0, 2 * torch.pi, 30, dtype=torch.float64)
+        x = t  # Parameter values
+        y = torch.stack([torch.cos(t), torch.sin(t)], dim=-1)  # (30, 2)
+
+        # Fit with cubic spline
+        spline = b_spline_fit(x, y, degree=3, n_knots=8)
+
+        # Evaluate at original points
+        y_fit = b_spline_evaluate(spline, x)
+
+        # Output should have correct shape
+        assert y_fit.shape == (30, 2)
+
+        # Should be a good approximation
+        torch.testing.assert_close(y_fit, y, atol=1e-3, rtol=1e-3)
+
+    def test_fit_interpolates_endpoints(self):
+        """With clamped knots, spline passes near endpoints."""
+        from torchscience.spline import b_spline_evaluate, b_spline_fit
+
+        # Create some data
+        x = torch.linspace(0.0, 1.0, 20, dtype=torch.float64)
+        y = torch.sin(torch.pi * x)
+
+        # Fit with cubic spline (uses clamped knots by default)
+        spline = b_spline_fit(x, y, degree=3, n_knots=5)
+
+        # Evaluate at endpoints
+        y_at_0 = b_spline_evaluate(
+            spline, torch.tensor(0.0, dtype=torch.float64)
+        )
+        y_at_1 = b_spline_evaluate(
+            spline, torch.tensor(1.0, dtype=torch.float64)
+        )
+
+        # Should be close to the data endpoints (y[0] = 0, y[-1] = 0)
+        assert y_at_0.item() == pytest.approx(y[0].item(), abs=1e-2)
+        assert y_at_1.item() == pytest.approx(y[-1].item(), abs=1e-2)
+
+    def test_scipy_comparison(self):
+        """Compare with scipy.interpolate.make_lsq_spline."""
+        scipy = pytest.importorskip("scipy")
+        from scipy.interpolate import make_lsq_spline
+
+        from torchscience.spline import b_spline_evaluate, b_spline_fit
+
+        # Create data
+        x_np = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        y_np = [0.0, 0.31, 0.59, 0.81, 0.95, 1.0, 0.95, 0.81, 0.59, 0.31, 0.0]
+
+        x = torch.tensor(x_np, dtype=torch.float64)
+        y = torch.tensor(y_np, dtype=torch.float64)
+
+        # Clamped knot vector for degree 3 with 3 interior knots
+        degree = 3
+        knots_np = [0.0, 0.0, 0.0, 0.0, 0.25, 0.5, 0.75, 1.0, 1.0, 1.0, 1.0]
+        knots = torch.tensor(knots_np, dtype=torch.float64)
+
+        # Fit with scipy
+        import numpy as np
+
+        scipy_spline = make_lsq_spline(
+            np.array(x_np), np.array(y_np), knots_np, k=degree
+        )
+
+        # Fit with torchscience
+        torch_spline = b_spline_fit(x, y, degree=degree, knots=knots)
+
+        # Compare evaluations
+        x_test = torch.linspace(0.0, 1.0, 50, dtype=torch.float64)
+        y_scipy = scipy_spline(x_test.numpy())
+        y_torch = b_spline_evaluate(torch_spline, x_test)
+
+        torch.testing.assert_close(
+            y_torch,
+            torch.tensor(y_scipy, dtype=torch.float64),
+            atol=1e-10,
+            rtol=1e-10,
+        )
+
+    def test_gradcheck(self):
+        """Gradients flow through fitting."""
+        from torch.autograd import gradcheck
+
+        from torchscience.spline import b_spline_evaluate, b_spline_fit
+
+        # Create data with requires_grad
+        x = torch.linspace(0.0, 1.0, 15, dtype=torch.float64)
+        y = torch.tensor(
+            [
+                0.0,
+                0.2,
+                0.4,
+                0.5,
+                0.6,
+                0.7,
+                0.8,
+                0.85,
+                0.9,
+                0.92,
+                0.94,
+                0.95,
+                0.96,
+                0.97,
+                1.0,
+            ],
+            dtype=torch.float64,
+            requires_grad=True,
+        )
+
+        # Define function that fits and evaluates
+        def fit_and_evaluate(y_data):
+            spline = b_spline_fit(x, y_data, degree=3, n_knots=3)
+            # Evaluate at a few points (avoid knots)
+            t = torch.tensor([0.15, 0.45, 0.85], dtype=torch.float64)
+            return b_spline_evaluate(spline, t)
+
+        assert gradcheck(fit_and_evaluate, (y,), eps=1e-6, atol=1e-4)
+
+    def test_default_knot_count(self):
+        """Default knot count is computed based on data size."""
+        from torchscience.spline import b_spline_fit
+
+        # Create data
+        x = torch.linspace(0.0, 1.0, 30, dtype=torch.float64)
+        y = x**2
+
+        # Fit without specifying n_knots or knots
+        spline = b_spline_fit(x, y, degree=3)
+
+        # Should have created a valid spline
+        # n_knots = n_interior + 2*(degree+1)
+        # n_control = n_knots - degree - 1
+        n_knots = spline.knots.shape[0]
+        n_control = spline.control_points.shape[0]
+
+        assert n_control == n_knots - 3 - 1  # degree = 3
+        assert n_knots > 2 * (3 + 1)  # At least boundary knots
+
+    def test_extrapolate_modes(self):
+        """Different extrapolation modes work."""
+        from torchscience.spline import (
+            ExtrapolationError,
+            b_spline_evaluate,
+            b_spline_fit,
+        )
+
+        x = torch.linspace(0.0, 1.0, 20, dtype=torch.float64)
+        y = x**2
+
+        # Test error mode
+        spline_error = b_spline_fit(
+            x, y, degree=3, n_knots=3, extrapolate="error"
+        )
+        with pytest.raises(ExtrapolationError):
+            b_spline_evaluate(
+                spline_error, torch.tensor([-0.1], dtype=torch.float64)
+            )
+
+        # Test clamp mode
+        spline_clamp = b_spline_fit(
+            x, y, degree=3, n_knots=3, extrapolate="clamp"
+        )
+        y_clamp = b_spline_evaluate(
+            spline_clamp, torch.tensor([-0.1, 1.1], dtype=torch.float64)
+        )
+        y_at_0 = b_spline_evaluate(
+            spline_clamp, torch.tensor([0.0], dtype=torch.float64)
+        )
+        y_at_1 = b_spline_evaluate(
+            spline_clamp, torch.tensor([1.0], dtype=torch.float64)
+        )
+        torch.testing.assert_close(
+            y_clamp[0], y_at_0.squeeze(), atol=1e-10, rtol=1e-10
+        )
+        torch.testing.assert_close(
+            y_clamp[1], y_at_1.squeeze(), atol=1e-10, rtol=1e-10
+        )
