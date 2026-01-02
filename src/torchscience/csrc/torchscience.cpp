@@ -18,7 +18,15 @@
 // other operators - Phase 2
 #include "composite/signal_processing/window_functions.h"
 #include "composite/signal_processing/waveform.h"
-#include "composite/signal_processing/noise.h"
+// noise - CompositeExplicitAutograd
+#include "cpu/signal_processing/noise/white_noise.h"
+#include "cpu/signal_processing/noise/pink_noise.h"
+#include "cpu/signal_processing/noise/brown_noise.h"
+#include "cpu/signal_processing/noise/blue_noise.h"
+#include "cpu/signal_processing/noise/violet_noise.h"
+#include "cpu/signal_processing/noise/poisson_noise.h"
+#include "cpu/signal_processing/noise/shot_noise.h"
+#include "cpu/signal_processing/noise/impulse_noise.h"
 #include "composite/optimization/test_functions.h"
 
 #include "cpu/distance/minkowski_distance.h"
@@ -284,7 +292,14 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("binomial_coefficient_backward_backward(Tensor gg_n, Tensor gg_k, Tensor grad_output, Tensor n, Tensor k) -> (Tensor, Tensor, Tensor)");
 
   // signal_processing.noise
+  module.def("white_noise(int[] size, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False, Generator? generator=None) -> Tensor");
   module.def("pink_noise(int[] size, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False, Generator? generator=None) -> Tensor");
+  module.def("brown_noise(int[] size, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False, Generator? generator=None) -> Tensor");
+  module.def("blue_noise(int[] size, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False, Generator? generator=None) -> Tensor");
+  module.def("violet_noise(int[] size, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False, Generator? generator=None) -> Tensor");
+  module.def("poisson_noise(int[] size, Tensor rate, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, Generator? generator=None) -> Tensor");
+  module.def("shot_noise(int[] size, Tensor rate, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False, Generator? generator=None) -> Tensor");
+  module.def("impulse_noise(int[] size, Tensor p_salt, Tensor p_pepper, float salt_value, float pepper_value, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, Generator? generator=None) -> Tensor");
 
   // information_theory
   module.def("kullback_leibler_divergence(Tensor p, Tensor q, int dim, str input_type, str reduction, bool pairwise) -> Tensor");

@@ -4,9 +4,9 @@
 #include <ATen/ATen.h>
 #include <cmath>
 
-namespace torchscience::noise {
+namespace torchscience::cpu::signal_processing::noise {
 
-inline at::Tensor pink_noise(
+inline at::Tensor blue_noise(
   at::IntArrayRef size,
   const c10::optional<at::ScalarType> dtype,
   const c10::optional<at::Layout> layout,
@@ -14,9 +14,9 @@ inline at::Tensor pink_noise(
   const bool requires_grad,
   const c10::optional<at::Generator> generator
 ) {
-  TORCH_CHECK(size.size() > 0, "pink_noise: size must be non-empty");
+  TORCH_CHECK(size.size() > 0, "blue_noise: size must be non-empty");
   for (auto s : size) {
-    TORCH_CHECK(s >= 0, "pink_noise: size elements must be non-negative, got ", s);
+    TORCH_CHECK(s >= 0, "blue_noise: size elements must be non-negative, got ", s);
   }
 
   // Determine output dtype and device
@@ -42,7 +42,7 @@ inline at::Tensor pink_noise(
     return at::empty(size.vec(), options);
   }
 
-  // Handle n=1 special case (return zeros - can't have 1/f spectrum with 1 sample)
+  // Handle n=1 special case (return zeros)
   if (n == 1) {
     auto options = at::TensorOptions()
       .dtype(out_dtype)
@@ -75,18 +75,17 @@ inline at::Tensor pink_noise(
   // Step 2: Compute real FFT along last dimension
   at::Tensor spectrum = at::fft_rfft(white, /*n=*/c10::nullopt, /*dim=*/-1);
 
-  // Step 3: Build frequency scaling vector S[k] = sqrt(N/k) for k > 0, S[0] = 0
-  // spectrum has shape [..., N/2 + 1]
+  // Step 3: Build frequency scaling vector
+  // Blue noise (α=-1): amplitude scales as √f, so S[k] = sqrt(k/N) for k > 0, S[0] = 0
   int64_t freq_size = spectrum.size(-1);
 
   // Create frequency indices [0, 1, 2, ..., N/2]
   at::Tensor freq_indices = at::arange(freq_size, compute_options);
 
-  // Scaling: sqrt(N/k) for k > 0, 0 for k = 0
-  // We use sqrt(N) / sqrt(k) = sqrt(N/k)
+  // Scaling: sqrt(k/N) for k > 0, 0 for k = 0
   at::Tensor scaling = at::where(
     freq_indices > 0,
-    at::sqrt(static_cast<double>(n) / freq_indices),
+    at::sqrt(freq_indices / static_cast<double>(n)),
     at::zeros({1}, compute_options)
   );
 
@@ -97,14 +96,13 @@ inline at::Tensor pink_noise(
   at::Tensor result = at::fft_irfft(shaped_spectrum, /*n=*/n, /*dim=*/-1);
 
   // Step 6: Normalize to approximately unit variance
-  // The theoretical variance before normalization is sum(N/k) for k=1..N/2
-  // which is approximately N * (ln(N/2) + gamma) where gamma is Euler's constant
-  // We normalize by sqrt of this
-  double harmonic_sum = 0.0;
+  // For blue noise, the theoretical variance is sum(k/N) for k=1..N/2
+  double variance_sum = 0.0;
   for (int64_t k = 1; k <= n / 2; ++k) {
-    harmonic_sum += static_cast<double>(n) / static_cast<double>(k);
+    double scale = static_cast<double>(k) / static_cast<double>(n);
+    variance_sum += scale;
   }
-  double norm_factor = std::sqrt(harmonic_sum / static_cast<double>(n));
+  double norm_factor = std::sqrt(variance_sum / static_cast<double>(n));
 
   result = result / norm_factor;
 
@@ -121,8 +119,8 @@ inline at::Tensor pink_noise(
   return result;
 }
 
-} // namespace torchscience::noise
+} // namespace torchscience::cpu::signal_processing::noise
 
-TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
-  module.impl("pink_noise", &torchscience::noise::pink_noise);
+TORCH_LIBRARY_IMPL(torchscience, CompositeExplicitAutograd, module) {
+  module.impl("blue_noise", &torchscience::cpu::signal_processing::noise::blue_noise);
 }
