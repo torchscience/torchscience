@@ -47,6 +47,7 @@ DegreeError
     Invalid degree for given knots.
 """
 
+from torchscience.spline._cubic_spline import CubicSpline, cubic_spline_fit
 from torchscience.spline._exceptions import (
     DegreeError,
     ExtrapolationError,
@@ -55,6 +56,10 @@ from torchscience.spline._exceptions import (
 )
 
 __all__ = [
+    # Data types
+    "CubicSpline",
+    # Cubic spline functions
+    "cubic_spline_fit",
     # Exceptions
     "SplineError",
     "ExtrapolationError",
