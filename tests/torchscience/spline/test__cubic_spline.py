@@ -126,10 +126,15 @@ class TestCubicSplineEvaluate:
         from torchscience.spline import cubic_spline_evaluate, cubic_spline_fit
 
         # Use a polynomial that a cubic spline can represent exactly
+        # For y = x^3, dy/dx = 3x^2, so at x=0: 0, at x=1: 3
         x = torch.linspace(0, 1, 5, dtype=torch.float64)
         y = x**3  # Cubic polynomial
 
-        spline = cubic_spline_fit(x, y, boundary="natural")
+        # Use clamped boundary with correct derivatives for exact representation
+        boundary_values = torch.tensor([0.0, 3.0], dtype=torch.float64)
+        spline = cubic_spline_fit(
+            x, y, boundary="clamped", boundary_values=boundary_values
+        )
 
         # Query at midpoints
         x_query = torch.tensor(
@@ -137,7 +142,7 @@ class TestCubicSplineEvaluate:
         )
         y_eval = cubic_spline_evaluate(spline, x_query)
 
-        # For a cubic polynomial, the spline should be close to exact
+        # For a cubic polynomial with matching boundary derivatives, spline is exact
         y_expected = x_query**3
         torch.testing.assert_close(y_eval, y_expected, atol=1e-6, rtol=1e-6)
 
