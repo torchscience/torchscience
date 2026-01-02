@@ -1,0 +1,360 @@
+"""Tests for B-spline basis function evaluation."""
+
+import pytest
+import torch
+
+
+class TestBSplineBasis:
+    """Tests for b_spline_basis function with Cox-de Boor recursion."""
+
+    def test_degree_0_indicator(self):
+        """Test that degree 0 basis functions are indicator functions.
+
+        B_{i,0}(t) = 1 if t_i <= t < t_{i+1}, else 0
+        """
+        from torchscience.spline import b_spline_basis
+
+        # Uniform knots: [0, 1, 2, 3, 4]
+        knots = torch.tensor([0.0, 1.0, 2.0, 3.0, 4.0], dtype=torch.float64)
+        degree = 0
+
+        # n_basis = n_knots - degree - 1 = 5 - 0 - 1 = 4
+        # Basis 0: [0, 1), Basis 1: [1, 2), Basis 2: [2, 3), Basis 3: [3, 4]
+
+        # Test points in each interval
+        t = torch.tensor([0.5, 1.5, 2.5, 3.5], dtype=torch.float64)
+        basis = b_spline_basis(t, knots, degree)
+
+        # Expected: each point should be 1 in its interval's basis, 0 elsewhere
+        expected = torch.tensor(
+            [
+                [1.0, 0.0, 0.0, 0.0],  # t=0.5 in [0,1)
+                [0.0, 1.0, 0.0, 0.0],  # t=1.5 in [1,2)
+                [0.0, 0.0, 1.0, 0.0],  # t=2.5 in [2,3)
+                [0.0, 0.0, 0.0, 1.0],  # t=3.5 in [3,4]
+            ],
+            dtype=torch.float64,
+        )
+        torch.testing.assert_close(basis, expected)
+
+    def test_degree_1_hat(self):
+        """Test that degree 1 basis functions are 'hat' (triangular) functions.
+
+        Degree 1 B-splines are piecewise linear with triangular shape.
+        """
+        from torchscience.spline import b_spline_basis
+
+        # Uniform knots: [0, 1, 2, 3, 4, 5]
+        knots = torch.tensor(
+            [0.0, 1.0, 2.0, 3.0, 4.0, 5.0], dtype=torch.float64
+        )
+        degree = 1
+
+        # n_basis = 6 - 1 - 1 = 4
+        # Basis i has support [t_i, t_{i+2}]
+
+        # Test at knot points (peaks of hat functions)
+        t_at_knots = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
+        basis_at_knots = b_spline_basis(t_at_knots, knots, degree)
+
+        # At t=1: B_0 peaks at 1, others are 0 or 1
+        # For degree 1 with uniform knots, B_i(t_{i+1}) = 1
+        assert basis_at_knots[0, 0].item() == pytest.approx(1.0)
+
+        # Test at midpoints (half-way up the hat)
+        t_mid = torch.tensor([0.5, 1.5], dtype=torch.float64)
+        basis_mid = b_spline_basis(t_mid, knots, degree)
+
+        # At t=0.5: B_0 = 0.5 (rising), B_1 = 0 (not started)
+        assert basis_mid[0, 0].item() == pytest.approx(0.5)
+
+        # At t=1.5: B_0 = 0.5 (falling), B_1 = 0.5 (rising)
+        assert basis_mid[1, 0].item() == pytest.approx(0.5)
+        assert basis_mid[1, 1].item() == pytest.approx(0.5)
+
+    def test_partition_of_unity(self):
+        """Test that sum of all basis functions equals 1 at interior points.
+
+        This is a fundamental property of B-splines: they form a partition of unity.
+        For open (uniform) knot vectors, partition of unity holds only in the
+        interior [t_degree, t_{n_knots-degree-1}].
+        For clamped knot vectors (repeated boundary knots), it holds over [a, b].
+        """
+        from torchscience.spline import b_spline_basis
+
+        # Test with clamped knot vectors (partition of unity over full domain)
+        for degree in [0, 1, 2, 3]:
+            # Create clamped knot vector: degree+1 repeated knots at each end
+            # with some interior knots
+            n_interior = 3
+            interior_knots = torch.linspace(0.0, 1.0, n_interior + 2)[1:-1]
+            boundary_left = torch.zeros(degree + 1, dtype=torch.float64)
+            boundary_right = torch.ones(degree + 1, dtype=torch.float64)
+            knots = torch.cat([boundary_left, interior_knots, boundary_right])
+
+            # Test at many points across the full domain
+            t = torch.linspace(0.0, 1.0, 50, dtype=torch.float64)
+
+            basis = b_spline_basis(t, knots, degree)
+
+            # Sum over basis functions should be 1
+            basis_sum = basis.sum(dim=-1)
+            expected = torch.ones_like(basis_sum)
+
+            torch.testing.assert_close(
+                basis_sum,
+                expected,
+                atol=1e-10,
+                rtol=1e-10,
+                msg=f"Partition of unity failed for degree {degree}",
+            )
+
+    def test_local_support(self):
+        """Test that basis i is zero outside its local support [t_i, t_{i+degree+1}]."""
+        from torchscience.spline import b_spline_basis
+
+        # Uniform knots: [0, 1, 2, 3, 4, 5, 6, 7]
+        knots = torch.tensor(
+            [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0], dtype=torch.float64
+        )
+        degree = 2
+
+        # n_basis = 8 - 2 - 1 = 5
+        # Basis 0 has support [0, 3]
+        # Basis 1 has support [1, 4]
+        # etc.
+
+        # Test basis function 1 (i=1): support [1, 4]
+        # Should be zero at t < 1 and t > 4
+
+        # Points outside support of basis 1
+        t_outside = torch.tensor([0.5, 4.5, 5.5], dtype=torch.float64)
+        basis_outside = b_spline_basis(t_outside, knots, degree, i=1)
+        expected_zeros = torch.zeros(3, dtype=torch.float64)
+        torch.testing.assert_close(
+            basis_outside, expected_zeros, atol=1e-12, rtol=1e-12
+        )
+
+        # Points inside support of basis 1
+        t_inside = torch.tensor([1.5, 2.5, 3.5], dtype=torch.float64)
+        basis_inside = b_spline_basis(t_inside, knots, degree, i=1)
+        # Should be positive (non-zero)
+        assert torch.all(basis_inside > 0)
+
+    def test_specific_basis_function(self):
+        """Test that the i parameter returns only the i-th basis function."""
+        from torchscience.spline import b_spline_basis
+
+        knots = torch.tensor(
+            [0.0, 1.0, 2.0, 3.0, 4.0, 5.0], dtype=torch.float64
+        )
+        degree = 2
+
+        t = torch.tensor([1.5, 2.5, 3.5], dtype=torch.float64)
+
+        # Get all basis functions
+        all_basis = b_spline_basis(t, knots, degree)  # shape (3, n_basis)
+
+        # n_basis = 6 - 2 - 1 = 3
+        assert all_basis.shape == (3, 3)
+
+        # Get specific basis functions and compare
+        for i in range(3):
+            single_basis = b_spline_basis(t, knots, degree, i=i)
+            # Shape should be (3,) - the query shape
+            assert single_basis.shape == (3,)
+            torch.testing.assert_close(single_basis, all_basis[:, i])
+
+    def test_scipy_comparison(self):
+        """Compare with scipy.interpolate.BSpline.basis_element."""
+        scipy = pytest.importorskip("scipy")
+        from scipy.interpolate import BSpline
+
+        from torchscience.spline import b_spline_basis
+
+        # Uniform knots
+        knots = torch.tensor(
+            [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0], dtype=torch.float64
+        )
+        degree = 3
+
+        # n_basis = 7 - 3 - 1 = 3
+        # Test in the interior of each basis function's support
+        # Basis 0 has support [0, 4], Basis 1 has support [1, 5], Basis 2 has support [2, 6]
+        # The intersection where all are non-zero is [2, 4]
+        # But we want to test each individually within its support
+        t = torch.linspace(0.5, 5.5, 50, dtype=torch.float64)
+
+        # Get our basis functions
+        our_basis = b_spline_basis(t, knots, degree)
+
+        # Compare with scipy for each basis function
+        for i in range(3):
+            # scipy.interpolate.BSpline.basis_element uses knots[i:i+k+2]
+            # for k=degree and basis function i
+            local_knots = knots[i : i + degree + 2].numpy()
+            scipy_basis_elem = BSpline.basis_element(local_knots)
+
+            # Only compare within the support of this basis function
+            support_left = knots[i].item()
+            support_right = knots[i + degree + 1].item()
+
+            # Find points within support (with small epsilon to avoid boundary issues)
+            eps = 1e-10
+            in_support = (t >= support_left + eps) & (t <= support_right - eps)
+
+            if in_support.any():
+                t_in_support = t[in_support]
+
+                # Evaluate scipy basis function
+                scipy_vals = scipy_basis_elem(t_in_support.numpy())
+                torch_vals = our_basis[in_support, i].numpy()
+
+                torch.testing.assert_close(
+                    torch.tensor(torch_vals, dtype=torch.float64),
+                    torch.tensor(scipy_vals, dtype=torch.float64),
+                    atol=1e-10,
+                    rtol=1e-10,
+                )
+
+    def test_gradcheck(self):
+        """Verify that gradients work correctly for the basis functions."""
+        from torch.autograd import gradcheck
+
+        from torchscience.spline import b_spline_basis
+
+        knots = torch.tensor(
+            [0.0, 1.0, 2.0, 3.0, 4.0, 5.0], dtype=torch.float64
+        )
+        degree = 3
+
+        # Query points that require gradients
+        # Keep away from knots where gradient may be discontinuous
+        t = torch.tensor(
+            [1.25, 2.5, 3.75], dtype=torch.float64, requires_grad=True
+        )
+
+        def basis_fn(x):
+            return b_spline_basis(x, knots, degree)
+
+        assert gradcheck(basis_fn, (t,), eps=1e-6, atol=1e-4)
+
+    def test_degree_validation(self):
+        """Test that invalid degree raises DegreeError."""
+        from torchscience.spline import DegreeError, b_spline_basis
+
+        knots = torch.tensor([0.0, 1.0, 2.0, 3.0], dtype=torch.float64)
+
+        # Negative degree
+        with pytest.raises(DegreeError):
+            b_spline_basis(torch.tensor([0.5]), knots, degree=-1)
+
+        # Degree too high for knot count (need n_knots >= degree + 2)
+        # 4 knots, degree 3: need 4 >= 5, which is false
+        with pytest.raises(DegreeError):
+            b_spline_basis(torch.tensor([0.5]), knots, degree=3)
+
+    def test_knot_validation(self):
+        """Test that non-monotonic knots raise KnotError."""
+        from torchscience.spline import KnotError, b_spline_basis
+
+        # Non-monotonic knots
+        knots = torch.tensor([0.0, 2.0, 1.0, 3.0], dtype=torch.float64)
+
+        with pytest.raises(KnotError):
+            b_spline_basis(torch.tensor([0.5]), knots, degree=1)
+
+    def test_rightmost_point_included(self):
+        """Test that t equals the last knot is handled correctly.
+
+        For clamped B-splines, the rightmost point should have the last
+        basis function equal to 1.
+        """
+        from torchscience.spline import b_spline_basis
+
+        # Use clamped knot vector for degree 1
+        knots = torch.tensor(
+            [0.0, 0.0, 1.0, 2.0, 3.0, 3.0], dtype=torch.float64
+        )
+        degree = 1
+
+        # n_basis = 6 - 1 - 1 = 4
+        # Test at exactly the last knot
+        t = torch.tensor([3.0], dtype=torch.float64)
+        basis = b_spline_basis(t, knots, degree)
+
+        # For clamped splines, partition of unity should hold
+        assert basis.sum().item() == pytest.approx(1.0)
+
+        # The last basis function should be 1 at the right boundary
+        assert basis[0, -1].item() == pytest.approx(1.0)
+
+    def test_repeated_knots(self):
+        """Test handling of repeated (multiplicity > 1) knots."""
+        from torchscience.spline import b_spline_basis
+
+        # Clamped knot vector for degree 2: triple knots at ends
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0], dtype=torch.float64
+        )
+        degree = 2
+
+        # n_basis = 7 - 2 - 1 = 4
+        t = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0], dtype=torch.float64)
+        basis = b_spline_basis(t, knots, degree)
+
+        # Should still satisfy partition of unity
+        basis_sum = basis.sum(dim=-1)
+        expected = torch.ones(5, dtype=torch.float64)
+        torch.testing.assert_close(basis_sum, expected, atol=1e-10, rtol=1e-10)
+
+        # At t=0, first basis should be 1 (clamped endpoint)
+        assert basis[0, 0].item() == pytest.approx(1.0)
+
+        # At t=1, last basis should be 1 (clamped endpoint)
+        assert basis[4, -1].item() == pytest.approx(1.0)
+
+    def test_batch_query_shape(self):
+        """Test that arbitrary query shapes are preserved."""
+        from torchscience.spline import b_spline_basis
+
+        # Use clamped knot vector so partition of unity holds everywhere
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 3.0, 3.0], dtype=torch.float64
+        )
+        degree = 2
+
+        # n_basis = 8 - 2 - 1 = 5
+
+        # 2D query shape
+        t = torch.linspace(0.5, 2.5, 12, dtype=torch.float64).reshape(3, 4)
+        basis = b_spline_basis(t, knots, degree)
+
+        # Output shape should be (3, 4, 5)
+        assert basis.shape == (3, 4, 5)
+
+        # Partition of unity should hold for clamped splines
+        basis_sum = basis.sum(dim=-1)
+        expected = torch.ones(3, 4, dtype=torch.float64)
+        torch.testing.assert_close(basis_sum, expected, atol=1e-10, rtol=1e-10)
+
+    def test_scalar_query(self):
+        """Test that scalar (0-d tensor) query works correctly."""
+        from torchscience.spline import b_spline_basis
+
+        # Use clamped knot vector so partition of unity holds
+        knots = torch.tensor(
+            [0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 3.0, 3.0], dtype=torch.float64
+        )
+        degree = 2
+
+        # Scalar query
+        t = torch.tensor(1.5, dtype=torch.float64)
+        basis = b_spline_basis(t, knots, degree)
+
+        # n_basis = 8 - 2 - 1 = 5
+        # For scalar input, output shape should be (n_basis,)
+        assert basis.shape == (5,)
+
+        # Partition of unity
+        assert basis.sum().item() == pytest.approx(1.0)
