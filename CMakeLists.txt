@@ -29,6 +29,7 @@ add_library(_csrc MODULE ${TORCHSCIENCE_SOURCES})
 
 # Include backend configurations
 include(cmake/cpu.cmake)
+include(cmake/embree.cmake)
 
 if(TORCHSCIENCE_ENABLE_CUDA)
   include(cmake/cuda.cmake)
