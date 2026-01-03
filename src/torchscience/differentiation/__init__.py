@@ -10,6 +10,7 @@ from torchscience.differentiation._exceptions import (
     DifferentiationError,
     StencilError,
 )
+from torchscience.differentiation._richardson import richardson_extrapolation
 from torchscience.differentiation._scalar_operators import (
     biharmonic,
     derivative,
@@ -40,4 +41,5 @@ __all__ = [
     "hessian",
     "jacobian",
     "laplacian",
+    "richardson_extrapolation",
 ]
