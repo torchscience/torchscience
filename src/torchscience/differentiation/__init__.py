@@ -1,5 +1,9 @@
 """Differentiation module: finite difference operators for numerical differentiation."""
 
+from torchscience.differentiation._construction import (
+    finite_difference_stencil,
+    fornberg_weights,
+)
 from torchscience.differentiation._exceptions import (
     BoundaryError,
     DifferentiationError,
@@ -12,4 +16,6 @@ __all__ = [
     "DifferentiationError",
     "FiniteDifferenceStencil",
     "StencilError",
+    "finite_difference_stencil",
+    "fornberg_weights",
 ]
