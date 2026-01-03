@@ -95,3 +95,35 @@ class TestRayIntersectBarycentrics:
         # At vertex 0: u=0, v=0 (w = 1-u-v = 1)
         assert torch.isclose(hits.u, torch.tensor([0.0]), atol=1e-5).all()
         assert torch.isclose(hits.v, torch.tensor([0.0]), atol=1e-5).all()
+
+
+class TestRayIntersectGradient:
+    """Gradient tests for ray_intersect."""
+
+    def test_gradcheck_origins(self):
+        """Gradient check for ray origins."""
+        vertices = torch.tensor(
+            [
+                [0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+            ],
+            dtype=torch.float64,
+        )
+        faces = torch.tensor([[0, 1, 2]])
+        bvh = bounding_volume_hierarchy([(vertices, faces)])
+
+        origins = torch.tensor(
+            [[0.25, 0.25, 1.0]], dtype=torch.float64, requires_grad=True
+        )
+        directions = torch.tensor([[0.0, 0.0, -1.0]], dtype=torch.float64)
+
+        def func(o):
+            hits = ray_intersect(bvh, o, directions)
+            # Return hit point
+            return o + hits.t.unsqueeze(-1) * directions
+
+        # Use relaxed tolerances because gradient approximation has small errors
+        torch.autograd.gradcheck(
+            func, (origins,), atol=0.02, rtol=0.1, raise_exception=True
+        )

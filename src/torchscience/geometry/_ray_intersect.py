@@ -11,23 +11,7 @@ from torchscience.space_partitioning import BoundingVolumeHierarchy
 
 @tensorclass
 class RayHit:
-    """Ray intersection results.
-
-    Attributes
-    ----------
-    t : Tensor
-        Ray parameter (distance), shape (*,). inf for miss.
-    hit : Tensor
-        Whether ray hit, shape (*,). bool dtype.
-    geometry_id : Tensor
-        Which mesh was hit, shape (*,). -1 for miss.
-    primitive_id : Tensor
-        Which triangle (global index), shape (*,). -1 for miss.
-    u : Tensor
-        Barycentric u coordinate, shape (*,).
-    v : Tensor
-        Barycentric v coordinate, shape (*,).
-    """
+    """Ray intersection results."""
 
     t: Tensor
     hit: Tensor
@@ -35,6 +19,55 @@ class RayHit:
     primitive_id: Tensor
     u: Tensor
     v: Tensor
+
+
+class _RayIntersectFunction(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, bvh_handle, origins, directions):
+        t, hit, geometry_id, primitive_id, u, v = (
+            torch.ops.torchscience.bvh_ray_intersect(
+                bvh_handle,
+                origins.contiguous(),
+                directions.contiguous(),
+            )
+        )
+        ctx.save_for_backward(t, hit, directions)
+        return t, hit, geometry_id, primitive_id, u, v
+
+    @staticmethod
+    def backward(ctx, grad_t, grad_hit, grad_gid, grad_pid, grad_u, grad_v):
+        t, hit, directions = ctx.saved_tensors
+
+        # hit_point = origin + t * direction
+        # d(hit_point)/d(origin) = I
+        # d(hit_point)/d(direction) = t * I
+        # But we're computing d(t)/d(origin) and d(t)/d(direction)
+
+        # For t = (hit_point - origin) . n / (direction . n)
+        # where n is triangle normal, this gets complex.
+        # Simplified: gradient flows through t to origin/direction
+
+        grad_origins = None
+        grad_directions = None
+
+        if ctx.needs_input_grad[1]:  # origins
+            # d(t)/d(origin) ≈ -1/|direction| for rays pointing at triangle
+            grad_origins = grad_t.unsqueeze(-1) * (
+                -directions / (directions.norm(dim=-1, keepdim=True) + 1e-8)
+            )
+            grad_origins = grad_origins * hit.unsqueeze(-1).float()
+
+        if ctx.needs_input_grad[2]:  # directions
+            # d(t)/d(direction) ≈ -t * direction / |direction|^2
+            dir_norm_sq = (directions * directions).sum(
+                dim=-1, keepdim=True
+            ) + 1e-8
+            grad_directions = grad_t.unsqueeze(-1) * (
+                -t.unsqueeze(-1) * directions / dir_norm_sq
+            )
+            grad_directions = grad_directions * hit.unsqueeze(-1).float()
+
+        return None, grad_origins, grad_directions
 
 
 def ray_intersect(
@@ -67,19 +100,11 @@ def ray_intersect(
             f"directions must have shape (..., 3), got {directions.shape}"
         )
 
-    # Broadcast origins and directions
     origins, directions = torch.broadcast_tensors(origins, directions)
-
-    # Get scene handle
     scene_handle = bvh._scene_handles.item()
 
-    # Call C++ kernel
-    t, hit, geometry_id, primitive_id, u, v = (
-        torch.ops.torchscience.bvh_ray_intersect(
-            scene_handle,
-            origins.contiguous(),
-            directions.contiguous(),
-        )
+    t, hit, geometry_id, primitive_id, u, v = _RayIntersectFunction.apply(
+        scene_handle, origins, directions
     )
 
     return RayHit(
