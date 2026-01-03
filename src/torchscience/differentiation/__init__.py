@@ -18,6 +18,11 @@ from torchscience.differentiation._scalar_operators import (
     laplacian,
 )
 from torchscience.differentiation._stencil import FiniteDifferenceStencil
+from torchscience.differentiation._vector_operators import (
+    curl,
+    divergence,
+    jacobian,
+)
 
 __all__ = [
     "BoundaryError",
@@ -26,10 +31,13 @@ __all__ = [
     "StencilError",
     "apply_stencil",
     "biharmonic",
+    "curl",
     "derivative",
+    "divergence",
     "finite_difference_stencil",
     "fornberg_weights",
     "gradient",
     "hessian",
+    "jacobian",
     "laplacian",
 ]
