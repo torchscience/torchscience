@@ -111,6 +111,7 @@
 #include "meta/space_partitioning/kd_tree.h"
 #include "meta/space_partitioning/k_nearest_neighbors.h"
 #include "meta/space_partitioning/range_search.h"
+#include "meta/geometry/convex_hull.h"
 #include "autograd/space_partitioning/k_nearest_neighbors.h"
 #include "autograd/space_partitioning/range_search.h"
 
