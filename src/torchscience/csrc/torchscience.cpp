@@ -63,6 +63,7 @@
 #include "cpu/space_partitioning/k_nearest_neighbors.h"
 #include "cpu/space_partitioning/range_search.h"
 #include "cpu/space_partitioning/bvh.h"
+#include "cpu/geometry/ray_intersect.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -374,4 +375,7 @@ TORCH_LIBRARY(torchscience, module) {
 
   // space_partitioning.bvh
   module.def("bvh_build(Tensor vertices, Tensor faces) -> Tensor");
+
+  // geometry.ray_intersect
+  module.def("bvh_ray_intersect(int scene_handle, Tensor origins, Tensor directions) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
 }
