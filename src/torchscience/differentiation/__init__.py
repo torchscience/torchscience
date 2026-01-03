@@ -10,6 +10,13 @@ from torchscience.differentiation._exceptions import (
     DifferentiationError,
     StencilError,
 )
+from torchscience.differentiation._scalar_operators import (
+    biharmonic,
+    derivative,
+    gradient,
+    hessian,
+    laplacian,
+)
 from torchscience.differentiation._stencil import FiniteDifferenceStencil
 
 __all__ = [
@@ -18,6 +25,11 @@ __all__ = [
     "FiniteDifferenceStencil",
     "StencilError",
     "apply_stencil",
+    "biharmonic",
+    "derivative",
     "finite_difference_stencil",
     "fornberg_weights",
+    "gradient",
+    "hessian",
+    "laplacian",
 ]
