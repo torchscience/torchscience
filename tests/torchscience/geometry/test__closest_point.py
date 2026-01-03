@@ -66,3 +66,31 @@ class TestClosestPointBasic:
 
         assert result.distance.shape == (2,)
         assert result.point.shape == (2, 3)
+
+
+class TestClosestPointGradient:
+    """Gradient tests for closest_point."""
+
+    def test_gradcheck_query_points(self):
+        """Gradient check for query points."""
+        vertices = torch.tensor(
+            [
+                [0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+            ],
+            dtype=torch.float64,
+        )
+        faces = torch.tensor([[0, 1, 2]])
+        bvh = bounding_volume_hierarchy([(vertices, faces)])
+
+        query = torch.tensor(
+            [[0.25, 0.25, 1.0]], dtype=torch.float64, requires_grad=True
+        )
+
+        def func(q):
+            return closest_point(bvh, q).point
+
+        torch.autograd.gradcheck(
+            func, (query,), raise_exception=True, atol=0.02, rtol=0.1
+        )

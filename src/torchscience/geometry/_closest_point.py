@@ -37,6 +37,53 @@ class ClosestPoint:
     v: Tensor
 
 
+class _ClosestPointFunction(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, bvh_handle, query_points):
+        point, distance, geometry_id, primitive_id, u, v = (
+            torch.ops.torchscience.bvh_closest_point(
+                bvh_handle,
+                query_points.contiguous(),
+            )
+        )
+        ctx.save_for_backward(query_points, point, distance)
+        return point, distance, geometry_id, primitive_id, u, v
+
+    @staticmethod
+    def backward(
+        ctx, grad_point, grad_distance, grad_gid, grad_pid, grad_u, grad_v
+    ):
+        query_points, closest_points, distance = ctx.saved_tensors
+
+        grad_query = None
+
+        if ctx.needs_input_grad[1]:  # query_points
+            # closest_point is the projection of query onto surface
+            # d(closest_point)/d(query) depends on local surface geometry
+
+            hit_mask = torch.isfinite(distance)
+
+            # d(distance)/d(query) = (query - closest) / distance (unit direction)
+            direction = query_points - closest_points
+            dist_safe = distance.unsqueeze(-1).clamp(min=1e-8)
+            unit_dir = direction / dist_safe
+
+            # For point output: d(point)/d(query) = I - n⊗n where n is surface normal
+            # The surface normal at the closest point is the unit direction from closest to query
+            # So d(point)/d(query) = I - unit_dir⊗unit_dir (projection onto tangent plane)
+            # grad_from_point = grad_point - (grad_point · unit_dir) * unit_dir
+            dot_product = (grad_point * unit_dir).sum(dim=-1, keepdim=True)
+            grad_from_point = grad_point - dot_product * unit_dir
+
+            # For distance output: d(dist)/d(query) = unit_direction
+            grad_from_distance = grad_distance.unsqueeze(-1) * unit_dir
+
+            grad_query = grad_from_point + grad_from_distance
+            grad_query = grad_query * hit_mask.unsqueeze(-1).float()
+
+        return None, grad_query
+
+
 def closest_point(
     bvh: BoundingVolumeHierarchy,
     query_points: Tensor,
@@ -63,10 +110,7 @@ def closest_point(
     scene_handle = bvh._scene_handles.item()
 
     point, distance, geometry_id, primitive_id, u, v = (
-        torch.ops.torchscience.bvh_closest_point(
-            scene_handle,
-            query_points.contiguous(),
-        )
+        _ClosestPointFunction.apply(scene_handle, query_points)
     )
 
     return ClosestPoint(
