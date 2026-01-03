@@ -1,5 +1,6 @@
 """Tests for scalar field differential operators."""
 
+import pytest
 import torch
 
 from torchscience.differentiation import (
@@ -147,3 +148,62 @@ class TestHessian:
         f = torch.randn(20, 20)
         H = hessian(f, dx=0.1)
         torch.testing.assert_close(H[0, 1], H[1, 0])
+
+
+class TestNumpyComparison:
+    """Tests comparing against numpy.gradient."""
+
+    @pytest.fixture
+    def numpy_available(self):
+        """Check if numpy is available."""
+        pytest.importorskip("numpy")
+        return True
+
+    def test_gradient_matches_numpy_1d(self, numpy_available):
+        """1D gradient matches numpy.gradient."""
+        import numpy as np
+
+        x = torch.linspace(0, 1, 21)
+        f = torch.sin(2 * 3.14159 * x)
+        dx = (x[1] - x[0]).item()
+
+        our_grad = derivative(f, dim=0, order=1, dx=dx, accuracy=2)
+        np_grad = np.gradient(f.numpy(), dx)
+
+        # Compare interior (boundary handling may differ)
+        torch.testing.assert_close(
+            our_grad[2:-2],
+            torch.tensor(np_grad[2:-2], dtype=f.dtype),
+            rtol=1e-4,
+            atol=1e-6,
+        )
+
+    def test_gradient_matches_numpy_2d(self, numpy_available):
+        """2D gradient matches numpy.gradient."""
+        import numpy as np
+
+        n = 21
+        x = torch.linspace(0, 1, n)
+        y = torch.linspace(0, 1, n)
+        X, Y = torch.meshgrid(x, y, indexing="ij")
+        f = X**2 + Y**2
+        dx = (x[1] - x[0]).item()
+
+        our_grad = gradient(f, dx=dx, accuracy=2)
+        np_grad = np.gradient(f.numpy(), dx)
+
+        # Compare x-gradient
+        torch.testing.assert_close(
+            our_grad[0, 2:-2, 2:-2],
+            torch.tensor(np_grad[0][2:-2, 2:-2], dtype=f.dtype),
+            rtol=1e-2,
+            atol=1e-4,
+        )
+
+        # Compare y-gradient
+        torch.testing.assert_close(
+            our_grad[1, 2:-2, 2:-2],
+            torch.tensor(np_grad[1][2:-2, 2:-2], dtype=f.dtype),
+            rtol=1e-2,
+            atol=1e-4,
+        )
