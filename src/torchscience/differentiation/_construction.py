@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import Tuple, Union
 
 import torch
@@ -293,5 +294,246 @@ def _generate_nd_stencil(
         offsets=offsets_tensor,
         coeffs=coeffs_tensor,
         derivative=derivative,
+        accuracy=accuracy,
+    )
+
+
+def laplacian_stencil(
+    ndim: int,
+    accuracy: int = 2,
+    dtype: torch.dtype | None = None,
+    device: torch.device | None = None,
+) -> FiniteDifferenceStencil:
+    """Generate n-dimensional Laplacian stencil.
+
+    The Laplacian is the sum of second derivatives in each dimension:
+    nabla^2 f = d^2f/dx^2 + d^2f/dy^2 + ...
+
+    Parameters
+    ----------
+    ndim : int
+        Number of spatial dimensions.
+    accuracy : int
+        Accuracy order of the approximation. Default is 2.
+    dtype : torch.dtype, optional
+        Output dtype. Default is torch.float64.
+    device : torch.device, optional
+        Output device. Default is CPU.
+
+    Returns
+    -------
+    FiniteDifferenceStencil
+        Laplacian stencil with combined offsets and coefficients.
+        For 2D with accuracy=2, this is the 5-point stencil.
+        For 3D with accuracy=2, this is the 7-point stencil.
+
+    Examples
+    --------
+    >>> stencil = laplacian_stencil(ndim=2, accuracy=2)
+    >>> stencil.n_points  # 5-point stencil
+    5
+    """
+    if ndim < 1:
+        raise ValueError("ndim must be at least 1")
+    if accuracy <= 0:
+        raise ValueError("accuracy must be positive")
+
+    if dtype is None:
+        dtype = torch.float64
+    if device is None:
+        device = torch.device("cpu")
+
+    # Generate 1D second derivative stencil
+    stencil_1d = finite_difference_stencil(
+        derivative=2,
+        accuracy=accuracy,
+        kind="central",
+        dtype=dtype,
+        device=device,
+    )
+
+    # Combine 1D stencils embedded in n-D
+    # Each dimension contributes offsets along its axis
+    offset_to_coeff: defaultdict[tuple, float] = defaultdict(float)
+
+    for dim in range(ndim):
+        for i in range(stencil_1d.n_points):
+            # Create n-D offset with the 1D offset in position dim
+            offset = [0] * ndim
+            offset[dim] = stencil_1d.offsets[i, 0].item()
+            offset_tuple = tuple(offset)
+            offset_to_coeff[offset_tuple] += stencil_1d.coeffs[i].item()
+
+    # Convert to tensors, filtering near-zero coefficients
+    offsets_list = []
+    coeffs_list = []
+    for offset, coeff in offset_to_coeff.items():
+        if abs(coeff) > 1e-14:
+            offsets_list.append(list(offset))
+            coeffs_list.append(coeff)
+
+    offsets_tensor = torch.tensor(
+        offsets_list, dtype=torch.int64, device=device
+    )
+    coeffs_tensor = torch.tensor(coeffs_list, dtype=dtype, device=device)
+
+    # The derivative tuple for Laplacian is (2, 2, ...) representing
+    # sum of second derivatives (though this is a sum, not a product)
+    derivative_tuple = tuple([2] * ndim)
+
+    return FiniteDifferenceStencil(
+        offsets=offsets_tensor,
+        coeffs=coeffs_tensor,
+        derivative=derivative_tuple,
+        accuracy=accuracy,
+    )
+
+
+def gradient_stencils(
+    ndim: int,
+    accuracy: int = 2,
+    kind: str = "central",
+    dtype: torch.dtype | None = None,
+    device: torch.device | None = None,
+) -> Tuple[FiniteDifferenceStencil, ...]:
+    """Generate tuple of gradient stencils, one per dimension.
+
+    The gradient is a vector of first partial derivatives:
+    grad f = (df/dx, df/dy, ...)
+
+    Parameters
+    ----------
+    ndim : int
+        Number of spatial dimensions.
+    accuracy : int
+        Accuracy order of the approximation. Default is 2.
+    kind : str
+        Stencil type: "central", "forward", or "backward".
+    dtype : torch.dtype, optional
+        Output dtype. Default is torch.float64.
+    device : torch.device, optional
+        Output device. Default is CPU.
+
+    Returns
+    -------
+    Tuple[FiniteDifferenceStencil, ...]
+        Tuple of n stencils, one for each dimension.
+        stencils[i].derivative has 1 in position i and 0 elsewhere.
+
+    Examples
+    --------
+    >>> stencils = gradient_stencils(ndim=2, accuracy=2)
+    >>> len(stencils)
+    2
+    >>> stencils[0].derivative
+    (1, 0)
+    >>> stencils[1].derivative
+    (0, 1)
+    """
+    if ndim < 1:
+        raise ValueError("ndim must be at least 1")
+    if accuracy <= 0:
+        raise ValueError("accuracy must be positive")
+
+    stencils = []
+    for dim in range(ndim):
+        # Create derivative tuple with 1 in position dim
+        derivative = tuple(1 if d == dim else 0 for d in range(ndim))
+        stencil = finite_difference_stencil(
+            derivative=derivative,
+            accuracy=accuracy,
+            kind=kind,
+            dtype=dtype,
+            device=device,
+        )
+        stencils.append(stencil)
+
+    return tuple(stencils)
+
+
+def biharmonic_stencil(
+    ndim: int,
+    accuracy: int = 2,
+    dtype: torch.dtype | None = None,
+    device: torch.device | None = None,
+) -> FiniteDifferenceStencil:
+    """Generate biharmonic (nabla^4) stencil.
+
+    The biharmonic operator is the Laplacian applied twice:
+    nabla^4 f = nabla^2(nabla^2 f)
+
+    Parameters
+    ----------
+    ndim : int
+        Number of spatial dimensions.
+    accuracy : int
+        Accuracy order of the approximation. Default is 2.
+    dtype : torch.dtype, optional
+        Output dtype. Default is torch.float64.
+    device : torch.device, optional
+        Output device. Default is CPU.
+
+    Returns
+    -------
+    FiniteDifferenceStencil
+        Biharmonic stencil computed by self-convolving the Laplacian.
+        For 2D with accuracy=2, this is a 13-point stencil.
+
+    Examples
+    --------
+    >>> stencil = biharmonic_stencil(ndim=2, accuracy=2)
+    >>> stencil.n_points  # 13-point stencil
+    13
+    """
+    if ndim < 1:
+        raise ValueError("ndim must be at least 1")
+    if accuracy <= 0:
+        raise ValueError("accuracy must be positive")
+
+    if dtype is None:
+        dtype = torch.float64
+    if device is None:
+        device = torch.device("cpu")
+
+    # Get Laplacian stencil
+    lap = laplacian_stencil(
+        ndim=ndim, accuracy=accuracy, dtype=dtype, device=device
+    )
+
+    # Self-convolve: for each pair of offsets, add them and multiply coefficients
+    offset_to_coeff: defaultdict[tuple, float] = defaultdict(float)
+
+    for i in range(lap.n_points):
+        for j in range(lap.n_points):
+            # Sum offsets
+            offset_i = lap.offsets[i].tolist()
+            offset_j = lap.offsets[j].tolist()
+            combined_offset = tuple(a + b for a, b in zip(offset_i, offset_j))
+
+            # Multiply coefficients
+            combined_coeff = lap.coeffs[i].item() * lap.coeffs[j].item()
+            offset_to_coeff[combined_offset] += combined_coeff
+
+    # Convert to tensors, filtering near-zero coefficients
+    offsets_list = []
+    coeffs_list = []
+    for offset, coeff in offset_to_coeff.items():
+        if abs(coeff) > 1e-14:
+            offsets_list.append(list(offset))
+            coeffs_list.append(coeff)
+
+    offsets_tensor = torch.tensor(
+        offsets_list, dtype=torch.int64, device=device
+    )
+    coeffs_tensor = torch.tensor(coeffs_list, dtype=dtype, device=device)
+
+    # The derivative tuple for biharmonic is (4, 4, ...) representing
+    # the fourth-order operator in each dimension
+    derivative_tuple = tuple([4] * ndim)
+
+    return FiniteDifferenceStencil(
+        offsets=offsets_tensor,
+        coeffs=coeffs_tensor,
+        derivative=derivative_tuple,
         accuracy=accuracy,
     )

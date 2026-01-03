@@ -2,8 +2,11 @@
 
 from torchscience.differentiation._apply import apply_stencil
 from torchscience.differentiation._construction import (
+    biharmonic_stencil,
     finite_difference_stencil,
     fornberg_weights,
+    gradient_stencils,
+    laplacian_stencil,
 )
 from torchscience.differentiation._exceptions import (
     BoundaryError,
@@ -32,14 +35,17 @@ __all__ = [
     "StencilError",
     "apply_stencil",
     "biharmonic",
+    "biharmonic_stencil",
     "curl",
     "derivative",
     "divergence",
     "finite_difference_stencil",
     "fornberg_weights",
     "gradient",
+    "gradient_stencils",
     "hessian",
     "jacobian",
     "laplacian",
+    "laplacian_stencil",
     "richardson_extrapolation",
 ]

@@ -132,3 +132,116 @@ class TestStencilValidation:
             finite_difference_stencil(
                 derivative=-1, accuracy=2, kind="central"
             )
+
+
+class TestPrebuiltStencils:
+    """Tests for pre-built stencil functions."""
+
+    def test_laplacian_stencil_2d(self):
+        """2D Laplacian stencil."""
+        from torchscience.differentiation import laplacian_stencil
+
+        stencil = laplacian_stencil(ndim=2, accuracy=2)
+        assert stencil.ndim == 2
+        # 5-point stencil for 2D Laplacian
+        assert stencil.n_points == 5
+
+    def test_laplacian_stencil_3d(self):
+        """3D Laplacian stencil."""
+        from torchscience.differentiation import laplacian_stencil
+
+        stencil = laplacian_stencil(ndim=3, accuracy=2)
+        assert stencil.ndim == 3
+        # 7-point stencil for 3D Laplacian
+        assert stencil.n_points == 7
+
+    def test_laplacian_stencil_1d(self):
+        """1D Laplacian stencil (just second derivative)."""
+        from torchscience.differentiation import laplacian_stencil
+
+        stencil = laplacian_stencil(ndim=1, accuracy=2)
+        assert stencil.ndim == 1
+        # 3-point stencil for 1D Laplacian
+        assert stencil.n_points == 3
+        # Coefficients should be [1, -2, 1]
+        expected_coeffs = torch.tensor([1.0, -2.0, 1.0], dtype=torch.float64)
+        torch.testing.assert_close(
+            stencil.coeffs, expected_coeffs, rtol=1e-5, atol=1e-7
+        )
+
+    def test_laplacian_stencil_2d_values(self):
+        """2D Laplacian stencil has correct coefficients."""
+        from torchscience.differentiation import laplacian_stencil
+
+        stencil = laplacian_stencil(ndim=2, accuracy=2)
+        # Center should have coefficient -4, and 4 neighbors should have +1
+        assert stencil.coeffs.sum().abs() < 1e-10  # Should sum to 0
+
+    def test_gradient_stencils_2d(self):
+        """2D gradient stencils."""
+        from torchscience.differentiation import gradient_stencils
+
+        stencils = gradient_stencils(ndim=2, accuracy=2)
+        assert len(stencils) == 2
+        assert stencils[0].derivative == (1, 0)
+        assert stencils[1].derivative == (0, 1)
+
+    def test_gradient_stencils_3d(self):
+        """3D gradient stencils."""
+        from torchscience.differentiation import gradient_stencils
+
+        stencils = gradient_stencils(ndim=3, accuracy=2)
+        assert len(stencils) == 3
+        assert stencils[0].derivative == (1, 0, 0)
+        assert stencils[1].derivative == (0, 1, 0)
+        assert stencils[2].derivative == (0, 0, 1)
+
+    def test_gradient_stencils_1d(self):
+        """1D gradient stencils."""
+        from torchscience.differentiation import gradient_stencils
+
+        stencils = gradient_stencils(ndim=1, accuracy=2)
+        assert len(stencils) == 1
+        assert stencils[0].derivative == (1,)
+
+    def test_gradient_stencils_forward(self):
+        """Gradient stencils with forward difference."""
+        from torchscience.differentiation import gradient_stencils
+
+        stencils = gradient_stencils(ndim=2, accuracy=1, kind="forward")
+        assert len(stencils) == 2
+        # Forward stencil should have offsets starting at 0
+        assert all(stencil.offsets.min() >= 0 for stencil in stencils)
+
+    def test_biharmonic_stencil_2d(self):
+        """2D biharmonic stencil."""
+        from torchscience.differentiation import biharmonic_stencil
+
+        stencil = biharmonic_stencil(ndim=2, accuracy=2)
+        assert stencil.ndim == 2
+        # Biharmonic is 13-point in 2D
+        assert stencil.n_points == 13
+
+    def test_biharmonic_stencil_1d(self):
+        """1D biharmonic stencil."""
+        from torchscience.differentiation import biharmonic_stencil
+
+        stencil = biharmonic_stencil(ndim=1, accuracy=2)
+        assert stencil.ndim == 1
+        # Biharmonic in 1D is fourth derivative: 5 points
+        assert stencil.n_points == 5
+        # Coefficients should be [1, -4, 6, -4, 1]
+        expected_coeffs = torch.tensor(
+            [1.0, -4.0, 6.0, -4.0, 1.0], dtype=torch.float64
+        )
+        torch.testing.assert_close(
+            stencil.coeffs, expected_coeffs, rtol=1e-5, atol=1e-7
+        )
+
+    def test_biharmonic_stencil_2d_values(self):
+        """2D biharmonic stencil sums to zero."""
+        from torchscience.differentiation import biharmonic_stencil
+
+        stencil = biharmonic_stencil(ndim=2, accuracy=2)
+        # Biharmonic stencil coefficients should sum to 0
+        assert stencil.coeffs.sum().abs() < 1e-10
