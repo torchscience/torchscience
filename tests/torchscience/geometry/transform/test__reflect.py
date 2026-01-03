@@ -128,3 +128,33 @@ class TestReflectDtypes:
         normal = normal / normal.norm(dim=-1, keepdim=True)
         result = reflect(direction, normal)
         assert result.dtype == torch.float64
+
+    def test_bfloat16(self):
+        """Works with bfloat16."""
+        direction = torch.randn(10, 3, dtype=torch.bfloat16)
+        normal = torch.randn(10, 3, dtype=torch.bfloat16)
+        normal = normal / normal.norm(dim=-1, keepdim=True)
+        result = reflect(direction, normal)
+        assert result.dtype == torch.bfloat16
+
+    def test_float16(self):
+        """Works with float16."""
+        direction = torch.randn(10, 3, dtype=torch.float16)
+        normal = torch.randn(10, 3, dtype=torch.float16)
+        normal = normal / normal.norm(dim=-1, keepdim=True)
+        result = reflect(direction, normal)
+        assert result.dtype == torch.float16
+
+    def test_shape_mismatch_error(self):
+        """Raises error when batch dimensions don't match."""
+        direction = torch.randn(5, 3)
+        normal = torch.randn(10, 3)
+        with pytest.raises(RuntimeError, match="matching batch dimensions"):
+            reflect(direction, normal)
+
+    def test_dtype_mismatch_error(self):
+        """Raises error when dtypes don't match."""
+        direction = torch.randn(10, 3, dtype=torch.float32)
+        normal = torch.randn(10, 3, dtype=torch.float64)
+        with pytest.raises(RuntimeError, match="same dtype"):
+            reflect(direction, normal)

@@ -16,6 +16,11 @@ namespace torchscience::cpu::geometry::transform {
 inline at::Tensor reflect(const at::Tensor& direction, const at::Tensor& normal) {
   TORCH_CHECK(direction.size(-1) == 3, "reflect: direction must have last dimension 3, got ", direction.size(-1));
   TORCH_CHECK(normal.size(-1) == 3, "reflect: normal must have last dimension 3, got ", normal.size(-1));
+  TORCH_CHECK(direction.scalar_type() == normal.scalar_type(),
+              "reflect: direction and normal must have the same dtype");
+  TORCH_CHECK(direction.sizes().slice(0, direction.dim() - 1) ==
+              normal.sizes().slice(0, normal.dim() - 1),
+              "reflect: direction and normal must have matching batch dimensions");
 
   auto output = at::empty_like(direction);
 
