@@ -101,6 +101,14 @@ def closest_point(
     -------
     ClosestPoint
         Query results with shape (...,).
+
+    Notes
+    -----
+    This implementation uses 6-direction ray casting (along the positive and
+    negative x, y, and z axes) to find the closest point. This is an
+    approximation that may miss the actual closest point in some cases,
+    particularly for complex geometry where the closest surface point is not
+    visible from any of the six cardinal directions.
     """
     if query_points.shape[-1] != 3:
         raise ValueError(

@@ -1,6 +1,6 @@
 """Spatial data structures for efficient neighbor search and range queries.
 
-This module provides k-d trees with:
+This module provides k-d trees and bounding volume hierarchies (BVH) with:
 - O(log n) query performance via tree traversal
 - Autograd support for query operations (build is non-differentiable)
 - Batched construction for (B, N, D) point clouds
