@@ -2,11 +2,54 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+import weakref
+from typing import Dict, Sequence
 
 import torch
 from tensordict import tensorclass
 from torch import Tensor
+
+# Registry mapping BVH object id -> _BVHGuard
+# Ensures guards stay alive as long as the BVH exists
+_BVH_GUARD_REGISTRY: Dict[int, "_BVHGuard"] = {}
+
+
+def _release_bvh_scene(handle: int) -> None:
+    """Release an Embree scene by handle.
+
+    Called automatically when BoundingVolumeHierarchy is garbage collected.
+    """
+    if handle != 0:
+        try:
+            torch.ops.torchscience.bvh_destroy(handle)
+        except Exception:
+            # Silently ignore errors during cleanup (e.g., interpreter shutdown)
+            pass
+
+
+class _BVHGuard:
+    """Guard object that releases Embree scene when destroyed.
+
+    The guard's destructor calls bvh_destroy to free the Embree RTCScene.
+    """
+
+    __slots__ = ("_handle",)
+
+    def __init__(self, handle: int) -> None:
+        self._handle = handle
+
+    def __del__(self) -> None:
+        _release_bvh_scene(self._handle)
+
+
+def _make_ref_callback(bvh_id: int):
+    """Create a weak reference callback that cleans up the guard registry."""
+
+    def _callback(ref: weakref.ref) -> None:
+        # Remove guard from registry, triggering its __del__
+        _BVH_GUARD_REGISTRY.pop(bvh_id, None)
+
+    return _callback
 
 
 @tensorclass
@@ -102,7 +145,7 @@ def bounding_volume_hierarchy(
         concat_faces.contiguous(),
     )
 
-    return BoundingVolumeHierarchy(
+    bvh = BoundingVolumeHierarchy(
         vertices=concat_vertices,
         faces=concat_faces,
         mesh_offsets=mesh_offsets,
@@ -110,3 +153,14 @@ def bounding_volume_hierarchy(
         _scene_handles=scene_handle,
         batch_size=[],
     )
+
+    # Register destructor guard using weak reference callback
+    # When bvh is garbage collected, the callback removes the guard
+    # from the registry, triggering guard.__del__ which releases the scene
+    handle_value = int(scene_handle.item())
+    bvh_id = id(bvh)
+    guard = _BVHGuard(handle_value)
+    _BVH_GUARD_REGISTRY[bvh_id] = guard
+    weakref.ref(bvh, _make_ref_callback(bvh_id))
+
+    return bvh

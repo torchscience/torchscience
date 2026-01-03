@@ -72,6 +72,13 @@ inline at::Tensor bvh_build(
     return at::tensor({handle}, at::kLong);
 }
 
+inline void bvh_destroy(int64_t scene_handle) {
+    if (scene_handle == 0) return;
+    RTCScene scene = reinterpret_cast<RTCScene>(scene_handle);
+    // Don't release device - it's shared/static
+    rtcReleaseScene(scene);
+}
+
 #else  // !TORCHSCIENCE_EMBREE
 
 inline at::Tensor bvh_build(
@@ -82,10 +89,16 @@ inline at::Tensor bvh_build(
     return at::Tensor();
 }
 
+inline void bvh_destroy(int64_t scene_handle) {
+    // No-op when Embree is not available
+    (void)scene_handle;
+}
+
 #endif  // TORCHSCIENCE_EMBREE
 
 }  // namespace torchscience::cpu::space_partitioning
 
 TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
     m.impl("bvh_build", torchscience::cpu::space_partitioning::bvh_build);
+    m.impl("bvh_destroy", torchscience::cpu::space_partitioning::bvh_destroy);
 }

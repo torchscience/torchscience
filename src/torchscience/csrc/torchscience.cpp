@@ -377,6 +377,7 @@ TORCH_LIBRARY(torchscience, module) {
 
   // space_partitioning.bvh
   module.def("bvh_build(Tensor vertices, Tensor faces) -> Tensor");
+  module.def("bvh_destroy(int scene_handle) -> ()");
 
   // geometry.ray_intersect
   module.def("bvh_ray_intersect(int scene_handle, Tensor origins, Tensor directions) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
