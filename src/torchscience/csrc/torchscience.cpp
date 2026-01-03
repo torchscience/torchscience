@@ -65,6 +65,7 @@
 #include "cpu/space_partitioning/bvh.h"
 #include "cpu/geometry/ray_intersect.h"
 #include "cpu/geometry/closest_point.h"
+#include "cpu/geometry/ray_occluded.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -382,4 +383,7 @@ TORCH_LIBRARY(torchscience, module) {
 
   // geometry.closest_point
   module.def("bvh_closest_point(int scene_handle, Tensor query_points) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // geometry.ray_occluded
+  module.def("bvh_ray_occluded(int scene_handle, Tensor origins, Tensor directions) -> Tensor");
 }
