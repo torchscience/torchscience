@@ -66,6 +66,7 @@
 #include "cpu/geometry/ray_intersect.h"
 #include "cpu/geometry/closest_point.h"
 #include "cpu/geometry/ray_occluded.h"
+#include "cpu/geometry/transform/reflect.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -84,6 +85,7 @@
 #include "autograd/test/sum_squares.h"
 #include "autograd/information_theory/kullback_leibler_divergence.h"
 #include "autograd/information_theory/jensen_shannon_divergence.h"
+#include "autograd/geometry/transform/reflect.h"
 
 #include "meta/distance/minkowski_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
@@ -113,6 +115,8 @@
 #include "meta/space_partitioning/range_search.h"
 #include "autograd/space_partitioning/k_nearest_neighbors.h"
 #include "autograd/space_partitioning/range_search.h"
+
+#include "meta/geometry/transform/reflect.h"
 
 #include "autocast/signal_processing/filter.h"
 #include "autocast/statistics/descriptive/kurtosis.h"
@@ -387,4 +391,8 @@ TORCH_LIBRARY(torchscience, module) {
 
   // geometry.ray_occluded
   module.def("bvh_ray_occluded(int scene_handle, Tensor origins, Tensor directions) -> Tensor");
+
+  // geometry.transform
+  module.def("reflect(Tensor direction, Tensor normal) -> Tensor");
+  module.def("reflect_backward(Tensor grad_output, Tensor direction, Tensor normal) -> (Tensor, Tensor)");
 }
