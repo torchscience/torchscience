@@ -1,4 +1,7 @@
 # tests/torchscience/geometry/test__convex_hull.py
+import torch
+
+import torchscience  # noqa: F401 - needed to register C++ operators
 
 
 class TestConvexHullImport:
@@ -15,3 +18,11 @@ class TestConvexHullImport:
         from torchscience.geometry import ConvexHull
 
         assert ConvexHull is not None
+
+
+class TestConvexHullSchema:
+    """Tests for convex_hull operator schema."""
+
+    def test_operator_exists(self):
+        """convex_hull operator is registered."""
+        assert hasattr(torch.ops.torchscience, "convex_hull")

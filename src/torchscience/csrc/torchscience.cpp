@@ -387,4 +387,10 @@ TORCH_LIBRARY(torchscience, module) {
 
   // geometry.ray_occluded
   module.def("bvh_ray_occluded(int scene_handle, Tensor origins, Tensor directions) -> Tensor");
+
+  // geometry.convex_hull
+  module.def("convex_hull(Tensor points) -> "
+             "(Tensor vertices, Tensor simplices, Tensor neighbors, "
+             "Tensor equations, Tensor area, Tensor volume, "
+             "Tensor n_vertices, Tensor n_facets)");
 }
