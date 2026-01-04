@@ -21,6 +21,9 @@ inline at::Tensor quaternion_inverse_backward(
     const at::Tensor& grad_output,
     const at::Tensor& q
 ) {
+  TORCH_CHECK(grad_output.size(-1) == 4, "quaternion_inverse_backward: grad_output must have last dimension 4");
+  TORCH_CHECK(q.size(-1) == 4, "quaternion_inverse_backward: q must have last dimension 4");
+
   return at::empty_like(q);
 }
 

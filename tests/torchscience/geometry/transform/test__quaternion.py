@@ -338,6 +338,11 @@ class TestQuaternionInverseShape:
         result = quaternion_inverse(q)
         assert result.wxyz.shape == (2, 3, 16, 16, 4)
 
+    def test_invalid_last_dim(self):
+        """Raise error if last dimension is not 4."""
+        with pytest.raises(ValueError, match="last dimension 4"):
+            quaternion_inverse(quaternion(torch.randn(10, 3)))
+
 
 class TestQuaternionInverseGradients:
     """Tests for quaternion_inverse gradient computation."""
