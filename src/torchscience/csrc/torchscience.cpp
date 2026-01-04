@@ -63,6 +63,7 @@
 #include "cpu/graph_theory/connected_components.h"
 #include "cpu/graph_theory/dijkstra.h"
 #include "cpu/graph_theory/bellman_ford.h"
+#include "cpu/graph_theory/minimum_spanning_tree.h"
 #include "cpu/information_theory/kullback_leibler_divergence.h"
 #include "cpu/information_theory/jensen_shannon_divergence.h"
 #include "cpu/space_partitioning/kd_tree.h"
@@ -126,6 +127,7 @@
 #include "meta/graph_theory/connected_components.h"
 #include "meta/graph_theory/dijkstra.h"
 #include "meta/graph_theory/bellman_ford.h"
+#include "meta/graph_theory/minimum_spanning_tree.h"
 #include "meta/information_theory/kullback_leibler_divergence.h"
 #include "meta/information_theory/jensen_shannon_divergence.h"
 #include "meta/space_partitioning/kd_tree.h"
@@ -373,6 +375,7 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("connected_components(Tensor adjacency, bool directed, str connection) -> (int, Tensor)");
   module.def("dijkstra(Tensor adjacency, int source, bool directed) -> (Tensor, Tensor)");
   module.def("bellman_ford(Tensor adjacency, int source, bool directed) -> (Tensor, Tensor, bool)");
+  module.def("minimum_spanning_tree(Tensor adjacency) -> (Tensor, Tensor)");
 
   // combinatorics
   module.def("binomial_coefficient(Tensor n, Tensor k) -> Tensor");
