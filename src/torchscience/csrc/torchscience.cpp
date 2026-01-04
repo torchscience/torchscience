@@ -96,6 +96,7 @@
 #include "autograd/information_theory/jensen_shannon_divergence.h"
 #include "autograd/geometry/transform/reflect.h"
 #include "autograd/geometry/transform/refract.h"
+#include "autograd/geometry/transform/quaternion_multiply.h"
 
 #include "meta/distance/minkowski_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
