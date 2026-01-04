@@ -8,6 +8,7 @@ from ._log_beta import log_beta
 from ._log_gamma import log_gamma
 from ._polygamma import polygamma
 from ._regularized_gamma_p import regularized_gamma_p
+from ._regularized_gamma_q import regularized_gamma_q
 from ._trigamma import trigamma
 
 __all__ = [
@@ -21,5 +22,6 @@ __all__ = [
     "log_gamma",
     "polygamma",
     "regularized_gamma_p",
+    "regularized_gamma_q",
     "trigamma",
 ]

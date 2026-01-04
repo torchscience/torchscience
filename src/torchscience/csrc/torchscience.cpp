@@ -274,6 +274,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("regularized_gamma_p_backward(Tensor grad, Tensor a, Tensor x) -> (Tensor, Tensor)");
   module.def("regularized_gamma_p_backward_backward(Tensor grad_grad_a, Tensor grad_grad_x, Tensor grad, Tensor a, Tensor x) -> (Tensor, Tensor, Tensor)");
 
+  module.def("regularized_gamma_q(Tensor a, Tensor x) -> Tensor");
+  module.def("regularized_gamma_q_backward(Tensor grad, Tensor a, Tensor x) -> (Tensor, Tensor)");
+  module.def("regularized_gamma_q_backward_backward(Tensor grad_grad_a, Tensor grad_grad_x, Tensor grad, Tensor a, Tensor x) -> (Tensor, Tensor, Tensor)");
+
   // distance
   module.def("minkowski_distance(Tensor x, Tensor y, float p, Tensor? weight) -> Tensor");
   module.def("minkowski_distance_backward(Tensor grad_output, Tensor x, Tensor y, float p, Tensor? weight, Tensor dist_output) -> (Tensor, Tensor, Tensor)");
