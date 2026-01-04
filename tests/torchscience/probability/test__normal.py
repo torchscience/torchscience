@@ -41,3 +41,24 @@ class TestNormalCdfForward:
         assert torch.allclose(
             cdf_minus + cdf_plus, torch.ones_like(x), atol=1e-6
         )
+
+
+class TestNormalCdfMeta:
+    """Test meta tensor support."""
+
+    def test_meta_tensor_shape(self):
+        """Meta tensors should produce correct output shape."""
+        x = torch.randn(3, 4, device="meta")
+        loc = torch.randn(3, 4, device="meta")
+        scale = torch.randn(3, 4, device="meta")
+        result = torch.ops.torchscience.normal_cdf(x, loc, scale)
+        assert result.shape == (3, 4)
+        assert result.device.type == "meta"
+
+    def test_meta_tensor_broadcast(self):
+        """Meta tensors should broadcast correctly."""
+        x = torch.randn(3, 4, device="meta")
+        loc = torch.randn(1, device="meta")
+        scale = torch.randn(1, device="meta")
+        result = torch.ops.torchscience.normal_cdf(x, loc, scale)
+        assert result.shape == (3, 4)
