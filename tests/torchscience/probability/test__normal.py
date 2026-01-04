@@ -131,3 +131,92 @@ class TestNormalCdfGradients:
         assert torch.autograd.gradgradcheck(
             fn, (x, loc, scale), eps=1e-6, atol=1e-3
         )
+
+
+class TestNormalPdfForward:
+    """Test normal_pdf forward correctness."""
+
+    def test_standard_normal_peak(self):
+        """PDF at mean should equal 1 / sqrt(2*pi)."""
+        x = torch.tensor([0.0])
+        loc = torch.tensor(0.0)
+        scale = torch.tensor(1.0)
+
+        result = torch.ops.torchscience.normal_pdf(x, loc, scale)
+        expected = torch.tensor([1 / math.sqrt(2 * math.pi)])
+
+        assert torch.allclose(result, expected, atol=1e-6)
+
+    def test_scipy_comparison(self):
+        """Compare against scipy.stats.norm.pdf."""
+        x = torch.linspace(-4, 4, 100)
+        loc = torch.tensor(1.0)
+        scale = torch.tensor(0.5)
+
+        result = torch.ops.torchscience.normal_pdf(x, loc, scale)
+        expected = torch.tensor(
+            scipy.stats.norm.pdf(x.numpy(), loc=1.0, scale=0.5),
+            dtype=torch.float32,
+        )
+        assert torch.allclose(result, expected, atol=1e-6)
+
+    def test_symmetry(self):
+        """PDF(mu - x) = PDF(mu + x)."""
+        x = torch.linspace(0.1, 3, 50)
+        mu = torch.tensor(2.0)
+        sigma = torch.tensor(1.5)
+
+        pdf_minus = torch.ops.torchscience.normal_pdf(mu - x, mu, sigma)
+        pdf_plus = torch.ops.torchscience.normal_pdf(mu + x, mu, sigma)
+
+        assert torch.allclose(pdf_minus, pdf_plus, atol=1e-6)
+
+
+class TestNormalPdfGradients:
+    """Test normal_pdf gradient computation."""
+
+    def test_gradcheck_x(self):
+        """Gradient check for x parameter."""
+        x = torch.tensor(
+            [-1.0, 0.0, 1.0], dtype=torch.float64, requires_grad=True
+        )
+        loc = torch.tensor(0.0, dtype=torch.float64)
+        scale = torch.tensor(1.0, dtype=torch.float64)
+
+        def fn(x_):
+            return torch.ops.torchscience.normal_pdf(x_, loc, scale)
+
+        assert torch.autograd.gradcheck(fn, (x,), eps=1e-6, atol=1e-4)
+
+    def test_gradcheck_loc(self):
+        """Gradient check for loc parameter."""
+        x = torch.tensor([0.0, 1.0, 2.0], dtype=torch.float64)
+        loc = torch.tensor(1.0, dtype=torch.float64, requires_grad=True)
+        scale = torch.tensor(1.0, dtype=torch.float64)
+
+        def fn(loc_):
+            return torch.ops.torchscience.normal_pdf(x, loc_, scale)
+
+        assert torch.autograd.gradcheck(fn, (loc,), eps=1e-6, atol=1e-4)
+
+    def test_gradcheck_scale(self):
+        """Gradient check for scale parameter."""
+        x = torch.tensor([0.0, 1.0, 2.0], dtype=torch.float64)
+        loc = torch.tensor(0.0, dtype=torch.float64)
+        scale = torch.tensor(1.5, dtype=torch.float64, requires_grad=True)
+
+        def fn(scale_):
+            return torch.ops.torchscience.normal_pdf(x, loc, scale_)
+
+        assert torch.autograd.gradcheck(fn, (scale,), eps=1e-6, atol=1e-4)
+
+    def test_grad_at_mean(self):
+        """dPDF/dx at x=mean should be 0."""
+        x = torch.tensor([0.0], dtype=torch.float64, requires_grad=True)
+        loc = torch.tensor(0.0, dtype=torch.float64)
+        scale = torch.tensor(1.0, dtype=torch.float64)
+
+        pdf = torch.ops.torchscience.normal_pdf(x, loc, scale)
+        grad_x = torch.autograd.grad(pdf.sum(), x)[0]
+
+        assert torch.allclose(grad_x, torch.zeros_like(grad_x), atol=1e-6)

@@ -524,4 +524,6 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("normal_cdf(Tensor x, Tensor loc, Tensor scale) -> Tensor");
   module.def("normal_cdf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
   module.def("normal_cdf_backward_backward(Tensor grad_grad_x, Tensor grad_grad_loc, Tensor grad_grad_scale, Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor, Tensor)");
+  module.def("normal_pdf(Tensor x, Tensor loc, Tensor scale) -> Tensor");
+  module.def("normal_pdf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
 }
