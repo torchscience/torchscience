@@ -1,5 +1,7 @@
 """ChebyshevT tensorclass for Chebyshev series of the first kind."""
 
+from __future__ import annotations
+
 from tensordict.tensorclass import tensorclass
 from torch import Tensor
 
@@ -32,6 +34,26 @@ class ChebyshevT:
         from ._chebyshev_t_evaluate import chebyshev_t_evaluate
 
         return chebyshev_t_evaluate(self, x)
+
+    def __add__(self, other: "ChebyshevT") -> "ChebyshevT":
+        from ._chebyshev_t_add import chebyshev_t_add
+
+        return chebyshev_t_add(self, other)
+
+    def __radd__(self, other: "ChebyshevT") -> "ChebyshevT":
+        from ._chebyshev_t_add import chebyshev_t_add
+
+        return chebyshev_t_add(other, self)
+
+    def __sub__(self, other: "ChebyshevT") -> "ChebyshevT":
+        from ._chebyshev_t_subtract import chebyshev_t_subtract
+
+        return chebyshev_t_subtract(self, other)
+
+    def __rsub__(self, other: "ChebyshevT") -> "ChebyshevT":
+        from ._chebyshev_t_subtract import chebyshev_t_subtract
+
+        return chebyshev_t_subtract(other, self)
 
 
 def chebyshev_t(coeffs: Tensor) -> ChebyshevT:
