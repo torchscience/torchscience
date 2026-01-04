@@ -16,11 +16,17 @@ namespace torchscience::kernel::distance {
  * H = (1/sqrt(2)) * sqrt(sum_i (sqrt(p_i) - sqrt(q_i))^2)
  *
  * Let S = sum_i (sqrt(p_i) - sqrt(q_i))^2
- * H = sqrt(S/2)
+ * H = sqrt(S) / sqrt(2), so sqrt(S) = H * sqrt(2)
  *
- * dH/dp_j = (1/2) * (1/sqrt(2*S)) * 2*(sqrt(p_j) - sqrt(q_j)) * (1/(2*sqrt(p_j)))
- *         = (sqrt(p_j) - sqrt(q_j)) / (2 * sqrt(2*S) * sqrt(p_j))
- *         = (sqrt(p_j) - sqrt(q_j)) / (2 * sqrt(2) * H * sqrt(p_j))
+ * dH/dS = 1 / (2 * sqrt(2) * sqrt(S))
+ * dS/dp_j = (sqrt(p_j) - sqrt(q_j)) / sqrt(p_j)
+ *
+ * dH/dp_j = dH/dS * dS/dp_j = (sqrt(p_j) - sqrt(q_j)) / (2 * sqrt(2) * sqrt(S) * sqrt(p_j))
+ *
+ * Since sqrt(2) * sqrt(S) = sqrt(2*S) and sqrt(S) = H * sqrt(2):
+ * sqrt(2*S) = sqrt(2) * H * sqrt(2) = 2H
+ *
+ * dH/dp_j = (sqrt(p_j) - sqrt(q_j)) / (4 * H * sqrt(p_j))
  *
  * @param grad_output Upstream gradient (scalar)
  * @param p Pointer to first probability distribution
@@ -52,7 +58,8 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE void hellinger_distance_backward_kernel(
     return;
   }
 
-  T coeff = grad_output / (T(2) * std::sqrt(T(2)) * hellinger_value);
+  // Coefficient: grad_output / (4 * H)
+  T coeff = grad_output / (T(4) * hellinger_value);
 
   for (int64_t i = 0; i < n; ++i) {
     T p_i = p[i] > eps ? p[i] : eps;

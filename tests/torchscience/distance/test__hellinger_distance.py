@@ -63,7 +63,8 @@ class TestHellingerDistanceCorrectness:
 
         h = hellinger_distance(p, q)
 
-        assert torch.isclose(h, torch.tensor(1.0), rtol=1e-5)
+        # Due to epsilon clamping, H is very close to 1 but not exactly
+        assert torch.isclose(h, torch.tensor(1.0), atol=1e-3)
 
     def test_manual_computation(self):
         """Verify against manual computation."""
