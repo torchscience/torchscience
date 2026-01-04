@@ -1,3 +1,5 @@
+import math
+
 import scipy.stats
 import torch
 
@@ -62,3 +64,57 @@ class TestNormalCdfMeta:
         scale = torch.randn(1, device="meta")
         result = torch.ops.torchscience.normal_cdf(x, loc, scale)
         assert result.shape == (3, 4)
+
+
+class TestNormalCdfGradients:
+    """Test gradient computation."""
+
+    def test_gradcheck_x(self):
+        """Gradient check for x parameter."""
+        x = torch.tensor(
+            [-1.0, 0.0, 1.0], dtype=torch.float64, requires_grad=True
+        )
+        loc = torch.tensor(0.0, dtype=torch.float64)
+        scale = torch.tensor(1.0, dtype=torch.float64)
+
+        def fn(x_):
+            return torch.ops.torchscience.normal_cdf(x_, loc, scale)
+
+        assert torch.autograd.gradcheck(fn, (x,), eps=1e-6, atol=1e-4)
+
+    def test_gradcheck_loc(self):
+        """Gradient check for loc parameter."""
+        x = torch.tensor([0.0, 1.0, 2.0], dtype=torch.float64)
+        loc = torch.tensor(1.0, dtype=torch.float64, requires_grad=True)
+        scale = torch.tensor(1.0, dtype=torch.float64)
+
+        def fn(loc_):
+            return torch.ops.torchscience.normal_cdf(x, loc_, scale)
+
+        assert torch.autograd.gradcheck(fn, (loc,), eps=1e-6, atol=1e-4)
+
+    def test_gradcheck_scale(self):
+        """Gradient check for scale parameter."""
+        x = torch.tensor([0.0, 1.0, 2.0], dtype=torch.float64)
+        loc = torch.tensor(0.0, dtype=torch.float64)
+        scale = torch.tensor(1.5, dtype=torch.float64, requires_grad=True)
+
+        def fn(scale_):
+            return torch.ops.torchscience.normal_cdf(x, loc, scale_)
+
+        assert torch.autograd.gradcheck(fn, (scale,), eps=1e-6, atol=1e-4)
+
+    def test_grad_x_is_pdf(self):
+        """dCDF/dx should equal PDF."""
+        x = torch.linspace(-3, 3, 100, dtype=torch.float64, requires_grad=True)
+        loc = torch.tensor(0.0, dtype=torch.float64)
+        scale = torch.tensor(1.0, dtype=torch.float64)
+
+        cdf = torch.ops.torchscience.normal_cdf(x, loc, scale)
+        grad_x = torch.autograd.grad(cdf.sum(), x)[0]
+
+        # PDF = exp(-z^2/2) / (sigma * sqrt(2*pi))
+        z = (x - loc) / scale
+        pdf = torch.exp(-0.5 * z * z) / (scale * math.sqrt(2 * math.pi))
+
+        assert torch.allclose(grad_x, pdf.detach(), atol=1e-6)

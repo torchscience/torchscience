@@ -98,6 +98,7 @@
 // probability
 #include "cpu/probability/normal.h"
 #include "meta/probability/normal.h"
+#include "autograd/probability/normal.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
