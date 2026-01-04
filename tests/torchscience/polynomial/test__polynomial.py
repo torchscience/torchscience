@@ -12,10 +12,12 @@ from torchscience.polynomial import (
     polynomial_antiderivative,
     polynomial_degree,
     polynomial_derivative,
+    polynomial_equal,
     polynomial_evaluate,
     polynomial_integral,
     polynomial_multiply,
     polynomial_negate,
+    polynomial_pow,
     polynomial_scale,
     polynomial_subtract,
 )
@@ -509,3 +511,167 @@ class TestPolynomialAutograd:
         assert torch.autograd.gradgradcheck(
             eval_fn, (coeffs,), raise_exception=True
         )
+
+
+class TestPolynomialPow:
+    """Tests for polynomial_pow."""
+
+    def test_pow_zero(self):
+        """p^0 = 1 for any non-zero polynomial."""
+        p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
+        result = polynomial_pow(p, 0)
+        expected = polynomial(torch.tensor([1.0]))
+        assert polynomial_equal(result, expected, tol=1e-6)
+
+    def test_pow_one(self):
+        """p^1 = p."""
+        p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
+        result = polynomial_pow(p, 1)
+        assert polynomial_equal(result, p, tol=1e-6)
+
+    def test_pow_two(self):
+        """(1 + x)^2 = 1 + 2x + x^2."""
+        p = polynomial(torch.tensor([1.0, 1.0]))  # 1 + x
+        result = polynomial_pow(p, 2)
+        expected = polynomial(torch.tensor([1.0, 2.0, 1.0]))
+        assert polynomial_equal(result, expected, tol=1e-6)
+
+    def test_pow_three_binomial(self):
+        """(1 + x)^3 = 1 + 3x + 3x^2 + x^3."""
+        p = polynomial(torch.tensor([1.0, 1.0]))
+        result = polynomial_pow(p, 3)
+        expected = polynomial(torch.tensor([1.0, 3.0, 3.0, 1.0]))
+        assert polynomial_equal(result, expected, tol=1e-6)
+
+    def test_pow_large_exponent(self):
+        """Test binary exponentiation with larger exponent."""
+        p = polynomial(torch.tensor([1.0, 1.0]))  # 1 + x
+        result = polynomial_pow(p, 5)
+        # (1+x)^5 = 1 + 5x + 10x^2 + 10x^3 + 5x^4 + x^5
+        expected = polynomial(torch.tensor([1.0, 5.0, 10.0, 10.0, 5.0, 1.0]))
+        assert polynomial_equal(result, expected, tol=1e-6)
+
+    def test_pow_negative_raises(self):
+        """Negative exponent raises ValueError."""
+        p = polynomial(torch.tensor([1.0, 1.0]))
+        with pytest.raises(ValueError):
+            polynomial_pow(p, -1)
+
+    def test_pow_operator(self):
+        """Test p ** n operator."""
+        p = polynomial(torch.tensor([1.0, 1.0]))
+        result = p**3
+        expected = polynomial(torch.tensor([1.0, 3.0, 3.0, 1.0]))
+        assert polynomial_equal(result, expected, tol=1e-6)
+
+
+class TestPolynomialPowAutograd:
+    """Tests for polynomial_pow autograd."""
+
+    def test_pow_gradcheck(self):
+        """Verify gradients through polynomial_pow."""
+        coeffs = torch.tensor(
+            [1.0, 2.0], requires_grad=True, dtype=torch.float64
+        )
+
+        def pow_sum(c):
+            p = polynomial(c)
+            result = polynomial_pow(p, 3)
+            return result.coeffs.sum()
+
+        assert torch.autograd.gradcheck(pow_sum, (coeffs,), eps=1e-6)
+
+    def test_pow_gradgradcheck(self):
+        """Verify second-order gradients through polynomial_pow."""
+        coeffs = torch.tensor(
+            [1.0, 2.0], requires_grad=True, dtype=torch.float64
+        )
+
+        def pow_sum(c):
+            p = polynomial(c)
+            result = polynomial_pow(p, 3)
+            return result.coeffs.sum()
+
+        assert torch.autograd.gradgradcheck(pow_sum, (coeffs,), eps=1e-6)
+
+
+class TestPolynomialIntegration:
+    """Integration tests combining multiple operations."""
+
+    def test_fit_then_evaluate(self):
+        """Fit polynomial and evaluate at original points."""
+        from torchscience.polynomial import polynomial_fit
+
+        x = torch.tensor([0.0, 1.0, 2.0, 3.0, 4.0])
+        y = 2 * x**2 - 3 * x + 1  # 1 - 3x + 2x^2
+
+        p = polynomial_fit(x, y, degree=2)
+        y_fit = polynomial_evaluate(p, x)
+
+        assert torch.allclose(y, y_fit, atol=1e-5)
+
+    def test_divide_then_multiply(self):
+        """Division followed by multiplication recovers original."""
+        from torchscience.polynomial import polynomial_add, polynomial_divmod
+
+        p = polynomial(torch.tensor([1.0, 2.0, 3.0, 4.0]))
+        q = polynomial(torch.tensor([1.0, 1.0]))
+
+        quot, rem = polynomial_divmod(p, q)
+        reconstructed = polynomial_add(polynomial_multiply(q, quot), rem)
+
+        assert polynomial_equal(p, reconstructed, tol=1e-6)
+
+    def test_compose_and_roots(self):
+        """Composition affects roots predictably."""
+        from torchscience.polynomial import (
+            polynomial_compose,
+            polynomial_roots,
+        )
+
+        # p(x) = x^2 - 1 has roots at +-1
+        p = polynomial(torch.tensor([-1.0, 0.0, 1.0]))
+        # q(x) = 2x shifts and scales
+        q = polynomial(torch.tensor([0.0, 2.0]))
+
+        composed = polynomial_compose(p, q)  # p(2x) = 4x^2 - 1
+
+        roots = polynomial_roots(composed)
+        # Roots of 4x^2 - 1 are +-0.5
+        root_reals = roots.real.sort().values
+        expected = torch.tensor([-0.5, 0.5])
+
+        assert torch.allclose(root_reals, expected, atol=1e-6)
+
+    def test_pow_and_derivative(self):
+        """Power and derivative work together correctly."""
+        from torchscience.polynomial import (
+            polynomial_derivative,
+            polynomial_pow,
+        )
+
+        # (1 + x)^3 = 1 + 3x + 3x^2 + x^3
+        p = polynomial(torch.tensor([1.0, 1.0]))
+        p_cubed = polynomial_pow(p, 3)
+
+        # Derivative: 3 + 6x + 3x^2
+        dp = polynomial_derivative(p_cubed)
+        expected = polynomial(torch.tensor([3.0, 6.0, 3.0]))
+
+        assert polynomial_equal(dp, expected, tol=1e-6)
+
+    def test_compose_then_evaluate(self):
+        """Composition followed by evaluation."""
+        from torchscience.polynomial import polynomial_compose
+
+        p = polynomial(torch.tensor([1.0, 2.0, 1.0]))  # 1 + 2x + x^2
+        q = polynomial(torch.tensor([1.0, 1.0]))  # 1 + x
+
+        composed = polynomial_compose(p, q)
+
+        # Evaluate at x = 2: composed(2) should equal p(q(2)) = p(3) = 1 + 6 + 9 = 16
+        x = torch.tensor([2.0])
+        result = polynomial_evaluate(composed, x)
+        expected = torch.tensor([16.0])
+
+        assert torch.allclose(result, expected, atol=1e-5)

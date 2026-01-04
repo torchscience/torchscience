@@ -23,6 +23,22 @@ polynomial_scale
     Multiply polynomial by scalar.
 polynomial_negate
     Negate polynomial.
+polynomial_pow
+    Raise polynomial to non-negative integer power.
+
+Division
+--------
+polynomial_divmod
+    Divide polynomials, returning quotient and remainder.
+polynomial_div
+    Quotient of polynomial division.
+polynomial_mod
+    Remainder of polynomial division.
+
+Composition
+-----------
+polynomial_compose
+    Compute p(q(x)).
 
 Evaluation and Calculus
 -----------------------
@@ -34,6 +50,13 @@ polynomial_antiderivative
     Compute antiderivative.
 polynomial_integral
     Compute definite integral.
+
+Fitting
+-------
+polynomial_fit
+    Fit polynomial to data via least squares.
+polynomial_vandermonde
+    Construct Vandermonde matrix.
 
 Root Finding
 ------------
@@ -77,9 +100,33 @@ tensor([ 1.,  6., 17.])
 >>> # Operator overloading
 >>> p(x)  # Same as polynomial_evaluate(p, x)
 tensor([ 1.,  6., 17.])
+
+>>> # Division
+>>> q = polynomial(torch.tensor([1.0, 1.0]))  # 1 + x
+>>> p // q  # Quotient
+>>> p % q   # Remainder
+
+>>> # Power
+>>> q ** 3  # (1 + x)^3
+
+>>> # Fitting
+>>> from torchscience.polynomial import polynomial_fit
+>>> x = torch.tensor([0.0, 1.0, 2.0, 3.0])
+>>> y = torch.tensor([1.0, 3.0, 5.0, 7.0])
+>>> p = polynomial_fit(x, y, degree=1)  # Fits y = 1 + 2x
 """
 
+from torchscience.polynomial._composition import polynomial_compose
+from torchscience.polynomial._division import (
+    polynomial_div,
+    polynomial_divmod,
+    polynomial_mod,
+)
 from torchscience.polynomial._exceptions import DegreeError, PolynomialError
+from torchscience.polynomial._fitting import (
+    polynomial_fit,
+    polynomial_vandermonde,
+)
 from torchscience.polynomial._polynomial import (
     Polynomial,
     polynomial,
@@ -91,6 +138,7 @@ from torchscience.polynomial._polynomial import (
     polynomial_integral,
     polynomial_multiply,
     polynomial_negate,
+    polynomial_pow,
     polynomial_scale,
     polynomial_subtract,
 )
@@ -113,6 +161,13 @@ __all__ = [
     "polynomial_multiply",
     "polynomial_scale",
     "polynomial_negate",
+    "polynomial_pow",
+    # Division
+    "polynomial_divmod",
+    "polynomial_div",
+    "polynomial_mod",
+    # Composition
+    "polynomial_compose",
     # Evaluation and calculus
     "polynomial_evaluate",
     "polynomial_derivative",
@@ -124,6 +179,9 @@ __all__ = [
     "polynomial_degree",
     "polynomial_trim",
     "polynomial_equal",
+    # Fitting
+    "polynomial_fit",
+    "polynomial_vandermonde",
     # Exceptions
     "PolynomialError",
     "DegreeError",
