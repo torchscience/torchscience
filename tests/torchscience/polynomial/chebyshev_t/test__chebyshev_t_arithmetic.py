@@ -9,6 +9,7 @@ from torchscience.polynomial import (
     chebyshev_t_add,
     chebyshev_t_evaluate,
     chebyshev_t_multiply,
+    chebyshev_t_mulx,
     chebyshev_t_negate,
     chebyshev_t_scale,
     chebyshev_t_subtract,
@@ -209,3 +210,59 @@ class TestChebyshevTMultiply:
         y_separate = chebyshev_t_evaluate(a, x) * chebyshev_t_evaluate(b, x)
 
         torch.testing.assert_close(y_product, y_separate, atol=1e-6, rtol=1e-6)
+
+
+class TestChebyshevTMulx:
+    """Tests for chebyshev_t_mulx (multiply by x)."""
+
+    def test_mulx_t0(self):
+        """x * T_0 = T_1."""
+        a = chebyshev_t(torch.tensor([1.0]))  # T_0
+        b = chebyshev_t_mulx(a)
+        # x * T_0 = T_1 -> [0, 1]
+        torch.testing.assert_close(b.coeffs, torch.tensor([0.0, 1.0]))
+
+    def test_mulx_t1(self):
+        """x * T_1 = 0.5*(T_0 + T_2)."""
+        a = chebyshev_t(torch.tensor([0.0, 1.0]))  # T_1
+        b = chebyshev_t_mulx(a)
+        # x * T_1 = 0.5*(T_0 + T_2) -> [0.5, 0, 0.5]
+        torch.testing.assert_close(b.coeffs, torch.tensor([0.5, 0.0, 0.5]))
+
+    def test_mulx_t2(self):
+        """x * T_2 = 0.5*(T_1 + T_3)."""
+        a = chebyshev_t(torch.tensor([0.0, 0.0, 1.0]))  # T_2
+        b = chebyshev_t_mulx(a)
+        # x * T_2 = 0.5*(T_1 + T_3) -> [0, 0.5, 0, 0.5]
+        torch.testing.assert_close(
+            b.coeffs, torch.tensor([0.0, 0.5, 0.0, 0.5])
+        )
+
+    def test_mulx_linear(self):
+        """x * (1 + 2*T_1) = T_1 + 2*0.5*(T_0 + T_2) = T_0 + T_1 + T_2."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0]))  # 1 + 2*T_1
+        b = chebyshev_t_mulx(a)
+        # x * (1 + 2*T_1) = T_1 + 2*0.5*(T_0 + T_2) = T_0 + T_1 + T_2
+        torch.testing.assert_close(b.coeffs, torch.tensor([1.0, 1.0, 1.0]))
+
+    def test_mulx_vs_numpy(self):
+        """Compare with numpy.polynomial.chebyshev.chebmulx."""
+        coeffs = [1.0, 2.0, 3.0]
+
+        a = chebyshev_t(torch.tensor(coeffs))
+        b = chebyshev_t_mulx(a)
+
+        b_np = np_cheb.chebmulx(coeffs)
+
+        np.testing.assert_allclose(b.coeffs.numpy(), b_np, rtol=1e-6)
+
+    def test_mulx_evaluation_consistency(self):
+        """(mulx(a))(x) == x * a(x) for all x in [-1,1]."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0, 3.0]))
+        b = chebyshev_t_mulx(a)
+
+        x = torch.linspace(-1, 1, 20)
+        y_mulx = chebyshev_t_evaluate(b, x)
+        y_separate = x * chebyshev_t_evaluate(a, x)
+
+        torch.testing.assert_close(y_mulx, y_separate, atol=1e-6, rtol=1e-6)
