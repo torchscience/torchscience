@@ -7,6 +7,7 @@ from scipy import signal as scipy_signal
 from torchscience.signal_processing.filter_design import (
     buttap,
     lp2bp_zpk,
+    lp2bs_zpk,
     lp2hp_zpk,
     lp2lp_zpk,
 )
@@ -193,6 +194,90 @@ class TestLp2bpZpkGradients:
 
         # Compute loss and backward
         loss = p2.abs().sum() + k2
+        loss.backward()
+
+        assert wo.grad is not None
+        assert bw.grad is not None
+        assert not torch.isnan(wo.grad)
+        assert not torch.isnan(bw.grad)
+
+
+class TestLp2bsZpk:
+    """Tests for lp2bs_zpk (lowpass to bandstop transform)."""
+
+    @pytest.mark.parametrize("n", [1, 2, 3, 4])
+    @pytest.mark.parametrize("wo", [1.0, 2.0, 10.0])
+    @pytest.mark.parametrize("bw", [0.5, 1.0, 2.0])
+    def test_matches_scipy(self, n: int, wo: float, bw: float) -> None:
+        """Should match scipy.signal.lp2bs_zpk."""
+        z, p, k = buttap(n, dtype=torch.float64)
+
+        z2, p2, k2 = lp2bs_zpk(z, p, k, wo=wo, bw=bw)
+
+        # Scipy reference
+        z_sp, p_sp, k_sp = scipy_signal.lp2bs_zpk(
+            z.numpy(), p.numpy(), k.item(), wo=wo, bw=bw
+        )
+
+        # Bandstop doubles the order
+        assert p2.numel() == 2 * n
+        assert len(p_sp) == 2 * n
+
+        # Compare poles (sort for consistent ordering)
+        p2_sorted = sorted(p2.numpy(), key=lambda x: (x.real, x.imag))
+        p_sp_sorted = sorted(p_sp, key=lambda x: (x.real, x.imag))
+
+        for p_ts, p_ref in zip(p2_sorted, p_sp_sorted):
+            assert abs(p_ts - p_ref) < 1e-10, (
+                f"Pole mismatch: {p_ts} vs {p_ref}"
+            )
+
+        # Compare zeros (sort for consistent ordering)
+        z2_sorted = sorted(z2.numpy(), key=lambda x: (x.real, x.imag))
+        z_sp_sorted = sorted(z_sp, key=lambda x: (x.real, x.imag))
+
+        for z_ts, z_ref in zip(z2_sorted, z_sp_sorted):
+            assert abs(z_ts - z_ref) < 1e-10, (
+                f"Zero mismatch: {z_ts} vs {z_ref}"
+            )
+
+        assert abs(k2.item() - k_sp) < 1e-10
+
+    def test_doubles_filter_order(self) -> None:
+        """Bandstop transform doubles the number of poles."""
+        z, p, k = buttap(4, dtype=torch.float64)
+        z2, p2, k2 = lp2bs_zpk(z, p, k, wo=1.0, bw=0.5)
+
+        assert p2.numel() == 2 * p.numel()
+
+    def test_adds_zeros_on_imaginary_axis(self) -> None:
+        """Bandstop transform adds zeros at ±j*wo."""
+        z, p, k = buttap(4, dtype=torch.float64)
+        wo = 2.0
+        z2, p2, k2 = lp2bs_zpk(z, p, k, wo=wo, bw=0.5)
+
+        # Should have 2n zeros (n pairs at ±j*wo)
+        assert z2.numel() == 2 * p.numel()
+
+        # All zeros should be on imaginary axis at ±wo
+        for zero in z2:
+            assert abs(zero.real) < 1e-10
+            assert abs(abs(zero.imag) - wo) < 1e-10
+
+
+class TestLp2bsZpkGradients:
+    """Test gradients for lp2bs_zpk."""
+
+    def test_gradient_wrt_wo_and_bw(self) -> None:
+        """Should have gradient w.r.t. wo and bw."""
+        z, p, k = buttap(4, dtype=torch.float64)
+
+        wo = torch.tensor(2.0, requires_grad=True)
+        bw = torch.tensor(0.5, requires_grad=True)
+        z2, p2, k2 = lp2bs_zpk(z, p, k, wo=wo, bw=bw)
+
+        # Compute loss and backward
+        loss = p2.abs().sum() + z2.abs().sum() + k2
         loss.backward()
 
         assert wo.grad is not None
