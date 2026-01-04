@@ -15,6 +15,7 @@ from torchscience.integration.quadrature._exceptions import (
     IntegrationError,
     QuadratureWarning,
 )
+from torchscience.integration.quadrature._simpson import simpson
 from torchscience.integration.quadrature._trapezoid import (
     cumulative_trapezoid,
     trapezoid,
@@ -23,6 +24,7 @@ from torchscience.integration.quadrature._trapezoid import (
 __all__ = [
     "trapezoid",
     "cumulative_trapezoid",
+    "simpson",
     "QuadratureWarning",
     "IntegrationError",
 ]
