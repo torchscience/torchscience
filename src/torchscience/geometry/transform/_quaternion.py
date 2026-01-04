@@ -233,3 +233,68 @@ def quaternion_normalize(q: Quaternion) -> Quaternion:
     """
     result = torch.ops.torchscience.quaternion_normalize(q.wxyz)
     return Quaternion(wxyz=result)
+
+
+def quaternion_apply(q: Quaternion, point: Tensor) -> Tensor:
+    """Apply quaternion rotation to 3D points.
+
+    Rotates point(s) by the rotation represented by quaternion(s).
+
+    .. math::
+
+        v' = q \\cdot [0, v] \\cdot q^{-1}
+
+    This is computed using the optimized formula:
+
+    .. math::
+
+        v' = v + 2w(q_{xyz} \\times v) + 2(q_{xyz} \\times (q_{xyz} \\times v))
+
+    where :math:`q = [w, x, y, z]` and :math:`q_{xyz} = [x, y, z]`.
+
+    Parameters
+    ----------
+    q : Quaternion
+        Unit quaternion(s), shape (..., 4).
+    point : Tensor
+        3D point(s), shape (..., 3). Batch dimensions broadcast with q.
+
+    Returns
+    -------
+    Tensor
+        Rotated point(s), shape is broadcast of q and point batch dims, plus 3.
+
+    Notes
+    -----
+    - Requires unit quaternions (|q| = 1) for correct rotation.
+    - Uses an optimized formula that avoids quaternion multiplication.
+    - Batch dimensions are broadcast between q and point.
+
+    See Also
+    --------
+    quaternion_multiply : Multiply two quaternions.
+    quaternion_inverse : Compute quaternion inverse.
+    quaternion_normalize : Normalize to unit quaternion.
+
+    References
+    ----------
+    .. [1] https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
+
+    Examples
+    --------
+    Identity rotation (returns original point):
+
+    >>> q = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+    >>> point = torch.tensor([1.0, 0.0, 0.0])
+    >>> quaternion_apply(q, point)
+    tensor([1., 0., 0.])
+
+    90-degree rotation around x-axis (maps y to z):
+
+    >>> import math
+    >>> q = quaternion(torch.tensor([math.cos(math.pi/4), math.sin(math.pi/4), 0.0, 0.0]))
+    >>> point = torch.tensor([0.0, 1.0, 0.0])
+    >>> quaternion_apply(q, point)
+    tensor([0., 0., 1.])
+    """
+    return torch.ops.torchscience.quaternion_apply(q.wxyz, point)

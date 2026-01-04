@@ -3,6 +3,7 @@
 from torchscience.geometry.transform._quaternion import (
     Quaternion,
     quaternion,
+    quaternion_apply,
     quaternion_inverse,
     quaternion_multiply,
     quaternion_normalize,
@@ -13,6 +14,7 @@ from torchscience.geometry.transform._refract import refract
 __all__ = [
     "Quaternion",
     "quaternion",
+    "quaternion_apply",
     "quaternion_inverse",
     "quaternion_multiply",
     "quaternion_normalize",
