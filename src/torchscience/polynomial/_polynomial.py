@@ -74,6 +74,16 @@ class Polynomial:
     def __call__(self, x: Tensor) -> Tensor:
         return polynomial_evaluate(self, x)
 
+    def __floordiv__(self, other: "Polynomial") -> "Polynomial":
+        from torchscience.polynomial._division import polynomial_div
+
+        return polynomial_div(self, other)
+
+    def __mod__(self, other: "Polynomial") -> "Polynomial":
+        from torchscience.polynomial._division import polynomial_mod
+
+        return polynomial_mod(self, other)
+
 
 def polynomial(coeffs: Tensor) -> Polynomial:
     """Create polynomial from coefficient tensor.

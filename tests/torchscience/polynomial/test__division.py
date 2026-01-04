@@ -249,3 +249,26 @@ class TestDivisionBatched:
         assert torch.allclose(
             remainder.coeffs[1], torch.tensor([4.0]), atol=1e-6
         )
+
+
+class TestDivisionOperators:
+    """Tests for // and % operators."""
+
+    def test_floordiv_operator(self):
+        """Test p // q operator."""
+        p = polynomial(torch.tensor([-1.0, 0.0, 0.0, 1.0]))
+        q = polynomial(torch.tensor([-1.0, 1.0]))
+
+        result = p // q
+
+        expected = polynomial(torch.tensor([1.0, 1.0, 1.0]))
+        assert polynomial_equal(result, expected, tol=1e-6)
+
+    def test_mod_operator(self):
+        """Test p % q operator."""
+        p = polynomial(torch.tensor([1.0, 0.0, 1.0]))
+        q = polynomial(torch.tensor([-1.0, 1.0]))
+
+        result = p % q
+
+        assert torch.allclose(result.coeffs, torch.tensor([2.0]), atol=1e-6)
