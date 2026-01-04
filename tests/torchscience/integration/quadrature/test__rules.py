@@ -139,3 +139,92 @@ class TestGaussLegendreGradients:
             return rule.integrate(lambda x: theta_ * x**2, 0, 1)
 
         assert torch.autograd.gradcheck(fn, (theta,), raise_exception=True)
+
+
+class TestGaussKronrod:
+    def test_init(self):
+        from torchscience.integration.quadrature import GaussKronrod
+
+        rule = GaussKronrod(15)
+        assert rule.order == 15
+
+    def test_invalid_order(self):
+        from torchscience.integration.quadrature import GaussKronrod
+
+        with pytest.raises(ValueError, match="order must be"):
+            GaussKronrod(20)
+
+    def test_integrate(self):
+        """Basic integration should work"""
+        from torchscience.integration.quadrature import GaussKronrod
+
+        rule = GaussKronrod(15)
+        result = rule.integrate(torch.sin, 0, torch.pi)
+
+        assert torch.allclose(
+            result, torch.tensor(2.0, dtype=result.dtype), rtol=1e-10
+        )
+
+    def test_integrate_with_error(self):
+        from torchscience.integration.quadrature import GaussKronrod
+
+        rule = GaussKronrod(15)
+        result, error = rule.integrate_with_error(torch.sin, 0, torch.pi)
+
+        assert torch.allclose(
+            result, torch.tensor(2.0, dtype=result.dtype), rtol=1e-10
+        )
+        assert error < 1e-10  # Very small error for smooth function
+
+    def test_error_estimate(self):
+        """Error estimate should be |Kronrod - Gauss|"""
+        from torchscience.integration.quadrature import GaussKronrod
+
+        rule = GaussKronrod(15)
+
+        # Integrate something that's harder for low-order rules
+        def oscillatory(x):
+            return torch.sin(10 * x)
+
+        result, error = rule.integrate_with_error(oscillatory, 0, torch.pi)
+
+        # Error should be positive and reasonable
+        assert error > 0
+        assert error < 1  # Should still be somewhat accurate
+
+    def test_gauss_vs_kronrod(self):
+        """Gauss and Kronrod should agree for smooth functions"""
+        from torchscience.integration.quadrature import GaussKronrod
+
+        rule = GaussKronrod(21)
+
+        # For a polynomial of low degree, both should be very accurate
+        def poly(x):
+            return x**3
+
+        kronrod_result, error = rule.integrate_with_error(poly, 0, 1)
+        # integral of x^3 from 0 to 1 = 1/4
+
+        assert torch.allclose(
+            kronrod_result,
+            torch.tensor(0.25, dtype=kronrod_result.dtype),
+            rtol=1e-10,
+        )
+        assert error < 1e-10
+
+
+class TestGaussKronrodGradients:
+    def test_gradient_closure(self):
+        """Gradient flows through closure parameters"""
+        from torchscience.integration.quadrature import GaussKronrod
+
+        theta = torch.tensor(2.0, requires_grad=True, dtype=torch.float64)
+        rule = GaussKronrod(15)
+
+        result = rule.integrate(lambda x: theta * x**2, 0, 1)
+        result.backward()
+
+        assert theta.grad is not None
+        assert torch.allclose(
+            theta.grad, torch.tensor(1 / 3, dtype=torch.float64), rtol=1e-6
+        )

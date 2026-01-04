@@ -272,38 +272,31 @@ def gauss_kronrod_nodes_weights(
         negative_k_weights = pos_k_weights[1:].flip(0)
         k_weights = torch.cat([negative_k_weights, pos_k_weights])
 
-        # Build Gauss indices (positions in the full array)
+        # Build Gauss indices and weights together (keep paired, then sort)
         # In positive nodes, Gauss nodes are at indices where gauss_mask is True
-        pos_gauss_indices = torch.where(gauss_mask_tensor)[0]
         n_neg = len(negative_nodes)
         # Full array: [neg nodes (n_neg)] + [pos nodes (n_pos)]
         # Positive index i maps to full index n_neg + i
         # Negative of positive index i (for i > 0) maps to n_neg - i
-        full_gauss_indices = []
-        for pi in pos_gauss_indices.tolist():
-            if pi == 0:
-                full_gauss_indices.append(n_neg)  # the zero node
-            else:
-                # Both positive and negative versions
-                full_gauss_indices.append(n_neg - pi)  # negative
-                full_gauss_indices.append(n_neg + pi)  # positive
 
-        g_indices = torch.tensor(
-            sorted(full_gauss_indices), dtype=torch.long, device=device
-        )
-
-        # Gauss weights: each positive Gauss weight appears twice (for +/- nodes),
-        # except the zero node weight appears once
-        g_weights_full = []
+        # Build paired (index, weight) and sort by index
+        pairs = []
         gauss_pos_indices = [i for i, m in enumerate(gauss_mask) if m]
         for idx, w in zip(gauss_pos_indices, positive_g_weights):
             if positive_nodes[idx] == 0:
-                g_weights_full.append(w)
+                pairs.append((n_neg, w))  # zero node
             else:
-                g_weights_full.append(w)
-                g_weights_full.append(w)
+                pairs.append((n_neg - idx, w))  # negative
+                pairs.append((n_neg + idx, w))  # positive
 
-        g_weights = torch.tensor(g_weights_full, dtype=dtype, device=device)
+        # Sort by index to ensure correct ordering
+        pairs.sort(key=lambda x: x[0])
+        g_indices = torch.tensor(
+            [p[0] for p in pairs], dtype=torch.long, device=device
+        )
+        g_weights = torch.tensor(
+            [p[1] for p in pairs], dtype=dtype, device=device
+        )
 
     else:
         # No zero node (shouldn't happen for standard GK rules)
