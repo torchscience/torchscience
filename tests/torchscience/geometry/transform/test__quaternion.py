@@ -9,6 +9,7 @@ from torchscience.geometry.transform import (
     quaternion,
     quaternion_inverse,
     quaternion_multiply,
+    quaternion_normalize,
 )
 
 
@@ -393,4 +394,138 @@ class TestQuaternionInverseDtypes:
         """Works with float16."""
         q = quaternion(torch.randn(10, 4, dtype=torch.float16))
         result = quaternion_inverse(q)
+        assert result.wxyz.dtype == torch.float16
+
+
+class TestQuaternionNormalize:
+    """Tests for quaternion_normalize."""
+
+    def test_normalize_identity(self):
+        """Normalizing identity quaternion returns identity."""
+        identity = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        result = quaternion_normalize(identity)
+        expected = torch.tensor([1.0, 0.0, 0.0, 0.0])
+        assert torch.allclose(result.wxyz, expected, atol=1e-5)
+
+    def test_normalize_scaled_quaternion(self):
+        """Normalizing a scaled quaternion gives unit length."""
+        q = quaternion(torch.tensor([2.0, 0.0, 0.0, 0.0]))
+        result = quaternion_normalize(q)
+        expected = torch.tensor([1.0, 0.0, 0.0, 0.0])
+        assert torch.allclose(result.wxyz, expected, atol=1e-5)
+
+    def test_normalize_random_quaternion(self):
+        """Normalized quaternion has unit norm."""
+        q = quaternion(torch.tensor([1.0, 2.0, 3.0, 4.0]))
+        result = quaternion_normalize(q)
+        norm = torch.linalg.norm(result.wxyz)
+        assert torch.allclose(norm, torch.tensor(1.0), atol=1e-5)
+
+    def test_double_normalize(self):
+        """Normalizing twice gives the same result."""
+        q = quaternion(torch.tensor([1.0, 2.0, 3.0, 4.0]))
+        result1 = quaternion_normalize(q)
+        result2 = quaternion_normalize(result1)
+        assert torch.allclose(result1.wxyz, result2.wxyz, atol=1e-5)
+
+    def test_batch(self):
+        """Batched normalization."""
+        q = quaternion(torch.randn(10, 4))
+        result = quaternion_normalize(q)
+        assert result.wxyz.shape == (10, 4)
+        # Check all have unit norm
+        norms = torch.linalg.norm(result.wxyz, dim=-1)
+        assert torch.allclose(norms, torch.ones(10), atol=1e-5)
+
+    def test_preserves_direction(self):
+        """Normalization preserves quaternion direction."""
+        q = quaternion(torch.tensor([3.0, 4.0, 0.0, 0.0]))
+        result = quaternion_normalize(q)
+        # Should be [0.6, 0.8, 0, 0] (3/5, 4/5)
+        expected = torch.tensor([0.6, 0.8, 0.0, 0.0])
+        assert torch.allclose(result.wxyz, expected, atol=1e-5)
+
+
+class TestQuaternionNormalizeShape:
+    """Tests for quaternion_normalize shape handling."""
+
+    def test_single_quaternion(self):
+        """Single quaternion (4,) input."""
+        q = quaternion(torch.tensor([1.0, 2.0, 3.0, 4.0]))
+        result = quaternion_normalize(q)
+        assert result.wxyz.shape == (4,)
+
+    def test_batch(self):
+        """Batch of quaternions (B, 4)."""
+        q = quaternion(torch.randn(10, 4))
+        result = quaternion_normalize(q)
+        assert result.wxyz.shape == (10, 4)
+
+    def test_image_shape(self):
+        """Image-like shape (H, W, 4)."""
+        q = quaternion(torch.randn(64, 64, 4))
+        result = quaternion_normalize(q)
+        assert result.wxyz.shape == (64, 64, 4)
+
+    def test_multi_batch_shape(self):
+        """Multi-batch shape (B, C, H, W, 4)."""
+        q = quaternion(torch.randn(2, 3, 16, 16, 4))
+        result = quaternion_normalize(q)
+        assert result.wxyz.shape == (2, 3, 16, 16, 4)
+
+    def test_invalid_last_dim(self):
+        """Raise error if last dimension is not 4."""
+        with pytest.raises(ValueError, match="last dimension 4"):
+            quaternion_normalize(quaternion(torch.randn(10, 3)))
+
+
+class TestQuaternionNormalizeGradients:
+    """Tests for quaternion_normalize gradient computation."""
+
+    def test_gradcheck(self):
+        """Gradient check w.r.t. q."""
+        q = torch.randn(5, 4, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda a: quaternion_normalize(Quaternion(wxyz=a)).wxyz,
+            (q,),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+    def test_gradcheck_batch(self):
+        """Gradient check with batch."""
+        q = torch.randn(3, 5, 4, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda a: quaternion_normalize(Quaternion(wxyz=a)).wxyz,
+            (q,),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+
+class TestQuaternionNormalizeDtypes:
+    """Tests for quaternion_normalize with different data types."""
+
+    def test_float32(self):
+        """Works with float32."""
+        q = quaternion(torch.randn(10, 4, dtype=torch.float32))
+        result = quaternion_normalize(q)
+        assert result.wxyz.dtype == torch.float32
+
+    def test_float64(self):
+        """Works with float64."""
+        q = quaternion(torch.randn(10, 4, dtype=torch.float64))
+        result = quaternion_normalize(q)
+        assert result.wxyz.dtype == torch.float64
+
+    def test_bfloat16(self):
+        """Works with bfloat16."""
+        q = quaternion(torch.randn(10, 4, dtype=torch.bfloat16))
+        result = quaternion_normalize(q)
+        assert result.wxyz.dtype == torch.bfloat16
+
+    def test_float16(self):
+        """Works with float16."""
+        q = quaternion(torch.randn(10, 4, dtype=torch.float16))
+        result = quaternion_normalize(q)
         assert result.wxyz.dtype == torch.float16

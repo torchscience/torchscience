@@ -175,3 +175,61 @@ def quaternion_inverse(q: Quaternion) -> Quaternion:
     """
     result = torch.ops.torchscience.quaternion_inverse(q.wxyz)
     return Quaternion(wxyz=result)
+
+
+def quaternion_normalize(q: Quaternion) -> Quaternion:
+    """Normalize a quaternion to unit length.
+
+    Computes the unit quaternion by dividing by its norm:
+
+    .. math::
+
+        \\hat{q} = \\frac{q}{\\|q\\|}
+
+    Where :math:`\\|q\\| = \\sqrt{w^2 + x^2 + y^2 + z^2}` is the quaternion norm.
+
+    Parameters
+    ----------
+    q : Quaternion
+        Input quaternion, shape (..., 4).
+
+    Returns
+    -------
+    Quaternion
+        Unit quaternion with ||q|| = 1, shape (..., 4).
+
+    Notes
+    -----
+    - The output quaternion has unit norm: ||output|| = 1.
+    - Normalizing an already-normalized quaternion returns the same quaternion
+      (up to numerical precision).
+    - For zero quaternions, the result is undefined (division by zero).
+    - Useful for ensuring quaternions remain valid rotations after
+      numerical operations that may cause drift from unit norm.
+
+    See Also
+    --------
+    quaternion_inverse : Compute quaternion inverse.
+    quaternion_multiply : Multiply two quaternions.
+
+    References
+    ----------
+    .. [1] Hamilton, W.R. "Elements of Quaternions", 1866.
+    .. [2] https://en.wikipedia.org/wiki/Quaternion#Unit_quaternion
+
+    Examples
+    --------
+    >>> q = quaternion(torch.tensor([2.0, 0.0, 0.0, 0.0]))
+    >>> q_norm = quaternion_normalize(q)
+    >>> q_norm.wxyz
+    tensor([1., 0., 0., 0.])
+
+    Normalize a general quaternion:
+
+    >>> q = quaternion(torch.tensor([1.0, 1.0, 1.0, 1.0]))
+    >>> q_norm = quaternion_normalize(q)
+    >>> torch.linalg.norm(q_norm.wxyz)
+    tensor(1.)
+    """
+    result = torch.ops.torchscience.quaternion_normalize(q.wxyz)
+    return Quaternion(wxyz=result)
