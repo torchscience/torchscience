@@ -13,6 +13,9 @@ from torchscience.graph_theory._floyd_warshall import (
     floyd_warshall,
 )
 from torchscience.graph_theory._graph_laplacian import graph_laplacian
+from torchscience.graph_theory._maximum_bipartite_matching import (
+    maximum_bipartite_matching,
+)
 from torchscience.graph_theory._minimum_spanning_tree import (
     minimum_spanning_tree,
 )
@@ -26,6 +29,7 @@ __all__ = [
     "dijkstra",
     "floyd_warshall",
     "graph_laplacian",
+    "maximum_bipartite_matching",
     "minimum_spanning_tree",
     "pagerank",
 ]
