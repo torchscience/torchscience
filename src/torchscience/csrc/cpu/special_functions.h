@@ -61,3 +61,9 @@ TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(log_beta, a, b)
 #include "../kernel/special_functions/log_gamma_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR(log_gamma, z)
+
+#include "../kernel/special_functions/regularized_gamma_p.h"
+#include "../kernel/special_functions/regularized_gamma_p_backward.h"
+#include "../kernel/special_functions/regularized_gamma_p_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(regularized_gamma_p, a, x)
