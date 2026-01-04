@@ -71,6 +71,7 @@
 #include "cpu/geometry/ray_occluded.h"
 #include "cpu/geometry/transform/reflect.h"
 #include "cpu/geometry/transform/refract.h"
+#include "cpu/geometry/transform/quaternion_multiply.h"
 #include "cpu/geometry/convex_hull.h"
 
 #include "autograd/distance/minkowski_distance.h"
