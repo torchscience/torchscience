@@ -118,3 +118,16 @@ class TestNormalCdfGradients:
         pdf = torch.exp(-0.5 * z * z) / (scale * math.sqrt(2 * math.pi))
 
         assert torch.allclose(grad_x, pdf.detach(), atol=1e-6)
+
+    def test_gradgradcheck(self):
+        """Second-order gradient check."""
+        x = torch.tensor([0.0, 1.0], dtype=torch.float64, requires_grad=True)
+        loc = torch.tensor(0.5, dtype=torch.float64, requires_grad=True)
+        scale = torch.tensor(1.0, dtype=torch.float64, requires_grad=True)
+
+        def fn(x_, loc_, scale_):
+            return torch.ops.torchscience.normal_cdf(x_, loc_, scale_)
+
+        assert torch.autograd.gradgradcheck(
+            fn, (x, loc, scale), eps=1e-6, atol=1e-3
+        )
