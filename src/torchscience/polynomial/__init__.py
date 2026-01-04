@@ -86,8 +86,8 @@ DegreeError
 
 Examples
 --------
->>> import torch
->>> from torchscience.polynomial import polynomial, polynomial_evaluate
+>>> from torchscience.polynomial._polynomial_evaluate import polynomial_evaluate import torch
+>>> from torchscience.polynomial import polynomial
 
 >>> # Create polynomial 1 + 2x + 3x^2
 >>> p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
@@ -109,80 +109,66 @@ tensor([ 1.,  6., 17.])
 >>> # Power
 >>> q ** 3  # (1 + x)^3
 
->>> # Fitting
->>> from torchscience.polynomial import polynomial_fit
+>>> from torchscience.polynomial._polynomial_fit import polynomial_fit # Fitting
 >>> x = torch.tensor([0.0, 1.0, 2.0, 3.0])
 >>> y = torch.tensor([1.0, 3.0, 5.0, 7.0])
 >>> p = polynomial_fit(x, y, degree=1)  # Fits y = 1 + 2x
 """
 
-from torchscience.polynomial._composition import polynomial_compose
-from torchscience.polynomial._division import (
-    polynomial_div,
-    polynomial_divmod,
-    polynomial_mod,
-)
-from torchscience.polynomial._exceptions import DegreeError, PolynomialError
-from torchscience.polynomial._fitting import (
-    polynomial_fit,
-    polynomial_vandermonde,
-)
-from torchscience.polynomial._polynomial import (
+from ._degree_error import DegreeError
+from ._polynomial import (
     Polynomial,
     polynomial,
     polynomial_add,
     polynomial_antiderivative,
+    polynomial_compose,
     polynomial_degree,
     polynomial_derivative,
+    polynomial_div,
+    polynomial_divmod,
+    polynomial_equal,
     polynomial_evaluate,
+    polynomial_fit,
+    polynomial_from_roots,
     polynomial_integral,
+    polynomial_mod,
     polynomial_multiply,
     polynomial_negate,
     polynomial_pow,
+    polynomial_roots,
     polynomial_scale,
     polynomial_subtract,
-)
-from torchscience.polynomial._roots import (
-    polynomial_equal,
-    polynomial_from_roots,
-    polynomial_roots,
     polynomial_trim,
+    polynomial_vandermonde,
+)
+from ._polynomial_error import (
+    PolynomialError,
 )
 
 __all__ = [
-    # Data types
+    "DegreeError",
     "Polynomial",
-    # Constructors
+    "PolynomialError",
     "polynomial",
-    "polynomial_from_roots",
-    # Arithmetic
     "polynomial_add",
-    "polynomial_subtract",
+    "polynomial_antiderivative",
+    "polynomial_compose",
+    "polynomial_degree",
+    "polynomial_derivative",
+    "polynomial_div",
+    "polynomial_divmod",
+    "polynomial_equal",
+    "polynomial_evaluate",
+    "polynomial_fit",
+    "polynomial_from_roots",
+    "polynomial_integral",
+    "polynomial_mod",
     "polynomial_multiply",
-    "polynomial_scale",
     "polynomial_negate",
     "polynomial_pow",
-    # Division
-    "polynomial_divmod",
-    "polynomial_div",
-    "polynomial_mod",
-    # Composition
-    "polynomial_compose",
-    # Evaluation and calculus
-    "polynomial_evaluate",
-    "polynomial_derivative",
-    "polynomial_antiderivative",
-    "polynomial_integral",
-    # Root finding
     "polynomial_roots",
-    # Utilities
-    "polynomial_degree",
+    "polynomial_scale",
+    "polynomial_subtract",
     "polynomial_trim",
-    "polynomial_equal",
-    # Fitting
-    "polynomial_fit",
     "polynomial_vandermonde",
-    # Exceptions
-    "PolynomialError",
-    "DegreeError",
 ]

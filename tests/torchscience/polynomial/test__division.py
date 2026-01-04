@@ -5,6 +5,7 @@ import pytest
 import torch
 
 from torchscience.polynomial import (
+    DegreeError,
     polynomial,
     polynomial_add,
     polynomial_div,
@@ -123,7 +124,6 @@ class TestDivisionErrors:
 
     def test_division_by_zero_polynomial(self):
         """Division by zero polynomial raises DegreeError."""
-        from torchscience.polynomial import DegreeError
 
         p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
         q = polynomial(torch.tensor([0.0]))

@@ -522,10 +522,7 @@ class TestCubicSplineIntegral:
 
     def test_integral_of_constant(self):
         """Test that integral of constant = constant * (b - a)."""
-        from torchscience.spline import (
-            cubic_spline_fit,
-            cubic_spline_integral,
-        )
+        from torchscience.spline import cubic_spline_fit, cubic_spline_integral
 
         # Create a spline that represents a constant function y = 5
         x = torch.linspace(0, 2, 5, dtype=torch.float64)
@@ -547,10 +544,7 @@ class TestCubicSplineIntegral:
 
     def test_integral_of_linear(self):
         """Test that integral of x from 0 to 1 = 0.5."""
-        from torchscience.spline import (
-            cubic_spline_fit,
-            cubic_spline_integral,
-        )
+        from torchscience.spline import cubic_spline_fit, cubic_spline_integral
 
         # Create a spline that represents y = x
         x = torch.linspace(0, 1, 5, dtype=torch.float64)
@@ -569,10 +563,7 @@ class TestCubicSplineIntegral:
 
     def test_integral_of_quadratic(self):
         """Test that integral of x^2 from 0 to 1 = 1/3."""
-        from torchscience.spline import (
-            cubic_spline_fit,
-            cubic_spline_integral,
-        )
+        from torchscience.spline import cubic_spline_fit, cubic_spline_integral
 
         # Create a spline that represents y = x^2
         x = torch.linspace(0, 1, 5, dtype=torch.float64)
@@ -592,10 +583,7 @@ class TestCubicSplineIntegral:
 
     def test_integral_of_cubic(self):
         """Test that integral of x^3 from 0 to 1 = 1/4."""
-        from torchscience.spline import (
-            cubic_spline_fit,
-            cubic_spline_integral,
-        )
+        from torchscience.spline import cubic_spline_fit, cubic_spline_integral
 
         # Create a spline that represents y = x^3
         x = torch.linspace(0, 1, 5, dtype=torch.float64)
@@ -615,10 +603,7 @@ class TestCubicSplineIntegral:
 
     def test_integral_negative_bounds(self):
         """Test that integral from b to a = -integral from a to b."""
-        from torchscience.spline import (
-            cubic_spline_fit,
-            cubic_spline_integral,
-        )
+        from torchscience.spline import cubic_spline_fit, cubic_spline_integral
 
         # Create a spline for y = x^2
         x = torch.linspace(0, 2, 5, dtype=torch.float64)
@@ -638,10 +623,7 @@ class TestCubicSplineIntegral:
 
     def test_integral_partial_domain(self):
         """Test integral over a subset of the spline domain."""
-        from torchscience.spline import (
-            cubic_spline_fit,
-            cubic_spline_integral,
-        )
+        from torchscience.spline import cubic_spline_fit, cubic_spline_integral
 
         # Create a spline for y = x (linear)
         x = torch.linspace(0, 4, 9, dtype=torch.float64)
@@ -664,10 +646,7 @@ class TestCubicSplineIntegral:
         from scipy.integrate import quad
         from scipy.interpolate import CubicSpline as ScipyCubicSpline
 
-        from torchscience.spline import (
-            cubic_spline_fit,
-            cubic_spline_integral,
-        )
+        from torchscience.spline import cubic_spline_fit, cubic_spline_integral
 
         # Create a spline for sin(x)
         x = torch.linspace(0, 2 * math.pi, 20, dtype=torch.float64)
@@ -694,10 +673,7 @@ class TestCubicSplineIntegral:
 
     def test_integral_tensor_bounds(self):
         """Test that tensor bounds work correctly."""
-        from torchscience.spline import (
-            cubic_spline_fit,
-            cubic_spline_integral,
-        )
+        from torchscience.spline import cubic_spline_fit, cubic_spline_integral
 
         # Create a spline for y = x
         x = torch.linspace(0, 2, 5, dtype=torch.float64)
@@ -718,10 +694,7 @@ class TestCubicSplineIntegral:
 
     def test_integral_multidimensional(self):
         """Test integral with multi-dimensional y values."""
-        from torchscience.spline import (
-            cubic_spline_fit,
-            cubic_spline_integral,
-        )
+        from torchscience.spline import cubic_spline_fit, cubic_spline_integral
 
         # Create a 2D spline: (t, t^2)
         x = torch.linspace(0, 1, 5, dtype=torch.float64)
@@ -746,10 +719,7 @@ class TestCubicSplineIntegral:
 
     def test_integral_same_bounds(self):
         """Test that integral with a == b returns zero."""
-        from torchscience.spline import (
-            cubic_spline_fit,
-            cubic_spline_integral,
-        )
+        from torchscience.spline import cubic_spline_fit, cubic_spline_integral
 
         x = torch.linspace(0, 1, 5, dtype=torch.float64)
         y = x**2

@@ -1,5 +1,3 @@
-"""Tridiagonal matrix solver using Thomas algorithm."""
-
 import torch
 from torch import Tensor
 

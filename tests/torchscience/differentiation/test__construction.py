@@ -3,7 +3,12 @@
 import pytest
 import torch
 
-from torchscience.differentiation import finite_difference_stencil
+from torchscience.differentiation import (
+    biharmonic_stencil,
+    finite_difference_stencil,
+    gradient_stencils,
+    laplacian_stencil,
+)
 
 
 class TestFornbergAlgorithm:
@@ -139,7 +144,6 @@ class TestPrebuiltStencils:
 
     def test_laplacian_stencil_2d(self):
         """2D Laplacian stencil."""
-        from torchscience.differentiation import laplacian_stencil
 
         stencil = laplacian_stencil(ndim=2, accuracy=2)
         assert stencil.ndim == 2
@@ -179,7 +183,6 @@ class TestPrebuiltStencils:
 
     def test_gradient_stencils_2d(self):
         """2D gradient stencils."""
-        from torchscience.differentiation import gradient_stencils
 
         stencils = gradient_stencils(ndim=2, accuracy=2)
         assert len(stencils) == 2
@@ -215,7 +218,6 @@ class TestPrebuiltStencils:
 
     def test_biharmonic_stencil_2d(self):
         """2D biharmonic stencil."""
-        from torchscience.differentiation import biharmonic_stencil
 
         stencil = biharmonic_stencil(ndim=2, accuracy=2)
         assert stencil.ndim == 2

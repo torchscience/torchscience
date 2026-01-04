@@ -1,12 +1,6 @@
-"""Polynomial composition."""
-
 from __future__ import annotations
 
-from torchscience.polynomial._polynomial import (
-    Polynomial,
-    polynomial,
-    polynomial_multiply,
-)
+from torchscience.polynomial import Polynomial, polynomial, polynomial_multiply
 
 
 def polynomial_compose(p: Polynomial, q: Polynomial) -> Polynomial:

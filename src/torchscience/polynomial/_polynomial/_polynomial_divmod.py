@@ -1,11 +1,8 @@
-"""Polynomial division operations."""
-
 from __future__ import annotations
 
 import torch
 
-from torchscience.polynomial._exceptions import DegreeError
-from torchscience.polynomial._polynomial import Polynomial, polynomial
+from torchscience.polynomial import DegreeError, Polynomial, polynomial
 
 
 def polynomial_divmod(
@@ -126,59 +123,3 @@ def polynomial_divmod(
         )
 
     return polynomial(quot_coeffs), polynomial(remainder_coeffs)
-
-
-def polynomial_div(p: Polynomial, q: Polynomial) -> Polynomial:
-    """Return quotient of polynomial division.
-
-    Convenience wrapper around polynomial_divmod that returns only the quotient.
-
-    Parameters
-    ----------
-    p : Polynomial
-        Dividend polynomial.
-    q : Polynomial
-        Divisor polynomial.
-
-    Returns
-    -------
-    Polynomial
-        Quotient of p / q.
-
-    Examples
-    --------
-    >>> p = polynomial(torch.tensor([-1.0, 0.0, 0.0, 1.0]))  # x^3 - 1
-    >>> q = polynomial(torch.tensor([-1.0, 1.0]))  # x - 1
-    >>> polynomial_div(p, q).coeffs
-    tensor([1., 1., 1.])
-    """
-    quotient, _ = polynomial_divmod(p, q)
-    return quotient
-
-
-def polynomial_mod(p: Polynomial, q: Polynomial) -> Polynomial:
-    """Return remainder of polynomial division.
-
-    Convenience wrapper around polynomial_divmod that returns only the remainder.
-
-    Parameters
-    ----------
-    p : Polynomial
-        Dividend polynomial.
-    q : Polynomial
-        Divisor polynomial.
-
-    Returns
-    -------
-    Polynomial
-        Remainder of p / q.
-
-    Examples
-    --------
-    >>> p = polynomial(torch.tensor([1.0, 0.0, 1.0]))  # x^2 + 1
-    >>> q = polynomial(torch.tensor([-1.0, 1.0]))  # x - 1
-    >>> polynomial_mod(p, q).coeffs  # remainder is 2
-    tensor([2.])
-    """
-    _, remainder = polynomial_divmod(p, q)
-    return remainder

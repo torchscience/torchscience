@@ -10,14 +10,18 @@ from torchscience.polynomial import (
     polynomial,
     polynomial_add,
     polynomial_antiderivative,
+    polynomial_compose,
     polynomial_degree,
     polynomial_derivative,
+    polynomial_divmod,
     polynomial_equal,
     polynomial_evaluate,
+    polynomial_fit,
     polynomial_integral,
     polynomial_multiply,
     polynomial_negate,
     polynomial_pow,
+    polynomial_roots,
     polynomial_scale,
     polynomial_subtract,
 )
@@ -600,7 +604,6 @@ class TestPolynomialIntegration:
 
     def test_fit_then_evaluate(self):
         """Fit polynomial and evaluate at original points."""
-        from torchscience.polynomial import polynomial_fit
 
         x = torch.tensor([0.0, 1.0, 2.0, 3.0, 4.0])
         y = 2 * x**2 - 3 * x + 1  # 1 - 3x + 2x^2
@@ -612,7 +615,7 @@ class TestPolynomialIntegration:
 
     def test_divide_then_multiply(self):
         """Division followed by multiplication recovers original."""
-        from torchscience.polynomial import polynomial_add, polynomial_divmod
+        from torchscience.polynomial import polynomial_add
 
         p = polynomial(torch.tensor([1.0, 2.0, 3.0, 4.0]))
         q = polynomial(torch.tensor([1.0, 1.0]))
@@ -624,10 +627,6 @@ class TestPolynomialIntegration:
 
     def test_compose_and_roots(self):
         """Composition affects roots predictably."""
-        from torchscience.polynomial import (
-            polynomial_compose,
-            polynomial_roots,
-        )
 
         # p(x) = x^2 - 1 has roots at +-1
         p = polynomial(torch.tensor([-1.0, 0.0, 1.0]))
