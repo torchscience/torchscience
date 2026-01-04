@@ -67,6 +67,7 @@
 #include "cpu/geometry/closest_point.h"
 #include "cpu/geometry/ray_occluded.h"
 #include "cpu/geometry/transform/reflect.h"
+#include "cpu/geometry/transform/refract.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -86,6 +87,7 @@
 #include "autograd/information_theory/kullback_leibler_divergence.h"
 #include "autograd/information_theory/jensen_shannon_divergence.h"
 #include "autograd/geometry/transform/reflect.h"
+#include "autograd/geometry/transform/refract.h"
 
 #include "meta/distance/minkowski_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
@@ -117,6 +119,7 @@
 #include "autograd/space_partitioning/range_search.h"
 
 #include "meta/geometry/transform/reflect.h"
+#include "meta/geometry/transform/refract.h"
 
 #include "autocast/signal_processing/filter.h"
 #include "autocast/statistics/descriptive/kurtosis.h"
@@ -395,4 +398,7 @@ TORCH_LIBRARY(torchscience, module) {
   // geometry.transform
   module.def("reflect(Tensor direction, Tensor normal) -> Tensor");
   module.def("reflect_backward(Tensor grad_output, Tensor direction, Tensor normal) -> (Tensor, Tensor)");
+
+  module.def("refract(Tensor direction, Tensor normal, Tensor eta) -> Tensor");
+  module.def("refract_backward(Tensor grad_output, Tensor direction, Tensor normal, Tensor eta) -> (Tensor, Tensor, Tensor)");
 }
