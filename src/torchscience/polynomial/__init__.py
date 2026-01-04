@@ -79,6 +79,7 @@ tensor([ 1.,  6., 17.])
 tensor([ 1.,  6., 17.])
 """
 
+from torchscience.polynomial._composition import polynomial_compose
 from torchscience.polynomial._division import (
     polynomial_div,
     polynomial_divmod,
@@ -124,6 +125,8 @@ __all__ = [
     "polynomial_divmod",
     "polynomial_div",
     "polynomial_mod",
+    # Composition
+    "polynomial_compose",
     # Evaluation and calculus
     "polynomial_evaluate",
     "polynomial_derivative",
