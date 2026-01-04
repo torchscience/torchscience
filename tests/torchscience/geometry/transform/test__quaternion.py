@@ -107,24 +107,146 @@ class TestQuaternionMultiply:
             atol=1e-4,
         )
 
-    @pytest.mark.skip(
-        reason="Second-order gradients not yet implemented for quaternion_multiply"
-    )
-    def test_gradgradcheck(self):
-        """Second-order gradient check."""
-        from torch.autograd import gradgradcheck
+    def test_non_commutative(self):
+        """Quaternion multiplication is non-commutative."""
+        import math
 
+        # Two different rotations
         q1 = quaternion(
-            torch.randn(3, 4, dtype=torch.float64, requires_grad=True)
-        )
+            torch.tensor(
+                [math.cos(math.pi / 4), math.sin(math.pi / 4), 0.0, 0.0]
+            )
+        )  # 90 deg around x
         q2 = quaternion(
-            torch.randn(3, 4, dtype=torch.float64, requires_grad=True)
-        )
-        assert gradgradcheck(
-            lambda a, b: quaternion_multiply(
-                Quaternion(wxyz=a), Quaternion(wxyz=b)
+            torch.tensor(
+                [math.cos(math.pi / 4), 0.0, math.sin(math.pi / 4), 0.0]
+            )
+        )  # 90 deg around y
+        result1 = quaternion_multiply(q1, q2)
+        result2 = quaternion_multiply(q2, q1)
+        assert not torch.allclose(result1.wxyz, result2.wxyz, atol=1e-5)
+
+
+class TestQuaternionMultiplyShape:
+    """Tests for quaternion_multiply shape handling."""
+
+    def test_single_quaternion(self):
+        """Single quaternion (4,) input."""
+        q1 = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        q2 = quaternion(torch.tensor([0.7071, 0.0, 0.0, 0.7071]))
+        result = quaternion_multiply(q1, q2)
+        assert result.wxyz.shape == (4,)
+
+    def test_batch(self):
+        """Batch of quaternions (B, 4)."""
+        q1 = quaternion(torch.randn(10, 4))
+        q2 = quaternion(torch.randn(10, 4))
+        result = quaternion_multiply(q1, q2)
+        assert result.wxyz.shape == (10, 4)
+
+    def test_image_shape(self):
+        """Image-like shape (H, W, 4)."""
+        q1 = quaternion(torch.randn(64, 64, 4))
+        q2 = quaternion(torch.randn(64, 64, 4))
+        result = quaternion_multiply(q1, q2)
+        assert result.wxyz.shape == (64, 64, 4)
+
+    def test_invalid_last_dim(self):
+        """Raise error if last dimension is not 4."""
+        with pytest.raises(ValueError, match="last dimension 4"):
+            quaternion(torch.randn(10, 3))
+
+
+class TestQuaternionMultiplyGradients:
+    """Tests for quaternion_multiply gradient computation."""
+
+    def test_gradcheck_q1(self):
+        """Gradient check w.r.t. q1."""
+        q1 = torch.randn(5, 4, dtype=torch.float64, requires_grad=True)
+        q2 = torch.randn(5, 4, dtype=torch.float64)
+        assert gradcheck(
+            lambda a: quaternion_multiply(
+                Quaternion(wxyz=a), Quaternion(wxyz=q2)
             ).wxyz,
-            (q1.wxyz, q2.wxyz),
+            (q1,),
             eps=1e-6,
             atol=1e-4,
         )
+
+    def test_gradcheck_q2(self):
+        """Gradient check w.r.t. q2."""
+        q1 = torch.randn(5, 4, dtype=torch.float64)
+        q2 = torch.randn(5, 4, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda b: quaternion_multiply(
+                Quaternion(wxyz=q1), Quaternion(wxyz=b)
+            ).wxyz,
+            (q2,),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+    def test_gradcheck_both(self):
+        """Gradient check w.r.t. both inputs."""
+        q1 = torch.randn(5, 4, dtype=torch.float64, requires_grad=True)
+        q2 = torch.randn(5, 4, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda a, b: quaternion_multiply(
+                Quaternion(wxyz=a), Quaternion(wxyz=b)
+            ).wxyz,
+            (q1, q2),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+    def test_gradcheck_broadcast(self):
+        """Gradient check with broadcasting."""
+        q1 = torch.randn(3, 1, 4, dtype=torch.float64, requires_grad=True)
+        q2 = torch.randn(1, 2, 4, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda a, b: quaternion_multiply(
+                Quaternion(wxyz=a), Quaternion(wxyz=b)
+            ).wxyz,
+            (q1, q2),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+
+class TestQuaternionMultiplyDtypes:
+    """Tests for quaternion_multiply with different data types."""
+
+    def test_float32(self):
+        """Works with float32."""
+        q1 = quaternion(torch.randn(10, 4, dtype=torch.float32))
+        q2 = quaternion(torch.randn(10, 4, dtype=torch.float32))
+        result = quaternion_multiply(q1, q2)
+        assert result.wxyz.dtype == torch.float32
+
+    def test_float64(self):
+        """Works with float64."""
+        q1 = quaternion(torch.randn(10, 4, dtype=torch.float64))
+        q2 = quaternion(torch.randn(10, 4, dtype=torch.float64))
+        result = quaternion_multiply(q1, q2)
+        assert result.wxyz.dtype == torch.float64
+
+    def test_bfloat16(self):
+        """Works with bfloat16."""
+        q1 = quaternion(torch.randn(10, 4, dtype=torch.bfloat16))
+        q2 = quaternion(torch.randn(10, 4, dtype=torch.bfloat16))
+        result = quaternion_multiply(q1, q2)
+        assert result.wxyz.dtype == torch.bfloat16
+
+    def test_float16(self):
+        """Works with float16."""
+        q1 = quaternion(torch.randn(10, 4, dtype=torch.float16))
+        q2 = quaternion(torch.randn(10, 4, dtype=torch.float16))
+        result = quaternion_multiply(q1, q2)
+        assert result.wxyz.dtype == torch.float16
+
+    def test_dtype_mismatch_error(self):
+        """Raises error when dtypes don't match."""
+        q1 = quaternion(torch.randn(10, 4, dtype=torch.float32))
+        q2 = quaternion(torch.randn(10, 4, dtype=torch.float64))
+        with pytest.raises(RuntimeError, match="same dtype"):
+            quaternion_multiply(q1, q2)

@@ -68,9 +68,20 @@ def quaternion(wxyz: Tensor) -> Quaternion:
 
 
 def quaternion_multiply(q1: Quaternion, q2: Quaternion) -> Quaternion:
-    """Multiply two quaternions (Hamilton product).
+    """Multiply two quaternions using the Hamilton product.
 
-    Computes q1 * q2, representing rotation q1 followed by rotation q2.
+    .. math::
+
+        (q_1 \\cdot q_2)_w = w_1 w_2 - x_1 x_2 - y_1 y_2 - z_1 z_2
+
+        (q_1 \\cdot q_2)_x = w_1 x_2 + x_1 w_2 + y_1 z_2 - z_1 y_2
+
+        (q_1 \\cdot q_2)_y = w_1 y_2 - x_1 z_2 + y_1 w_2 + z_1 x_2
+
+        (q_1 \\cdot q_2)_z = w_1 z_2 + x_1 y_2 - y_1 x_2 + z_1 w_2
+
+    Where :math:`q_1 = w_1 + x_1 i + y_1 j + z_1 k` and
+    :math:`q_2 = w_2 + x_2 i + y_2 j + z_2 k`.
 
     Parameters
     ----------
@@ -83,6 +94,23 @@ def quaternion_multiply(q1: Quaternion, q2: Quaternion) -> Quaternion:
     -------
     Quaternion
         Product q1 * q2, shape is broadcast of q1 and q2 batch dimensions.
+
+    Notes
+    -----
+    - Quaternion multiplication is **non-commutative**: q1 * q2 != q2 * q1.
+    - For unit quaternions representing rotations, q1 * q2 represents
+      rotation q1 followed by rotation q2.
+    - Works for any quaternions, not just unit quaternions.
+
+    See Also
+    --------
+    quaternion_inverse : Compute quaternion inverse.
+    quaternion_normalize : Normalize to unit quaternion.
+
+    References
+    ----------
+    .. [1] Hamilton, W.R. "Elements of Quaternions", 1866.
+    .. [2] https://en.wikipedia.org/wiki/Quaternion#Hamilton_product
 
     Examples
     --------
