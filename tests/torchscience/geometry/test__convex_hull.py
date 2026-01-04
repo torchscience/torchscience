@@ -1,4 +1,5 @@
 # tests/torchscience/geometry/test__convex_hull.py
+import pytest
 import torch
 
 import torchscience  # noqa: F401 - needed to register C++ operators
@@ -281,3 +282,132 @@ class TestConvexHull3D:
         torch.testing.assert_close(
             hull.volume, torch.tensor(1.0 / 3.0), atol=1e-5, rtol=1e-5
         )
+
+
+class TestScipyComparison:
+    """Tests comparing torchscience convex_hull with scipy.spatial.ConvexHull."""
+
+    def test_2d_random_vertices_match_scipy(self):
+        """2D random hull vertices match scipy."""
+        scipy_spatial = pytest.importorskip("scipy.spatial")
+
+        from torchscience.geometry import convex_hull
+
+        torch.manual_seed(42)
+        points = torch.rand(50, 2)
+
+        # torchscience
+        hull = convex_hull(points)
+        ts_vertices = set(hull.vertices[: hull.n_vertices.item()].tolist())
+
+        # scipy
+        scipy_hull = scipy_spatial.ConvexHull(points.numpy())
+        scipy_vertices = set(scipy_hull.vertices.tolist())
+
+        assert ts_vertices == scipy_vertices
+
+    def test_2d_random_area_matches_scipy(self):
+        """2D random hull area matches scipy."""
+        scipy_spatial = pytest.importorskip("scipy.spatial")
+
+        from torchscience.geometry import convex_hull
+
+        torch.manual_seed(123)
+        points = torch.rand(100, 2)
+
+        # torchscience (volume = area in 2D)
+        hull = convex_hull(points)
+
+        # scipy
+        scipy_hull = scipy_spatial.ConvexHull(points.numpy())
+
+        torch.testing.assert_close(
+            hull.volume,
+            torch.tensor(scipy_hull.volume, dtype=hull.volume.dtype),
+            atol=1e-5,
+            rtol=1e-5,
+        )
+
+    @pytest.mark.xfail(reason="3D Quickhull implementation needs debugging")
+    def test_3d_random_vertices_match_scipy(self):
+        """3D random hull vertices match scipy."""
+        scipy_spatial = pytest.importorskip("scipy.spatial")
+
+        from torchscience.geometry import convex_hull
+
+        torch.manual_seed(42)
+        points = torch.rand(50, 3)
+
+        # torchscience
+        hull = convex_hull(points)
+        ts_vertices = set(hull.vertices[: hull.n_vertices.item()].tolist())
+
+        # scipy
+        scipy_hull = scipy_spatial.ConvexHull(points.numpy())
+        scipy_vertices = set(scipy_hull.vertices.tolist())
+
+        assert ts_vertices == scipy_vertices
+
+    @pytest.mark.xfail(reason="3D Quickhull implementation needs debugging")
+    def test_3d_random_volume_matches_scipy(self):
+        """3D random hull volume matches scipy."""
+        scipy_spatial = pytest.importorskip("scipy.spatial")
+
+        from torchscience.geometry import convex_hull
+
+        torch.manual_seed(123)
+        points = torch.rand(100, 3)
+
+        # torchscience
+        hull = convex_hull(points)
+
+        # scipy
+        scipy_hull = scipy_spatial.ConvexHull(points.numpy())
+
+        torch.testing.assert_close(
+            hull.volume,
+            torch.tensor(scipy_hull.volume, dtype=hull.volume.dtype),
+            atol=1e-4,
+            rtol=1e-4,
+        )
+
+    @pytest.mark.xfail(reason="3D Quickhull implementation needs debugging")
+    def test_3d_random_surface_area_matches_scipy(self):
+        """3D random hull surface area matches scipy."""
+        scipy_spatial = pytest.importorskip("scipy.spatial")
+
+        from torchscience.geometry import convex_hull
+
+        torch.manual_seed(456)
+        points = torch.rand(80, 3)
+
+        # torchscience (area = surface area in 3D)
+        hull = convex_hull(points)
+
+        # scipy
+        scipy_hull = scipy_spatial.ConvexHull(points.numpy())
+
+        torch.testing.assert_close(
+            hull.area,
+            torch.tensor(scipy_hull.area, dtype=hull.area.dtype),
+            atol=1e-4,
+            rtol=1e-4,
+        )
+
+    @pytest.mark.xfail(reason="3D Quickhull implementation needs debugging")
+    def test_3d_facet_count_matches_scipy(self):
+        """3D hull facet count matches scipy."""
+        scipy_spatial = pytest.importorskip("scipy.spatial")
+
+        from torchscience.geometry import convex_hull
+
+        torch.manual_seed(789)
+        points = torch.rand(60, 3)
+
+        # torchscience
+        hull = convex_hull(points)
+
+        # scipy
+        scipy_hull = scipy_spatial.ConvexHull(points.numpy())
+
+        assert hull.n_facets.item() == len(scipy_hull.simplices)
