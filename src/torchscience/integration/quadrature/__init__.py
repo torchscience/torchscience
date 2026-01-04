@@ -15,6 +15,7 @@ from torchscience.integration.quadrature._exceptions import (
     IntegrationError,
     QuadratureWarning,
 )
+from torchscience.integration.quadrature._rules import GaussLegendre
 from torchscience.integration.quadrature._simpson import (
     cumulative_simpson,
     simpson,
@@ -25,6 +26,7 @@ from torchscience.integration.quadrature._trapezoid import (
 )
 
 __all__ = [
+    "GaussLegendre",
     "trapezoid",
     "cumulative_trapezoid",
     "simpson",
