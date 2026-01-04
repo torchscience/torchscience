@@ -25,9 +25,9 @@ void quaternion_multiply_backward_scalar(
   // d(output)/d(y1) = [-y2, z2, w2, -x2]
   // d(output)/d(z1) = [-z2, -y2, x2, w2]
   grad_q1[0] = gw * w2 + gx * x2 + gy * y2 + gz * z2;
-  grad_q1[1] = -gw * x2 + gx * w2 + gy * z2 - gz * y2;
-  grad_q1[2] = -gw * y2 - gx * z2 + gy * w2 + gz * x2;
-  grad_q1[3] = -gw * z2 + gx * y2 - gy * x2 + gz * w2;
+  grad_q1[1] = -gw * x2 + gx * w2 - gy * z2 + gz * y2;
+  grad_q1[2] = -gw * y2 + gx * z2 + gy * w2 - gz * x2;
+  grad_q1[3] = -gw * z2 - gx * y2 + gy * x2 + gz * w2;
 
   // Gradient w.r.t. q2
   // d(output)/d(w2) = [w1, x1, y1, z1]
