@@ -79,6 +79,11 @@ tensor([ 1.,  6., 17.])
 tensor([ 1.,  6., 17.])
 """
 
+from torchscience.polynomial._division import (
+    polynomial_div,
+    polynomial_divmod,
+    polynomial_mod,
+)
 from torchscience.polynomial._exceptions import DegreeError, PolynomialError
 from torchscience.polynomial._polynomial import (
     Polynomial,
@@ -113,6 +118,10 @@ __all__ = [
     "polynomial_multiply",
     "polynomial_scale",
     "polynomial_negate",
+    # Division
+    "polynomial_divmod",
+    "polynomial_div",
+    "polynomial_mod",
     # Evaluation and calculus
     "polynomial_evaluate",
     "polynomial_derivative",
