@@ -369,3 +369,70 @@ def quaternion_apply(q: Quaternion, point: Tensor) -> Tensor:
     tensor([0., 0., 1.])
     """
     return torch.ops.torchscience.quaternion_apply(q.wxyz, point)
+
+
+def matrix_to_quaternion(matrix: Tensor) -> Quaternion:
+    """Convert 3x3 rotation matrix to quaternion.
+
+    Uses Shepperd's method for numerical stability by choosing the largest
+    diagonal element to avoid division by small numbers.
+
+    Parameters
+    ----------
+    matrix : Tensor
+        Rotation matrix, shape (..., 3, 3).
+
+    Returns
+    -------
+    Quaternion
+        Unit quaternion, shape (..., 4) in wxyz convention.
+
+    Notes
+    -----
+    - For valid rotation matrices (orthogonal with determinant 1), the output
+      is a unit quaternion.
+    - Rotation matrices R and the output quaternion q satisfy the property
+      that quaternion_to_matrix(matrix_to_quaternion(R)) == R (up to numerical
+      precision).
+    - The sign of the quaternion is not uniquely determined: q and -q represent
+      the same rotation.
+
+    See Also
+    --------
+    quaternion_to_matrix : Convert quaternion to rotation matrix.
+    quaternion_normalize : Normalize to unit quaternion.
+
+    References
+    ----------
+    .. [1] Shepperd, S.W. "Quaternion from Rotation Matrix." Journal of
+           Guidance and Control, 1978.
+    .. [2] https://en.wikipedia.org/wiki/Rotation_matrix#Quaternion
+
+    Examples
+    --------
+    Identity matrix gives identity quaternion (or its negative):
+
+    >>> R = torch.eye(3)
+    >>> q = matrix_to_quaternion(R)
+    >>> q.wxyz
+    tensor([1., 0., 0., 0.])
+
+    Round-trip conversion:
+
+    >>> q_orig = quaternion_normalize(quaternion(torch.randn(4)))
+    >>> R = quaternion_to_matrix(q_orig)
+    >>> q_back = matrix_to_quaternion(R)
+    >>> # q_back should match q_orig or -q_orig
+    >>> torch.allclose(q_back.wxyz, q_orig.wxyz, atol=1e-5) or \\
+    ...     torch.allclose(q_back.wxyz, -q_orig.wxyz, atol=1e-5)
+    True
+
+    Batch of rotation matrices:
+
+    >>> R = torch.randn(10, 3, 3)
+    >>> q = matrix_to_quaternion(R)
+    >>> q.wxyz.shape
+    torch.Size([10, 4])
+    """
+    result = torch.ops.torchscience.matrix_to_quaternion(matrix)
+    return Quaternion(wxyz=result)
