@@ -95,6 +95,9 @@
 #include "autograd/privacy/gaussian_mechanism.h"
 #include "autograd/privacy/laplace_mechanism.h"
 
+// probability
+#include "cpu/probability/normal.h"
+
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
 #include "autograd/graphics/shading/phong.h"
@@ -514,4 +517,9 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("laplace_mechanism(Tensor x, Tensor noise, float b) -> Tensor");
   module.def("laplace_mechanism_backward(Tensor grad_output) -> Tensor");
+
+  // Probability - Normal distribution
+  module.def("normal_cdf(Tensor x, Tensor loc, Tensor scale) -> Tensor");
+  module.def("normal_cdf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("normal_cdf_backward_backward(Tensor grad_grad_x, Tensor grad_grad_loc, Tensor grad_grad_scale, Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor, Tensor)");
 }
