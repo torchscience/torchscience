@@ -328,7 +328,6 @@ class TestScipyComparison:
             rtol=1e-5,
         )
 
-    @pytest.mark.xfail(reason="3D Quickhull implementation needs debugging")
     def test_3d_random_vertices_match_scipy(self):
         """3D random hull vertices match scipy."""
         scipy_spatial = pytest.importorskip("scipy.spatial")
@@ -348,7 +347,6 @@ class TestScipyComparison:
 
         assert ts_vertices == scipy_vertices
 
-    @pytest.mark.xfail(reason="3D Quickhull implementation needs debugging")
     def test_3d_random_volume_matches_scipy(self):
         """3D random hull volume matches scipy."""
         scipy_spatial = pytest.importorskip("scipy.spatial")
@@ -371,7 +369,6 @@ class TestScipyComparison:
             rtol=1e-4,
         )
 
-    @pytest.mark.xfail(reason="3D Quickhull implementation needs debugging")
     def test_3d_random_surface_area_matches_scipy(self):
         """3D random hull surface area matches scipy."""
         scipy_spatial = pytest.importorskip("scipy.spatial")
@@ -394,7 +391,6 @@ class TestScipyComparison:
             rtol=1e-4,
         )
 
-    @pytest.mark.xfail(reason="3D Quickhull implementation needs debugging")
     def test_3d_facet_count_matches_scipy(self):
         """3D hull facet count matches scipy."""
         scipy_spatial = pytest.importorskip("scipy.spatial")

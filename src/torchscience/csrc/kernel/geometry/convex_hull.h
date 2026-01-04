@@ -134,17 +134,13 @@ struct ConvexHull3D {
 
   // Facet structure for Quickhull
   struct Facet {
-    int64_t v[3];           // Vertex indices
-    int64_t neighbors[3];   // Neighbor facet indices
-    scalar_t normal[3];     // Unit normal
-    scalar_t offset;        // Plane offset
-    std::vector<int64_t> outside_set;
-    int64_t furthest_point;
-    scalar_t furthest_dist;
+    int64_t v[3];           // Vertex indices (CCW when viewed from outside)
+    scalar_t normal[3];     // Unit outward normal
+    scalar_t offset;        // Plane offset (n.p + d = 0)
+    std::vector<int64_t> outside_set;  // Points outside this facet
     bool active;
 
     void compute_plane(const scalar_t* pts) {
-      // Compute normal from cross product
       scalar_t ax = pts[v[1] * 3 + 0] - pts[v[0] * 3 + 0];
       scalar_t ay = pts[v[1] * 3 + 1] - pts[v[0] * 3 + 1];
       scalar_t az = pts[v[1] * 3 + 2] - pts[v[0] * 3 + 2];
@@ -158,8 +154,7 @@ struct ConvexHull3D {
 
       scalar_t len = std::sqrt(normal[0] * normal[0] + normal[1] * normal[1] +
                                normal[2] * normal[2]);
-
-      if (len > scalar_t(1e-10)) {
+      if (len > scalar_t(1e-12)) {
         normal[0] /= len;
         normal[1] /= len;
         normal[2] /= len;
@@ -176,7 +171,6 @@ struct ConvexHull3D {
 
   void compute(const scalar_t* points, int64_t n) {
     if (n < 4) {
-      // Degenerate: return all points as vertices
       vertices.clear();
       for (int64_t i = 0; i < n; ++i) vertices.push_back(i);
       surface_area = scalar_t(0);
@@ -187,182 +181,203 @@ struct ConvexHull3D {
     // Step 1: Find initial tetrahedron
     std::vector<int64_t> initial = find_initial_simplex(points, n);
     if (initial.size() < 4) {
-      // Degenerate (coplanar)
       vertices.assign(initial.begin(), initial.end());
       surface_area = scalar_t(0);
       volume = scalar_t(0);
       return;
     }
 
-    // Step 2: Initialize with 4 facets of tetrahedron
+    // Step 2: Create initial tetrahedron with 4 facets
     std::vector<Facet> facets;
-    facets.reserve(n * 4);  // Upper bound estimate
+    facets.reserve(n * 2);
 
-    // Create 4 faces of tetrahedron (ensure outward normals)
-    int64_t faces[4][3] = {{initial[0], initial[1], initial[2]},
-                           {initial[0], initial[2], initial[3]},
-                           {initial[0], initial[3], initial[1]},
-                           {initial[1], initial[3], initial[2]}};
+    // Compute centroid for consistent outward orientation
+    scalar_t cx = (points[initial[0] * 3] + points[initial[1] * 3] +
+                   points[initial[2] * 3] + points[initial[3] * 3]) / 4;
+    scalar_t cy = (points[initial[0] * 3 + 1] + points[initial[1] * 3 + 1] +
+                   points[initial[2] * 3 + 1] + points[initial[3] * 3 + 1]) / 4;
+    scalar_t cz = (points[initial[0] * 3 + 2] + points[initial[1] * 3 + 2] +
+                   points[initial[2] * 3 + 2] + points[initial[3] * 3 + 2]) / 4;
+    scalar_t centroid[3] = {cx, cy, cz};
 
-    // Compute centroid for orientation
-    scalar_t cx = scalar_t(0), cy = scalar_t(0), cz = scalar_t(0);
-    for (int i = 0; i < 4; ++i) {
-      cx += points[initial[i] * 3 + 0];
-      cy += points[initial[i] * 3 + 1];
-      cz += points[initial[i] * 3 + 2];
-    }
-    cx /= 4;
-    cy /= 4;
-    cz /= 4;
+    // 4 faces of tetrahedron
+    int64_t tet_faces[4][3] = {
+        {initial[0], initial[1], initial[2]},
+        {initial[0], initial[2], initial[3]},
+        {initial[0], initial[3], initial[1]},
+        {initial[1], initial[3], initial[2]}};
 
     for (int i = 0; i < 4; ++i) {
       Facet f;
-      f.v[0] = faces[i][0];
-      f.v[1] = faces[i][1];
-      f.v[2] = faces[i][2];
+      f.v[0] = tet_faces[i][0];
+      f.v[1] = tet_faces[i][1];
+      f.v[2] = tet_faces[i][2];
       f.active = true;
-      f.furthest_dist = scalar_t(-1);
-      f.furthest_point = -1;
       f.compute_plane(points);
 
       // Ensure normal points outward (away from centroid)
-      scalar_t center[3] = {cx, cy, cz};
-      if (f.signed_distance(center) > 0) {
-        // Flip normal and swap vertices
+      if (f.signed_distance(centroid) > 0) {
         std::swap(f.v[1], f.v[2]);
         f.compute_plane(points);
       }
-
       facets.push_back(f);
     }
 
-    // Set up neighbor relationships for initial tetrahedron
-    facets[0].neighbors[0] = 3;
-    facets[0].neighbors[1] = 2;
-    facets[0].neighbors[2] = 1;
-    facets[1].neighbors[0] = 3;
-    facets[1].neighbors[1] = 0;
-    facets[1].neighbors[2] = 2;
-    facets[2].neighbors[0] = 3;
-    facets[2].neighbors[1] = 1;
-    facets[2].neighbors[2] = 0;
-    facets[3].neighbors[0] = 1;
-    facets[3].neighbors[1] = 2;
-    facets[3].neighbors[2] = 0;
-
-    // Step 3: Assign all points to outside sets
-    std::vector<bool> in_hull(n, false);
-    for (int i = 0; i < 4; ++i) in_hull[initial[i]] = true;
+    // Step 3: Assign outside points to facets
+    std::set<int64_t> hull_points(initial.begin(), initial.end());
 
     for (int64_t i = 0; i < n; ++i) {
-      if (in_hull[i]) continue;
+      if (hull_points.count(i)) continue;
 
-      scalar_t max_dist = scalar_t(-1e10);
-      int64_t best_facet = -1;
+      scalar_t max_dist = scalar_t(0);
+      int64_t best = -1;
 
       for (size_t f = 0; f < facets.size(); ++f) {
         if (!facets[f].active) continue;
-        scalar_t dist = facets[f].signed_distance(&points[i * 3]);
-        if (dist > scalar_t(1e-10) && dist > max_dist) {
-          max_dist = dist;
-          best_facet = static_cast<int64_t>(f);
+        scalar_t d = facets[f].signed_distance(&points[i * 3]);
+        if (d > max_dist) {
+          max_dist = d;
+          best = static_cast<int64_t>(f);
         }
       }
 
-      if (best_facet >= 0) {
-        facets[best_facet].outside_set.push_back(i);
-        if (max_dist > facets[best_facet].furthest_dist) {
-          facets[best_facet].furthest_dist = max_dist;
-          facets[best_facet].furthest_point = i;
-        }
+      if (best >= 0 && max_dist > scalar_t(1e-10)) {
+        facets[best].outside_set.push_back(i);
       }
     }
 
-    // Step 4: Iteratively add points
-    bool changed = true;
-    while (changed) {
-      changed = false;
+    // Step 4: Iteratively expand hull
+    bool progress = true;
+    while (progress) {
+      progress = false;
+
+      // Find facet with non-empty outside set
+      int64_t work_facet = -1;
+      scalar_t max_dist = scalar_t(0);
+      int64_t apex = -1;
 
       for (size_t f = 0; f < facets.size(); ++f) {
         if (!facets[f].active || facets[f].outside_set.empty()) continue;
 
-        // Get apex (furthest point)
-        int64_t apex = facets[f].furthest_point;
-
-        // Find all visible facets from apex
-        std::vector<int64_t> visible;
-        std::vector<bool> visited(facets.size(), false);
-        find_visible_facets(facets, f, points, apex, visible, visited);
-
-        if (visible.empty()) continue;
-
-        // Find horizon (boundary between visible and invisible)
-        std::vector<std::pair<int64_t, int64_t>> horizon;
-        find_horizon(facets, visible, horizon);
-
-        // Create new facets connecting apex to horizon
-        int64_t first_new = static_cast<int64_t>(facets.size());
-        for (const auto& edge : horizon) {
-          Facet nf;
-          nf.v[0] = apex;
-          nf.v[1] = edge.first;
-          nf.v[2] = edge.second;
-          nf.active = true;
-          nf.furthest_dist = scalar_t(-1);
-          nf.furthest_point = -1;
-          nf.compute_plane(points);
-
-          // Ensure outward normal
-          scalar_t dist_check = nf.signed_distance(&points[initial[0] * 3]);
-          if (dist_check > scalar_t(1e-10)) {
-            std::swap(nf.v[1], nf.v[2]);
-            nf.compute_plane(points);
-          }
-
-          nf.neighbors[0] = -1;
-          nf.neighbors[1] = -1;
-          nf.neighbors[2] = -1;
-          facets.push_back(nf);
-        }
-
-        // Deactivate visible facets and redistribute outside sets
-        std::vector<int64_t> points_to_redistribute;
-        for (int64_t vi : visible) {
-          facets[vi].active = false;
-          for (int64_t pi : facets[vi].outside_set) {
-            if (pi != apex) {
-              points_to_redistribute.push_back(pi);
-            }
-          }
-          facets[vi].outside_set.clear();
-        }
-
-        // Redistribute points to new facets
-        for (int64_t pi : points_to_redistribute) {
-          scalar_t max_dist = scalar_t(-1e10);
-          int64_t best_facet = -1;
-
-          for (size_t nf = first_new; nf < facets.size(); ++nf) {
-            if (!facets[nf].active) continue;
-            scalar_t dist = facets[nf].signed_distance(&points[pi * 3]);
-            if (dist > scalar_t(1e-10) && dist > max_dist) {
-              max_dist = dist;
-              best_facet = static_cast<int64_t>(nf);
-            }
-          }
-
-          if (best_facet >= 0) {
-            facets[best_facet].outside_set.push_back(pi);
-            if (max_dist > facets[best_facet].furthest_dist) {
-              facets[best_facet].furthest_dist = max_dist;
-              facets[best_facet].furthest_point = pi;
-            }
+        // Find furthest point in this facet's outside set
+        for (int64_t pi : facets[f].outside_set) {
+          scalar_t d = facets[f].signed_distance(&points[pi * 3]);
+          if (d > max_dist) {
+            max_dist = d;
+            apex = pi;
+            work_facet = static_cast<int64_t>(f);
           }
         }
-
-        changed = true;
-        break;  // Restart loop since facet indices changed
       }
+
+      if (work_facet < 0) break;  // No more work
+
+      // Find ALL visible facets (direct check, no neighbor traversal)
+      std::vector<int64_t> visible;
+      for (size_t f = 0; f < facets.size(); ++f) {
+        if (!facets[f].active) continue;
+        if (facets[f].signed_distance(&points[apex * 3]) > scalar_t(1e-10)) {
+          visible.push_back(static_cast<int64_t>(f));
+        }
+      }
+
+      if (visible.empty()) continue;
+
+      // Collect points from visible facets for redistribution
+      std::vector<int64_t> orphan_points;
+      for (int64_t vi : visible) {
+        for (int64_t pi : facets[vi].outside_set) {
+          if (pi != apex) orphan_points.push_back(pi);
+        }
+        facets[vi].outside_set.clear();
+        facets[vi].active = false;
+      }
+
+      // Find horizon edges (edges of visible facets not shared with other visible)
+      std::set<int64_t> visible_set(visible.begin(), visible.end());
+      std::vector<std::pair<int64_t, int64_t>> horizon;
+
+      for (int64_t vi : visible) {
+        const Facet& vf = facets[vi];
+        for (int e = 0; e < 3; ++e) {
+          int64_t e1 = vf.v[e];
+          int64_t e2 = vf.v[(e + 1) % 3];
+
+          // Check if this edge is shared with another visible facet
+          bool shared = false;
+          for (int64_t vj : visible) {
+            if (vj == vi) continue;
+            const Facet& of = facets[vj];
+            for (int oe = 0; oe < 3; ++oe) {
+              int64_t oe1 = of.v[oe];
+              int64_t oe2 = of.v[(oe + 1) % 3];
+              // Edges match if they share same vertices (in either order)
+              if ((e1 == oe1 && e2 == oe2) || (e1 == oe2 && e2 == oe1)) {
+                shared = true;
+                break;
+              }
+            }
+            if (shared) break;
+          }
+
+          if (!shared) {
+            // This edge is on the horizon - add in CCW order from outside
+            horizon.emplace_back(e2, e1);  // Reverse to get correct winding
+          }
+        }
+      }
+
+      // Create new facets from apex to each horizon edge
+      hull_points.insert(apex);
+      size_t first_new = facets.size();
+
+      for (const auto& edge : horizon) {
+        Facet nf;
+        nf.v[0] = apex;
+        nf.v[1] = edge.first;
+        nf.v[2] = edge.second;
+        nf.active = true;
+        nf.compute_plane(points);
+
+        // Use centroid of current hull for orientation check
+        scalar_t hcx = 0, hcy = 0, hcz = 0;
+        for (int64_t hp : hull_points) {
+          hcx += points[hp * 3];
+          hcy += points[hp * 3 + 1];
+          hcz += points[hp * 3 + 2];
+        }
+        hcx /= hull_points.size();
+        hcy /= hull_points.size();
+        hcz /= hull_points.size();
+        scalar_t hc[3] = {hcx, hcy, hcz};
+
+        if (nf.signed_distance(hc) > scalar_t(1e-10)) {
+          std::swap(nf.v[1], nf.v[2]);
+          nf.compute_plane(points);
+        }
+
+        facets.push_back(nf);
+      }
+
+      // Redistribute orphan points to new facets
+      for (int64_t pi : orphan_points) {
+        scalar_t best_dist = scalar_t(0);
+        int64_t best = -1;
+
+        for (size_t f = first_new; f < facets.size(); ++f) {
+          scalar_t d = facets[f].signed_distance(&points[pi * 3]);
+          if (d > best_dist) {
+            best_dist = d;
+            best = static_cast<int64_t>(f);
+          }
+        }
+
+        if (best >= 0 && best_dist > scalar_t(1e-10)) {
+          facets[best].outside_set.push_back(pi);
+        }
+      }
+
+      progress = true;
     }
 
     // Step 5: Extract results
@@ -373,9 +388,9 @@ struct ConvexHull3D {
 
     for (const auto& f : facets) {
       if (!f.active) continue;
-      for (int i = 0; i < 3; ++i) {
-        vertex_set.insert(f.v[i]);
-      }
+      vertex_set.insert(f.v[0]);
+      vertex_set.insert(f.v[1]);
+      vertex_set.insert(f.v[2]);
       simplices.push_back(f.v[0]);
       simplices.push_back(f.v[1]);
       simplices.push_back(f.v[2]);
@@ -383,14 +398,12 @@ struct ConvexHull3D {
       equations.push_back(f.normal[1]);
       equations.push_back(f.normal[2]);
       equations.push_back(f.offset);
-      neighbors.push_back(f.neighbors[0]);
-      neighbors.push_back(f.neighbors[1]);
-      neighbors.push_back(f.neighbors[2]);
+      neighbors.push_back(-1);  // Not tracking neighbors
+      neighbors.push_back(-1);
+      neighbors.push_back(-1);
     }
 
     vertices.assign(vertex_set.begin(), vertex_set.end());
-
-    // Compute surface area and volume
     compute_metrics(points);
   }
 
@@ -398,15 +411,14 @@ struct ConvexHull3D {
   std::vector<int64_t> find_initial_simplex(const scalar_t* pts, int64_t n) {
     std::vector<int64_t> result;
 
-    // Find extremal points along each axis
+    // Find extremal points
     int64_t min_x = 0, max_x = 0;
     for (int64_t i = 1; i < n; ++i) {
       if (pts[i * 3] < pts[min_x * 3]) min_x = i;
       if (pts[i * 3] > pts[max_x * 3]) max_x = i;
     }
 
-    if (min_x == max_x) return result;  // All points coincident
-
+    if (min_x == max_x) return result;
     result.push_back(min_x);
     result.push_back(max_x);
 
@@ -415,22 +427,17 @@ struct ConvexHull3D {
     int64_t third = -1;
     for (int64_t i = 0; i < n; ++i) {
       if (i == min_x || i == max_x) continue;
-      scalar_t dist =
-          point_line_dist(&pts[i * 3], &pts[min_x * 3], &pts[max_x * 3]);
+      scalar_t dist = point_line_dist(&pts[i * 3], &pts[min_x * 3], &pts[max_x * 3]);
       if (dist > max_dist) {
         max_dist = dist;
         third = i;
       }
     }
 
-    if (third < 0) return result;  // Collinear
+    if (third < 0 || max_dist < scalar_t(1e-10)) return result;
     result.push_back(third);
 
-    // Find point furthest from plane
-    max_dist = scalar_t(0);
-    int64_t fourth = -1;
-
-    // Compute plane normal
+    // Compute plane of first 3 points
     scalar_t ax = pts[max_x * 3] - pts[min_x * 3];
     scalar_t ay = pts[max_x * 3 + 1] - pts[min_x * 3 + 1];
     scalar_t az = pts[max_x * 3 + 2] - pts[min_x * 3 + 2];
@@ -441,79 +448,41 @@ struct ConvexHull3D {
     scalar_t ny = az * bx - ax * bz;
     scalar_t nz = ax * by - ay * bx;
     scalar_t len = std::sqrt(nx * nx + ny * ny + nz * nz);
-    if (len > scalar_t(1e-10)) {
+    if (len > scalar_t(1e-12)) {
       nx /= len;
       ny /= len;
       nz /= len;
     }
-    scalar_t d = -(nx * pts[min_x * 3] + ny * pts[min_x * 3 + 1] +
-                   nz * pts[min_x * 3 + 2]);
+    scalar_t d = -(nx * pts[min_x * 3] + ny * pts[min_x * 3 + 1] + nz * pts[min_x * 3 + 2]);
 
+    // Find point furthest from plane
+    max_dist = scalar_t(0);
+    int64_t fourth = -1;
     for (int64_t i = 0; i < n; ++i) {
       if (i == min_x || i == max_x || i == third) continue;
-      scalar_t dist = std::abs(nx * pts[i * 3] + ny * pts[i * 3 + 1] +
-                               nz * pts[i * 3 + 2] + d);
+      scalar_t dist = std::abs(nx * pts[i * 3] + ny * pts[i * 3 + 1] + nz * pts[i * 3 + 2] + d);
       if (dist > max_dist) {
         max_dist = dist;
         fourth = i;
       }
     }
 
-    if (fourth < 0) return result;  // Coplanar
+    if (fourth < 0 || max_dist < scalar_t(1e-10)) return result;
     result.push_back(fourth);
 
     return result;
   }
 
-  scalar_t point_line_dist(const scalar_t* p, const scalar_t* a,
-                           const scalar_t* b) {
+  scalar_t point_line_dist(const scalar_t* p, const scalar_t* a, const scalar_t* b) {
     scalar_t abx = b[0] - a[0], aby = b[1] - a[1], abz = b[2] - a[2];
     scalar_t apx = p[0] - a[0], apy = p[1] - a[1], apz = p[2] - a[2];
-    // Cross product ap x ab
     scalar_t cx = apy * abz - apz * aby;
     scalar_t cy = apz * abx - apx * abz;
     scalar_t cz = apx * aby - apy * abx;
     scalar_t cross_len = std::sqrt(cx * cx + cy * cy + cz * cz);
     scalar_t ab_len = std::sqrt(abx * abx + aby * aby + abz * abz);
-    if (ab_len < scalar_t(1e-10)) return scalar_t(0);
+    if (ab_len < scalar_t(1e-12)) return scalar_t(0);
     return cross_len / ab_len;
-  }
-
-  void find_visible_facets(std::vector<Facet>& facets, int64_t start,
-                           const scalar_t* points, int64_t apex,
-                           std::vector<int64_t>& visible,
-                           std::vector<bool>& visited) {
-    if (visited[start] || !facets[start].active) return;
-    visited[start] = true;
-
-    if (facets[start].signed_distance(&points[apex * 3]) > scalar_t(1e-10)) {
-      visible.push_back(start);
-      for (int i = 0; i < 3; ++i) {
-        int64_t nb = facets[start].neighbors[i];
-        if (nb >= 0 && !visited[nb]) {
-          find_visible_facets(facets, nb, points, apex, visible, visited);
-        }
-      }
-    }
-  }
-
-  void find_horizon(const std::vector<Facet>& facets,
-                    const std::vector<int64_t>& visible,
-                    std::vector<std::pair<int64_t, int64_t>>& horizon) {
-    std::set<int64_t> visible_set(visible.begin(), visible.end());
-
-    for (int64_t fi : visible) {
-      const Facet& f = facets[fi];
-      for (int i = 0; i < 3; ++i) {
-        int64_t nb = f.neighbors[i];
-        if (nb < 0 || visible_set.find(nb) == visible_set.end()) {
-          // This edge is on the horizon
-          int64_t e1 = f.v[(i + 1) % 3];
-          int64_t e2 = f.v[(i + 2) % 3];
-          horizon.emplace_back(e1, e2);
-        }
-      }
-    }
   }
 
   void compute_metrics(const scalar_t* points) {
@@ -523,38 +492,33 @@ struct ConvexHull3D {
     int64_t n_facets = static_cast<int64_t>(simplices.size()) / 3;
     if (n_facets == 0) return;
 
-    // Reference point for volume calculation (any vertex works)
-    int64_t ref = simplices[0];
-    scalar_t rx = points[ref * 3], ry = points[ref * 3 + 1],
-             rz = points[ref * 3 + 2];
-
+    // Use origin as reference for volume (simpler and correct)
     for (int64_t i = 0; i < n_facets; ++i) {
       int64_t v0 = simplices[i * 3];
       int64_t v1 = simplices[i * 3 + 1];
       int64_t v2 = simplices[i * 3 + 2];
 
-      // Triangle area via cross product
-      scalar_t ax = points[v1 * 3] - points[v0 * 3];
-      scalar_t ay = points[v1 * 3 + 1] - points[v0 * 3 + 1];
-      scalar_t az = points[v1 * 3 + 2] - points[v0 * 3 + 2];
-      scalar_t bx = points[v2 * 3] - points[v0 * 3];
-      scalar_t by = points[v2 * 3 + 1] - points[v0 * 3 + 1];
-      scalar_t bz = points[v2 * 3 + 2] - points[v0 * 3 + 2];
+      scalar_t p0x = points[v0 * 3], p0y = points[v0 * 3 + 1], p0z = points[v0 * 3 + 2];
+      scalar_t p1x = points[v1 * 3], p1y = points[v1 * 3 + 1], p1z = points[v1 * 3 + 2];
+      scalar_t p2x = points[v2 * 3], p2y = points[v2 * 3 + 1], p2z = points[v2 * 3 + 2];
 
+      // Cross product for triangle area and normal
+      scalar_t ax = p1x - p0x, ay = p1y - p0y, az = p1z - p0z;
+      scalar_t bx = p2x - p0x, by = p2y - p0y, bz = p2z - p0z;
       scalar_t cx = ay * bz - az * by;
       scalar_t cy = az * bx - ax * bz;
       scalar_t cz = ax * by - ay * bx;
 
-      scalar_t tri_area = std::sqrt(cx * cx + cy * cy + cz * cz) / scalar_t(2);
-      surface_area += tri_area;
+      // Triangle area = |cross| / 2
+      surface_area += std::sqrt(cx * cx + cy * cy + cz * cz) / scalar_t(2);
 
-      // Tetrahedron volume (reference point to triangle)
-      scalar_t dx = points[v0 * 3] - rx;
-      scalar_t dy = points[v0 * 3 + 1] - ry;
-      scalar_t dz = points[v0 * 3 + 2] - rz;
-
-      // Volume = (1/6) * |d . (a x b)|
-      scalar_t tet_vol = (dx * cx + dy * cy + dz * cz) / scalar_t(6);
+      // Signed volume of tetrahedron from origin = (p0 . (p1 x p2)) / 6
+      // Using: p0 . ((p1-p0) x (p2-p0)) = p0 . cross, but simpler is:
+      // V = (1/6) * p0 . (cross of p1-p0 and p2-p0)
+      // Actually use direct formula: V = (1/6) * |a . (b x c)| where a,b,c from origin
+      scalar_t tet_vol = (p0x * (p1y * p2z - p1z * p2y) -
+                          p0y * (p1x * p2z - p1z * p2x) +
+                          p0z * (p1x * p2y - p1y * p2x)) / scalar_t(6);
       volume += tet_vol;
     }
 
