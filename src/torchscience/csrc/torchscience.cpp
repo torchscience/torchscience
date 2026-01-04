@@ -60,6 +60,7 @@
 #include "cpu/integral_transform/inverse_hilbert_transform.h"
 #include "cpu/test/sum_squares.h"
 #include "cpu/graph_theory/floyd_warshall.h"
+#include "cpu/graph_theory/connected_components.h"
 #include "cpu/information_theory/kullback_leibler_divergence.h"
 #include "cpu/information_theory/jensen_shannon_divergence.h"
 #include "cpu/space_partitioning/kd_tree.h"
@@ -120,6 +121,7 @@
 #include "meta/integral_transform/inverse_hilbert_transform.h"
 #include "meta/test/sum_squares.h"
 #include "meta/graph_theory/floyd_warshall.h"
+#include "meta/graph_theory/connected_components.h"
 #include "meta/information_theory/kullback_leibler_divergence.h"
 #include "meta/information_theory/jensen_shannon_divergence.h"
 #include "meta/space_partitioning/kd_tree.h"
@@ -364,6 +366,7 @@ TORCH_LIBRARY(torchscience, module) {
 
   // graph_theory
   module.def("floyd_warshall(Tensor input, bool directed) -> (Tensor, Tensor, bool)");
+  module.def("connected_components(Tensor adjacency, bool directed, str connection) -> (int, Tensor)");
 
   // combinatorics
   module.def("binomial_coefficient(Tensor n, Tensor k) -> Tensor");
