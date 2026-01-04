@@ -128,6 +128,7 @@
 #include "meta/space_partitioning/range_search.h"
 #include "meta/geometry/transform/reflect.h"
 #include "meta/geometry/transform/refract.h"
+#include "meta/geometry/transform/quaternion_multiply.h"
 #include "meta/geometry/convex_hull.h"
 #include "autograd/space_partitioning/k_nearest_neighbors.h"
 #include "autograd/space_partitioning/range_search.h"
