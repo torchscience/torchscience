@@ -11,6 +11,7 @@ Quadrature rule classes:
     GaussLegendre, GaussKronrod
 """
 
+from torchscience.integration.quadrature._dblquad import dblquad
 from torchscience.integration.quadrature._exceptions import (
     IntegrationError,
     QuadratureWarning,
@@ -40,6 +41,7 @@ __all__ = [
     "fixed_quad",
     "quad",
     "quad_info",
+    "dblquad",
     "QuadratureWarning",
     "IntegrationError",
 ]
