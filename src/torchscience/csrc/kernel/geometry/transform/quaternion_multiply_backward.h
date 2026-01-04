@@ -35,9 +35,9 @@ void quaternion_multiply_backward_scalar(
   // d(output)/d(y2) = [-y1, -z1, w1, x1]
   // d(output)/d(z2) = [-z1, y1, -x1, w1]
   grad_q2[0] = gw * w1 + gx * x1 + gy * y1 + gz * z1;
-  grad_q2[1] = -gw * x1 + gx * w1 - gy * z1 + gz * y1;
-  grad_q2[2] = -gw * y1 + gx * z1 + gy * w1 - gz * x1;
-  grad_q2[3] = -gw * z1 - gx * y1 + gy * x1 + gz * w1;
+  grad_q2[1] = -gw * x1 + gx * w1 + gy * z1 - gz * y1;
+  grad_q2[2] = -gw * y1 - gx * z1 + gy * w1 + gz * x1;
+  grad_q2[3] = -gw * z1 + gx * y1 - gy * x1 + gz * w1;
 }
 
 }  // namespace torchscience::kernel::geometry::transform

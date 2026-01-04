@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import torch
 from tensordict.tensorclass import tensorclass
 from torch import Tensor
+
+import torchscience._csrc  # noqa: F401 - Load C++ operators
 
 
 @tensorclass
@@ -62,3 +65,31 @@ def quaternion(wxyz: Tensor) -> Quaternion:
             f"quaternion: wxyz must have last dimension 4, got {wxyz.shape[-1]}"
         )
     return Quaternion(wxyz=wxyz)
+
+
+def quaternion_multiply(q1: Quaternion, q2: Quaternion) -> Quaternion:
+    """Multiply two quaternions (Hamilton product).
+
+    Computes q1 * q2, representing rotation q1 followed by rotation q2.
+
+    Parameters
+    ----------
+    q1 : Quaternion
+        First quaternion, shape (..., 4).
+    q2 : Quaternion
+        Second quaternion, shape (..., 4). Batch dimensions broadcast with q1.
+
+    Returns
+    -------
+    Quaternion
+        Product q1 * q2, shape is broadcast of q1 and q2 batch dimensions.
+
+    Examples
+    --------
+    >>> q1 = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))  # identity
+    >>> q2 = quaternion(torch.tensor([0.7071, 0.7071, 0.0, 0.0]))  # 90deg around x
+    >>> quaternion_multiply(q1, q2).wxyz
+    tensor([0.7071, 0.7071, 0.0000, 0.0000])
+    """
+    result = torch.ops.torchscience.quaternion_multiply(q1.wxyz, q2.wxyz)
+    return Quaternion(wxyz=result)
