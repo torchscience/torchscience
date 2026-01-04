@@ -74,6 +74,7 @@
 #include "cpu/geometry/transform/refract.h"
 #include "cpu/geometry/convex_hull.h"
 #include "cpu/encryption/chacha20.h"
+#include "meta/encryption/chacha20.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
