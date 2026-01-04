@@ -39,6 +39,7 @@
 #include "cpu/distance/minkowski_distance.h"
 #include "cpu/graphics/shading/cook_torrance.h"
 #include "cpu/graphics/shading/phong.h"
+#include "cpu/graphics/shading/schlick_reflectance.h"
 #include "cpu/graphics/lighting/spotlight.h"
 #include "cpu/graphics/tone_mapping/reinhard.h"
 #include "cpu/graphics/texture_mapping/cube_mapping.h"
@@ -72,6 +73,7 @@
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
 #include "autograd/graphics/shading/phong.h"
+#include "autograd/graphics/shading/schlick_reflectance.h"
 #include "autograd/graphics/lighting/spotlight.h"
 #include "autograd/graphics/tone_mapping/reinhard.h"
 #include "autograd/graphics/projection/perspective_projection.h"
@@ -92,6 +94,7 @@
 #include "meta/distance/minkowski_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
 #include "meta/graphics/shading/phong.h"
+#include "meta/graphics/shading/schlick_reflectance.h"
 #include "meta/graphics/lighting/spotlight.h"
 #include "meta/graphics/tone_mapping/reinhard.h"
 #include "meta/graphics/texture_mapping/cube_mapping.h"
@@ -231,6 +234,10 @@ TORCH_LIBRARY(torchscience, module) {
   // Phong shading
   module.def("phong(Tensor normal, Tensor view, Tensor light, Tensor shininess) -> Tensor");
   module.def("phong_backward(Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor shininess) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // Schlick reflectance
+  module.def("schlick_reflectance(Tensor cosine, Tensor r0) -> Tensor");
+  module.def("schlick_reflectance_backward(Tensor grad_output, Tensor cosine, Tensor r0) -> Tensor");
 
   // graphics.lighting
   module.def("spotlight(Tensor light_pos, Tensor surface_pos, Tensor spot_direction, Tensor intensity, Tensor inner_angle, Tensor outer_angle) -> (Tensor, Tensor)");
