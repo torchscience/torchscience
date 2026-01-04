@@ -1525,3 +1525,241 @@ class TestQuaternionSlerpDtypes:
         t = torch.rand(10, dtype=torch.float32)
         with pytest.raises(RuntimeError, match="same dtype"):
             quaternion_slerp(q1, q2, t)
+
+
+class TestQuaternionIntegration:
+    """Integration tests for quaternion module."""
+
+    def test_scipy_comparison_quaternion_to_matrix(self):
+        """Compare quaternion_to_matrix with scipy."""
+        pytest.importorskip("scipy")
+        from scipy.spatial.transform import Rotation as R
+
+        # Random quaternion from scipy
+        q_scipy = R.random()
+        # scipy uses xyzw order, we use wxyz
+        xyzw = q_scipy.as_quat()
+        q_wxyz = torch.tensor(
+            [xyzw[3], xyzw[0], xyzw[1], xyzw[2]], dtype=torch.float64
+        )
+        q = quaternion(q_wxyz)
+
+        # Compare matrix conversion
+        mat_scipy = torch.tensor(q_scipy.as_matrix(), dtype=torch.float64)
+        mat_torch = quaternion_to_matrix(q)
+        assert torch.allclose(mat_torch, mat_scipy, atol=1e-6)
+
+    def test_scipy_comparison_quaternion_apply(self):
+        """Compare quaternion_apply with scipy rotation."""
+        pytest.importorskip("scipy")
+        from scipy.spatial.transform import Rotation as R
+
+        q_scipy = R.random()
+        xyzw = q_scipy.as_quat()
+        q_wxyz = torch.tensor(
+            [xyzw[3], xyzw[0], xyzw[1], xyzw[2]], dtype=torch.float64
+        )
+        q = quaternion(q_wxyz)
+
+        # Compare point rotation
+        point = torch.randn(3, dtype=torch.float64)
+        rotated_scipy = torch.tensor(
+            q_scipy.apply(point.numpy()), dtype=torch.float64
+        )
+        rotated_torch = quaternion_apply(q, point)
+        assert torch.allclose(rotated_torch, rotated_scipy, atol=1e-6)
+
+    def test_scipy_comparison_matrix_to_quaternion(self):
+        """Compare matrix_to_quaternion with scipy."""
+        pytest.importorskip("scipy")
+        from scipy.spatial.transform import Rotation as R
+
+        # Create rotation from scipy
+        q_scipy = R.random()
+        mat = torch.tensor(q_scipy.as_matrix(), dtype=torch.float64)
+
+        # Convert to quaternion
+        q = matrix_to_quaternion(mat)
+
+        # Compare - quaternions can differ by sign, so compare absolute values
+        # or check rotation
+        xyzw = q_scipy.as_quat()
+        q_scipy_wxyz = torch.tensor(
+            [xyzw[3], xyzw[0], xyzw[1], xyzw[2]], dtype=torch.float64
+        )
+
+        # Either q matches or -q matches (both represent same rotation)
+        matches = torch.allclose(
+            q.wxyz, q_scipy_wxyz, atol=1e-6
+        ) or torch.allclose(q.wxyz, -q_scipy_wxyz, atol=1e-6)
+        assert matches, (
+            f"Got {q.wxyz}, expected {q_scipy_wxyz} or {-q_scipy_wxyz}"
+        )
+
+    def test_roundtrip_quaternion_matrix_quaternion(self):
+        """Test quaternion -> matrix -> quaternion roundtrip."""
+        q_original = quaternion(
+            torch.tensor([0.5, 0.5, 0.5, 0.5], dtype=torch.float64)
+        )
+        q_original = quaternion_normalize(q_original)
+
+        # Convert to matrix and back
+        mat = quaternion_to_matrix(q_original)
+        q_recovered = matrix_to_quaternion(mat)
+
+        # Quaternions can differ by sign
+        matches = torch.allclose(
+            q_recovered.wxyz, q_original.wxyz, atol=1e-6
+        ) or torch.allclose(q_recovered.wxyz, -q_original.wxyz, atol=1e-6)
+        assert matches
+
+    def test_roundtrip_matrix_quaternion_matrix(self):
+        """Test matrix -> quaternion -> matrix roundtrip."""
+        pytest.importorskip("scipy")
+        from scipy.spatial.transform import Rotation as R
+
+        # Start with valid rotation matrix from scipy
+        mat_original = torch.tensor(
+            R.random().as_matrix(), dtype=torch.float64
+        )
+
+        # Convert to quaternion and back
+        q = matrix_to_quaternion(mat_original)
+        mat_recovered = quaternion_to_matrix(q)
+
+        assert torch.allclose(mat_recovered, mat_original, atol=1e-6)
+
+    def test_chained_rotations(self):
+        """Test that chained quaternion operations match matrix multiplication."""
+        pytest.importorskip("scipy")
+        from scipy.spatial.transform import Rotation as R
+
+        # Create two random rotations
+        r1 = R.random()
+        r2 = R.random()
+
+        # Convert to quaternions (wxyz)
+        q1_xyzw = r1.as_quat()
+        q1 = quaternion(
+            torch.tensor(
+                [q1_xyzw[3], q1_xyzw[0], q1_xyzw[1], q1_xyzw[2]],
+                dtype=torch.float64,
+            )
+        )
+
+        q2_xyzw = r2.as_quat()
+        q2 = quaternion(
+            torch.tensor(
+                [q2_xyzw[3], q2_xyzw[0], q2_xyzw[1], q2_xyzw[2]],
+                dtype=torch.float64,
+            )
+        )
+
+        # Chain quaternions
+        q_chained = quaternion_multiply(q1, q2)
+
+        # Apply chained quaternion to point
+        point = torch.randn(3, dtype=torch.float64)
+        rotated_quat = quaternion_apply(q_chained, point)
+
+        # Compare with scipy's chained rotation
+        r_chained = r1 * r2
+        rotated_scipy = torch.tensor(
+            r_chained.apply(point.numpy()), dtype=torch.float64
+        )
+
+        assert torch.allclose(rotated_quat, rotated_scipy, atol=1e-5)
+
+    def test_inverse_rotation(self):
+        """Test that q * q^(-1) = identity and rotates point back."""
+        q = quaternion(torch.tensor([0.5, 0.5, 0.5, 0.5], dtype=torch.float64))
+        q = quaternion_normalize(q)
+        q_inv = quaternion_inverse(q)
+
+        # q * q^(-1) should give identity
+        identity = quaternion_multiply(q, q_inv)
+        expected_identity = torch.tensor(
+            [1.0, 0.0, 0.0, 0.0], dtype=torch.float64
+        )
+        assert torch.allclose(identity.wxyz, expected_identity, atol=1e-6)
+
+        # Rotating a point and then rotating back should give original
+        point = torch.randn(3, dtype=torch.float64)
+        rotated = quaternion_apply(q, point)
+        recovered = quaternion_apply(q_inv, rotated)
+        assert torch.allclose(recovered, point, atol=1e-6)
+
+    def test_slerp_endpoints(self):
+        """Test slerp at t=0 and t=1 gives correct endpoints."""
+        q1 = quaternion(
+            torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64)
+        )
+        q2 = quaternion(
+            torch.tensor([0.7071, 0.0, 0.0, 0.7071], dtype=torch.float64)
+        )
+        q2 = quaternion_normalize(q2)
+
+        # At t=0, should get q1
+        result_0 = quaternion_slerp(
+            q1, q2, torch.tensor(0.0, dtype=torch.float64)
+        )
+        assert torch.allclose(result_0.wxyz, q1.wxyz, atol=1e-6)
+
+        # At t=1, should get q2
+        result_1 = quaternion_slerp(
+            q1, q2, torch.tensor(1.0, dtype=torch.float64)
+        )
+        assert torch.allclose(result_1.wxyz, q2.wxyz, atol=1e-6)
+
+    def test_slerp_midpoint_rotation(self):
+        """Test that slerp midpoint gives half the rotation angle."""
+        pytest.importorskip("scipy")
+
+        # Identity and 90-degree rotation around z
+        q1 = quaternion(
+            torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64)
+        )
+        q2 = quaternion(
+            torch.tensor(
+                [0.7071067811865476, 0.0, 0.0, 0.7071067811865476],
+                dtype=torch.float64,
+            )
+        )
+
+        # Slerp at t=0.5 should give 45-degree rotation
+        q_mid = quaternion_slerp(
+            q1, q2, torch.tensor(0.5, dtype=torch.float64)
+        )
+
+        # Apply to point [1, 0, 0] - should rotate 45 degrees around z
+        point = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64)
+        rotated = quaternion_apply(q_mid, point)
+
+        # Expected: rotated 45 degrees around z
+        expected = torch.tensor(
+            [0.7071067811865476, 0.7071067811865476, 0.0], dtype=torch.float64
+        )
+        assert torch.allclose(rotated, expected, atol=1e-5)
+
+    def test_batched_operations_consistency(self):
+        """Test that batched operations give same results as individual ops."""
+        torch.manual_seed(42)
+        n = 10
+
+        # Create batch of quaternions
+        q1_batch = quaternion(torch.randn(n, 4, dtype=torch.float64))
+        q1_batch = quaternion_normalize(q1_batch)
+        q2_batch = quaternion(torch.randn(n, 4, dtype=torch.float64))
+        q2_batch = quaternion_normalize(q2_batch)
+
+        # Batched multiply
+        result_batch = quaternion_multiply(q1_batch, q2_batch)
+
+        # Individual multiplies
+        for i in range(n):
+            q1_i = quaternion(q1_batch.wxyz[i])
+            q2_i = quaternion(q2_batch.wxyz[i])
+            result_i = quaternion_multiply(q1_i, q2_i)
+            assert torch.allclose(
+                result_batch.wxyz[i], result_i.wxyz, atol=1e-6
+            )
