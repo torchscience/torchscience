@@ -1,4 +1,7 @@
-"""Geometry transform operations."""
+"""
+Geometric transformation
+========================
+"""
 
 from torchscience.geometry.transform._quaternion import (
     Quaternion,
