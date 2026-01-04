@@ -86,6 +86,10 @@ from torchscience.polynomial._division import (
     polynomial_mod,
 )
 from torchscience.polynomial._exceptions import DegreeError, PolynomialError
+from torchscience.polynomial._fitting import (
+    polynomial_fit,
+    polynomial_vandermonde,
+)
 from torchscience.polynomial._polynomial import (
     Polynomial,
     polynomial,
@@ -138,6 +142,9 @@ __all__ = [
     "polynomial_degree",
     "polynomial_trim",
     "polynomial_equal",
+    # Fitting
+    "polynomial_fit",
+    "polynomial_vandermonde",
     # Exceptions
     "PolynomialError",
     "DegreeError",
