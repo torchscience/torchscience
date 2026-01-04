@@ -39,6 +39,7 @@
 #include "cpu/distance/minkowski_distance.h"
 #include "cpu/distance/hellinger_distance.h"
 #include "cpu/distance/total_variation_distance.h"
+#include "cpu/distance/bhattacharyya_distance.h"
 #include "cpu/graphics/shading/cook_torrance.h"
 #include "cpu/graphics/shading/phong.h"
 #include "cpu/graphics/shading/schlick_reflectance.h"
@@ -100,6 +101,7 @@
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/distance/hellinger_distance.h"
 #include "autograd/distance/total_variation_distance.h"
+#include "autograd/distance/bhattacharyya_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
 #include "autograd/graphics/shading/phong.h"
 #include "autograd/graphics/shading/schlick_reflectance.h"
@@ -132,6 +134,7 @@
 #include "meta/distance/minkowski_distance.h"
 #include "meta/distance/hellinger_distance.h"
 #include "meta/distance/total_variation_distance.h"
+#include "meta/distance/bhattacharyya_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
 #include "meta/graphics/shading/phong.h"
 #include "meta/graphics/shading/schlick_reflectance.h"
@@ -287,6 +290,10 @@ TORCH_LIBRARY(torchscience, module) {
   // Total variation distance
   module.def("total_variation_distance(Tensor p, Tensor q, int dim, str input_type, str reduction, bool pairwise) -> Tensor");
   module.def("total_variation_distance_backward(Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, bool pairwise) -> (Tensor, Tensor)");
+
+  // Bhattacharyya distance
+  module.def("bhattacharyya_distance(Tensor p, Tensor q, int dim, str input_type, str reduction, bool pairwise) -> Tensor");
+  module.def("bhattacharyya_distance_backward(Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, bool pairwise) -> (Tensor, Tensor)");
 
   // graphics.shading
   module.def("cook_torrance(Tensor normal, Tensor view, Tensor light, Tensor roughness, Tensor f0) -> Tensor");
