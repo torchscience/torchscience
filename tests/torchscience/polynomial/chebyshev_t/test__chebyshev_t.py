@@ -96,3 +96,77 @@ class TestChebyshevTEvaluate:
         y = c(x)
         # T_0=1, T_1=x: 1 + 2*0=1, 1 + 2*1=3
         torch.testing.assert_close(y, torch.tensor([1.0, 3.0]))
+
+
+class TestChebyshevTEvaluateAutograd:
+    """Tests for autograd support in chebyshev_t_evaluate."""
+
+    def test_grad_wrt_coeffs(self):
+        """Gradient through evaluation w.r.t. coefficients."""
+        coeffs = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        c = chebyshev_t(coeffs)
+        x = torch.tensor([0.5])
+        y = chebyshev_t_evaluate(c, x)
+        y.sum().backward()
+
+        assert coeffs.grad is not None
+        assert coeffs.grad.shape == coeffs.shape
+
+    def test_grad_wrt_x(self):
+        """Gradient through evaluation w.r.t. x."""
+        coeffs = torch.tensor([1.0, 2.0, 3.0])
+        c = chebyshev_t(coeffs)
+        x = torch.tensor([0.5], requires_grad=True)
+        y = chebyshev_t_evaluate(c, x)
+        y.sum().backward()
+
+        assert x.grad is not None
+        assert x.grad.shape == x.shape
+
+    def test_gradcheck_coeffs(self):
+        """torch.autograd.gradcheck for coefficients."""
+        coeffs = torch.tensor(
+            [1.0, 2.0, 3.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(c):
+            return chebyshev_t_evaluate(
+                chebyshev_t(c), torch.tensor([0.3, 0.7], dtype=torch.float64)
+            )
+
+        assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
+
+    def test_gradcheck_x(self):
+        """torch.autograd.gradcheck for x."""
+        x = torch.tensor([0.3, 0.7], dtype=torch.float64, requires_grad=True)
+        coeffs = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
+
+        def fn(x_):
+            return chebyshev_t_evaluate(chebyshev_t(coeffs), x_)
+
+        assert torch.autograd.gradcheck(fn, (x,), raise_exception=True)
+
+    def test_gradgradcheck_coeffs(self):
+        """Second-order gradients w.r.t. coefficients."""
+        coeffs = torch.tensor(
+            [1.0, 2.0, 3.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(c):
+            return chebyshev_t_evaluate(
+                chebyshev_t(c), torch.tensor([0.3, 0.7], dtype=torch.float64)
+            )
+
+        assert torch.autograd.gradgradcheck(
+            fn, (coeffs,), raise_exception=True
+        )
+
+    def test_gradgradcheck_x(self):
+        """Second-order gradients w.r.t. x."""
+        x = torch.tensor([0.3, 0.7], dtype=torch.float64, requires_grad=True)
+        coeffs = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
+
+        def fn(x_):
+            return chebyshev_t_evaluate(chebyshev_t(coeffs), x_)
+
+        assert torch.autograd.gradgradcheck(fn, (x,), raise_exception=True)
