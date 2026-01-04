@@ -3,6 +3,7 @@ import scipy.special
 import torch
 
 import torchscience.special_functions  # noqa: F401 - registers operators
+from torchscience.special_functions import regularized_gamma_p
 
 
 class TestRegularizedGammaPForward:
@@ -114,3 +115,23 @@ class TestRegularizedGammaPGradients:
             return torch.ops.torchscience.regularized_gamma_p(a_, x_)
 
         assert torch.autograd.gradgradcheck(fn, (a, x), eps=1e-6, atol=1e-3)
+
+
+class TestRegularizedGammaPPythonAPI:
+    """Test Python API."""
+
+    def test_import(self):
+        """Function should be importable."""
+        from torchscience.special_functions import regularized_gamma_p
+
+        assert callable(regularized_gamma_p)
+
+    def test_api_matches_operator(self):
+        """Python API should match operator behavior."""
+        a = torch.tensor([1.5, 2.0])
+        x = torch.tensor([1.0, 2.0])
+
+        result_api = regularized_gamma_p(a, x)
+        result_op = torch.ops.torchscience.regularized_gamma_p(a, x)
+
+        assert torch.allclose(result_api, result_op)
