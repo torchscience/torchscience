@@ -220,3 +220,81 @@ class TestNormalPdfGradients:
         grad_x = torch.autograd.grad(pdf.sum(), x)[0]
 
         assert torch.allclose(grad_x, torch.zeros_like(grad_x), atol=1e-6)
+
+
+class TestNormalPpfForward:
+    """Test normal_ppf (quantile function) forward correctness."""
+
+    def test_standard_quantiles(self):
+        """Test standard normal quantiles."""
+        p = torch.tensor([0.5, 0.025, 0.975])
+        loc = torch.tensor(0.0)
+        scale = torch.tensor(1.0)
+
+        result = torch.ops.torchscience.normal_ppf(p, loc, scale)
+        expected = torch.tensor([0.0, -1.96, 1.96])
+
+        assert torch.allclose(result, expected, atol=0.01)
+
+    def test_cdf_ppf_roundtrip(self):
+        """ppf(cdf(x)) should equal x."""
+        x = torch.linspace(-3, 3, 100)
+        loc = torch.tensor(1.0)
+        scale = torch.tensor(2.0)
+
+        p = torch.ops.torchscience.normal_cdf(x, loc, scale)
+        x_recovered = torch.ops.torchscience.normal_ppf(p, loc, scale)
+
+        assert torch.allclose(x, x_recovered, atol=1e-5)
+
+    def test_scipy_comparison(self):
+        """Compare against scipy.stats.norm.ppf."""
+        p = torch.linspace(0.01, 0.99, 100)
+        loc = torch.tensor(-1.0)
+        scale = torch.tensor(1.5)
+
+        result = torch.ops.torchscience.normal_ppf(p, loc, scale)
+        expected = torch.tensor(
+            scipy.stats.norm.ppf(p.numpy(), loc=-1.0, scale=1.5),
+            dtype=torch.float32,
+        )
+        assert torch.allclose(result, expected, atol=1e-5)
+
+
+class TestNormalPpfGradients:
+    """Test normal_ppf gradient computation."""
+
+    def test_gradcheck_p(self):
+        """Gradient check for p parameter."""
+        p = torch.tensor(
+            [0.3, 0.5, 0.7], dtype=torch.float64, requires_grad=True
+        )
+        loc = torch.tensor(0.0, dtype=torch.float64)
+        scale = torch.tensor(1.0, dtype=torch.float64)
+
+        def fn(p_):
+            return torch.ops.torchscience.normal_ppf(p_, loc, scale)
+
+        assert torch.autograd.gradcheck(fn, (p,), eps=1e-6, atol=1e-4)
+
+    def test_gradcheck_loc(self):
+        """Gradient check for loc parameter."""
+        p = torch.tensor([0.3, 0.5, 0.7], dtype=torch.float64)
+        loc = torch.tensor(1.0, dtype=torch.float64, requires_grad=True)
+        scale = torch.tensor(1.0, dtype=torch.float64)
+
+        def fn(loc_):
+            return torch.ops.torchscience.normal_ppf(p, loc_, scale)
+
+        assert torch.autograd.gradcheck(fn, (loc,), eps=1e-6, atol=1e-4)
+
+    def test_gradcheck_scale(self):
+        """Gradient check for scale parameter."""
+        p = torch.tensor([0.3, 0.5, 0.7], dtype=torch.float64)
+        loc = torch.tensor(0.0, dtype=torch.float64)
+        scale = torch.tensor(1.5, dtype=torch.float64, requires_grad=True)
+
+        def fn(scale_):
+            return torch.ops.torchscience.normal_ppf(p, loc, scale_)
+
+        assert torch.autograd.gradcheck(fn, (scale,), eps=1e-6, atol=1e-4)
