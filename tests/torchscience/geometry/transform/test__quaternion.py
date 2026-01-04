@@ -14,6 +14,7 @@ from torchscience.geometry.transform import (
     quaternion_inverse,
     quaternion_multiply,
     quaternion_normalize,
+    quaternion_slerp,
     quaternion_to_matrix,
 )
 
@@ -1249,3 +1250,278 @@ class TestMatrixToQuaternionDtypes:
         R = torch.randn(10, 3, 3, dtype=torch.float16)
         q = matrix_to_quaternion(R)
         assert q.wxyz.dtype == torch.float16
+
+
+class TestQuaternionSlerp:
+    """Tests for quaternion_slerp."""
+
+    def test_t_equals_zero_returns_q1(self):
+        """At t=0, slerp returns q1."""
+        q1 = quaternion_normalize(
+            quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        )
+        q2 = quaternion_normalize(
+            quaternion(torch.tensor([0.7071, 0.0, 0.0, 0.7071]))
+        )
+        t = torch.tensor(0.0)
+        result = quaternion_slerp(q1, q2, t)
+        assert torch.allclose(result.wxyz, q1.wxyz, atol=1e-5)
+
+    def test_t_equals_one_returns_q2(self):
+        """At t=1, slerp returns q2."""
+        q1 = quaternion_normalize(
+            quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        )
+        q2 = quaternion_normalize(
+            quaternion(torch.tensor([0.7071, 0.0, 0.0, 0.7071]))
+        )
+        t = torch.tensor(1.0)
+        result = quaternion_slerp(q1, q2, t)
+        assert torch.allclose(result.wxyz, q2.wxyz, atol=1e-5)
+
+    def test_t_equals_half_returns_midpoint(self):
+        """At t=0.5, slerp returns midpoint rotation."""
+        # Identity to 90 deg around z
+        q1 = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        # 90 degrees around z: [cos(45), 0, 0, sin(45)]
+        q2 = quaternion(
+            torch.tensor(
+                [math.cos(math.pi / 4), 0.0, 0.0, math.sin(math.pi / 4)]
+            )
+        )
+        t = torch.tensor(0.5)
+        result = quaternion_slerp(q1, q2, t)
+        # Expected: 45 degrees around z: [cos(22.5), 0, 0, sin(22.5)]
+        expected = torch.tensor(
+            [math.cos(math.pi / 8), 0.0, 0.0, math.sin(math.pi / 8)]
+        )
+        assert torch.allclose(result.wxyz, expected, atol=1e-5)
+
+    def test_slerp_to_self_returns_self(self):
+        """Slerping a quaternion to itself returns itself."""
+        q = quaternion_normalize(
+            quaternion(torch.tensor([0.5, 0.5, 0.5, 0.5]))
+        )
+        t = torch.tensor(0.5)
+        result = quaternion_slerp(q, q, t)
+        assert torch.allclose(result.wxyz, q.wxyz, atol=1e-5)
+
+    def test_batch(self):
+        """Batched slerp."""
+        q1_raw = torch.randn(10, 4)
+        q1 = quaternion(
+            q1_raw / torch.linalg.norm(q1_raw, dim=-1, keepdim=True)
+        )
+        q2_raw = torch.randn(10, 4)
+        q2 = quaternion(
+            q2_raw / torch.linalg.norm(q2_raw, dim=-1, keepdim=True)
+        )
+        t = torch.rand(10)
+        result = quaternion_slerp(q1, q2, t)
+        assert result.wxyz.shape == (10, 4)
+
+    def test_broadcast_single_t(self):
+        """Single t broadcast to batch of quaternions."""
+        q1_raw = torch.randn(10, 4)
+        q1 = quaternion(
+            q1_raw / torch.linalg.norm(q1_raw, dim=-1, keepdim=True)
+        )
+        q2_raw = torch.randn(10, 4)
+        q2 = quaternion(
+            q2_raw / torch.linalg.norm(q2_raw, dim=-1, keepdim=True)
+        )
+        t = torch.tensor(0.5)
+        result = quaternion_slerp(q1, q2, t)
+        assert result.wxyz.shape == (10, 4)
+
+    def test_output_is_normalized(self):
+        """Slerp output is a unit quaternion."""
+        q1_raw = torch.randn(10, 4)
+        q1 = quaternion(
+            q1_raw / torch.linalg.norm(q1_raw, dim=-1, keepdim=True)
+        )
+        q2_raw = torch.randn(10, 4)
+        q2 = quaternion(
+            q2_raw / torch.linalg.norm(q2_raw, dim=-1, keepdim=True)
+        )
+        t = torch.rand(10)
+        result = quaternion_slerp(q1, q2, t)
+        norms = torch.linalg.norm(result.wxyz, dim=-1)
+        assert torch.allclose(norms, torch.ones(10), atol=1e-5)
+
+    def test_takes_shorter_path(self):
+        """Slerp takes the shorter path by negating q2 if needed."""
+        # q and -q represent the same rotation
+        q1 = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        q2 = quaternion(torch.tensor([-0.7071, 0.0, 0.0, -0.7071]))  # negated
+        t = torch.tensor(0.5)
+        result = quaternion_slerp(q1, q2, t)
+        # Should interpolate to the 45-deg rotation (not 315-deg)
+        expected = torch.tensor(
+            [math.cos(math.pi / 8), 0.0, 0.0, math.sin(math.pi / 8)]
+        )
+        assert torch.allclose(
+            result.wxyz, expected, atol=1e-4
+        ) or torch.allclose(result.wxyz, -expected, atol=1e-4)
+
+
+class TestQuaternionSlerpShape:
+    """Tests for quaternion_slerp shape handling."""
+
+    def test_single_quaternion_scalar_t(self):
+        """Single quaternion (4,) with scalar t."""
+        q1 = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        q2 = quaternion(torch.tensor([0.7071, 0.0, 0.0, 0.7071]))
+        t = torch.tensor(0.5)
+        result = quaternion_slerp(q1, q2, t)
+        assert result.wxyz.shape == (4,)
+
+    def test_batch(self):
+        """Batch of quaternions (B, 4) with matching t."""
+        q1 = quaternion(torch.randn(10, 4))
+        q2 = quaternion(torch.randn(10, 4))
+        t = torch.rand(10)
+        result = quaternion_slerp(q1, q2, t)
+        assert result.wxyz.shape == (10, 4)
+
+    def test_broadcast_q1_q2(self):
+        """Broadcasting between q1 and q2 batch dimensions."""
+        q1 = quaternion(torch.randn(5, 1, 4))
+        q2 = quaternion(torch.randn(1, 3, 4))
+        t = torch.rand(5, 3)
+        result = quaternion_slerp(q1, q2, t)
+        assert result.wxyz.shape == (5, 3, 4)
+
+    def test_broadcast_t_to_batch(self):
+        """Broadcasting scalar t to batch."""
+        q1 = quaternion(torch.randn(10, 4))
+        q2 = quaternion(torch.randn(10, 4))
+        t = torch.tensor(0.5)
+        result = quaternion_slerp(q1, q2, t)
+        assert result.wxyz.shape == (10, 4)
+
+
+class TestQuaternionSlerpGradients:
+    """Tests for quaternion_slerp gradient computation."""
+
+    def test_gradcheck_q1(self):
+        """Gradient check w.r.t. q1."""
+        q1_raw = torch.randn(5, 4, dtype=torch.float64)
+        q1_raw = q1_raw / torch.linalg.norm(q1_raw, dim=-1, keepdim=True)
+        q1 = q1_raw.clone().detach().requires_grad_(True)
+        q2_raw = torch.randn(5, 4, dtype=torch.float64)
+        q2_raw = q2_raw / torch.linalg.norm(q2_raw, dim=-1, keepdim=True)
+        q2 = q2_raw.clone().detach()
+        t = (
+            torch.rand(5, dtype=torch.float64) * 0.8 + 0.1
+        )  # Avoid t=0,1 for better gradients
+        assert gradcheck(
+            lambda a: quaternion_slerp(
+                Quaternion(wxyz=a), Quaternion(wxyz=q2), t
+            ).wxyz,
+            (q1,),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+    def test_gradcheck_q2(self):
+        """Gradient check w.r.t. q2."""
+        q1_raw = torch.randn(5, 4, dtype=torch.float64)
+        q1_raw = q1_raw / torch.linalg.norm(q1_raw, dim=-1, keepdim=True)
+        q1 = q1_raw.clone().detach()
+        q2_raw = torch.randn(5, 4, dtype=torch.float64)
+        q2_raw = q2_raw / torch.linalg.norm(q2_raw, dim=-1, keepdim=True)
+        q2 = q2_raw.clone().detach().requires_grad_(True)
+        t = torch.rand(5, dtype=torch.float64) * 0.8 + 0.1
+        assert gradcheck(
+            lambda b: quaternion_slerp(
+                Quaternion(wxyz=q1), Quaternion(wxyz=b), t
+            ).wxyz,
+            (q2,),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+    def test_gradcheck_t(self):
+        """Gradient check w.r.t. t."""
+        q1_raw = torch.randn(5, 4, dtype=torch.float64)
+        q1_raw = q1_raw / torch.linalg.norm(q1_raw, dim=-1, keepdim=True)
+        q1 = q1_raw.clone().detach()
+        q2_raw = torch.randn(5, 4, dtype=torch.float64)
+        q2_raw = q2_raw / torch.linalg.norm(q2_raw, dim=-1, keepdim=True)
+        q2 = q2_raw.clone().detach()
+        t = (torch.rand(5, dtype=torch.float64) * 0.8 + 0.1).requires_grad_(
+            True
+        )
+        assert gradcheck(
+            lambda t_val: quaternion_slerp(
+                Quaternion(wxyz=q1), Quaternion(wxyz=q2), t_val
+            ).wxyz,
+            (t,),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+    def test_gradcheck_all(self):
+        """Gradient check w.r.t. all inputs."""
+        q1_raw = torch.randn(5, 4, dtype=torch.float64)
+        q1_raw = q1_raw / torch.linalg.norm(q1_raw, dim=-1, keepdim=True)
+        q1 = q1_raw.clone().detach().requires_grad_(True)
+        q2_raw = torch.randn(5, 4, dtype=torch.float64)
+        q2_raw = q2_raw / torch.linalg.norm(q2_raw, dim=-1, keepdim=True)
+        q2 = q2_raw.clone().detach().requires_grad_(True)
+        t = (torch.rand(5, dtype=torch.float64) * 0.8 + 0.1).requires_grad_(
+            True
+        )
+        assert gradcheck(
+            lambda a, b, t_val: quaternion_slerp(
+                Quaternion(wxyz=a), Quaternion(wxyz=b), t_val
+            ).wxyz,
+            (q1, q2, t),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+
+class TestQuaternionSlerpDtypes:
+    """Tests for quaternion_slerp with different data types."""
+
+    def test_float32(self):
+        """Works with float32."""
+        q1 = quaternion(torch.randn(10, 4, dtype=torch.float32))
+        q2 = quaternion(torch.randn(10, 4, dtype=torch.float32))
+        t = torch.rand(10, dtype=torch.float32)
+        result = quaternion_slerp(q1, q2, t)
+        assert result.wxyz.dtype == torch.float32
+
+    def test_float64(self):
+        """Works with float64."""
+        q1 = quaternion(torch.randn(10, 4, dtype=torch.float64))
+        q2 = quaternion(torch.randn(10, 4, dtype=torch.float64))
+        t = torch.rand(10, dtype=torch.float64)
+        result = quaternion_slerp(q1, q2, t)
+        assert result.wxyz.dtype == torch.float64
+
+    def test_bfloat16(self):
+        """Works with bfloat16."""
+        q1 = quaternion(torch.randn(10, 4, dtype=torch.bfloat16))
+        q2 = quaternion(torch.randn(10, 4, dtype=torch.bfloat16))
+        t = torch.rand(10, dtype=torch.bfloat16)
+        result = quaternion_slerp(q1, q2, t)
+        assert result.wxyz.dtype == torch.bfloat16
+
+    def test_float16(self):
+        """Works with float16."""
+        q1 = quaternion(torch.randn(10, 4, dtype=torch.float16))
+        q2 = quaternion(torch.randn(10, 4, dtype=torch.float16))
+        t = torch.rand(10, dtype=torch.float16)
+        result = quaternion_slerp(q1, q2, t)
+        assert result.wxyz.dtype == torch.float16
+
+    def test_dtype_mismatch_error(self):
+        """Raises error when dtypes don't match."""
+        q1 = quaternion(torch.randn(10, 4, dtype=torch.float32))
+        q2 = quaternion(torch.randn(10, 4, dtype=torch.float64))
+        t = torch.rand(10, dtype=torch.float32)
+        with pytest.raises(RuntimeError, match="same dtype"):
+            quaternion_slerp(q1, q2, t)

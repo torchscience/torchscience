@@ -436,3 +436,79 @@ def matrix_to_quaternion(matrix: Tensor) -> Quaternion:
     """
     result = torch.ops.torchscience.matrix_to_quaternion(matrix)
     return Quaternion(wxyz=result)
+
+
+def quaternion_slerp(q1: Quaternion, q2: Quaternion, t: Tensor) -> Quaternion:
+    """Spherical linear interpolation between two quaternions.
+
+    Smoothly interpolates from q1 (t=0) to q2 (t=1) along the shortest arc
+    on the 4D unit sphere.
+
+    .. math::
+
+        \\text{slerp}(q_1, q_2, t) = \\frac{\\sin((1-t)\\theta)}{\\sin(\\theta)} q_1
+        + \\frac{\\sin(t\\theta)}{\\sin(\\theta)} q_2
+
+    Where :math:`\\theta = \\arccos(q_1 \\cdot q_2)` is the angle between the
+    two quaternions.
+
+    Parameters
+    ----------
+    q1 : Quaternion
+        Start quaternion, shape (..., 4).
+    q2 : Quaternion
+        End quaternion, shape (..., 4). Batch dimensions broadcast with q1.
+    t : Tensor
+        Interpolation parameter (0 to 1), scalar or broadcastable shape.
+
+    Returns
+    -------
+    Quaternion
+        Interpolated quaternion.
+
+    Notes
+    -----
+    - At t=0, returns q1. At t=1, returns q2.
+    - At t=0.5, returns the midpoint rotation on the geodesic.
+    - Always takes the shorter path on the sphere (negates q2 if needed).
+    - Falls back to linear interpolation when quaternions are nearly parallel.
+    - Output is normalized to ensure unit quaternion.
+
+    See Also
+    --------
+    quaternion_multiply : Multiply two quaternions.
+    quaternion_normalize : Normalize to unit quaternion.
+
+    References
+    ----------
+    .. [1] Shoemake, Ken. "Animating rotation with quaternion curves."
+           ACM SIGGRAPH Computer Graphics 19.3 (1985): 245-254.
+    .. [2] https://en.wikipedia.org/wiki/Slerp
+
+    Examples
+    --------
+    Interpolate between identity and 90-degree rotation around z-axis:
+
+    >>> q1 = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))  # identity
+    >>> q2 = quaternion(torch.tensor([0.7071, 0.0, 0.0, 0.7071]))  # 90 deg z
+    >>> t = torch.tensor(0.0)
+    >>> quaternion_slerp(q1, q2, t).wxyz
+    tensor([1., 0., 0., 0.])
+
+    >>> t = torch.tensor(1.0)
+    >>> quaternion_slerp(q1, q2, t).wxyz
+    tensor([0.7071, 0.0000, 0.0000, 0.7071])
+
+    Batch interpolation:
+
+    >>> q1 = quaternion(torch.randn(10, 4))
+    >>> q1 = quaternion_normalize(q1)
+    >>> q2 = quaternion(torch.randn(10, 4))
+    >>> q2 = quaternion_normalize(q2)
+    >>> t = torch.linspace(0, 1, 10)
+    >>> result = quaternion_slerp(q1, q2, t)
+    >>> result.wxyz.shape
+    torch.Size([10, 4])
+    """
+    result = torch.ops.torchscience.quaternion_slerp(q1.wxyz, q2.wxyz, t)
+    return Quaternion(wxyz=result)
