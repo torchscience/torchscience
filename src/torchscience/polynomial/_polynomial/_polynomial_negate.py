@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from torchscience.polynomial import Polynomial
+from ._polynomial import Polynomial
 
 
 def polynomial_negate(p: Polynomial) -> Polynomial:

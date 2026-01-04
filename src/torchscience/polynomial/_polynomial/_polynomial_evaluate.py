@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from torch import Tensor
 
-from torchscience.polynomial import Polynomial
+from ._polynomial import Polynomial
 
 
 def polynomial_evaluate(p: Polynomial, x: Tensor) -> Tensor:

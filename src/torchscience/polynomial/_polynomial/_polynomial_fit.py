@@ -5,11 +5,8 @@ from typing import Optional
 import torch
 from torch import Tensor
 
-from torchscience.polynomial import (
-    Polynomial,
-    polynomial,
-    polynomial_vandermonde,
-)
+from ._polynomial import Polynomial, polynomial
+from ._polynomial_vandermonde import polynomial_vandermonde
 
 
 def polynomial_fit(

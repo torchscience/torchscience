@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from torchscience.polynomial import Polynomial, polynomial, polynomial_multiply
+from ._polynomial import Polynomial, polynomial
+from ._polynomial_multiply import polynomial_multiply
 
 
 def polynomial_compose(p: Polynomial, q: Polynomial) -> Polynomial:

@@ -1,6 +1,6 @@
 import torch
 
-from torchscience.polynomial import Polynomial
+from ._polynomial import Polynomial
 
 
 def polynomial_trim(p: Polynomial, tol: float = 0.0) -> Polynomial:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from torchscience.polynomial import Polynomial
+from ._polynomial import Polynomial
 
 
 def polynomial_multiply(p: Polynomial, q: Polynomial) -> Polynomial:

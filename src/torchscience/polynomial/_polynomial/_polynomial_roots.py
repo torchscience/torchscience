@@ -1,7 +1,9 @@
 import torch
 from torch import Tensor
 
-from torchscience.polynomial import DegreeError, Polynomial
+from torchscience.polynomial._degree_error import DegreeError
+
+from ._polynomial import Polynomial
 
 
 def polynomial_roots(p: Polynomial) -> Tensor:

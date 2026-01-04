@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from torchscience.polynomial import Polynomial, polynomial_divmod
+from ._polynomial import Polynomial
+from ._polynomial_divmod import polynomial_divmod
 
 
 def polynomial_mod(p: Polynomial, q: Polynomial) -> Polynomial:

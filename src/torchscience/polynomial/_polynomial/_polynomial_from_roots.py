@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor
 
-from torchscience.polynomial import Polynomial, polynomial
+from ._polynomial import Polynomial, polynomial
 
 
 def polynomial_from_roots(roots: Tensor) -> Polynomial:

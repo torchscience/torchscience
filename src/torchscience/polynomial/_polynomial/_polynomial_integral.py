@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from torch import Tensor
 
-from torchscience.polynomial import (
-    Polynomial,
-    polynomial_antiderivative,
-    polynomial_evaluate,
-)
+from ._polynomial import Polynomial
+from ._polynomial_antiderivative import polynomial_antiderivative
+from ._polynomial_evaluate import polynomial_evaluate
 
 
 def polynomial_integral(p: Polynomial, a: Tensor, b: Tensor) -> Tensor:

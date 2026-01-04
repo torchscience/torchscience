@@ -3,7 +3,7 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-from torchscience.polynomial import Polynomial
+from ._polynomial import Polynomial
 
 
 def polynomial_degree(p: Polynomial) -> Tensor:

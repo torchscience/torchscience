@@ -1,4 +1,4 @@
-from torchscience.polynomial import PolynomialError
+from torchscience.polynomial._polynomial_error import PolynomialError
 
 
 class DegreeError(PolynomialError):
