@@ -154,3 +154,81 @@ class TestTrapezoidDtypes:
         result = trapezoid(y, x)
 
         assert result.dtype == dtype
+
+
+class TestCumulativeTrapezoid:
+    def test_matches_scipy(self):
+        """Compare with scipy.integrate.cumulative_trapezoid"""
+        x = torch.linspace(0, torch.pi, 100)
+        y = torch.sin(x)
+
+        from torchscience.integration.quadrature import cumulative_trapezoid
+
+        result = cumulative_trapezoid(y, x)
+
+        expected = scipy.integrate.cumulative_trapezoid(y.numpy(), x.numpy())
+        assert torch.allclose(
+            result, torch.tensor(expected, dtype=result.dtype), rtol=1e-5
+        )
+
+    def test_output_shape_without_initial(self):
+        """Without initial, output has one fewer element"""
+        y = torch.randn(100)
+
+        from torchscience.integration.quadrature import cumulative_trapezoid
+
+        result = cumulative_trapezoid(y)
+
+        assert result.shape == (99,)
+
+    def test_output_shape_with_initial(self):
+        """With initial, output has same shape as input"""
+        y = torch.randn(100)
+
+        from torchscience.integration.quadrature import cumulative_trapezoid
+
+        result = cumulative_trapezoid(y, initial=0.0)
+
+        assert result.shape == (100,)
+        assert result[0].item() == 0.0
+
+    def test_final_value_matches_trapezoid(self):
+        """Final cumulative value should match total trapezoid"""
+        x = torch.linspace(0, 1, 50)
+        y = x**2
+
+        from torchscience.integration.quadrature import (
+            cumulative_trapezoid,
+            trapezoid,
+        )
+
+        total = trapezoid(y, x)
+        cumulative = cumulative_trapezoid(y, x)
+
+        assert torch.allclose(cumulative[-1], total)
+
+
+class TestCumulativeTrapezoidGradients:
+    def test_gradcheck(self):
+        """Numerical gradient check"""
+        x = torch.linspace(0, 1, 20, dtype=torch.float64)
+        y = torch.randn(20, requires_grad=True, dtype=torch.float64)
+
+        from torchscience.integration.quadrature import cumulative_trapezoid
+
+        def fn(y_):
+            return cumulative_trapezoid(y_, x).sum()
+
+        assert torch.autograd.gradcheck(fn, (y,), raise_exception=True)
+
+    def test_gradgradcheck(self):
+        """Second-order gradient check"""
+        x = torch.linspace(0, 1, 20, dtype=torch.float64)
+        y = torch.randn(20, requires_grad=True, dtype=torch.float64)
+
+        from torchscience.integration.quadrature import cumulative_trapezoid
+
+        def fn(y_):
+            return cumulative_trapezoid(y_, x).sum()
+
+        assert torch.autograd.gradgradcheck(fn, (y,), raise_exception=True)
