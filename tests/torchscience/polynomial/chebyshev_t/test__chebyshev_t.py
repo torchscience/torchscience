@@ -214,3 +214,38 @@ class TestChebyshevTVsNumPy:
         y_np = np_cheb.chebval(x, coeffs)
 
         np.testing.assert_allclose(y_torch, y_np, rtol=1e-6)
+
+
+class TestChebyshevTBatched:
+    """Tests for batched Chebyshev series operations."""
+
+    def test_batched_constructor(self):
+        """Batched Chebyshev series."""
+        coeffs = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
+        c = chebyshev_t(coeffs)
+        assert c.coeffs.shape == (2, 2)
+
+    def test_batched_evaluate(self):
+        """Evaluate batched series at multiple points."""
+        # Two series: 1 + T_1 and 2 + 3*T_1
+        coeffs = torch.tensor([[1.0, 1.0], [2.0, 3.0]])
+        c = chebyshev_t(coeffs)
+        x = torch.tensor([0.0, 0.5, 1.0])
+        y = chebyshev_t_evaluate(c, x)
+
+        # Result shape: (2, 3) - 2 series x 3 points
+        assert y.shape == (2, 3)
+
+        # c[0] = 1 + x: at [0, 0.5, 1] -> [1, 1.5, 2]
+        # c[1] = 2 + 3x: at [0, 0.5, 1] -> [2, 3.5, 5]
+        expected = torch.tensor([[1.0, 1.5, 2.0], [2.0, 3.5, 5.0]])
+        torch.testing.assert_close(y, expected)
+
+    def test_batched_multidim(self):
+        """Multi-dimensional batch."""
+        coeffs = torch.randn(2, 3, 4)  # 2x3 batch of degree-3 polynomials
+        c = chebyshev_t(coeffs)
+        x = torch.tensor([0.0, 0.5])
+        y = chebyshev_t_evaluate(c, x)
+
+        assert y.shape == (2, 3, 2)  # (batch, points)
