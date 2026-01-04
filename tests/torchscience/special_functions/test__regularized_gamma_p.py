@@ -1,3 +1,4 @@
+import pytest
 import scipy.special
 import torch
 
@@ -99,3 +100,17 @@ class TestRegularizedGammaPGradients:
             return torch.ops.torchscience.regularized_gamma_p(a_, x)
 
         assert torch.autograd.gradcheck(fn, (a,), eps=1e-6, atol=1e-4)
+
+    @pytest.mark.xfail(
+        reason="Second-order gradients use numerical differentiation which has "
+        "precision limitations for the regularized gamma function"
+    )
+    def test_gradgradcheck(self):
+        """Second-order gradient check."""
+        a = torch.tensor([1.5, 2.0], dtype=torch.float64, requires_grad=True)
+        x = torch.tensor([1.0, 2.0], dtype=torch.float64, requires_grad=True)
+
+        def fn(a_, x_):
+            return torch.ops.torchscience.regularized_gamma_p(a_, x_)
+
+        assert torch.autograd.gradgradcheck(fn, (a, x), eps=1e-6, atol=1e-3)
