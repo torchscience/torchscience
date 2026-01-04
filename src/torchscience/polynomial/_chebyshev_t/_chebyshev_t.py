@@ -55,6 +55,33 @@ class ChebyshevT:
 
         return chebyshev_t_subtract(other, self)
 
+    def __neg__(self) -> "ChebyshevT":
+        from ._chebyshev_t_negate import chebyshev_t_negate
+
+        return chebyshev_t_negate(self)
+
+    def __mul__(self, other):
+        if isinstance(other, ChebyshevT):
+            from ._chebyshev_t_multiply import chebyshev_t_multiply
+
+            return chebyshev_t_multiply(self, other)
+        if isinstance(other, Tensor):
+            from ._chebyshev_t_scale import chebyshev_t_scale
+
+            return chebyshev_t_scale(self, other)
+        return NotImplemented
+
+    def __rmul__(self, other):
+        if isinstance(other, ChebyshevT):
+            from ._chebyshev_t_multiply import chebyshev_t_multiply
+
+            return chebyshev_t_multiply(other, self)
+        if isinstance(other, Tensor):
+            from ._chebyshev_t_scale import chebyshev_t_scale
+
+            return chebyshev_t_scale(self, other)
+        return NotImplemented
+
 
 def chebyshev_t(coeffs: Tensor) -> ChebyshevT:
     """Create Chebyshev series from coefficient tensor.

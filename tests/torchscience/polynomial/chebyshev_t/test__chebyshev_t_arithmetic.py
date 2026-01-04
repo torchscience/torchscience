@@ -7,6 +7,8 @@ from numpy.polynomial import chebyshev as np_cheb
 from torchscience.polynomial import (
     chebyshev_t,
     chebyshev_t_add,
+    chebyshev_t_negate,
+    chebyshev_t_scale,
     chebyshev_t_subtract,
 )
 
@@ -85,3 +87,41 @@ class TestChebyshevTSubtract:
         c_np = np_cheb.chebsub(a_coeffs, b_coeffs)
 
         np.testing.assert_allclose(c.coeffs.numpy(), c_np, rtol=1e-6)
+
+
+class TestChebyshevTNegate:
+    """Tests for chebyshev_t_negate."""
+
+    def test_negate(self):
+        """Negate series."""
+        a = chebyshev_t(torch.tensor([1.0, -2.0, 3.0]))
+        b = chebyshev_t_negate(a)
+        torch.testing.assert_close(b.coeffs, torch.tensor([-1.0, 2.0, -3.0]))
+
+    def test_negate_operator(self):
+        """Test unary - operator."""
+        a = chebyshev_t(torch.tensor([1.0, -2.0]))
+        b = -a
+        torch.testing.assert_close(b.coeffs, torch.tensor([-1.0, 2.0]))
+
+
+class TestChebyshevTScale:
+    """Tests for chebyshev_t_scale."""
+
+    def test_scale_by_scalar(self):
+        """Scale by scalar tensor."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0, 3.0]))
+        b = chebyshev_t_scale(a, torch.tensor(2.0))
+        torch.testing.assert_close(b.coeffs, torch.tensor([2.0, 4.0, 6.0]))
+
+    def test_scale_operator(self):
+        """Test * operator with scalar."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0]))
+        b = a * torch.tensor(3.0)
+        torch.testing.assert_close(b.coeffs, torch.tensor([3.0, 6.0]))
+
+    def test_scale_rmul_operator(self):
+        """Test scalar * series."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0]))
+        b = torch.tensor(3.0) * a
+        torch.testing.assert_close(b.coeffs, torch.tensor([3.0, 6.0]))

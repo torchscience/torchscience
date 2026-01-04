@@ -120,6 +120,8 @@ from ._chebyshev_t import (
     chebyshev_t,
     chebyshev_t_add,
     chebyshev_t_evaluate,
+    chebyshev_t_negate,
+    chebyshev_t_scale,
     chebyshev_t_subtract,
 )
 from ._degree_error import DegreeError
@@ -157,6 +159,8 @@ __all__ = [
     "chebyshev_t",
     "chebyshev_t_add",
     "chebyshev_t_evaluate",
+    "chebyshev_t_negate",
+    "chebyshev_t_scale",
     "chebyshev_t_subtract",
     "DegreeError",
     "Polynomial",
