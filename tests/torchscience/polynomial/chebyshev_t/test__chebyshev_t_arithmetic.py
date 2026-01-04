@@ -7,6 +7,8 @@ from numpy.polynomial import chebyshev as np_cheb
 from torchscience.polynomial import (
     chebyshev_t,
     chebyshev_t_add,
+    chebyshev_t_evaluate,
+    chebyshev_t_multiply,
     chebyshev_t_negate,
     chebyshev_t_scale,
     chebyshev_t_subtract,
@@ -125,3 +127,85 @@ class TestChebyshevTScale:
         a = chebyshev_t(torch.tensor([1.0, 2.0]))
         b = torch.tensor(3.0) * a
         torch.testing.assert_close(b.coeffs, torch.tensor([3.0, 6.0]))
+
+
+class TestChebyshevTMultiply:
+    """Tests for chebyshev_t_multiply using linearization."""
+
+    def test_multiply_t0_t0(self):
+        """T_0 * T_0 = T_0."""
+        a = chebyshev_t(torch.tensor([1.0]))  # T_0
+        b = chebyshev_t(torch.tensor([1.0]))  # T_0
+        c = chebyshev_t_multiply(a, b)
+        torch.testing.assert_close(c.coeffs, torch.tensor([1.0]))
+
+    def test_multiply_t0_t1(self):
+        """T_0 * T_1 = T_1."""
+        a = chebyshev_t(torch.tensor([1.0]))  # T_0
+        b = chebyshev_t(torch.tensor([0.0, 1.0]))  # T_1
+        c = chebyshev_t_multiply(a, b)
+        # Result should be T_1
+        torch.testing.assert_close(c.coeffs, torch.tensor([0.0, 1.0]))
+
+    def test_multiply_t1_t1(self):
+        """T_1 * T_1 = 0.5*(T_2 + T_0) = 0.5*T_0 + 0.5*T_2."""
+        a = chebyshev_t(torch.tensor([0.0, 1.0]))  # T_1
+        b = chebyshev_t(torch.tensor([0.0, 1.0]))  # T_1
+        c = chebyshev_t_multiply(a, b)
+        # T_1 * T_1 = 0.5*(T_2 + T_0) -> [0.5, 0, 0.5]
+        torch.testing.assert_close(c.coeffs, torch.tensor([0.5, 0.0, 0.5]))
+
+    def test_multiply_t1_t2(self):
+        """T_1 * T_2 = 0.5*(T_3 + T_1)."""
+        a = chebyshev_t(torch.tensor([0.0, 1.0]))  # T_1
+        b = chebyshev_t(torch.tensor([0.0, 0.0, 1.0]))  # T_2
+        c = chebyshev_t_multiply(a, b)
+        # T_1 * T_2 = 0.5*(T_3 + T_1) -> [0, 0.5, 0, 0.5]
+        torch.testing.assert_close(
+            c.coeffs, torch.tensor([0.0, 0.5, 0.0, 0.5])
+        )
+
+    def test_multiply_linear(self):
+        """(1 + T_1) * (2 + 3*T_1)."""
+        a = chebyshev_t(torch.tensor([1.0, 1.0]))  # 1 + T_1
+        b = chebyshev_t(torch.tensor([2.0, 3.0]))  # 2 + 3*T_1
+        c = chebyshev_t_multiply(a, b)
+        # = 2*T_0 + 3*T_1 + 2*T_1 + 3*T_1*T_1
+        # = 2 + 5*T_1 + 3*0.5*(T_0 + T_2)
+        # = 2 + 5*T_1 + 1.5*T_0 + 1.5*T_2
+        # = 3.5*T_0 + 5*T_1 + 1.5*T_2
+        torch.testing.assert_close(c.coeffs, torch.tensor([3.5, 5.0, 1.5]))
+
+    def test_multiply_operator(self):
+        """Test * operator between series."""
+        a = chebyshev_t(torch.tensor([1.0, 1.0]))
+        b = chebyshev_t(torch.tensor([1.0, 1.0]))
+        c = a * b
+        # (1 + T_1)^2 = 1 + 2*T_1 + T_1^2 = 1 + 2*T_1 + 0.5*(T_0 + T_2)
+        # = 1.5*T_0 + 2*T_1 + 0.5*T_2
+        torch.testing.assert_close(c.coeffs, torch.tensor([1.5, 2.0, 0.5]))
+
+    def test_multiply_vs_numpy(self):
+        """Compare with numpy.polynomial.chebyshev.chebmul."""
+        a_coeffs = [1.0, 2.0, 3.0]
+        b_coeffs = [4.0, 5.0]
+
+        a = chebyshev_t(torch.tensor(a_coeffs))
+        b = chebyshev_t(torch.tensor(b_coeffs))
+        c = chebyshev_t_multiply(a, b)
+
+        c_np = np_cheb.chebmul(a_coeffs, b_coeffs)
+
+        np.testing.assert_allclose(c.coeffs.numpy(), c_np, rtol=1e-6)
+
+    def test_multiply_evaluation_consistency(self):
+        """(a*b)(x) == a(x)*b(x) for all x in [-1,1]."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0, 3.0]))
+        b = chebyshev_t(torch.tensor([4.0, -1.0, 2.0]))
+        c = chebyshev_t_multiply(a, b)
+
+        x = torch.linspace(-1, 1, 20)
+        y_product = chebyshev_t_evaluate(c, x)
+        y_separate = chebyshev_t_evaluate(a, x) * chebyshev_t_evaluate(b, x)
+
+        torch.testing.assert_close(y_product, y_separate, atol=1e-6, rtol=1e-6)
