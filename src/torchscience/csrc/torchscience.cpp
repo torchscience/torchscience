@@ -77,6 +77,8 @@
 #include "cpu/geometry/transform/reflect.h"
 #include "cpu/geometry/transform/refract.h"
 #include "cpu/geometry/convex_hull.h"
+#include "cpu/encryption/chacha20.h"
+#include "meta/encryption/chacha20.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -442,4 +444,7 @@ TORCH_LIBRARY(torchscience, module) {
              "(Tensor vertices, Tensor simplices, Tensor neighbors, "
              "Tensor equations, Tensor area, Tensor volume, "
              "Tensor n_vertices, Tensor n_facets)");
+
+  // encryption
+  module.def("chacha20(Tensor key, Tensor nonce, int num_bytes, int counter=0) -> Tensor");
 }
