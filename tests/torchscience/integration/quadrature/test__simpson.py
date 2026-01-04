@@ -119,3 +119,69 @@ class TestSimpsonBatching:
         assert torch.allclose(result[0], torch.tensor(1 / 3), rtol=1e-4)
         assert torch.allclose(result[1], torch.tensor(1 / 4), rtol=1e-4)
         assert torch.allclose(result[2], torch.tensor(1 / 5), rtol=1e-4)
+
+
+class TestCumulativeSimpson:
+    def test_final_matches_simpson(self):
+        """Final cumulative value should match total simpson"""
+        x = torch.linspace(0, 1, 51)  # Odd number of points
+        y = x**2
+
+        from torchscience.integration.quadrature import (
+            cumulative_simpson,
+            simpson,
+        )
+
+        total = simpson(y, x)
+        cumulative = cumulative_simpson(y, x)
+
+        assert torch.allclose(cumulative[-1], total, rtol=1e-5)
+
+    def test_output_shape_without_initial(self):
+        """Without initial, output shape depends on parity"""
+        y = torch.randn(51)  # 50 intervals (even)
+
+        from torchscience.integration.quadrature import cumulative_simpson
+
+        result = cumulative_simpson(y)
+
+        # For Simpson, we compute cumulative at every other point
+        assert result.shape[0] == 50  # n - 1
+
+    def test_output_shape_with_initial(self):
+        """With initial, output has same shape as input"""
+        y = torch.randn(51)
+
+        from torchscience.integration.quadrature import cumulative_simpson
+
+        result = cumulative_simpson(y, initial=0.0)
+
+        assert result.shape == (51,)
+        assert result[0].item() == 0.0
+
+    def test_monotonic_for_positive_function(self):
+        """Cumulative integral of positive function should be monotonic"""
+        x = torch.linspace(0, 1, 51)
+        y = x**2 + 1  # Always positive
+
+        from torchscience.integration.quadrature import cumulative_simpson
+
+        result = cumulative_simpson(y, x, initial=0.0)
+
+        # Should be strictly increasing
+        diffs = result[1:] - result[:-1]
+        assert (diffs >= 0).all()
+
+
+class TestCumulativeSimpsonGradients:
+    def test_gradcheck(self):
+        """Numerical gradient check"""
+        x = torch.linspace(0, 1, 21, dtype=torch.float64)
+        y = torch.randn(21, requires_grad=True, dtype=torch.float64)
+
+        from torchscience.integration.quadrature import cumulative_simpson
+
+        def fn(y_):
+            return cumulative_simpson(y_, x).sum()
+
+        assert torch.autograd.gradcheck(fn, (y,), raise_exception=True)

@@ -187,3 +187,116 @@ def _simpson_from_slice(
         return _simpson_uniform(y, x_slice, dx)
     else:
         return _simpson_uniform(y, None, dx)
+
+
+def cumulative_simpson(
+    y: Tensor,
+    x: Optional[Tensor] = None,
+    *,
+    dx: float = 1.0,
+    dim: int = -1,
+    initial: Optional[float] = None,
+) -> Tensor:
+    """
+    Cumulatively integrate y using Simpson's rule.
+
+    Uses composite Simpson's rule with running sum.
+
+    Parameters
+    ----------
+    y : Tensor
+        Values to integrate.
+    x : Tensor, optional
+        Sample points.
+    dx : float
+        Spacing when x is None.
+    dim : int
+        Dimension along which to integrate.
+    initial : float, optional
+        If given, insert this value at the beginning.
+
+    Returns
+    -------
+    Tensor
+        Cumulative integral values.
+
+    Notes
+    -----
+    For Simpson's rule, we integrate pairs of intervals (3 points at a time).
+    The cumulative values are computed at each point.
+
+    Examples
+    --------
+    >>> y = torch.sin(torch.linspace(0, torch.pi, 101))
+    >>> cumulative = cumulative_simpson(y, dx=torch.pi / 100)
+    >>> cumulative[-1]  # approximately 2.0
+    """
+    # Move target dim to end
+    y = torch.movedim(y, dim, -1)
+    n = y.shape[-1]
+
+    if n < 3:
+        # Fall back to trapezoid for very short arrays
+        from torchscience.integration.quadrature._trapezoid import (
+            cumulative_trapezoid,
+        )
+
+        result = cumulative_trapezoid(
+            torch.movedim(y, -1, dim), x, dx=dx, dim=dim, initial=initial
+        )
+        return result
+
+    if x is not None:
+        x = torch.movedim(x, dim, -1)
+
+    # Compute Simpson integral for pairs [0,2], [0,4], [0,6], ...
+    # Then interpolate for odd indices using trapezoid
+
+    # First, compute cumulative using trapezoid as base
+    if x is not None:
+        spacing = x[..., 1:] - x[..., :-1]
+    else:
+        spacing = dx
+
+    avg_y = (y[..., :-1] + y[..., 1:]) / 2
+    trap_increments = avg_y * spacing
+    trap_cumulative = torch.cumsum(trap_increments, dim=-1)
+
+    # Apply Simpson correction at even indices
+    # Simpson is more accurate, so we adjust the cumulative values
+    result = trap_cumulative.clone()
+
+    # For uniform spacing, Simpson gives better results
+    # We can refine the cumulative by using Simpson's rule where applicable
+    if x is None:
+        # Uniform spacing: apply Simpson's correction
+        # For each pair [2i, 2i+2], Simpson gives:
+        # integral = dx/3 * (y[2i] + 4*y[2i+1] + y[2i+2])
+        for i in range(2, n, 2):
+            # Simpson integral from 0 to i
+            simpson_val = _simpson_uniform(y[..., : i + 1], None, dx)
+            if i - 1 < result.shape[-1]:
+                result[..., i - 1] = simpson_val
+    else:
+        # Non-uniform: use Simpson where possible
+        for i in range(2, n, 2):
+            simpson_val = _simpson_uniform(
+                y[..., : i + 1], x[..., : i + 1], dx
+            )
+            if i - 1 < result.shape[-1]:
+                result[..., i - 1] = simpson_val
+
+    # Prepend initial value if requested
+    if initial is not None:
+        initial_tensor = torch.full(
+            (*result.shape[:-1], 1),
+            initial,
+            dtype=result.dtype,
+            device=result.device,
+        )
+        result = torch.cat([initial_tensor, result], dim=-1)
+
+    # Move dim back to original position
+    result = torch.movedim(result, -1, dim)
+
+    return result
