@@ -422,6 +422,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("refract(Tensor direction, Tensor normal, Tensor eta) -> Tensor");
   module.def("refract_backward(Tensor grad_output, Tensor direction, Tensor normal, Tensor eta) -> (Tensor, Tensor, Tensor)");
 
+  // Quaternion operations
+  module.def("quaternion_multiply(Tensor q1, Tensor q2) -> Tensor");
+  module.def("quaternion_multiply_backward(Tensor grad_output, Tensor q1, Tensor q2) -> (Tensor, Tensor)");
+
   // geometry.convex_hull
   module.def("convex_hull(Tensor points) -> "
              "(Tensor vertices, Tensor simplices, Tensor neighbors, "
