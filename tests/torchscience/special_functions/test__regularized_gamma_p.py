@@ -71,3 +71,31 @@ class TestRegularizedGammaPMeta:
         x = torch.randn(1, 4, device="meta")
         result = torch.ops.torchscience.regularized_gamma_p(a, x)
         assert result.shape == (3, 4)
+
+
+class TestRegularizedGammaPGradients:
+    """Test gradient computation."""
+
+    def test_gradcheck_x(self):
+        """Gradient check for x parameter."""
+        a = torch.tensor([1.5, 2.0, 3.0], dtype=torch.float64)
+        x = torch.tensor(
+            [1.0, 2.0, 1.5], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(x_):
+            return torch.ops.torchscience.regularized_gamma_p(a, x_)
+
+        assert torch.autograd.gradcheck(fn, (x,), eps=1e-6, atol=1e-4)
+
+    def test_gradcheck_a(self):
+        """Gradient check for a parameter."""
+        a = torch.tensor(
+            [1.5, 2.0, 3.0], dtype=torch.float64, requires_grad=True
+        )
+        x = torch.tensor([1.0, 2.0, 1.5], dtype=torch.float64)
+
+        def fn(a_):
+            return torch.ops.torchscience.regularized_gamma_p(a_, x)
+
+        assert torch.autograd.gradcheck(fn, (a,), eps=1e-6, atol=1e-4)
