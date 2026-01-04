@@ -39,13 +39,13 @@
 #include "cpu/distance/minkowski_distance.h"
 #include "cpu/graphics/shading/cook_torrance.h"
 #include "cpu/graphics/shading/phong.h"
-#include "cpu/graphics/shading/schlick_reflectance.h"
 #include "cpu/graphics/lighting/spotlight.h"
 #include "cpu/graphics/tone_mapping/reinhard.h"
 #include "cpu/graphics/texture_mapping/cube_mapping.h"
 #include "cpu/graphics/projection/perspective_projection.h"
 #include "cpu/graphics/color/srgb_to_hsv.h"
 #include "cpu/graphics/color/hsv_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_srgb_linear.h"
 #include "cpu/signal_processing/filter.h"
 #include "cpu/optimization/test_functions.h"
 #include "cpu/optimization/combinatorial.h"
@@ -69,16 +69,17 @@
 #include "cpu/geometry/ray_occluded.h"
 #include "cpu/geometry/transform/reflect.h"
 #include "cpu/geometry/transform/refract.h"
+#include "cpu/geometry/convex_hull.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
 #include "autograd/graphics/shading/phong.h"
-#include "autograd/graphics/shading/schlick_reflectance.h"
 #include "autograd/graphics/lighting/spotlight.h"
 #include "autograd/graphics/tone_mapping/reinhard.h"
 #include "autograd/graphics/projection/perspective_projection.h"
 #include "autograd/graphics/color/srgb_to_hsv.h"
 #include "autograd/graphics/color/hsv_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_srgb_linear.h"
 #include "autograd/signal_processing/filter.h"
 #include "autograd/optimization/test_functions.h"
 #include "autograd/optimization/combinatorial.h"
@@ -94,13 +95,13 @@
 #include "meta/distance/minkowski_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
 #include "meta/graphics/shading/phong.h"
-#include "meta/graphics/shading/schlick_reflectance.h"
 #include "meta/graphics/lighting/spotlight.h"
 #include "meta/graphics/tone_mapping/reinhard.h"
 #include "meta/graphics/texture_mapping/cube_mapping.h"
 #include "meta/graphics/projection/perspective_projection.h"
 #include "meta/graphics/color/srgb_to_hsv.h"
 #include "meta/graphics/color/hsv_to_srgb.h"
+#include "meta/graphics/color/srgb_to_srgb_linear.h"
 #include "meta/signal_processing/filter.h"
 #include "meta/optimization/test_functions.h"
 #include "meta/optimization/combinatorial.h"
@@ -118,11 +119,11 @@
 #include "meta/space_partitioning/kd_tree.h"
 #include "meta/space_partitioning/k_nearest_neighbors.h"
 #include "meta/space_partitioning/range_search.h"
-#include "autograd/space_partitioning/k_nearest_neighbors.h"
-#include "autograd/space_partitioning/range_search.h"
-
 #include "meta/geometry/transform/reflect.h"
 #include "meta/geometry/transform/refract.h"
+#include "meta/geometry/convex_hull.h"
+#include "autograd/space_partitioning/k_nearest_neighbors.h"
+#include "autograd/space_partitioning/range_search.h"
 
 #include "autocast/signal_processing/filter.h"
 #include "autocast/statistics/descriptive/kurtosis.h"
@@ -235,10 +236,6 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("phong(Tensor normal, Tensor view, Tensor light, Tensor shininess) -> Tensor");
   module.def("phong_backward(Tensor grad_output, Tensor normal, Tensor view, Tensor light, Tensor shininess) -> (Tensor, Tensor, Tensor, Tensor)");
 
-  // Schlick reflectance
-  module.def("schlick_reflectance(Tensor cosine, Tensor r0) -> Tensor");
-  module.def("schlick_reflectance_backward(Tensor grad_output, Tensor cosine, Tensor r0) -> Tensor");
-
   // graphics.lighting
   module.def("spotlight(Tensor light_pos, Tensor surface_pos, Tensor spot_direction, Tensor intensity, Tensor inner_angle, Tensor outer_angle) -> (Tensor, Tensor)");
   module.def("spotlight_backward(Tensor grad_irradiance, Tensor light_pos, Tensor surface_pos, Tensor spot_direction, Tensor intensity, Tensor inner_angle, Tensor outer_angle) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
@@ -253,6 +250,9 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("hsv_to_srgb(Tensor input) -> Tensor");
   module.def("hsv_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_srgb_linear(Tensor input) -> Tensor");
+  module.def("srgb_to_srgb_linear_backward(Tensor grad_output, Tensor input) -> Tensor");
 
   // graphics.texture_mapping
   module.def("cube_mapping(Tensor direction) -> (Tensor, Tensor, Tensor)");
@@ -408,4 +408,10 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("refract(Tensor direction, Tensor normal, Tensor eta) -> Tensor");
   module.def("refract_backward(Tensor grad_output, Tensor direction, Tensor normal, Tensor eta) -> (Tensor, Tensor, Tensor)");
+
+  // geometry.convex_hull
+  module.def("convex_hull(Tensor points) -> "
+             "(Tensor vertices, Tensor simplices, Tensor neighbors, "
+             "Tensor equations, Tensor area, Tensor volume, "
+             "Tensor n_vertices, Tensor n_facets)");
 }
