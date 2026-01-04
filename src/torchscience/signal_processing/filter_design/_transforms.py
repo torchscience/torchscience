@@ -130,3 +130,87 @@ def lp2hp_zpk(
     k_new = k * torch.real(prod_neg_z / prod_neg_p)
 
     return z_new, p_new, k_new
+
+
+def lp2bp_zpk(
+    z: Tensor,
+    p: Tensor,
+    k: Tensor,
+    wo: Union[float, Tensor] = 1.0,
+    bw: Union[float, Tensor] = 1.0,
+) -> Tuple[Tensor, Tensor, Tensor]:
+    """
+    Transform a lowpass filter to a bandpass filter.
+
+    Performs the analog transformation s -> (s^2 + wo^2) / (bw * s), which
+    converts a lowpass filter with cutoff 1 rad/s to a bandpass filter with
+    center frequency wo rad/s and bandwidth bw rad/s.
+
+    Parameters
+    ----------
+    z : Tensor
+        Zeros of the analog lowpass filter.
+    p : Tensor
+        Poles of the analog lowpass filter.
+    k : Tensor
+        System gain of the analog lowpass filter.
+    wo : float or Tensor
+        Center frequency of the bandpass filter (rad/s).
+    bw : float or Tensor
+        Bandwidth of the bandpass filter (rad/s).
+
+    Returns
+    -------
+    z : Tensor
+        Zeros of the bandpass filter.
+    p : Tensor
+        Poles of the bandpass filter.
+    k : Tensor
+        System gain of the bandpass filter.
+
+    Notes
+    -----
+    The transformation s -> (s^2 + wo^2) / (bw * s):
+    - Doubles the filter order (each pole becomes two poles)
+    - Adds (len(p) - len(z)) zeros at s=0
+    - Maps the lowpass cutoff to the bandpass edges
+
+    For each pole p_k, the new poles are:
+        p_new = (bw * p_k / 2) ± sqrt((bw * p_k / 2)^2 - wo^2)
+    """
+    if not isinstance(wo, Tensor):
+        wo = torch.as_tensor(wo, dtype=k.dtype, device=k.device)
+    if not isinstance(bw, Tensor):
+        bw = torch.as_tensor(bw, dtype=k.dtype, device=k.device)
+
+    degree_diff = p.numel() - z.numel()
+    wo_sq = wo * wo
+
+    # Transform poles: each pole becomes two poles
+    # p_new = (bw * p / 2) ± sqrt((bw * p / 2)^2 - wo^2)
+    half_bw_p = (bw * p) / 2
+    discriminant = half_bw_p * half_bw_p - wo_sq
+    sqrt_disc = torch.sqrt(discriminant.to(p.dtype))
+    p_new_1 = half_bw_p + sqrt_disc
+    p_new_2 = half_bw_p - sqrt_disc
+    p_new = torch.cat([p_new_1, p_new_2])
+
+    # Transform zeros (if any) and add zeros at origin
+    if z.numel() > 0:
+        half_bw_z = (bw * z) / 2
+        disc_z = half_bw_z * half_bw_z - wo_sq
+        sqrt_disc_z = torch.sqrt(disc_z.to(z.dtype))
+        z_new_1 = half_bw_z + sqrt_disc_z
+        z_new_2 = half_bw_z - sqrt_disc_z
+        z_transformed = torch.cat([z_new_1, z_new_2])
+    else:
+        z_transformed = torch.empty(0, dtype=p.dtype, device=p.device)
+
+    # Add zeros at origin
+    zeros_at_origin = torch.zeros(degree_diff, dtype=p.dtype, device=p.device)
+    z_new = torch.cat([z_transformed, zeros_at_origin])
+
+    # Adjust gain: k * bw^(degree_diff)
+    k_new = k * (bw**degree_diff)
+
+    return z_new, p_new, k_new
