@@ -52,3 +52,22 @@ class TestRegularizedGammaPSpecialCases:
         x = torch.rand(100) * 20  # x in [0, 20)
         result = torch.ops.torchscience.regularized_gamma_p(a, x)
         assert (result >= 0).all() and (result <= 1).all()
+
+
+class TestRegularizedGammaPMeta:
+    """Test meta tensor support."""
+
+    def test_meta_tensor_shape(self):
+        """Meta tensors should produce correct output shape."""
+        a = torch.randn(3, 4, device="meta")
+        x = torch.randn(3, 4, device="meta")
+        result = torch.ops.torchscience.regularized_gamma_p(a, x)
+        assert result.shape == (3, 4)
+        assert result.device.type == "meta"
+
+    def test_meta_tensor_broadcast(self):
+        """Meta tensors should broadcast correctly."""
+        a = torch.randn(3, 1, device="meta")
+        x = torch.randn(1, 4, device="meta")
+        result = torch.ops.torchscience.regularized_gamma_p(a, x)
+        assert result.shape == (3, 4)
