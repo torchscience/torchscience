@@ -13,7 +13,7 @@ class TestButtapForward:
     @pytest.mark.parametrize("n", [1, 2, 3, 4, 5, 6, 7, 8])
     def test_poles_match_scipy(self, n: int) -> None:
         """Poles should match scipy.signal.buttap."""
-        z, p, k = buttap(n)
+        z, p, k = buttap(n, dtype=torch.float64)
 
         # Get scipy reference
         z_scipy, p_scipy, k_scipy = scipy_signal.buttap(n)
@@ -35,7 +35,7 @@ class TestButtapForward:
 
     def test_order_1_single_real_pole(self) -> None:
         """Order 1 should have single real pole at -1."""
-        z, p, k = buttap(1)
+        z, p, k = buttap(1, dtype=torch.float64)
 
         assert z.numel() == 0
         assert p.numel() == 1
@@ -46,7 +46,7 @@ class TestButtapForward:
     def test_poles_on_unit_circle(self) -> None:
         """All poles should lie on the unit circle."""
         for n in range(1, 9):
-            z, p, k = buttap(n)
+            z, p, k = buttap(n, dtype=torch.float64)
             for pole in p:
                 magnitude = abs(pole)
                 assert abs(magnitude - 1.0) < 1e-10, (
@@ -56,7 +56,7 @@ class TestButtapForward:
     def test_poles_in_left_half_plane(self) -> None:
         """All poles should be in the left half-plane (stable)."""
         for n in range(1, 9):
-            z, p, k = buttap(n)
+            z, p, k = buttap(n, dtype=torch.float64)
             for pole in p:
                 assert pole.real < 1e-10, f"Pole {pole} not in left half-plane"
 
