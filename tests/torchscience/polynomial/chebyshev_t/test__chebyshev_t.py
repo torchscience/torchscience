@@ -170,3 +170,47 @@ class TestChebyshevTEvaluateAutograd:
             return chebyshev_t_evaluate(chebyshev_t(coeffs), x_)
 
         assert torch.autograd.gradgradcheck(fn, (x,), raise_exception=True)
+
+
+import numpy as np
+from numpy.polynomial import chebyshev as np_cheb
+
+
+class TestChebyshevTVsNumPy:
+    """Tests comparing against NumPy's chebyshev module."""
+
+    def test_evaluate_vs_numpy(self):
+        """Compare evaluation against numpy.polynomial.chebyshev.chebval."""
+        coeffs = [1.0, -2.0, 3.0, -4.0, 5.0]
+        x = np.linspace(-1, 1, 20)
+
+        c_torch = chebyshev_t(torch.tensor(coeffs))
+        y_torch = chebyshev_t_evaluate(c_torch, torch.tensor(x)).numpy()
+
+        y_np = np_cheb.chebval(x, coeffs)
+
+        np.testing.assert_allclose(y_torch, y_np, rtol=1e-6)
+
+    def test_evaluate_high_degree(self):
+        """High degree polynomial evaluation matches NumPy."""
+        coeffs = np.random.randn(20).tolist()
+        x = np.linspace(-1, 1, 50)
+
+        c_torch = chebyshev_t(torch.tensor(coeffs))
+        y_torch = chebyshev_t_evaluate(c_torch, torch.tensor(x)).numpy()
+
+        y_np = np_cheb.chebval(x, coeffs)
+
+        np.testing.assert_allclose(y_torch, y_np, rtol=1e-5)
+
+    def test_evaluate_at_endpoints(self):
+        """Evaluation at domain endpoints matches NumPy."""
+        coeffs = [1.0, 2.0, 3.0]
+        x = np.array([-1.0, 1.0])
+
+        c_torch = chebyshev_t(torch.tensor(coeffs))
+        y_torch = chebyshev_t_evaluate(c_torch, torch.tensor(x)).numpy()
+
+        y_np = np_cheb.chebval(x, coeffs)
+
+        np.testing.assert_allclose(y_torch, y_np, rtol=1e-6)
