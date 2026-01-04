@@ -10,7 +10,6 @@ import math
 import numpy as np
 import pytest
 import torch
-
 import torchscience.signal_processing.integral_transform
 
 # Check if scipy is available for reference tests

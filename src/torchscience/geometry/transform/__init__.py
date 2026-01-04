@@ -7,6 +7,7 @@ from torchscience.geometry.transform._quaternion import (
     quaternion_inverse,
     quaternion_multiply,
     quaternion_normalize,
+    quaternion_to_matrix,
 )
 from torchscience.geometry.transform._reflect import reflect
 from torchscience.geometry.transform._refract import refract
@@ -18,6 +19,7 @@ __all__ = [
     "quaternion_inverse",
     "quaternion_multiply",
     "quaternion_normalize",
+    "quaternion_to_matrix",
     "reflect",
     "refract",
 ]

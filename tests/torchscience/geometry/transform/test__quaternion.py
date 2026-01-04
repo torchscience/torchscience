@@ -13,6 +13,7 @@ from torchscience.geometry.transform import (
     quaternion_inverse,
     quaternion_multiply,
     quaternion_normalize,
+    quaternion_to_matrix,
 )
 
 
@@ -774,3 +775,204 @@ class TestQuaternionApplyDtypes:
         point = torch.randn(10, 3, dtype=torch.float64)
         with pytest.raises(RuntimeError, match="same dtype"):
             quaternion_apply(q, point)
+
+
+class TestQuaternionToMatrix:
+    """Tests for quaternion_to_matrix."""
+
+    def test_identity(self):
+        """Identity quaternion gives identity matrix."""
+        q = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        R = quaternion_to_matrix(q)
+        expected = torch.eye(3)
+        assert torch.allclose(R, expected, atol=1e-5)
+
+    def test_180_deg_around_z(self):
+        """180-degree rotation around z-axis: diag([-1, -1, 1])."""
+        # q = [0, 0, 0, 1] represents 180 degrees around z
+        q = quaternion(torch.tensor([0.0, 0.0, 0.0, 1.0]))
+        R = quaternion_to_matrix(q)
+        expected = torch.diag(torch.tensor([-1.0, -1.0, 1.0]))
+        assert torch.allclose(R, expected, atol=1e-5)
+
+    def test_180_deg_around_x(self):
+        """180-degree rotation around x-axis: diag([1, -1, -1])."""
+        # q = [0, 1, 0, 0] represents 180 degrees around x
+        q = quaternion(torch.tensor([0.0, 1.0, 0.0, 0.0]))
+        R = quaternion_to_matrix(q)
+        expected = torch.diag(torch.tensor([1.0, -1.0, -1.0]))
+        assert torch.allclose(R, expected, atol=1e-5)
+
+    def test_180_deg_around_y(self):
+        """180-degree rotation around y-axis: diag([-1, 1, -1])."""
+        # q = [0, 0, 1, 0] represents 180 degrees around y
+        q = quaternion(torch.tensor([0.0, 0.0, 1.0, 0.0]))
+        R = quaternion_to_matrix(q)
+        expected = torch.diag(torch.tensor([-1.0, 1.0, -1.0]))
+        assert torch.allclose(R, expected, atol=1e-5)
+
+    def test_90_deg_around_z(self):
+        """90-degree rotation around z-axis."""
+        # q = [cos(45), 0, 0, sin(45)]
+        q = quaternion(
+            torch.tensor(
+                [math.cos(math.pi / 4), 0.0, 0.0, math.sin(math.pi / 4)]
+            )
+        )
+        R = quaternion_to_matrix(q)
+        # Expected: [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+        expected = torch.tensor(
+            [
+                [0.0, -1.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0],
+            ]
+        )
+        assert torch.allclose(R, expected, atol=1e-5)
+
+    def test_batch(self):
+        """Batched quaternion to matrix conversion."""
+        q = quaternion(torch.randn(10, 4))
+        R = quaternion_to_matrix(q)
+        assert R.shape == (10, 3, 3)
+
+    def test_orthogonality(self):
+        """R @ R.T = I for unit quaternions."""
+        q_raw = torch.randn(10, 4)
+        q = quaternion(q_raw / torch.linalg.norm(q_raw, dim=-1, keepdim=True))
+        R = quaternion_to_matrix(q)
+        RRT = torch.bmm(R, R.transpose(-1, -2))
+        expected = torch.eye(3).unsqueeze(0).expand(10, -1, -1)
+        assert torch.allclose(RRT, expected, atol=1e-5)
+
+    def test_determinant_one(self):
+        """det(R) = 1 for unit quaternions."""
+        q_raw = torch.randn(10, 4)
+        q = quaternion(q_raw / torch.linalg.norm(q_raw, dim=-1, keepdim=True))
+        R = quaternion_to_matrix(q)
+        dets = torch.linalg.det(R)
+        expected = torch.ones(10)
+        assert torch.allclose(dets, expected, atol=1e-5)
+
+    def test_consistency_with_apply(self):
+        """Matrix rotation should match quaternion_apply."""
+        # Create a random unit quaternion
+        q_raw = torch.randn(4)
+        q = quaternion(q_raw / torch.linalg.norm(q_raw))
+        point = torch.randn(3)
+
+        # Rotate with quaternion_apply
+        rotated_quat = quaternion_apply(q, point)
+
+        # Rotate with matrix
+        R = quaternion_to_matrix(q)
+        rotated_mat = R @ point
+
+        assert torch.allclose(rotated_quat, rotated_mat, atol=1e-5)
+
+    def test_negative_quaternion_same_matrix(self):
+        """q and -q produce the same rotation matrix."""
+        q_raw = torch.randn(4)
+        q_raw = q_raw / torch.linalg.norm(q_raw)
+        q = quaternion(q_raw)
+        q_neg = quaternion(-q_raw)
+
+        R = quaternion_to_matrix(q)
+        R_neg = quaternion_to_matrix(q_neg)
+
+        assert torch.allclose(R, R_neg, atol=1e-5)
+
+
+class TestQuaternionToMatrixShape:
+    """Tests for quaternion_to_matrix shape handling."""
+
+    def test_single_quaternion(self):
+        """Single quaternion (4,) input gives (3, 3) output."""
+        q = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        R = quaternion_to_matrix(q)
+        assert R.shape == (3, 3)
+
+    def test_batch(self):
+        """Batch of quaternions (B, 4) gives (B, 3, 3) output."""
+        q = quaternion(torch.randn(10, 4))
+        R = quaternion_to_matrix(q)
+        assert R.shape == (10, 3, 3)
+
+    def test_image_shape(self):
+        """Image-like shape (H, W, 4) gives (H, W, 3, 3) output."""
+        q = quaternion(torch.randn(64, 64, 4))
+        R = quaternion_to_matrix(q)
+        assert R.shape == (64, 64, 3, 3)
+
+    def test_multi_batch_shape(self):
+        """Multi-batch shape (B, C, H, W, 4) gives (B, C, H, W, 3, 3) output."""
+        q = quaternion(torch.randn(2, 3, 16, 16, 4))
+        R = quaternion_to_matrix(q)
+        assert R.shape == (2, 3, 16, 16, 3, 3)
+
+    def test_invalid_last_dim(self):
+        """Raise error if last dimension is not 4."""
+        with pytest.raises(ValueError, match="last dimension 4"):
+            quaternion_to_matrix(quaternion(torch.randn(10, 3)))
+
+
+class TestQuaternionToMatrixGradients:
+    """Tests for quaternion_to_matrix gradient computation."""
+
+    def test_gradcheck(self):
+        """Gradient check w.r.t. q."""
+        q = torch.randn(5, 4, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda a: quaternion_to_matrix(Quaternion(wxyz=a)),
+            (q,),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+    def test_gradcheck_batch(self):
+        """Gradient check with batch."""
+        q = torch.randn(3, 5, 4, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda a: quaternion_to_matrix(Quaternion(wxyz=a)),
+            (q,),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+    def test_gradcheck_single(self):
+        """Gradient check for single quaternion."""
+        q = torch.randn(4, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda a: quaternion_to_matrix(Quaternion(wxyz=a)),
+            (q,),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+
+class TestQuaternionToMatrixDtypes:
+    """Tests for quaternion_to_matrix with different data types."""
+
+    def test_float32(self):
+        """Works with float32."""
+        q = quaternion(torch.randn(10, 4, dtype=torch.float32))
+        R = quaternion_to_matrix(q)
+        assert R.dtype == torch.float32
+
+    def test_float64(self):
+        """Works with float64."""
+        q = quaternion(torch.randn(10, 4, dtype=torch.float64))
+        R = quaternion_to_matrix(q)
+        assert R.dtype == torch.float64
+
+    def test_bfloat16(self):
+        """Works with bfloat16."""
+        q = quaternion(torch.randn(10, 4, dtype=torch.bfloat16))
+        R = quaternion_to_matrix(q)
+        assert R.dtype == torch.bfloat16
+
+    def test_float16(self):
+        """Works with float16."""
+        q = quaternion(torch.randn(10, 4, dtype=torch.float16))
+        R = quaternion_to_matrix(q)
+        assert R.dtype == torch.float16

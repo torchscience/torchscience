@@ -75,6 +75,7 @@
 #include "cpu/geometry/transform/quaternion_inverse.h"
 #include "cpu/geometry/transform/quaternion_normalize.h"
 #include "cpu/geometry/transform/quaternion_apply.h"
+#include "cpu/geometry/transform/quaternion_to_matrix.h"
 #include "cpu/geometry/convex_hull.h"
 
 #include "autograd/distance/minkowski_distance.h"
@@ -103,6 +104,7 @@
 #include "autograd/geometry/transform/quaternion_inverse.h"
 #include "autograd/geometry/transform/quaternion_normalize.h"
 #include "autograd/geometry/transform/quaternion_apply.h"
+#include "autograd/geometry/transform/quaternion_to_matrix.h"
 
 #include "meta/distance/minkowski_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
@@ -139,6 +141,7 @@
 #include "meta/geometry/transform/quaternion_inverse.h"
 #include "meta/geometry/transform/quaternion_normalize.h"
 #include "meta/geometry/transform/quaternion_apply.h"
+#include "meta/geometry/transform/quaternion_to_matrix.h"
 #include "meta/geometry/convex_hull.h"
 #include "autograd/space_partitioning/k_nearest_neighbors.h"
 #include "autograd/space_partitioning/range_search.h"
@@ -446,6 +449,9 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("quaternion_apply(Tensor q, Tensor point) -> Tensor");
   module.def("quaternion_apply_backward(Tensor grad_output, Tensor q, Tensor point) -> (Tensor, Tensor)");
+
+  module.def("quaternion_to_matrix(Tensor q) -> Tensor");
+  module.def("quaternion_to_matrix_backward(Tensor grad_output, Tensor q) -> Tensor");
 
   // geometry.convex_hull
   module.def("convex_hull(Tensor points) -> "

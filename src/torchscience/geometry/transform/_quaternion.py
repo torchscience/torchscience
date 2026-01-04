@@ -235,6 +235,77 @@ def quaternion_normalize(q: Quaternion) -> Quaternion:
     return Quaternion(wxyz=result)
 
 
+def quaternion_to_matrix(q: Quaternion) -> Tensor:
+    """Convert quaternion to 3x3 rotation matrix.
+
+    Converts a unit quaternion to its equivalent 3x3 rotation matrix.
+
+    The rotation matrix R is computed as:
+
+    .. math::
+
+        R = \\begin{bmatrix}
+        1 - 2(y^2 + z^2) & 2(xy - wz) & 2(xz + wy) \\\\
+        2(xy + wz) & 1 - 2(x^2 + z^2) & 2(yz - wx) \\\\
+        2(xz - wy) & 2(yz + wx) & 1 - 2(x^2 + y^2)
+        \\end{bmatrix}
+
+    where :math:`q = [w, x, y, z]` is the quaternion in scalar-first convention.
+
+    Parameters
+    ----------
+    q : Quaternion
+        Unit quaternion(s), shape (..., 4).
+
+    Returns
+    -------
+    Tensor
+        Rotation matrix, shape (..., 3, 3).
+
+    Notes
+    -----
+    - For unit quaternions, the resulting matrix is orthogonal: R @ R.T = I.
+    - The determinant of the rotation matrix is 1.
+    - Quaternions q and -q produce the same rotation matrix.
+
+    See Also
+    --------
+    quaternion_apply : Apply quaternion rotation to points.
+    quaternion_multiply : Multiply two quaternions.
+
+    References
+    ----------
+    .. [1] https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Quaternion-derived_rotation_matrix
+
+    Examples
+    --------
+    Identity quaternion gives identity matrix:
+
+    >>> q = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+    >>> quaternion_to_matrix(q)
+    tensor([[1., 0., 0.],
+            [0., 1., 0.],
+            [0., 0., 1.]])
+
+    180-degree rotation around z-axis:
+
+    >>> q = quaternion(torch.tensor([0.0, 0.0, 0.0, 1.0]))
+    >>> quaternion_to_matrix(q)
+    tensor([[-1.,  0.,  0.],
+            [ 0., -1.,  0.],
+            [ 0.,  0.,  1.]])
+
+    Batch of quaternions:
+
+    >>> q = quaternion(torch.randn(10, 4))
+    >>> q = quaternion_normalize(q)
+    >>> R = quaternion_to_matrix(q)
+    >>> R.shape
+    torch.Size([10, 3, 3])
+    """
+    return torch.ops.torchscience.quaternion_to_matrix(q.wxyz)
+
+
 def quaternion_apply(q: Quaternion, point: Tensor) -> Tensor:
     """Apply quaternion rotation to 3D points.
 
