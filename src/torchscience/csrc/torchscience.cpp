@@ -430,4 +430,7 @@ TORCH_LIBRARY(torchscience, module) {
              "(Tensor vertices, Tensor simplices, Tensor neighbors, "
              "Tensor equations, Tensor area, Tensor volume, "
              "Tensor n_vertices, Tensor n_facets)");
+
+  // encryption
+  module.def("chacha20(Tensor key, Tensor nonce, int num_bytes, int counter=0) -> Tensor");
 }
