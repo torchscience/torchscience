@@ -12,10 +12,12 @@ from torchscience.polynomial import (
     polynomial_antiderivative,
     polynomial_degree,
     polynomial_derivative,
+    polynomial_equal,
     polynomial_evaluate,
     polynomial_integral,
     polynomial_multiply,
     polynomial_negate,
+    polynomial_pow,
     polynomial_scale,
     polynomial_subtract,
 )
@@ -509,3 +511,85 @@ class TestPolynomialAutograd:
         assert torch.autograd.gradgradcheck(
             eval_fn, (coeffs,), raise_exception=True
         )
+
+
+class TestPolynomialPow:
+    """Tests for polynomial_pow."""
+
+    def test_pow_zero(self):
+        """p^0 = 1 for any non-zero polynomial."""
+        p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
+        result = polynomial_pow(p, 0)
+        expected = polynomial(torch.tensor([1.0]))
+        assert polynomial_equal(result, expected, tol=1e-6)
+
+    def test_pow_one(self):
+        """p^1 = p."""
+        p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
+        result = polynomial_pow(p, 1)
+        assert polynomial_equal(result, p, tol=1e-6)
+
+    def test_pow_two(self):
+        """(1 + x)^2 = 1 + 2x + x^2."""
+        p = polynomial(torch.tensor([1.0, 1.0]))  # 1 + x
+        result = polynomial_pow(p, 2)
+        expected = polynomial(torch.tensor([1.0, 2.0, 1.0]))
+        assert polynomial_equal(result, expected, tol=1e-6)
+
+    def test_pow_three_binomial(self):
+        """(1 + x)^3 = 1 + 3x + 3x^2 + x^3."""
+        p = polynomial(torch.tensor([1.0, 1.0]))
+        result = polynomial_pow(p, 3)
+        expected = polynomial(torch.tensor([1.0, 3.0, 3.0, 1.0]))
+        assert polynomial_equal(result, expected, tol=1e-6)
+
+    def test_pow_large_exponent(self):
+        """Test binary exponentiation with larger exponent."""
+        p = polynomial(torch.tensor([1.0, 1.0]))  # 1 + x
+        result = polynomial_pow(p, 5)
+        # (1+x)^5 = 1 + 5x + 10x^2 + 10x^3 + 5x^4 + x^5
+        expected = polynomial(torch.tensor([1.0, 5.0, 10.0, 10.0, 5.0, 1.0]))
+        assert polynomial_equal(result, expected, tol=1e-6)
+
+    def test_pow_negative_raises(self):
+        """Negative exponent raises ValueError."""
+        p = polynomial(torch.tensor([1.0, 1.0]))
+        with pytest.raises(ValueError):
+            polynomial_pow(p, -1)
+
+    def test_pow_operator(self):
+        """Test p ** n operator."""
+        p = polynomial(torch.tensor([1.0, 1.0]))
+        result = p**3
+        expected = polynomial(torch.tensor([1.0, 3.0, 3.0, 1.0]))
+        assert polynomial_equal(result, expected, tol=1e-6)
+
+
+class TestPolynomialPowAutograd:
+    """Tests for polynomial_pow autograd."""
+
+    def test_pow_gradcheck(self):
+        """Verify gradients through polynomial_pow."""
+        coeffs = torch.tensor(
+            [1.0, 2.0], requires_grad=True, dtype=torch.float64
+        )
+
+        def pow_sum(c):
+            p = polynomial(c)
+            result = polynomial_pow(p, 3)
+            return result.coeffs.sum()
+
+        assert torch.autograd.gradcheck(pow_sum, (coeffs,), eps=1e-6)
+
+    def test_pow_gradgradcheck(self):
+        """Verify second-order gradients through polynomial_pow."""
+        coeffs = torch.tensor(
+            [1.0, 2.0], requires_grad=True, dtype=torch.float64
+        )
+
+        def pow_sum(c):
+            p = polynomial(c)
+            result = polynomial_pow(p, 3)
+            return result.coeffs.sum()
+
+        assert torch.autograd.gradgradcheck(pow_sum, (coeffs,), eps=1e-6)

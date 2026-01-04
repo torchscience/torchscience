@@ -96,6 +96,7 @@ from torchscience.polynomial._polynomial import (
     polynomial_integral,
     polynomial_multiply,
     polynomial_negate,
+    polynomial_pow,
     polynomial_scale,
     polynomial_subtract,
 )
@@ -118,6 +119,7 @@ __all__ = [
     "polynomial_multiply",
     "polynomial_scale",
     "polynomial_negate",
+    "polynomial_pow",
     # Division
     "polynomial_divmod",
     "polynomial_div",
