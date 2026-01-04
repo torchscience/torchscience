@@ -76,3 +76,64 @@ class TestConvexHullMeta:
         assert vertices.shape[0] == 4  # batch
         assert area.shape == (4,)
         assert volume.shape == (4,)
+
+
+class TestConvexHull2D:
+    """Tests for 2D convex hull."""
+
+    def test_square_hull(self):
+        """Unit square hull has 4 vertices."""
+        points = torch.tensor(
+            [
+                [0.0, 0.0],
+                [1.0, 0.0],
+                [1.0, 1.0],
+                [0.0, 1.0],
+                [0.5, 0.5],  # interior point
+            ]
+        )
+        result = torch.ops.torchscience.convex_hull(points)
+        (
+            vertices,
+            simplices,
+            neighbors,
+            equations,
+            area,
+            volume,
+            n_vertices,
+            n_facets,
+        ) = result
+
+        assert n_vertices.item() == 4
+        assert n_facets.item() == 4  # 4 edges in 2D
+
+    def test_triangle_hull(self):
+        """Triangle hull has 3 vertices."""
+        points = torch.tensor(
+            [
+                [0.0, 0.0],
+                [1.0, 0.0],
+                [0.5, 1.0],
+            ]
+        )
+        result = torch.ops.torchscience.convex_hull(points)
+        _, _, _, _, _, _, n_vertices, n_facets = result
+
+        assert n_vertices.item() == 3
+        assert n_facets.item() == 3
+
+    def test_area_square(self):
+        """Unit square has area 1.0."""
+        points = torch.tensor(
+            [
+                [0.0, 0.0],
+                [1.0, 0.0],
+                [1.0, 1.0],
+                [0.0, 1.0],
+            ]
+        )
+        result = torch.ops.torchscience.convex_hull(points)
+        _, _, _, _, _, volume, _, _ = result
+
+        # In 2D, "volume" is area
+        torch.testing.assert_close(volume, torch.tensor(1.0))

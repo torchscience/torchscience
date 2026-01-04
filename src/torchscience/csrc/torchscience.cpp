@@ -66,6 +66,7 @@
 #include "cpu/geometry/ray_intersect.h"
 #include "cpu/geometry/closest_point.h"
 #include "cpu/geometry/ray_occluded.h"
+#include "cpu/geometry/convex_hull.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
