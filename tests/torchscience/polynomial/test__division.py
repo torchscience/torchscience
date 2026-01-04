@@ -161,6 +161,16 @@ class TestDivisionNumpy:
             atol=1e-5,
         )
 
+        # Also check remainder
+        # Pad np_rem if needed to match shape
+        if len(np_rem) == 0:
+            np_rem = np.array([0.0])
+        assert torch.allclose(
+            remainder.coeffs,
+            torch.tensor(np_rem, dtype=torch.float32),
+            atol=1e-5,
+        )
+
 
 class TestDivisionAutograd:
     """Tests for autograd support."""
@@ -184,6 +194,25 @@ class TestDivisionAutograd:
             divmod_sum, (p_coeffs, q_coeffs), eps=1e-6
         )
 
+    def test_divmod_gradgradcheck(self):
+        """Verify second-order gradients through polynomial_divmod."""
+        p_coeffs = torch.tensor(
+            [1.0, 2.0, 3.0, 4.0], requires_grad=True, dtype=torch.float64
+        )
+        q_coeffs = torch.tensor(
+            [1.0, 1.0], requires_grad=True, dtype=torch.float64
+        )
+
+        def divmod_sum(p_c, q_c):
+            p = polynomial(p_c)
+            q = polynomial(q_c)
+            quot, rem = polynomial_divmod(p, q)
+            return quot.coeffs.sum() + rem.coeffs.sum()
+
+        assert torch.autograd.gradgradcheck(
+            divmod_sum, (p_coeffs, q_coeffs), eps=1e-6
+        )
+
 
 class TestDivisionBatched:
     """Tests for batched division."""
@@ -204,3 +233,19 @@ class TestDivisionBatched:
         # Both should have quotient [1, 1] or [2, 2] and remainder 2 or 4
         assert quotient.coeffs.shape[0] == 2
         assert remainder.coeffs.shape[0] == 2
+
+        # First polynomial: (x^2+1)/(x-1) = x+1 remainder 2
+        assert torch.allclose(
+            quotient.coeffs[0], torch.tensor([1.0, 1.0]), atol=1e-6
+        )
+        assert torch.allclose(
+            remainder.coeffs[0], torch.tensor([2.0]), atol=1e-6
+        )
+
+        # Second polynomial: (2x^2+2)/(x-1) = 2x+2 remainder 4
+        assert torch.allclose(
+            quotient.coeffs[1], torch.tensor([2.0, 2.0]), atol=1e-6
+        )
+        assert torch.allclose(
+            remainder.coeffs[1], torch.tensor([4.0]), atol=1e-6
+        )

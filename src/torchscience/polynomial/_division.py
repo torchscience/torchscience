@@ -1,5 +1,7 @@
 """Polynomial division operations."""
 
+from __future__ import annotations
+
 import torch
 
 from torchscience.polynomial._exceptions import DegreeError
