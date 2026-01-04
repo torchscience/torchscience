@@ -15,8 +15,10 @@ from torchscience.integration.quadrature._exceptions import (
     IntegrationError,
     QuadratureWarning,
 )
+from torchscience.integration.quadrature._trapezoid import trapezoid
 
 __all__ = [
+    "trapezoid",
     "QuadratureWarning",
     "IntegrationError",
 ]
