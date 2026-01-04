@@ -137,3 +137,147 @@ class TestConvexHull2D:
 
         # In 2D, "volume" is area
         torch.testing.assert_close(volume, torch.tensor(1.0))
+
+
+class TestConvexHullPythonAPI:
+    """Tests for convex_hull Python wrapper returning ConvexHull tensorclass."""
+
+    def test_returns_convex_hull_class(self):
+        """convex_hull returns ConvexHull tensorclass."""
+        from torchscience.geometry import ConvexHull, convex_hull
+
+        points = torch.rand(10, 2)
+        hull = convex_hull(points)
+        assert isinstance(hull, ConvexHull)
+
+    def test_contains_input_points(self):
+        """ConvexHull stores original input points."""
+        from torchscience.geometry import convex_hull
+
+        points = torch.rand(10, 2)
+        hull = convex_hull(points)
+        torch.testing.assert_close(hull.points, points)
+
+    def test_area_property(self):
+        """ConvexHull.area returns perimeter in 2D."""
+        from torchscience.geometry import convex_hull
+
+        points = torch.tensor(
+            [
+                [0.0, 0.0],
+                [1.0, 0.0],
+                [1.0, 1.0],
+                [0.0, 1.0],
+            ]
+        )
+        hull = convex_hull(points)
+        # Perimeter of unit square is 4.0
+        torch.testing.assert_close(hull.area, torch.tensor(4.0))
+
+    def test_volume_property(self):
+        """ConvexHull.volume returns area in 2D."""
+        from torchscience.geometry import convex_hull
+
+        points = torch.tensor(
+            [
+                [0.0, 0.0],
+                [1.0, 0.0],
+                [1.0, 1.0],
+                [0.0, 1.0],
+            ]
+        )
+        hull = convex_hull(points)
+        # Area of unit square is 1.0
+        torch.testing.assert_close(hull.volume, torch.tensor(1.0))
+
+    def test_n_dims_property(self):
+        """ConvexHull.n_dims returns dimensionality."""
+        from torchscience.geometry import convex_hull
+
+        points_2d = torch.rand(10, 2)
+        hull_2d = convex_hull(points_2d)
+        assert hull_2d.n_dims == 2
+
+        points_3d = torch.rand(10, 3)
+        hull_3d = convex_hull(points_3d)
+        assert hull_3d.n_dims == 3
+
+    def test_vertices_are_indices(self):
+        """ConvexHull.vertices are point indices on the hull."""
+        from torchscience.geometry import convex_hull
+
+        points = torch.tensor(
+            [
+                [0.0, 0.0],
+                [1.0, 0.0],
+                [0.5, 0.5],  # interior
+                [1.0, 1.0],
+                [0.0, 1.0],
+            ]
+        )
+        hull = convex_hull(points)
+        # Should have 4 vertices (indices 0, 1, 3, 4)
+        assert hull.n_vertices.item() == 4
+        # Check indices are in valid range
+        assert hull.vertices[:4].min() >= 0
+        assert hull.vertices[:4].max() <= 4
+
+
+class TestConvexHull3D:
+    """Tests for 3D convex hull."""
+
+    def test_tetrahedron_hull(self):
+        """Tetrahedron hull has 4 vertices and 4 faces."""
+        from torchscience.geometry import convex_hull
+
+        points = torch.tensor(
+            [
+                [0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [0.5, 1.0, 0.0],
+                [0.5, 0.5, 1.0],
+            ]
+        )
+        hull = convex_hull(points)
+        assert hull.n_vertices.item() == 4
+        assert hull.n_facets.item() == 4
+
+    def test_cube_hull(self):
+        """Cube hull has 8 vertices and 12 faces (triangulated)."""
+        from torchscience.geometry import convex_hull
+
+        points = torch.tensor(
+            [
+                [0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [1.0, 1.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [1.0, 0.0, 1.0],
+                [1.0, 1.0, 1.0],
+                [0.0, 1.0, 1.0],
+            ]
+        )
+        hull = convex_hull(points)
+        assert hull.n_vertices.item() == 8
+        # A triangulated cube has 12 triangular faces (2 per square face)
+        assert hull.n_facets.item() == 12
+
+    def test_volume_tetrahedron(self):
+        """Unit tetrahedron has known volume."""
+        from torchscience.geometry import convex_hull
+
+        # Regular tetrahedron with vertices at corners of unit cube
+        points = torch.tensor(
+            [
+                [0.0, 0.0, 0.0],
+                [1.0, 1.0, 0.0],
+                [1.0, 0.0, 1.0],
+                [0.0, 1.0, 1.0],
+            ]
+        )
+        hull = convex_hull(points)
+        # Volume of this tetrahedron is 1/3
+        torch.testing.assert_close(
+            hull.volume, torch.tensor(1.0 / 3.0), atol=1e-5, rtol=1e-5
+        )

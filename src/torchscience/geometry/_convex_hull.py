@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import torch
 from tensordict import tensorclass
 from torch import Tensor
+
+import torchscience  # noqa: F401 - needed to register C++ operators
 
 
 @tensorclass
@@ -108,4 +111,27 @@ def convex_hull(points: Tensor) -> ConvexHull:
     >>> hull = convex_hull(points)
     >>> hull.volume.shape  # (8,)
     """
-    raise NotImplementedError("convex_hull C++ kernel not yet implemented")
+    # Call C++ operator
+    (
+        vertices,
+        simplices,
+        neighbors,
+        equations,
+        area,
+        volume,
+        n_vertices,
+        n_facets,
+    ) = torch.ops.torchscience.convex_hull(points)
+
+    return ConvexHull(
+        points=points,
+        vertices=vertices,
+        simplices=simplices,
+        neighbors=neighbors,
+        equations=equations,
+        _area=area,
+        _volume=volume,
+        n_vertices=n_vertices,
+        n_facets=n_facets,
+        batch_size=[],
+    )
