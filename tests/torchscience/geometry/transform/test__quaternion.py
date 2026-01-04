@@ -7,6 +7,7 @@ from torch.autograd import gradcheck
 from torchscience.geometry.transform import (
     Quaternion,
     quaternion,
+    quaternion_inverse,
     quaternion_multiply,
 )
 
@@ -250,3 +251,141 @@ class TestQuaternionMultiplyDtypes:
         q2 = quaternion(torch.randn(10, 4, dtype=torch.float64))
         with pytest.raises(RuntimeError, match="same dtype"):
             quaternion_multiply(q1, q2)
+
+
+class TestQuaternionInverse:
+    """Tests for quaternion_inverse."""
+
+    def test_inverse_of_identity(self):
+        """Inverse of identity is identity."""
+        identity = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        result = quaternion_inverse(identity)
+        expected = torch.tensor([1.0, 0.0, 0.0, 0.0])
+        assert torch.allclose(result.wxyz, expected, atol=1e-5)
+
+    def test_multiply_by_inverse_gives_identity(self):
+        """q * q^(-1) = identity for unit quaternion."""
+        q = quaternion(torch.tensor([0.5, 0.5, 0.5, 0.5]))
+        q_inv = quaternion_inverse(q)
+        result = quaternion_multiply(q, q_inv)
+        expected = torch.tensor([1.0, 0.0, 0.0, 0.0])
+        assert torch.allclose(result.wxyz, expected, atol=1e-5)
+
+    def test_inverse_multiply_gives_identity(self):
+        """q^(-1) * q = identity for unit quaternion."""
+        q = quaternion(torch.tensor([0.5, 0.5, 0.5, 0.5]))
+        q_inv = quaternion_inverse(q)
+        result = quaternion_multiply(q_inv, q)
+        expected = torch.tensor([1.0, 0.0, 0.0, 0.0])
+        assert torch.allclose(result.wxyz, expected, atol=1e-5)
+
+    def test_double_inverse(self):
+        """(q^(-1))^(-1) = q."""
+        q = quaternion(torch.tensor([0.5, 0.5, 0.5, 0.5]))
+        q_inv_inv = quaternion_inverse(quaternion_inverse(q))
+        assert torch.allclose(q_inv_inv.wxyz, q.wxyz, atol=1e-5)
+
+    def test_batch(self):
+        """Batched inverse."""
+        q = quaternion(torch.randn(10, 4))
+        result = quaternion_inverse(q)
+        assert result.wxyz.shape == (10, 4)
+
+    def test_conjugate_values(self):
+        """Inverse equals conjugate: [w, -x, -y, -z]."""
+        q = quaternion(torch.tensor([0.7071, 0.7071, 0.0, 0.0]))
+        result = quaternion_inverse(q)
+        expected = torch.tensor([0.7071, -0.7071, 0.0, 0.0])
+        assert torch.allclose(result.wxyz, expected, atol=1e-4)
+
+    def test_gradcheck(self):
+        """Gradient check."""
+        q = quaternion(
+            torch.randn(5, 4, dtype=torch.float64, requires_grad=True)
+        )
+        assert gradcheck(
+            lambda a: quaternion_inverse(Quaternion(wxyz=a)).wxyz,
+            (q.wxyz,),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+
+class TestQuaternionInverseShape:
+    """Tests for quaternion_inverse shape handling."""
+
+    def test_single_quaternion(self):
+        """Single quaternion (4,) input."""
+        q = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        result = quaternion_inverse(q)
+        assert result.wxyz.shape == (4,)
+
+    def test_batch(self):
+        """Batch of quaternions (B, 4)."""
+        q = quaternion(torch.randn(10, 4))
+        result = quaternion_inverse(q)
+        assert result.wxyz.shape == (10, 4)
+
+    def test_image_shape(self):
+        """Image-like shape (H, W, 4)."""
+        q = quaternion(torch.randn(64, 64, 4))
+        result = quaternion_inverse(q)
+        assert result.wxyz.shape == (64, 64, 4)
+
+    def test_multi_batch_shape(self):
+        """Multi-batch shape (B, C, H, W, 4)."""
+        q = quaternion(torch.randn(2, 3, 16, 16, 4))
+        result = quaternion_inverse(q)
+        assert result.wxyz.shape == (2, 3, 16, 16, 4)
+
+
+class TestQuaternionInverseGradients:
+    """Tests for quaternion_inverse gradient computation."""
+
+    def test_gradcheck(self):
+        """Gradient check w.r.t. q."""
+        q = torch.randn(5, 4, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda a: quaternion_inverse(Quaternion(wxyz=a)).wxyz,
+            (q,),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+    def test_gradcheck_batch(self):
+        """Gradient check with batch."""
+        q = torch.randn(3, 5, 4, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda a: quaternion_inverse(Quaternion(wxyz=a)).wxyz,
+            (q,),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+
+class TestQuaternionInverseDtypes:
+    """Tests for quaternion_inverse with different data types."""
+
+    def test_float32(self):
+        """Works with float32."""
+        q = quaternion(torch.randn(10, 4, dtype=torch.float32))
+        result = quaternion_inverse(q)
+        assert result.wxyz.dtype == torch.float32
+
+    def test_float64(self):
+        """Works with float64."""
+        q = quaternion(torch.randn(10, 4, dtype=torch.float64))
+        result = quaternion_inverse(q)
+        assert result.wxyz.dtype == torch.float64
+
+    def test_bfloat16(self):
+        """Works with bfloat16."""
+        q = quaternion(torch.randn(10, 4, dtype=torch.bfloat16))
+        result = quaternion_inverse(q)
+        assert result.wxyz.dtype == torch.bfloat16
+
+    def test_float16(self):
+        """Works with float16."""
+        q = quaternion(torch.randn(10, 4, dtype=torch.float16))
+        result = quaternion_inverse(q)
+        assert result.wxyz.dtype == torch.float16

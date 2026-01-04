@@ -72,6 +72,7 @@
 #include "cpu/geometry/transform/reflect.h"
 #include "cpu/geometry/transform/refract.h"
 #include "cpu/geometry/transform/quaternion_multiply.h"
+#include "cpu/geometry/transform/quaternion_inverse.h"
 #include "cpu/geometry/convex_hull.h"
 
 #include "autograd/distance/minkowski_distance.h"
@@ -97,6 +98,7 @@
 #include "autograd/geometry/transform/reflect.h"
 #include "autograd/geometry/transform/refract.h"
 #include "autograd/geometry/transform/quaternion_multiply.h"
+#include "autograd/geometry/transform/quaternion_inverse.h"
 
 #include "meta/distance/minkowski_distance.h"
 #include "meta/graphics/shading/cook_torrance.h"
@@ -130,6 +132,7 @@
 #include "meta/geometry/transform/reflect.h"
 #include "meta/geometry/transform/refract.h"
 #include "meta/geometry/transform/quaternion_multiply.h"
+#include "meta/geometry/transform/quaternion_inverse.h"
 #include "meta/geometry/convex_hull.h"
 #include "autograd/space_partitioning/k_nearest_neighbors.h"
 #include "autograd/space_partitioning/range_search.h"
@@ -428,6 +431,9 @@ TORCH_LIBRARY(torchscience, module) {
   // Quaternion operations
   module.def("quaternion_multiply(Tensor q1, Tensor q2) -> Tensor");
   module.def("quaternion_multiply_backward(Tensor grad_output, Tensor q1, Tensor q2) -> (Tensor, Tensor)");
+
+  module.def("quaternion_inverse(Tensor q) -> Tensor");
+  module.def("quaternion_inverse_backward(Tensor grad_output, Tensor q) -> Tensor");
 
   // geometry.convex_hull
   module.def("convex_hull(Tensor points) -> "

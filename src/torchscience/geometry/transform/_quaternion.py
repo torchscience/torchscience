@@ -121,3 +121,57 @@ def quaternion_multiply(q1: Quaternion, q2: Quaternion) -> Quaternion:
     """
     result = torch.ops.torchscience.quaternion_multiply(q1.wxyz, q2.wxyz)
     return Quaternion(wxyz=result)
+
+
+def quaternion_inverse(q: Quaternion) -> Quaternion:
+    """Compute inverse of a unit quaternion.
+
+    For unit quaternions, the inverse equals the conjugate:
+
+    .. math::
+
+        q^{-1} = [w, -x, -y, -z]
+
+    Where :math:`q = w + xi + yj + zk` is a unit quaternion with
+    :math:`|q| = w^2 + x^2 + y^2 + z^2 = 1`.
+
+    Parameters
+    ----------
+    q : Quaternion
+        Unit quaternion, shape (..., 4).
+
+    Returns
+    -------
+    Quaternion
+        Inverse quaternion q^(-1), shape (..., 4).
+
+    Notes
+    -----
+    - Only valid for unit quaternions (|q| = 1).
+    - For general quaternions, use q* / |q|^2.
+    - The inverse satisfies q * q^(-1) = q^(-1) * q = identity.
+
+    See Also
+    --------
+    quaternion_multiply : Multiply two quaternions.
+    quaternion_normalize : Normalize to unit quaternion.
+
+    References
+    ----------
+    .. [1] Hamilton, W.R. "Elements of Quaternions", 1866.
+    .. [2] https://en.wikipedia.org/wiki/Quaternion#Conjugation,_the_norm,_and_reciprocal
+
+    Examples
+    --------
+    >>> q = quaternion(torch.tensor([0.5, 0.5, 0.5, 0.5]))
+    >>> q_inv = quaternion_inverse(q)
+    >>> q_inv.wxyz
+    tensor([ 0.5000, -0.5000, -0.5000, -0.5000])
+
+    Verify that q * q^(-1) gives identity:
+
+    >>> quaternion_multiply(q, q_inv).wxyz
+    tensor([1., 0., 0., 0.])
+    """
+    result = torch.ops.torchscience.quaternion_inverse(q.wxyz)
+    return Quaternion(wxyz=result)
