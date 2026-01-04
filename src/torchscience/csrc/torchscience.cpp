@@ -74,7 +74,15 @@
 #include "cpu/geometry/transform/refract.h"
 #include "cpu/geometry/convex_hull.h"
 #include "cpu/encryption/chacha20.h"
+#include "cpu/encryption/sha256.h"
 #include "meta/encryption/chacha20.h"
+#include "meta/encryption/sha256.h"
+#include "cpu/privacy/gaussian_mechanism.h"
+#include "cpu/privacy/laplace_mechanism.h"
+#include "meta/privacy/gaussian_mechanism.h"
+#include "meta/privacy/laplace_mechanism.h"
+#include "autograd/privacy/gaussian_mechanism.h"
+#include "autograd/privacy/laplace_mechanism.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/graphics/shading/cook_torrance.h"
@@ -435,4 +443,12 @@ TORCH_LIBRARY(torchscience, module) {
 
   // encryption
   module.def("chacha20(Tensor key, Tensor nonce, int num_bytes, int counter=0) -> Tensor");
+  module.def("sha256(Tensor data) -> Tensor");
+
+  // Privacy operators
+  module.def("gaussian_mechanism(Tensor x, Tensor noise, float sigma) -> Tensor");
+  module.def("gaussian_mechanism_backward(Tensor grad_output) -> Tensor");
+
+  module.def("laplace_mechanism(Tensor x, Tensor noise, float b) -> Tensor");
+  module.def("laplace_mechanism_backward(Tensor grad_output) -> Tensor");
 }
