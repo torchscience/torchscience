@@ -123,6 +123,7 @@ from ._chebyshev_t import (
     chebyshev_t_multiply,
     chebyshev_t_mulx,
     chebyshev_t_negate,
+    chebyshev_t_pow,
     chebyshev_t_scale,
     chebyshev_t_subtract,
 )
@@ -164,6 +165,7 @@ __all__ = [
     "chebyshev_t_multiply",
     "chebyshev_t_mulx",
     "chebyshev_t_negate",
+    "chebyshev_t_pow",
     "chebyshev_t_scale",
     "chebyshev_t_subtract",
     "DegreeError",

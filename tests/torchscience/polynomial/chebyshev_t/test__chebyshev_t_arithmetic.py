@@ -1,6 +1,7 @@
 """Tests for ChebyshevT arithmetic operations."""
 
 import numpy as np
+import pytest
 import torch
 from numpy.polynomial import chebyshev as np_cheb
 
@@ -11,6 +12,7 @@ from torchscience.polynomial import (
     chebyshev_t_multiply,
     chebyshev_t_mulx,
     chebyshev_t_negate,
+    chebyshev_t_pow,
     chebyshev_t_scale,
     chebyshev_t_subtract,
 )
@@ -266,3 +268,61 @@ class TestChebyshevTMulx:
         y_separate = x * chebyshev_t_evaluate(a, x)
 
         torch.testing.assert_close(y_mulx, y_separate, atol=1e-6, rtol=1e-6)
+
+
+class TestChebyshevTPow:
+    """Tests for chebyshev_t_pow."""
+
+    def test_pow_zero(self):
+        """a^0 = 1 (T_0)."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0, 3.0]))
+        b = chebyshev_t_pow(a, 0)
+        torch.testing.assert_close(b.coeffs, torch.tensor([1.0]))
+
+    def test_pow_one(self):
+        """a^1 = a."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0, 3.0]))
+        b = chebyshev_t_pow(a, 1)
+        torch.testing.assert_close(b.coeffs, a.coeffs)
+
+    def test_pow_two(self):
+        """(1 + T_1)^2."""
+        a = chebyshev_t(torch.tensor([1.0, 1.0]))  # 1 + T_1
+        b = chebyshev_t_pow(a, 2)
+        # (1 + T_1)^2 = 1 + 2*T_1 + T_1^2 = 1 + 2*T_1 + 0.5*(T_0 + T_2)
+        # = 1.5*T_0 + 2*T_1 + 0.5*T_2
+        torch.testing.assert_close(b.coeffs, torch.tensor([1.5, 2.0, 0.5]))
+
+    def test_pow_three(self):
+        """(1 + T_1)^3."""
+        a = chebyshev_t(torch.tensor([1.0, 1.0]))
+        b = chebyshev_t_pow(a, 3)
+
+        # Verify by evaluation
+        x = torch.linspace(-1, 1, 10)
+        y_pow = chebyshev_t_evaluate(b, x)
+        y_cubed = chebyshev_t_evaluate(a, x) ** 3
+        torch.testing.assert_close(y_pow, y_cubed, atol=1e-5, rtol=1e-5)
+
+    def test_pow_operator(self):
+        """Test ** operator."""
+        a = chebyshev_t(torch.tensor([1.0, 1.0]))
+        b = a**2
+        torch.testing.assert_close(b.coeffs, torch.tensor([1.5, 2.0, 0.5]))
+
+    def test_pow_negative_raises(self):
+        """Negative exponent raises ValueError."""
+        a = chebyshev_t(torch.tensor([1.0, 1.0]))
+        with pytest.raises(ValueError):
+            chebyshev_t_pow(a, -1)
+
+    def test_pow_vs_numpy(self):
+        """Compare with numpy.polynomial.chebyshev.chebpow."""
+        coeffs = [1.0, 2.0]
+
+        a = chebyshev_t(torch.tensor(coeffs))
+        b = chebyshev_t_pow(a, 4)
+
+        b_np = np_cheb.chebpow(coeffs, 4)
+
+        np.testing.assert_allclose(b.coeffs.numpy(), b_np, rtol=1e-5)

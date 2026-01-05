@@ -82,6 +82,11 @@ class ChebyshevT:
             return chebyshev_t_scale(self, other)
         return NotImplemented
 
+    def __pow__(self, n: int) -> "ChebyshevT":
+        from ._chebyshev_t_pow import chebyshev_t_pow
+
+        return chebyshev_t_pow(self, n)
+
 
 def chebyshev_t(coeffs: Tensor) -> ChebyshevT:
     """Create Chebyshev series from coefficient tensor.
