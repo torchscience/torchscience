@@ -206,3 +206,89 @@ class TestChebyshevTIntegral:
         result_np = np_cheb.chebval(1.0, ia_np) - np_cheb.chebval(-1.0, ia_np)
 
         np.testing.assert_allclose(result.item(), result_np, rtol=1e-6)
+
+
+class TestChebyshevTCalculusAutograd:
+    """Tests for autograd support in calculus operations."""
+
+    def test_derivative_gradcheck(self):
+        """Gradcheck for derivative."""
+        coeffs = torch.tensor(
+            [1.0, 2.0, 3.0, 4.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(c):
+            return chebyshev_t_derivative(chebyshev_t(c)).coeffs
+
+        assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
+
+    def test_antiderivative_gradcheck(self):
+        """Gradcheck for antiderivative."""
+        coeffs = torch.tensor(
+            [1.0, 2.0, 3.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(c):
+            return chebyshev_t_antiderivative(
+                chebyshev_t(c), constant=0.0
+            ).coeffs
+
+        assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
+
+    def test_integral_gradcheck_coeffs(self):
+        """Gradcheck for integral w.r.t. coefficients."""
+        coeffs = torch.tensor(
+            [1.0, 2.0, 3.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(c):
+            return chebyshev_t_integral(
+                chebyshev_t(c),
+                torch.tensor(-1.0, dtype=torch.float64),
+                torch.tensor(1.0, dtype=torch.float64),
+            )
+
+        assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
+
+    def test_integral_gradcheck_limits(self):
+        """Gradcheck for integral w.r.t. limits."""
+        lower = torch.tensor(-0.5, dtype=torch.float64, requires_grad=True)
+        upper = torch.tensor(0.5, dtype=torch.float64, requires_grad=True)
+        coeffs = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
+
+        def fn(lo, hi):
+            return chebyshev_t_integral(chebyshev_t(coeffs), lo, hi)
+
+        assert torch.autograd.gradcheck(
+            fn, (lower, upper), raise_exception=True
+        )
+
+    def test_derivative_gradgradcheck(self):
+        """Second-order gradients for derivative."""
+        coeffs = torch.tensor(
+            [1.0, 2.0, 3.0, 4.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(c):
+            return chebyshev_t_derivative(chebyshev_t(c)).coeffs.sum()
+
+        assert torch.autograd.gradgradcheck(
+            fn, (coeffs,), raise_exception=True
+        )
+
+    def test_integral_gradgradcheck(self):
+        """Second-order gradients for integral."""
+        coeffs = torch.tensor(
+            [1.0, 2.0, 3.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(c):
+            return chebyshev_t_integral(
+                chebyshev_t(c),
+                torch.tensor(-1.0, dtype=torch.float64),
+                torch.tensor(1.0, dtype=torch.float64),
+            )
+
+        assert torch.autograd.gradgradcheck(
+            fn, (coeffs,), raise_exception=True
+        )
