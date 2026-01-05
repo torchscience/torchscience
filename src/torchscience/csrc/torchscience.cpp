@@ -528,4 +528,8 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("normal_pdf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
   module.def("normal_ppf(Tensor p, Tensor loc, Tensor scale) -> Tensor");
   module.def("normal_ppf_backward(Tensor grad, Tensor p, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("normal_sf(Tensor x, Tensor loc, Tensor scale) -> Tensor");
+  module.def("normal_sf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("normal_logpdf(Tensor x, Tensor loc, Tensor scale) -> Tensor");
+  module.def("normal_logpdf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
 }

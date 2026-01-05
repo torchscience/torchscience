@@ -12,6 +12,10 @@
 #include "../../kernel/probability/normal_pdf_backward.h"
 #include "../../kernel/probability/normal_ppf.h"
 #include "../../kernel/probability/normal_ppf_backward.h"
+#include "../../kernel/probability/normal_sf.h"
+#include "../../kernel/probability/normal_sf_backward.h"
+#include "../../kernel/probability/normal_logpdf.h"
+#include "../../kernel/probability/normal_logpdf_backward.h"
 
 namespace torchscience::cpu::probability {
 
@@ -313,6 +317,154 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_ppf_backward(
       reduce_grad(grad_scale, scale));
 }
 
+at::Tensor normal_sf(
+    const at::Tensor& x,
+    const at::Tensor& loc,
+    const at::Tensor& scale) {
+  // Broadcast all inputs together
+  auto tensors = at::broadcast_tensors({x, loc, scale});
+  auto x_b = tensors[0].contiguous();
+  auto loc_b = tensors[1].contiguous();
+  auto scale_b = tensors[2].contiguous();
+
+  auto output = at::empty_like(x_b);
+
+  AT_DISPATCH_FLOATING_TYPES_AND2(
+      at::kBFloat16, at::kHalf, x.scalar_type(), "normal_sf_cpu", [&] {
+        auto x_data = x_b.data_ptr<scalar_t>();
+        auto loc_data = loc_b.data_ptr<scalar_t>();
+        auto scale_data = scale_b.data_ptr<scalar_t>();
+        auto out_data = output.data_ptr<scalar_t>();
+        int64_t n = output.numel();
+
+        at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
+          for (int64_t i = begin; i < end; ++i) {
+            out_data[i] = kernel::probability::normal_sf<scalar_t>(
+                x_data[i], loc_data[i], scale_data[i]);
+          }
+        });
+      });
+
+  return output;
+}
+
+std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_sf_backward(
+    const at::Tensor& grad,
+    const at::Tensor& x,
+    const at::Tensor& loc,
+    const at::Tensor& scale) {
+  // Broadcast all inputs
+  auto tensors = at::broadcast_tensors({grad, x, loc, scale});
+  auto grad_b = tensors[0].contiguous();
+  auto x_b = tensors[1].contiguous();
+  auto loc_b = tensors[2].contiguous();
+  auto scale_b = tensors[3].contiguous();
+
+  auto grad_x = at::empty_like(x_b);
+  auto grad_loc = at::empty_like(loc_b);
+  auto grad_scale = at::empty_like(scale_b);
+
+  AT_DISPATCH_FLOATING_TYPES_AND2(
+      at::kBFloat16, at::kHalf, x.scalar_type(), "normal_sf_backward_cpu", [&] {
+        auto grad_data = grad_b.data_ptr<scalar_t>();
+        auto x_data = x_b.data_ptr<scalar_t>();
+        auto loc_data = loc_b.data_ptr<scalar_t>();
+        auto scale_data = scale_b.data_ptr<scalar_t>();
+        auto grad_x_data = grad_x.data_ptr<scalar_t>();
+        auto grad_loc_data = grad_loc.data_ptr<scalar_t>();
+        auto grad_scale_data = grad_scale.data_ptr<scalar_t>();
+        int64_t n = grad_b.numel();
+
+        at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
+          for (int64_t i = begin; i < end; ++i) {
+            kernel::probability::normal_sf_backward<scalar_t>(
+                grad_data[i], x_data[i], loc_data[i], scale_data[i],
+                grad_x_data[i], grad_loc_data[i], grad_scale_data[i]);
+          }
+        });
+      });
+
+  // Reduce gradients if inputs were broadcast
+  return std::make_tuple(
+      reduce_grad(grad_x, x),
+      reduce_grad(grad_loc, loc),
+      reduce_grad(grad_scale, scale));
+}
+
+at::Tensor normal_logpdf(
+    const at::Tensor& x,
+    const at::Tensor& loc,
+    const at::Tensor& scale) {
+  // Broadcast all inputs together
+  auto tensors = at::broadcast_tensors({x, loc, scale});
+  auto x_b = tensors[0].contiguous();
+  auto loc_b = tensors[1].contiguous();
+  auto scale_b = tensors[2].contiguous();
+
+  auto output = at::empty_like(x_b);
+
+  AT_DISPATCH_FLOATING_TYPES_AND2(
+      at::kBFloat16, at::kHalf, x.scalar_type(), "normal_logpdf_cpu", [&] {
+        auto x_data = x_b.data_ptr<scalar_t>();
+        auto loc_data = loc_b.data_ptr<scalar_t>();
+        auto scale_data = scale_b.data_ptr<scalar_t>();
+        auto out_data = output.data_ptr<scalar_t>();
+        int64_t n = output.numel();
+
+        at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
+          for (int64_t i = begin; i < end; ++i) {
+            out_data[i] = kernel::probability::normal_logpdf<scalar_t>(
+                x_data[i], loc_data[i], scale_data[i]);
+          }
+        });
+      });
+
+  return output;
+}
+
+std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_logpdf_backward(
+    const at::Tensor& grad,
+    const at::Tensor& x,
+    const at::Tensor& loc,
+    const at::Tensor& scale) {
+  // Broadcast all inputs
+  auto tensors = at::broadcast_tensors({grad, x, loc, scale});
+  auto grad_b = tensors[0].contiguous();
+  auto x_b = tensors[1].contiguous();
+  auto loc_b = tensors[2].contiguous();
+  auto scale_b = tensors[3].contiguous();
+
+  auto grad_x = at::empty_like(x_b);
+  auto grad_loc = at::empty_like(loc_b);
+  auto grad_scale = at::empty_like(scale_b);
+
+  AT_DISPATCH_FLOATING_TYPES_AND2(
+      at::kBFloat16, at::kHalf, x.scalar_type(), "normal_logpdf_backward_cpu", [&] {
+        auto grad_data = grad_b.data_ptr<scalar_t>();
+        auto x_data = x_b.data_ptr<scalar_t>();
+        auto loc_data = loc_b.data_ptr<scalar_t>();
+        auto scale_data = scale_b.data_ptr<scalar_t>();
+        auto grad_x_data = grad_x.data_ptr<scalar_t>();
+        auto grad_loc_data = grad_loc.data_ptr<scalar_t>();
+        auto grad_scale_data = grad_scale.data_ptr<scalar_t>();
+        int64_t n = grad_b.numel();
+
+        at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
+          for (int64_t i = begin; i < end; ++i) {
+            kernel::probability::normal_logpdf_backward<scalar_t>(
+                grad_data[i], x_data[i], loc_data[i], scale_data[i],
+                grad_x_data[i], grad_loc_data[i], grad_scale_data[i]);
+          }
+        });
+      });
+
+  // Reduce gradients if inputs were broadcast
+  return std::make_tuple(
+      reduce_grad(grad_x, x),
+      reduce_grad(grad_loc, loc),
+      reduce_grad(grad_scale, scale));
+}
+
 TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
   m.impl("normal_cdf", &normal_cdf);
   m.impl("normal_cdf_backward", &normal_cdf_backward);
@@ -321,6 +473,10 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
   m.impl("normal_pdf_backward", &normal_pdf_backward);
   m.impl("normal_ppf", &normal_ppf);
   m.impl("normal_ppf_backward", &normal_ppf_backward);
+  m.impl("normal_sf", &normal_sf);
+  m.impl("normal_sf_backward", &normal_sf_backward);
+  m.impl("normal_logpdf", &normal_logpdf);
+  m.impl("normal_logpdf_backward", &normal_logpdf_backward);
 }
 
 }  // namespace torchscience::cpu::probability
