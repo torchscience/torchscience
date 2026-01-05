@@ -72,6 +72,7 @@
 #include "cpu/information_theory/jensen_shannon_divergence.h"
 #include "cpu/information_theory/shannon_entropy.h"
 #include "cpu/information_theory/cross_entropy.h"
+#include "cpu/information_theory/chi_squared_divergence.h"
 #include "cpu/space_partitioning/kd_tree.h"
 #include "cpu/space_partitioning/k_nearest_neighbors.h"
 #include "cpu/space_partitioning/range_search.h"
@@ -130,6 +131,7 @@
 #include "autograd/information_theory/jensen_shannon_divergence.h"
 #include "autograd/information_theory/shannon_entropy.h"
 #include "autograd/information_theory/cross_entropy.h"
+#include "autograd/information_theory/chi_squared_divergence.h"
 #include "autograd/geometry/transform/reflect.h"
 #include "autograd/geometry/transform/refract.h"
 #include "autograd/geometry/transform/quaternion_multiply.h"
@@ -176,6 +178,7 @@
 #include "meta/information_theory/jensen_shannon_divergence.h"
 #include "meta/information_theory/shannon_entropy.h"
 #include "meta/information_theory/cross_entropy.h"
+#include "meta/information_theory/chi_squared_divergence.h"
 #include "meta/space_partitioning/kd_tree.h"
 #include "meta/space_partitioning/k_nearest_neighbors.h"
 #include "meta/space_partitioning/range_search.h"
@@ -484,6 +487,9 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("cross_entropy(Tensor p, Tensor q, int dim, str input_type, str reduction, float? base) -> Tensor");
   module.def("cross_entropy_backward(Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, float? base) -> (Tensor, Tensor)");
   module.def("cross_entropy_backward_backward(Tensor gg_p, Tensor gg_q, Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, float? base) -> (Tensor, Tensor, Tensor)");
+  module.def("chi_squared_divergence(Tensor p, Tensor q, int dim, str reduction) -> Tensor");
+  module.def("chi_squared_divergence_backward(Tensor grad_output, Tensor p, Tensor q, int dim, str reduction) -> (Tensor, Tensor)");
+  module.def("chi_squared_divergence_backward_backward(Tensor gg_p, Tensor gg_q, Tensor grad_output, Tensor p, Tensor q, int dim, str reduction) -> (Tensor, Tensor, Tensor)");
 
   // space_partitioning
   // Batched tree build - always use this, even for single trees (pass B=1)
