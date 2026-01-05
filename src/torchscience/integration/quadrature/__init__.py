@@ -9,6 +9,9 @@ Function-based integration (evaluates callable):
 
 Quadrature rule classes:
     GaussLegendre, GaussKronrod
+
+Exceptions:
+    QuadratureWarning, IntegrationError
 """
 
 from torchscience.integration.quadrature._dblquad import dblquad
@@ -32,16 +35,20 @@ from torchscience.integration.quadrature._trapezoid import (
 )
 
 __all__ = [
-    "GaussKronrod",
-    "GaussLegendre",
+    # Sample-based
     "trapezoid",
     "cumulative_trapezoid",
     "simpson",
     "cumulative_simpson",
+    # Function-based
     "fixed_quad",
     "quad",
     "quad_info",
     "dblquad",
+    # Rule classes
+    "GaussLegendre",
+    "GaussKronrod",
+    # Exceptions
     "QuadratureWarning",
     "IntegrationError",
 ]
