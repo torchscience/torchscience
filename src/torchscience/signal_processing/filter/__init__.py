@@ -6,7 +6,9 @@ This module provides filter design functions for signal processing applications.
 from ._butterworth_analog_bandpass_filter import (
     butterworth_analog_bandpass_filter,
 )
+from ._sosfilt import sosfilt
 
 __all__ = [
     "butterworth_analog_bandpass_filter",
+    "sosfilt",
 ]

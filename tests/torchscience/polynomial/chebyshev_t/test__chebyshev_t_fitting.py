@@ -7,6 +7,7 @@ from numpy.polynomial import chebyshev as np_cheb
 from torchscience.polynomial import (
     chebyshev_t,
     chebyshev_t_evaluate,
+    chebyshev_t_fit,
     chebyshev_t_points,
     chebyshev_t_vandermonde,
 )
@@ -111,3 +112,65 @@ class TestChebyshevTVandermonde:
         y_eval = chebyshev_t_evaluate(c, x)
 
         torch.testing.assert_close(y_vander, y_eval, atol=1e-5, rtol=1e-5)
+
+
+class TestChebyshevTFit:
+    """Tests for chebyshev_t_fit."""
+
+    def test_fit_exact_linear(self):
+        """Fit exactly recovers linear function."""
+        x = torch.tensor([-1.0, 0.0, 1.0])
+        y = 2.0 * x + 3.0  # 3 + 2*T_1
+
+        c = chebyshev_t_fit(x, y, degree=1)
+        y_fit = chebyshev_t_evaluate(c, x)
+
+        torch.testing.assert_close(y_fit, y, atol=1e-5, rtol=1e-5)
+
+    def test_fit_exact_quadratic(self):
+        """Fit exactly recovers quadratic function."""
+        x = chebyshev_t_points(5)
+        y = x**2 - 0.5 * x + 1.0
+
+        c = chebyshev_t_fit(x, y, degree=2)
+        y_fit = chebyshev_t_evaluate(c, x)
+
+        torch.testing.assert_close(y_fit, y, atol=1e-4, rtol=1e-4)
+
+    def test_fit_overdetermined(self):
+        """Overdetermined system (more points than degree)."""
+        x = torch.linspace(-1, 1, 20)
+        # True function: 1 + 2*T_1 + 3*T_2
+        coeffs_true = torch.tensor([1.0, 2.0, 3.0])
+        y = chebyshev_t_evaluate(chebyshev_t(coeffs_true), x)
+
+        c = chebyshev_t_fit(x, y, degree=2)
+
+        torch.testing.assert_close(c.coeffs, coeffs_true, atol=1e-5, rtol=1e-5)
+
+    def test_fit_noisy_data(self):
+        """Fit with noisy data."""
+        torch.manual_seed(42)
+        x = torch.linspace(-1, 1, 50)
+        y_true = x**2
+        y = y_true + 0.01 * torch.randn_like(y_true)
+
+        c = chebyshev_t_fit(x, y, degree=4)
+        y_fit = chebyshev_t_evaluate(c, x)
+
+        # Residual should be small
+        residual = (y_fit - y_true).abs().mean()
+        assert residual < 0.05
+
+    def test_fit_vs_numpy(self):
+        """Compare with numpy.polynomial.chebyshev.chebfit."""
+        x = np.linspace(-1, 1, 20)
+        y = np.sin(np.pi * x)
+        deg = 5
+
+        c_torch = chebyshev_t_fit(torch.tensor(x), torch.tensor(y), degree=deg)
+        c_np = np_cheb.chebfit(x, y, deg)
+
+        np.testing.assert_allclose(
+            c_torch.coeffs.numpy(), c_np, rtol=1e-5, atol=1e-5
+        )

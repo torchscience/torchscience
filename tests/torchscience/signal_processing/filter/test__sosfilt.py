@@ -18,8 +18,8 @@ class TestSosfiltForward:
         # Design a lowpass filter
         sos = butterworth(4, 0.2)
 
-        # Create test signal
-        t = torch.linspace(0, 1, 1000)
+        # Create test signal (use float64 to match scipy precision)
+        t = torch.linspace(0, 1, 1000, dtype=torch.float64)
         x = torch.sin(2 * math.pi * 5 * t) + 0.5 * torch.sin(
             2 * math.pi * 50 * t
         )
@@ -36,15 +36,17 @@ class TestSosfiltForward:
 
     def test_removes_high_frequency(self) -> None:
         """Lowpass filter should attenuate high frequencies."""
-        sos = butterworth(4, 0.1)  # Low cutoff
+        sos = butterworth(4, 0.05)  # Very low cutoff (normalized)
 
-        # High frequency signal
-        t = torch.linspace(0, 1, 1000)
-        x = torch.sin(2 * math.pi * 100 * t)
+        # High frequency signal well above cutoff
+        # Sample rate = 1000, Nyquist = 500
+        # Signal at 200 Hz = 0.4 normalized, cutoff at 0.05 = 25 Hz
+        t = torch.linspace(0, 1, 1000, dtype=torch.float64)
+        x = torch.sin(2 * math.pi * 200 * t)
 
         y = sosfilt(sos, x)
 
-        # Output should have much smaller amplitude
+        # Output should have much smaller amplitude (>10x attenuation)
         assert y.abs().max() < 0.1 * x.abs().max()
 
     def test_passes_low_frequency(self) -> None:
@@ -52,7 +54,7 @@ class TestSosfiltForward:
         sos = butterworth(4, 0.5)  # High cutoff
 
         # Low frequency signal (after transient)
-        t = torch.linspace(0, 1, 1000)
+        t = torch.linspace(0, 1, 1000, dtype=torch.float64)
         x = torch.sin(2 * math.pi * 2 * t)
 
         y = sosfilt(sos, x)
