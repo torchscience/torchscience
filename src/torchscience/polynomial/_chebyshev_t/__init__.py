@@ -7,6 +7,7 @@ from ._chebyshev_t_derivative import chebyshev_t_derivative
 from ._chebyshev_t_evaluate import chebyshev_t_evaluate
 from ._chebyshev_t_fit import chebyshev_t_fit
 from ._chebyshev_t_integral import chebyshev_t_integral
+from ._chebyshev_t_interpolate import chebyshev_t_interpolate
 from ._chebyshev_t_multiply import chebyshev_t_multiply
 from ._chebyshev_t_mulx import chebyshev_t_mulx
 from ._chebyshev_t_negate import chebyshev_t_negate
@@ -25,6 +26,7 @@ __all__ = [
     "chebyshev_t_evaluate",
     "chebyshev_t_fit",
     "chebyshev_t_integral",
+    "chebyshev_t_interpolate",
     "chebyshev_t_multiply",
     "chebyshev_t_mulx",
     "chebyshev_t_negate",

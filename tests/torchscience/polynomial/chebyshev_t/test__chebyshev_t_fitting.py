@@ -1,5 +1,7 @@
 """Tests for ChebyshevT fitting and interpolation."""
 
+import math
+
 import numpy as np
 import torch
 from numpy.polynomial import chebyshev as np_cheb
@@ -8,6 +10,7 @@ from torchscience.polynomial import (
     chebyshev_t,
     chebyshev_t_evaluate,
     chebyshev_t_fit,
+    chebyshev_t_interpolate,
     chebyshev_t_points,
     chebyshev_t_vandermonde,
 )
@@ -174,3 +177,66 @@ class TestChebyshevTFit:
         np.testing.assert_allclose(
             c_torch.coeffs.numpy(), c_np, rtol=1e-5, atol=1e-5
         )
+
+
+class TestChebyshevTInterpolate:
+    """Tests for chebyshev_t_interpolate."""
+
+    def test_interpolate_linear(self):
+        """Interpolate linear function."""
+
+        def f(x):
+            return 2 * x + 3
+
+        c = chebyshev_t_interpolate(f, n=2)
+
+        # Verify at Chebyshev points
+        x = chebyshev_t_points(10)
+        y_interp = chebyshev_t_evaluate(c, x)
+        y_true = f(x)
+
+        torch.testing.assert_close(y_interp, y_true, atol=1e-5, rtol=1e-5)
+
+    def test_interpolate_polynomial(self):
+        """Interpolate exactly recovers polynomial."""
+
+        def f(x):
+            return x**3 - 2 * x + 1
+
+        c = chebyshev_t_interpolate(f, n=4)
+
+        x = torch.linspace(-1, 1, 20)
+        y_interp = chebyshev_t_evaluate(c, x)
+        y_true = f(x)
+
+        torch.testing.assert_close(y_interp, y_true, atol=1e-4, rtol=1e-4)
+
+    def test_interpolate_sin(self):
+        """Interpolate sin function."""
+
+        def f(x):
+            return torch.sin(math.pi * x)
+
+        c = chebyshev_t_interpolate(f, n=20)
+
+        x = torch.linspace(-1, 1, 50)
+        y_interp = chebyshev_t_evaluate(c, x)
+        y_true = f(x)
+
+        # Should be very accurate for smooth function
+        torch.testing.assert_close(y_interp, y_true, atol=1e-3, rtol=1e-3)
+
+    def test_interpolate_at_nodes(self):
+        """Interpolation is exact at Chebyshev nodes."""
+
+        def f(x):
+            return x**2 - x + 1
+
+        n = 5
+        c = chebyshev_t_interpolate(f, n=n)
+
+        x_nodes = chebyshev_t_points(n)
+        y_interp = chebyshev_t_evaluate(c, x_nodes)
+        y_true = f(x_nodes)
+
+        torch.testing.assert_close(y_interp, y_true, atol=1e-6, rtol=1e-6)
