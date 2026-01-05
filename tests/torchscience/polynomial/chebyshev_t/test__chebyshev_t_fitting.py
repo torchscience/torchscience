@@ -5,7 +5,10 @@ import torch
 from numpy.polynomial import chebyshev as np_cheb
 
 from torchscience.polynomial import (
+    chebyshev_t,
+    chebyshev_t_evaluate,
     chebyshev_t_points,
+    chebyshev_t_vandermonde,
 )
 
 
@@ -56,3 +59,55 @@ class TestChebyshevTPoints:
         """Preserve dtype."""
         x = chebyshev_t_points(5, dtype=torch.float64)
         assert x.dtype == torch.float64
+
+
+class TestChebyshevTVandermonde:
+    """Tests for chebyshev_t_vandermonde."""
+
+    def test_vandermonde_shape(self):
+        """Vandermonde matrix shape."""
+        x = torch.tensor([0.0, 0.5, 1.0])
+        V = chebyshev_t_vandermonde(x, degree=3)
+        assert V.shape == (3, 4)  # (n_points, degree+1)
+
+    def test_vandermonde_first_column(self):
+        """First column is all ones (T_0 = 1)."""
+        x = torch.tensor([-1.0, 0.0, 0.5, 1.0])
+        V = chebyshev_t_vandermonde(x, degree=3)
+        torch.testing.assert_close(V[:, 0], torch.ones(4))
+
+    def test_vandermonde_second_column(self):
+        """Second column is x (T_1 = x)."""
+        x = torch.tensor([-1.0, 0.0, 0.5, 1.0])
+        V = chebyshev_t_vandermonde(x, degree=3)
+        torch.testing.assert_close(V[:, 1], x)
+
+    def test_vandermonde_third_column(self):
+        """Third column is T_2 = 2x^2 - 1."""
+        x = torch.tensor([-1.0, 0.0, 0.5, 1.0])
+        V = chebyshev_t_vandermonde(x, degree=3)
+        expected = 2 * x**2 - 1
+        torch.testing.assert_close(V[:, 2], expected)
+
+    def test_vandermonde_vs_numpy(self):
+        """Compare with numpy.polynomial.chebyshev.chebvander."""
+        x = np.linspace(-1, 1, 10)
+        deg = 5
+
+        V_torch = chebyshev_t_vandermonde(torch.tensor(x), degree=deg)
+        V_np = np_cheb.chebvander(x, deg)
+
+        np.testing.assert_allclose(V_torch.numpy(), V_np, rtol=1e-6)
+
+    def test_vandermonde_evaluation_consistency(self):
+        """V @ coeffs == evaluate(series, x)."""
+        x = torch.linspace(-1, 1, 10)
+        coeffs = torch.tensor([1.0, 2.0, 3.0, 4.0])
+
+        V = chebyshev_t_vandermonde(x, degree=3)
+        y_vander = V @ coeffs
+
+        c = chebyshev_t(coeffs)
+        y_eval = chebyshev_t_evaluate(c, x)
+
+        torch.testing.assert_close(y_vander, y_eval, atol=1e-5, rtol=1e-5)

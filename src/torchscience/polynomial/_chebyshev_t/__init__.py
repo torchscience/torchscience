@@ -13,6 +13,7 @@ from ._chebyshev_t_points import chebyshev_t_points
 from ._chebyshev_t_pow import chebyshev_t_pow
 from ._chebyshev_t_scale import chebyshev_t_scale
 from ._chebyshev_t_subtract import chebyshev_t_subtract
+from ._chebyshev_t_vandermonde import chebyshev_t_vandermonde
 
 __all__ = [
     "ChebyshevT",
@@ -29,4 +30,5 @@ __all__ = [
     "chebyshev_t_pow",
     "chebyshev_t_scale",
     "chebyshev_t_subtract",
+    "chebyshev_t_vandermonde",
 ]
