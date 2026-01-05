@@ -2,6 +2,7 @@
 
 from ._bilinear import bilinear_zpk
 from ._buttap import buttap
+from ._conversions import zpk2sos
 from ._transforms import lp2bp_zpk, lp2bs_zpk, lp2hp_zpk, lp2lp_zpk
 
 __all__ = [
@@ -11,4 +12,5 @@ __all__ = [
     "lp2bs_zpk",
     "lp2hp_zpk",
     "lp2lp_zpk",
+    "zpk2sos",
 ]
