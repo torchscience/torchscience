@@ -70,6 +70,7 @@
 #include "cpu/graph_theory/maximum_bipartite_matching.h"
 #include "cpu/information_theory/kullback_leibler_divergence.h"
 #include "cpu/information_theory/jensen_shannon_divergence.h"
+#include "cpu/information_theory/shannon_entropy.h"
 #include "cpu/space_partitioning/kd_tree.h"
 #include "cpu/space_partitioning/k_nearest_neighbors.h"
 #include "cpu/space_partitioning/range_search.h"
@@ -468,6 +469,11 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("jensen_shannon_divergence(Tensor p, Tensor q, int dim, str input_type, str reduction, float? base, bool pairwise) -> Tensor");
   module.def("jensen_shannon_divergence_backward(Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, float? base, bool pairwise) -> (Tensor, Tensor)");
   module.def("jensen_shannon_divergence_backward_backward(Tensor gg_p, Tensor gg_q, Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, float? base, bool pairwise) -> (Tensor, Tensor, Tensor)");
+
+  // Shannon entropy
+  module.def("shannon_entropy(Tensor p, int dim, str input_type, str reduction, float? base) -> Tensor");
+  module.def("shannon_entropy_backward(Tensor grad_output, Tensor p, int dim, str input_type, str reduction, float? base) -> Tensor");
+  module.def("shannon_entropy_backward_backward(Tensor gg_p, Tensor grad_output, Tensor p, int dim, str input_type, str reduction, float? base) -> (Tensor, Tensor)");
 
   // space_partitioning
   // Batched tree build - always use this, even for single trees (pass B=1)
