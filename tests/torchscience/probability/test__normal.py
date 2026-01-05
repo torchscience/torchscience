@@ -4,6 +4,13 @@ import scipy.stats
 import torch
 
 import torchscience._csrc  # noqa: F401 - Load C++ operators
+from torchscience.probability import (
+    normal_cdf,
+    normal_logpdf,
+    normal_pdf,
+    normal_ppf,
+    normal_sf,
+)
 
 
 class TestNormalCdfForward:
@@ -467,3 +474,78 @@ class TestNormalLogpdfGradients:
         grad_x = torch.autograd.grad(logpdf.sum(), x)[0]
 
         assert torch.allclose(grad_x, torch.zeros_like(grad_x), atol=1e-6)
+
+
+class TestNormalPythonAPI:
+    """Test Python API."""
+
+    def test_imports(self):
+        """All functions should be importable."""
+        assert all(
+            callable(f)
+            for f in [
+                normal_cdf,
+                normal_pdf,
+                normal_ppf,
+                normal_sf,
+                normal_logpdf,
+            ]
+        )
+
+    def test_default_parameters(self):
+        """Should work with default loc=0, scale=1."""
+        x = torch.tensor([0.0, 1.0])
+        result = normal_cdf(x)
+        expected = normal_cdf(x, loc=0.0, scale=1.0)
+        assert torch.allclose(result, expected)
+
+    def test_float_parameters(self):
+        """Should accept float parameters for loc and scale."""
+        x = torch.tensor([0.0, 1.0, 2.0])
+
+        # All functions should accept float parameters
+        cdf = normal_cdf(x, loc=1.0, scale=2.0)
+        pdf = normal_pdf(x, loc=1.0, scale=2.0)
+        sf = normal_sf(x, loc=1.0, scale=2.0)
+        logpdf = normal_logpdf(x, loc=1.0, scale=2.0)
+
+        assert cdf.shape == x.shape
+        assert pdf.shape == x.shape
+        assert sf.shape == x.shape
+        assert logpdf.shape == x.shape
+
+    def test_ppf_float_parameters(self):
+        """PPF should accept float parameters."""
+        p = torch.tensor([0.1, 0.5, 0.9])
+        result = normal_ppf(p, loc=1.0, scale=2.0)
+        assert result.shape == p.shape
+
+    def test_consistency_with_ops(self):
+        """Python API should produce same results as torch.ops."""
+        x = torch.tensor([0.0, 1.0, 2.0])
+        loc = torch.tensor(1.0)
+        scale = torch.tensor(2.0)
+
+        # Compare Python API with torch.ops
+        assert torch.allclose(
+            normal_cdf(x, loc, scale),
+            torch.ops.torchscience.normal_cdf(x, loc, scale),
+        )
+        assert torch.allclose(
+            normal_pdf(x, loc, scale),
+            torch.ops.torchscience.normal_pdf(x, loc, scale),
+        )
+        assert torch.allclose(
+            normal_sf(x, loc, scale),
+            torch.ops.torchscience.normal_sf(x, loc, scale),
+        )
+        assert torch.allclose(
+            normal_logpdf(x, loc, scale),
+            torch.ops.torchscience.normal_logpdf(x, loc, scale),
+        )
+
+        p = torch.tensor([0.1, 0.5, 0.9])
+        assert torch.allclose(
+            normal_ppf(p, loc, scale),
+            torch.ops.torchscience.normal_ppf(p, loc, scale),
+        )

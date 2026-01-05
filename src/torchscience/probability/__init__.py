@@ -21,8 +21,20 @@ Example
 """
 
 from ._exceptions import DomainError, ProbabilityError
+from ._normal import (
+    normal_cdf,
+    normal_logpdf,
+    normal_pdf,
+    normal_ppf,
+    normal_sf,
+)
 
 __all__ = [
     "DomainError",
     "ProbabilityError",
+    "normal_cdf",
+    "normal_logpdf",
+    "normal_pdf",
+    "normal_ppf",
+    "normal_sf",
 ]
