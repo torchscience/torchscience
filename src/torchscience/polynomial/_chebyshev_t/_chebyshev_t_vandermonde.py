@@ -38,18 +38,23 @@ def chebyshev_t_vandermonde(x: Tensor, degree: int) -> Tensor:
             [ 1.0000,  0.5000, -0.5000],
             [ 1.0000,  1.0000,  1.0000]])
     """
-    n = x.shape[0]
-    V = torch.zeros(n, degree + 1, dtype=x.dtype, device=x.device)
+    # Build columns without in-place ops for autograd compatibility
+    columns = []
 
     # T_0 = 1
-    V[:, 0] = 1.0
+    T_prev_prev = torch.ones_like(x)
+    columns.append(T_prev_prev)
 
     if degree >= 1:
         # T_1 = x
-        V[:, 1] = x
+        T_prev = x
+        columns.append(T_prev)
 
-    # Recurrence: T_{k+1} = 2*x*T_k - T_{k-1}
-    for k in range(1, degree):
-        V[:, k + 1] = 2.0 * x * V[:, k] - V[:, k - 1]
+        # Recurrence: T_{k+1} = 2*x*T_k - T_{k-1}
+        for _ in range(2, degree + 1):
+            T_curr = 2.0 * x * T_prev - T_prev_prev
+            columns.append(T_curr)
+            T_prev_prev = T_prev
+            T_prev = T_curr
 
-    return V
+    return torch.stack(columns, dim=-1)

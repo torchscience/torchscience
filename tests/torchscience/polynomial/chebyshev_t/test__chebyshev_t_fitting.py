@@ -240,3 +240,42 @@ class TestChebyshevTInterpolate:
         y_true = f(x_nodes)
 
         torch.testing.assert_close(y_interp, y_true, atol=1e-6, rtol=1e-6)
+
+
+class TestChebyshevTFittingAutograd:
+    """Tests for autograd support in fitting operations."""
+
+    def test_vandermonde_gradcheck(self):
+        """Gradcheck for Vandermonde."""
+        x = torch.tensor(
+            [0.0, 0.3, 0.7, 1.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(x_):
+            return chebyshev_t_vandermonde(x_, degree=3)
+
+        assert torch.autograd.gradcheck(fn, (x,), raise_exception=True)
+
+    def test_fit_gradcheck(self):
+        """Gradcheck for fit w.r.t. y."""
+        x = torch.tensor([-1.0, -0.5, 0.0, 0.5, 1.0], dtype=torch.float64)
+        y = torch.tensor(
+            [1.0, 2.0, 1.5, 2.5, 3.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(y_):
+            return chebyshev_t_fit(x, y_, degree=2).coeffs
+
+        assert torch.autograd.gradcheck(fn, (y,), raise_exception=True)
+
+    def test_fit_gradgradcheck(self):
+        """Second-order gradients for fit."""
+        x = torch.tensor([-1.0, -0.5, 0.0, 0.5, 1.0], dtype=torch.float64)
+        y = torch.tensor(
+            [1.0, 2.0, 1.5, 2.5, 3.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(y_):
+            return chebyshev_t_fit(x, y_, degree=2).coeffs.sum()
+
+        assert torch.autograd.gradgradcheck(fn, (y,), raise_exception=True)
