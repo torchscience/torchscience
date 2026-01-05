@@ -147,30 +147,43 @@ def zpk2sos(
 
     sos = torch.stack(sos_list)
 
-    # Distribute gain across sections
+    # Distribute gain across sections (avoid inplace ops for autograd)
     gain_per_section = k.abs() ** (1.0 / n_sections)
-    sos[:, :3] = sos[:, :3] * gain_per_section.unsqueeze(-1)
+    numerator_scaled = sos[:, :3] * gain_per_section.unsqueeze(-1)
+    denominator = sos[:, 3:]
 
     # Handle sign of gain
     if k < 0:
-        sos[0, 0] = -sos[0, 0]
+        # Negate first b0 coefficient
+        sign_mult = torch.ones(n_sections, 3, dtype=k.dtype, device=k.device)
+        sign_mult[0, 0] = -1.0
+        numerator_scaled = numerator_scaled * sign_mult
+
+    sos = torch.cat([numerator_scaled, denominator], dim=1)
 
     return sos.real if sos.is_complex() else sos
 
 
 def _separate_real_complex(x: Tensor) -> Tuple[Tensor, Tensor]:
-    """Separate real and complex values, keeping only one of each conjugate pair."""
+    """Separate real and complex values, keeping only one of each conjugate pair.
+
+    A value is considered "real" if:
+    - Its imaginary part is negligible relative to its real part (1e-6 relative tol)
+    - OR if the entire value is very small (< 1e-6), treat as real at origin
+
+    For complex values, we keep only the one with positive imaginary part
+    from each conjugate pair.
+    """
     if x.numel() == 0:
         return x, x
 
-    # Use a relative tolerance to handle numerical noise from bilinear transform
-    # Also treat very small values (near origin) as real
-    max_abs = x.abs().max()
-    abs_tol = 1e-10
-    rel_tol = 1e-6 * max_abs
-    tol = torch.maximum(torch.tensor(abs_tol), rel_tol)
+    # Values are "real" if:
+    # 1. abs(imag) < 1e-6 * abs(real) + 1e-10, OR
+    # 2. The entire magnitude is negligible (< 1e-6)
+    rel_tol = 1e-6 * x.real.abs() + 1e-10
+    is_negligible = x.abs() < 1e-6
+    is_real = (x.imag.abs() < rel_tol) | is_negligible
 
-    is_real = x.imag.abs() < tol
     real_vals = x[is_real].real
 
     # For complex, keep only positive imaginary (one of each conjugate pair)
