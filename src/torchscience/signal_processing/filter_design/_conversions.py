@@ -163,7 +163,13 @@ def _separate_real_complex(x: Tensor) -> Tuple[Tensor, Tensor]:
     if x.numel() == 0:
         return x, x
 
-    tol = 1e-10
+    # Use a relative tolerance to handle numerical noise from bilinear transform
+    # Also treat very small values (near origin) as real
+    max_abs = x.abs().max()
+    abs_tol = 1e-10
+    rel_tol = 1e-6 * max_abs
+    tol = torch.maximum(torch.tensor(abs_tol), rel_tol)
+
     is_real = x.imag.abs() < tol
     real_vals = x[is_real].real
 
