@@ -1,5 +1,7 @@
 """ChebyshevT tensorclass for Chebyshev series of the first kind."""
 
+from __future__ import annotations
+
 from tensordict.tensorclass import tensorclass
 from torch import Tensor
 
@@ -32,6 +34,58 @@ class ChebyshevT:
         from ._chebyshev_t_evaluate import chebyshev_t_evaluate
 
         return chebyshev_t_evaluate(self, x)
+
+    def __add__(self, other: "ChebyshevT") -> "ChebyshevT":
+        from ._chebyshev_t_add import chebyshev_t_add
+
+        return chebyshev_t_add(self, other)
+
+    def __radd__(self, other: "ChebyshevT") -> "ChebyshevT":
+        from ._chebyshev_t_add import chebyshev_t_add
+
+        return chebyshev_t_add(other, self)
+
+    def __sub__(self, other: "ChebyshevT") -> "ChebyshevT":
+        from ._chebyshev_t_subtract import chebyshev_t_subtract
+
+        return chebyshev_t_subtract(self, other)
+
+    def __rsub__(self, other: "ChebyshevT") -> "ChebyshevT":
+        from ._chebyshev_t_subtract import chebyshev_t_subtract
+
+        return chebyshev_t_subtract(other, self)
+
+    def __neg__(self) -> "ChebyshevT":
+        from ._chebyshev_t_negate import chebyshev_t_negate
+
+        return chebyshev_t_negate(self)
+
+    def __mul__(self, other):
+        if isinstance(other, ChebyshevT):
+            from ._chebyshev_t_multiply import chebyshev_t_multiply
+
+            return chebyshev_t_multiply(self, other)
+        if isinstance(other, Tensor):
+            from ._chebyshev_t_scale import chebyshev_t_scale
+
+            return chebyshev_t_scale(self, other)
+        return NotImplemented
+
+    def __rmul__(self, other):
+        if isinstance(other, ChebyshevT):
+            from ._chebyshev_t_multiply import chebyshev_t_multiply
+
+            return chebyshev_t_multiply(other, self)
+        if isinstance(other, Tensor):
+            from ._chebyshev_t_scale import chebyshev_t_scale
+
+            return chebyshev_t_scale(self, other)
+        return NotImplemented
+
+    def __pow__(self, n: int) -> "ChebyshevT":
+        from ._chebyshev_t_pow import chebyshev_t_pow
+
+        return chebyshev_t_pow(self, n)
 
 
 def chebyshev_t(coeffs: Tensor) -> ChebyshevT:

@@ -115,7 +115,18 @@ tensor([ 1.,  6., 17.])
 >>> p = polynomial_fit(x, y, degree=1)  # Fits y = 1 + 2x
 """
 
-from ._chebyshev_t import ChebyshevT, chebyshev_t, chebyshev_t_evaluate
+from ._chebyshev_t import (
+    ChebyshevT,
+    chebyshev_t,
+    chebyshev_t_add,
+    chebyshev_t_evaluate,
+    chebyshev_t_multiply,
+    chebyshev_t_mulx,
+    chebyshev_t_negate,
+    chebyshev_t_pow,
+    chebyshev_t_scale,
+    chebyshev_t_subtract,
+)
 from ._degree_error import DegreeError
 from ._polynomial import (
     Polynomial,
@@ -149,7 +160,14 @@ from ._polynomial_error import (
 __all__ = [
     "ChebyshevT",
     "chebyshev_t",
+    "chebyshev_t_add",
     "chebyshev_t_evaluate",
+    "chebyshev_t_multiply",
+    "chebyshev_t_mulx",
+    "chebyshev_t_negate",
+    "chebyshev_t_pow",
+    "chebyshev_t_scale",
+    "chebyshev_t_subtract",
     "DegreeError",
     "Polynomial",
     "PolynomialError",
