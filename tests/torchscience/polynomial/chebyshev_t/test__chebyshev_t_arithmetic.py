@@ -326,3 +326,95 @@ class TestChebyshevTPow:
         b_np = np_cheb.chebpow(coeffs, 4)
 
         np.testing.assert_allclose(b.coeffs.numpy(), b_np, rtol=1e-5)
+
+
+class TestChebyshevTArithmeticAutograd:
+    """Tests for autograd support in arithmetic operations."""
+
+    def test_add_gradcheck(self):
+        """Gradcheck for add."""
+        a_coeffs = torch.tensor(
+            [1.0, 2.0], dtype=torch.float64, requires_grad=True
+        )
+        b_coeffs = torch.tensor(
+            [3.0, 4.0, 5.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(a, b):
+            return chebyshev_t_add(chebyshev_t(a), chebyshev_t(b)).coeffs
+
+        assert torch.autograd.gradcheck(
+            fn, (a_coeffs, b_coeffs), raise_exception=True
+        )
+
+    def test_subtract_gradcheck(self):
+        """Gradcheck for subtract."""
+        a_coeffs = torch.tensor(
+            [1.0, 2.0, 3.0], dtype=torch.float64, requires_grad=True
+        )
+        b_coeffs = torch.tensor(
+            [4.0, 5.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(a, b):
+            return chebyshev_t_subtract(chebyshev_t(a), chebyshev_t(b)).coeffs
+
+        assert torch.autograd.gradcheck(
+            fn, (a_coeffs, b_coeffs), raise_exception=True
+        )
+
+    def test_multiply_gradcheck(self):
+        """Gradcheck for multiply."""
+        a_coeffs = torch.tensor(
+            [1.0, 2.0], dtype=torch.float64, requires_grad=True
+        )
+        b_coeffs = torch.tensor(
+            [3.0, 4.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(a, b):
+            return chebyshev_t_multiply(chebyshev_t(a), chebyshev_t(b)).coeffs
+
+        assert torch.autograd.gradcheck(
+            fn, (a_coeffs, b_coeffs), raise_exception=True
+        )
+
+    def test_mulx_gradcheck(self):
+        """Gradcheck for mulx."""
+        coeffs = torch.tensor(
+            [1.0, 2.0, 3.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(c):
+            return chebyshev_t_mulx(chebyshev_t(c)).coeffs
+
+        assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
+
+    def test_pow_gradcheck(self):
+        """Gradcheck for pow."""
+        coeffs = torch.tensor(
+            [1.0, 2.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(c):
+            return chebyshev_t_pow(chebyshev_t(c), 3).coeffs
+
+        assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
+
+    def test_multiply_gradgradcheck(self):
+        """Second-order gradients for multiply."""
+        a_coeffs = torch.tensor(
+            [1.0, 2.0], dtype=torch.float64, requires_grad=True
+        )
+        b_coeffs = torch.tensor(
+            [3.0, 4.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(a, b):
+            return chebyshev_t_multiply(
+                chebyshev_t(a), chebyshev_t(b)
+            ).coeffs.sum()
+
+        assert torch.autograd.gradgradcheck(
+            fn, (a_coeffs, b_coeffs), raise_exception=True
+        )
