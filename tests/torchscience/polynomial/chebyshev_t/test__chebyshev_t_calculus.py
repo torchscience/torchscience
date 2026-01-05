@@ -9,6 +9,7 @@ from torchscience.polynomial import (
     chebyshev_t_antiderivative,
     chebyshev_t_derivative,
     chebyshev_t_evaluate,
+    chebyshev_t_integral,
 )
 
 
@@ -143,3 +144,65 @@ class TestChebyshevTAntiderivative:
         ia_np = np_cheb.chebint(coeffs)
 
         np.testing.assert_allclose(ia.coeffs.numpy(), ia_np, rtol=1e-6)
+
+
+class TestChebyshevTIntegral:
+    """Tests for chebyshev_t_integral (definite integral)."""
+
+    def test_integral_constant(self):
+        """Integral of constant over [-1, 1]."""
+        # integral_{-1}^{1} 1 dx = 2
+        a = chebyshev_t(torch.tensor([1.0]))
+        result = chebyshev_t_integral(a, torch.tensor(-1.0), torch.tensor(1.0))
+        torch.testing.assert_close(result, torch.tensor(2.0))
+
+    def test_integral_t1(self):
+        """Integral of T_1 = x over [-1, 1]."""
+        # integral_{-1}^{1} x dx = 0 (odd function)
+        a = chebyshev_t(torch.tensor([0.0, 1.0]))
+        result = chebyshev_t_integral(a, torch.tensor(-1.0), torch.tensor(1.0))
+        torch.testing.assert_close(
+            result, torch.tensor(0.0), atol=1e-6, rtol=1e-6
+        )
+
+    def test_integral_t2(self):
+        """Integral of T_2 = 2x^2 - 1 over [-1, 1]."""
+        # integral_{-1}^{1} (2x^2 - 1) dx = [2x^3/3 - x]_{-1}^{1}
+        # = (2/3 - 1) - (-2/3 + 1) = -1/3 - 1/3 = -2/3
+        a = chebyshev_t(torch.tensor([0.0, 0.0, 1.0]))
+        result = chebyshev_t_integral(a, torch.tensor(-1.0), torch.tensor(1.0))
+        torch.testing.assert_close(
+            result, torch.tensor(-2.0 / 3.0), atol=1e-6, rtol=1e-6
+        )
+
+    def test_integral_custom_limits(self):
+        """Integral over [0, 1]."""
+        # integral_{0}^{1} 1 dx = 1
+        a = chebyshev_t(torch.tensor([1.0]))
+        result = chebyshev_t_integral(a, torch.tensor(0.0), torch.tensor(1.0))
+        torch.testing.assert_close(result, torch.tensor(1.0))
+
+    def test_integral_quadratic(self):
+        """Integral of 1 + x + x^2 over [0, 1]."""
+        # Convert to Chebyshev: 1 + x + x^2 = 1 + T_1 + (T_2+1)/2 = 1.5 + T_1 + 0.5*T_2
+        # integral_{0}^{1} (1 + x + x^2) dx = [x + x^2/2 + x^3/3]_{0}^{1}
+        # = 1 + 0.5 + 1/3 = 11/6
+        a = chebyshev_t(torch.tensor([1.5, 1.0, 0.5]))
+        result = chebyshev_t_integral(a, torch.tensor(0.0), torch.tensor(1.0))
+        torch.testing.assert_close(
+            result, torch.tensor(11.0 / 6.0), atol=1e-5, rtol=1e-5
+        )
+
+    def test_integral_vs_numpy(self):
+        """Compare with numerical integration."""
+        coeffs = [1.0, 2.0, 3.0, 4.0]
+        a = chebyshev_t(torch.tensor(coeffs))
+
+        # Compute using our integral
+        result = chebyshev_t_integral(a, torch.tensor(-1.0), torch.tensor(1.0))
+
+        # Compute using numpy antiderivative and evaluate
+        ia_np = np_cheb.chebint(coeffs)
+        result_np = np_cheb.chebval(1.0, ia_np) - np_cheb.chebval(-1.0, ia_np)
+
+        np.testing.assert_allclose(result.item(), result_np, rtol=1e-6)
