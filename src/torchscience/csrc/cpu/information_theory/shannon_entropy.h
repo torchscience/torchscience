@@ -17,7 +17,7 @@ namespace torchscience::cpu::information_theory {
 
 namespace {
 
-inline at::Tensor preprocess_input(
+inline at::Tensor shannon_preprocess_input(
     const at::Tensor& input,
     int64_t dim,
     const std::string& input_type
@@ -37,7 +37,7 @@ inline at::Tensor preprocess_input(
     }
 }
 
-inline at::Tensor apply_reduction(
+inline at::Tensor shannon_apply_reduction(
     const at::Tensor& output,
     const std::string& reduction,
     int64_t batch_size
@@ -57,7 +57,7 @@ inline at::Tensor apply_reduction(
     }
 }
 
-inline double get_log_base_scale(c10::optional<double> base) {
+inline double shannon_get_log_base_scale(c10::optional<double> base) {
     if (!base.has_value()) {
         return 1.0;  // Natural logarithm (nats)
     }
@@ -75,8 +75,8 @@ inline at::Tensor shannon_entropy(
     const std::string& reduction,
     c10::optional<double> base
 ) {
-    at::Tensor p_prob = preprocess_input(p, dim, input_type);
-    double log_base_scale = get_log_base_scale(base);
+    at::Tensor p_prob = shannon_preprocess_input(p, dim, input_type);
+    double log_base_scale = shannon_get_log_base_scale(base);
 
     int64_t ndim = p_prob.dim();
     if (dim < 0) {
@@ -123,7 +123,7 @@ inline at::Tensor shannon_entropy(
         output = output.view(output_shape);
     }
 
-    return apply_reduction(output, reduction, batch_size);
+    return shannon_apply_reduction(output, reduction, batch_size);
 }
 
 inline at::Tensor shannon_entropy_backward(
@@ -134,8 +134,8 @@ inline at::Tensor shannon_entropy_backward(
     const std::string& reduction,
     c10::optional<double> base
 ) {
-    at::Tensor p_prob = preprocess_input(p, dim, input_type);
-    double log_base_scale = get_log_base_scale(base);
+    at::Tensor p_prob = shannon_preprocess_input(p, dim, input_type);
+    double log_base_scale = shannon_get_log_base_scale(base);
 
     int64_t ndim = p_prob.dim();
     if (dim < 0) {
@@ -199,8 +199,8 @@ inline std::tuple<at::Tensor, at::Tensor> shannon_entropy_backward_backward(
     const std::string& reduction,
     c10::optional<double> base
 ) {
-    at::Tensor p_prob = preprocess_input(p, dim, input_type);
-    double log_base_scale = get_log_base_scale(base);
+    at::Tensor p_prob = shannon_preprocess_input(p, dim, input_type);
+    double log_base_scale = shannon_get_log_base_scale(base);
 
     int64_t ndim = p_prob.dim();
     if (dim < 0) {
