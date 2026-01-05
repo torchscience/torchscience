@@ -6,6 +6,7 @@ from numpy.polynomial import chebyshev as np_cheb
 
 from torchscience.polynomial import (
     chebyshev_t,
+    chebyshev_t_antiderivative,
     chebyshev_t_derivative,
     chebyshev_t_evaluate,
 )
@@ -83,3 +84,62 @@ class TestChebyshevTDerivative:
         dy_symbolic = chebyshev_t_evaluate(da, x.detach())
 
         torch.testing.assert_close(grad_y, dy_symbolic, atol=1e-5, rtol=1e-5)
+
+
+class TestChebyshevTAntiderivative:
+    """Tests for chebyshev_t_antiderivative."""
+
+    def test_antiderivative_constant(self):
+        """Antiderivative of constant."""
+        # integral(1) = T_1 = x (with C=0)
+        a = chebyshev_t(torch.tensor([1.0]))  # 1 = T_0
+        ia = chebyshev_t_antiderivative(a)
+        # Result: 0 + T_1 = [0, 1]
+        torch.testing.assert_close(ia.coeffs, torch.tensor([0.0, 1.0]))
+
+    def test_antiderivative_with_constant(self):
+        """Antiderivative with integration constant."""
+        a = chebyshev_t(torch.tensor([1.0]))  # constant 1
+        ia = chebyshev_t_antiderivative(a, constant=2.0)
+        # integral(1) + 2 = x + 2 = 2*T_0 + T_1
+        torch.testing.assert_close(ia.coeffs, torch.tensor([2.0, 1.0]))
+
+    def test_antiderivative_derivative_inverse(self):
+        """Derivative of antiderivative recovers original."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0, 3.0]))
+        ia = chebyshev_t_antiderivative(a)
+        dia = chebyshev_t_derivative(ia)
+        torch.testing.assert_close(dia.coeffs, a.coeffs, atol=1e-6, rtol=1e-6)
+
+    def test_antiderivative_vs_numpy(self):
+        """Compare with numpy.polynomial.chebyshev.chebint."""
+        coeffs = [1.0, 2.0, 3.0]
+
+        a = chebyshev_t(torch.tensor(coeffs))
+        ia = chebyshev_t_antiderivative(a, constant=0.0)
+
+        ia_np = np_cheb.chebint(coeffs)
+
+        np.testing.assert_allclose(ia.coeffs.numpy(), ia_np, rtol=1e-6)
+
+    def test_antiderivative_order_2(self):
+        """Second antiderivative."""
+        coeffs = [1.0, 2.0, 3.0]
+
+        a = chebyshev_t(torch.tensor(coeffs))
+        i2a = chebyshev_t_antiderivative(a, order=2)
+
+        i2a_np = np_cheb.chebint(coeffs, m=2)
+
+        np.testing.assert_allclose(i2a.coeffs.numpy(), i2a_np, rtol=1e-5)
+
+    def test_antiderivative_t1_vs_numpy(self):
+        """Antiderivative of T_1 matches numpy."""
+        coeffs = [0.0, 1.0]  # T_1
+
+        a = chebyshev_t(torch.tensor(coeffs))
+        ia = chebyshev_t_antiderivative(a, constant=0.0)
+
+        ia_np = np_cheb.chebint(coeffs)
+
+        np.testing.assert_allclose(ia.coeffs.numpy(), ia_np, rtol=1e-6)
