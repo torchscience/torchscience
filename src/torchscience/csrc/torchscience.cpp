@@ -77,6 +77,7 @@
 #include "cpu/information_theory/chi_squared_divergence.h"
 #include "cpu/information_theory/renyi_entropy.h"
 #include "cpu/information_theory/tsallis_entropy.h"
+#include "cpu/information_theory/renyi_divergence.h"
 #include "cpu/space_partitioning/kd_tree.h"
 #include "cpu/space_partitioning/k_nearest_neighbors.h"
 #include "cpu/space_partitioning/range_search.h"
@@ -150,6 +151,7 @@
 #include "autograd/information_theory/chi_squared_divergence.h"
 #include "autograd/information_theory/renyi_entropy.h"
 #include "autograd/information_theory/tsallis_entropy.h"
+#include "autograd/information_theory/renyi_divergence.h"
 #include "autograd/geometry/transform/reflect.h"
 #include "autograd/geometry/transform/refract.h"
 #include "autograd/geometry/transform/quaternion_multiply.h"
@@ -201,6 +203,7 @@
 #include "meta/information_theory/chi_squared_divergence.h"
 #include "meta/information_theory/renyi_entropy.h"
 #include "meta/information_theory/tsallis_entropy.h"
+#include "meta/information_theory/renyi_divergence.h"
 #include "meta/space_partitioning/kd_tree.h"
 #include "meta/space_partitioning/k_nearest_neighbors.h"
 #include "meta/space_partitioning/range_search.h"
@@ -514,6 +517,10 @@ TORCH_LIBRARY(torchscience, module) {
   // Tsallis entropy
   module.def("tsallis_entropy(Tensor p, float q, int dim, str input_type, str reduction) -> Tensor");
   module.def("tsallis_entropy_backward(Tensor grad_output, Tensor p, float q, int dim, str input_type, str reduction) -> Tensor");
+
+  // Renyi divergence
+  module.def("renyi_divergence(Tensor p, Tensor q, float alpha, int dim, str input_type, str reduction, float? base, bool pairwise) -> Tensor");
+  module.def("renyi_divergence_backward(Tensor grad_output, Tensor p, Tensor q, float alpha, int dim, str input_type, str reduction, float? base, bool pairwise) -> (Tensor, Tensor)");
 
   // Cross-entropy
   module.def("cross_entropy(Tensor p, Tensor q, int dim, str input_type, str reduction, float? base) -> Tensor");
