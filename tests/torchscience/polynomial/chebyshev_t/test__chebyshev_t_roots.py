@@ -8,6 +8,7 @@ from torchscience.polynomial import (
     chebyshev_t,
     chebyshev_t_companion,
     chebyshev_t_evaluate,
+    chebyshev_t_from_roots,
     chebyshev_t_roots,
 )
 
@@ -128,3 +129,54 @@ class TestChebyshevTRoots:
         np.testing.assert_allclose(
             roots_torch_sorted, roots_np_sorted, rtol=1e-8
         )
+
+
+class TestChebyshevTFromRoots:
+    """Tests for chebyshev_t_from_roots."""
+
+    def test_from_roots_single(self):
+        """Single root at x=0."""
+        roots = torch.tensor([0.0])
+        c = chebyshev_t_from_roots(roots)
+
+        # Should be (x - 0) = x = T_1
+        x = torch.linspace(-1, 1, 10)
+        y = chebyshev_t_evaluate(c, x)
+
+        torch.testing.assert_close(y, x, atol=1e-6, rtol=1e-6)
+
+    def test_from_roots_two(self):
+        """Two roots."""
+        roots = torch.tensor([0.5, -0.5])
+        c = chebyshev_t_from_roots(roots)
+
+        # Should be (x - 0.5)(x + 0.5) = x^2 - 0.25
+        x = torch.linspace(-1, 1, 10)
+        y = chebyshev_t_evaluate(c, x)
+        y_expected = (x - 0.5) * (x + 0.5)
+
+        torch.testing.assert_close(y, y_expected, atol=1e-5, rtol=1e-5)
+
+    def test_from_roots_roundtrip(self):
+        """roots(from_roots(r)) == r."""
+        roots_orig = torch.tensor([0.2, -0.3, 0.7], dtype=torch.float64)
+        c = chebyshev_t_from_roots(roots_orig)
+        roots_recovered = chebyshev_t_roots(c)
+
+        roots_orig_sorted = roots_orig.sort().values
+        roots_recovered_sorted = roots_recovered.real.sort().values
+
+        torch.testing.assert_close(
+            roots_recovered_sorted, roots_orig_sorted, atol=1e-8, rtol=1e-8
+        )
+
+    def test_from_roots_vs_numpy(self):
+        """Compare with numpy.polynomial.chebyshev.chebfromroots."""
+        roots = [0.1, -0.2, 0.5, -0.8]
+
+        c_torch = chebyshev_t_from_roots(
+            torch.tensor(roots, dtype=torch.float64)
+        )
+        c_np = np_cheb.chebfromroots(roots)
+
+        np.testing.assert_allclose(c_torch.coeffs.numpy(), c_np, rtol=1e-10)

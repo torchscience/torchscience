@@ -7,6 +7,7 @@ from ._chebyshev_t_companion import chebyshev_t_companion
 from ._chebyshev_t_derivative import chebyshev_t_derivative
 from ._chebyshev_t_evaluate import chebyshev_t_evaluate
 from ._chebyshev_t_fit import chebyshev_t_fit
+from ._chebyshev_t_from_roots import chebyshev_t_from_roots
 from ._chebyshev_t_integral import chebyshev_t_integral
 from ._chebyshev_t_interpolate import chebyshev_t_interpolate
 from ._chebyshev_t_multiply import chebyshev_t_multiply
@@ -28,6 +29,7 @@ __all__ = [
     "chebyshev_t_derivative",
     "chebyshev_t_evaluate",
     "chebyshev_t_fit",
+    "chebyshev_t_from_roots",
     "chebyshev_t_integral",
     "chebyshev_t_interpolate",
     "chebyshev_t_multiply",
