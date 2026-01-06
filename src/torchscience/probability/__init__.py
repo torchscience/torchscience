@@ -25,6 +25,10 @@ from ._beta import (
     beta_pdf,
     beta_ppf,
 )
+from ._binomial import (
+    binomial_cdf,
+    binomial_pmf,
+)
 from ._chi2 import (
     chi2_cdf,
     chi2_pdf,
@@ -49,6 +53,10 @@ from ._normal import (
     normal_pdf,
     normal_ppf,
     normal_sf,
+)
+from ._poisson import (
+    poisson_cdf,
+    poisson_pmf,
 )
 
 __all__ = [
@@ -78,4 +86,10 @@ __all__ = [
     "normal_pdf",
     "normal_ppf",
     "normal_sf",
+    # Binomial distribution
+    "binomial_cdf",
+    "binomial_pmf",
+    # Poisson distribution
+    "poisson_cdf",
+    "poisson_pmf",
 ]

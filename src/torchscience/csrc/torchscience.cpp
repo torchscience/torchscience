@@ -112,16 +112,22 @@
 #include "cpu/probability/f.h"
 #include "cpu/probability/beta.h"
 #include "cpu/probability/gamma.h"
+#include "cpu/probability/binomial.h"
+#include "cpu/probability/poisson.h"
 #include "meta/probability/normal.h"
 #include "meta/probability/chi2.h"
 #include "meta/probability/f.h"
 #include "meta/probability/beta.h"
 #include "meta/probability/gamma.h"
+#include "meta/probability/binomial.h"
+#include "meta/probability/poisson.h"
 #include "autograd/probability/normal.h"
 #include "autograd/probability/chi2.h"
 #include "autograd/probability/f.h"
 #include "autograd/probability/beta.h"
 #include "autograd/probability/gamma.h"
+#include "autograd/probability/binomial.h"
+#include "autograd/probability/poisson.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/distance/hellinger_distance.h"
@@ -650,4 +656,16 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("gamma_pdf_backward(Tensor grad, Tensor x, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
   module.def("gamma_ppf(Tensor p, Tensor shape, Tensor scale) -> Tensor");
   module.def("gamma_ppf_backward(Tensor grad, Tensor p, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
+
+  // Probability - Binomial distribution
+  module.def("binomial_cdf(Tensor k, Tensor n, Tensor p) -> Tensor");
+  module.def("binomial_cdf_backward(Tensor grad, Tensor k, Tensor n, Tensor p) -> (Tensor, Tensor, Tensor)");
+  module.def("binomial_pmf(Tensor k, Tensor n, Tensor p) -> Tensor");
+  module.def("binomial_pmf_backward(Tensor grad, Tensor k, Tensor n, Tensor p) -> (Tensor, Tensor, Tensor)");
+
+  // Probability - Poisson distribution
+  module.def("poisson_cdf(Tensor k, Tensor rate) -> Tensor");
+  module.def("poisson_cdf_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
+  module.def("poisson_pmf(Tensor k, Tensor rate) -> Tensor");
+  module.def("poisson_pmf_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
 }

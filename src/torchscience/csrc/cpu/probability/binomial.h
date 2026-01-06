@@ -1,0 +1,170 @@
+#pragma once
+
+#include <ATen/ATen.h>
+#include <ATen/Dispatch.h>
+#include <ATen/Parallel.h>
+#include <torch/library.h>
+
+#include "../../kernel/probability/binomial_cdf.h"
+#include "../../kernel/probability/binomial_cdf_backward.h"
+#include "../../kernel/probability/binomial_pmf.h"
+#include "../../kernel/probability/binomial_pmf_backward.h"
+
+namespace torchscience::cpu::probability {
+
+// reduce_grad is defined in normal.h and already available
+
+at::Tensor binomial_cdf(
+    const at::Tensor& k,
+    const at::Tensor& n,
+    const at::Tensor& p) {
+  auto tensors = at::broadcast_tensors({k, n, p});
+  auto k_b = tensors[0].contiguous();
+  auto n_b = tensors[1].contiguous();
+  auto p_b = tensors[2].contiguous();
+
+  auto output = at::empty_like(k_b);
+
+  AT_DISPATCH_FLOATING_TYPES_AND2(
+      at::kBFloat16, at::kHalf, k.scalar_type(), "binomial_cdf_cpu", [&] {
+        auto k_data = k_b.data_ptr<scalar_t>();
+        auto n_data = n_b.data_ptr<scalar_t>();
+        auto p_data = p_b.data_ptr<scalar_t>();
+        auto out_data = output.data_ptr<scalar_t>();
+        int64_t numel = output.numel();
+
+        at::parallel_for(0, numel, 1000, [&](int64_t begin, int64_t end) {
+          for (int64_t i = begin; i < end; ++i) {
+            out_data[i] = kernel::probability::binomial_cdf<scalar_t>(
+                k_data[i], n_data[i], p_data[i]);
+          }
+        });
+      });
+
+  return output;
+}
+
+std::tuple<at::Tensor, at::Tensor, at::Tensor> binomial_cdf_backward(
+    const at::Tensor& grad,
+    const at::Tensor& k,
+    const at::Tensor& n,
+    const at::Tensor& p) {
+  auto tensors = at::broadcast_tensors({grad, k, n, p});
+  auto grad_b = tensors[0].contiguous();
+  auto k_b = tensors[1].contiguous();
+  auto n_b = tensors[2].contiguous();
+  auto p_b = tensors[3].contiguous();
+
+  auto grad_k = at::empty_like(k_b);
+  auto grad_n = at::empty_like(n_b);
+  auto grad_p = at::empty_like(p_b);
+
+  AT_DISPATCH_FLOATING_TYPES_AND2(
+      at::kBFloat16, at::kHalf, k.scalar_type(), "binomial_cdf_backward_cpu", [&] {
+        auto grad_data = grad_b.data_ptr<scalar_t>();
+        auto k_data = k_b.data_ptr<scalar_t>();
+        auto n_data = n_b.data_ptr<scalar_t>();
+        auto p_data = p_b.data_ptr<scalar_t>();
+        auto grad_k_data = grad_k.data_ptr<scalar_t>();
+        auto grad_n_data = grad_n.data_ptr<scalar_t>();
+        auto grad_p_data = grad_p.data_ptr<scalar_t>();
+        int64_t numel = grad_b.numel();
+
+        at::parallel_for(0, numel, 1000, [&](int64_t begin, int64_t end) {
+          for (int64_t i = begin; i < end; ++i) {
+            auto [gk, gn, gp] = kernel::probability::binomial_cdf_backward<scalar_t>(
+                grad_data[i], k_data[i], n_data[i], p_data[i]);
+            grad_k_data[i] = gk;
+            grad_n_data[i] = gn;
+            grad_p_data[i] = gp;
+          }
+        });
+      });
+
+  return std::make_tuple(
+      reduce_grad(grad_k, k),
+      reduce_grad(grad_n, n),
+      reduce_grad(grad_p, p));
+}
+
+at::Tensor binomial_pmf(
+    const at::Tensor& k,
+    const at::Tensor& n,
+    const at::Tensor& p) {
+  auto tensors = at::broadcast_tensors({k, n, p});
+  auto k_b = tensors[0].contiguous();
+  auto n_b = tensors[1].contiguous();
+  auto p_b = tensors[2].contiguous();
+
+  auto output = at::empty_like(k_b);
+
+  AT_DISPATCH_FLOATING_TYPES_AND2(
+      at::kBFloat16, at::kHalf, k.scalar_type(), "binomial_pmf_cpu", [&] {
+        auto k_data = k_b.data_ptr<scalar_t>();
+        auto n_data = n_b.data_ptr<scalar_t>();
+        auto p_data = p_b.data_ptr<scalar_t>();
+        auto out_data = output.data_ptr<scalar_t>();
+        int64_t numel = output.numel();
+
+        at::parallel_for(0, numel, 1000, [&](int64_t begin, int64_t end) {
+          for (int64_t i = begin; i < end; ++i) {
+            out_data[i] = kernel::probability::binomial_pmf<scalar_t>(
+                k_data[i], n_data[i], p_data[i]);
+          }
+        });
+      });
+
+  return output;
+}
+
+std::tuple<at::Tensor, at::Tensor, at::Tensor> binomial_pmf_backward(
+    const at::Tensor& grad,
+    const at::Tensor& k,
+    const at::Tensor& n,
+    const at::Tensor& p) {
+  auto tensors = at::broadcast_tensors({grad, k, n, p});
+  auto grad_b = tensors[0].contiguous();
+  auto k_b = tensors[1].contiguous();
+  auto n_b = tensors[2].contiguous();
+  auto p_b = tensors[3].contiguous();
+
+  auto grad_k = at::empty_like(k_b);
+  auto grad_n = at::empty_like(n_b);
+  auto grad_p = at::empty_like(p_b);
+
+  AT_DISPATCH_FLOATING_TYPES_AND2(
+      at::kBFloat16, at::kHalf, k.scalar_type(), "binomial_pmf_backward_cpu", [&] {
+        auto grad_data = grad_b.data_ptr<scalar_t>();
+        auto k_data = k_b.data_ptr<scalar_t>();
+        auto n_data = n_b.data_ptr<scalar_t>();
+        auto p_data = p_b.data_ptr<scalar_t>();
+        auto grad_k_data = grad_k.data_ptr<scalar_t>();
+        auto grad_n_data = grad_n.data_ptr<scalar_t>();
+        auto grad_p_data = grad_p.data_ptr<scalar_t>();
+        int64_t numel = grad_b.numel();
+
+        at::parallel_for(0, numel, 1000, [&](int64_t begin, int64_t end) {
+          for (int64_t i = begin; i < end; ++i) {
+            auto [gk, gn, gp] = kernel::probability::binomial_pmf_backward<scalar_t>(
+                grad_data[i], k_data[i], n_data[i], p_data[i]);
+            grad_k_data[i] = gk;
+            grad_n_data[i] = gn;
+            grad_p_data[i] = gp;
+          }
+        });
+      });
+
+  return std::make_tuple(
+      reduce_grad(grad_k, k),
+      reduce_grad(grad_n, n),
+      reduce_grad(grad_p, p));
+}
+
+TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
+  m.impl("binomial_cdf", &binomial_cdf);
+  m.impl("binomial_cdf_backward", &binomial_cdf_backward);
+  m.impl("binomial_pmf", &binomial_pmf);
+  m.impl("binomial_pmf_backward", &binomial_pmf_backward);
+}
+
+}  // namespace torchscience::cpu::probability
