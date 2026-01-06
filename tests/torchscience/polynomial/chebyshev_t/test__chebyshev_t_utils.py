@@ -5,9 +5,13 @@ import torch
 from numpy.polynomial import chebyshev as np_cheb
 
 from torchscience.polynomial import (
+    ChebyshevT,
     chebyshev_t,
+    chebyshev_t_add,
     chebyshev_t_degree,
+    chebyshev_t_divmod,
     chebyshev_t_equal,
+    chebyshev_t_multiply,
     chebyshev_t_trim,
     chebyshev_t_weight,
 )
@@ -135,3 +139,56 @@ class TestChebyshevTWeight:
         x = torch.tensor([0.9, 0.99, 0.999])
         w = chebyshev_t_weight(x)
         assert w[0] < w[1] < w[2]
+
+
+class TestChebyshevTDivision:
+    """Tests for division operations."""
+
+    def test_divmod_exact(self):
+        """Exact division leaves no remainder."""
+        # (1 + T_1)^2 / (1 + T_1) = (1 + T_1)
+        a = chebyshev_t(torch.tensor([1.0, 1.0]))  # 1 + T_1
+        a_squared = chebyshev_t_multiply(a, a)
+
+        q, r = chebyshev_t_divmod(a_squared, a)
+
+        # Quotient should be (1 + T_1)
+        torch.testing.assert_close(
+            q.coeffs, torch.tensor([1.0, 1.0]), atol=1e-5, rtol=1e-5
+        )
+
+        # Remainder should be ~0
+        assert torch.abs(r.coeffs).max() < 1e-5
+
+    def test_divmod_with_remainder(self):
+        """Division with non-zero remainder."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0, 3.0, 4.0]))  # degree 3
+        b = chebyshev_t(torch.tensor([1.0, 1.0]))  # degree 1
+
+        q, r = chebyshev_t_divmod(a, b)
+
+        # Verify: a = b*q + r
+        reconstructed = chebyshev_t_add(chebyshev_t_multiply(b, q), r)
+
+        # Pad for comparison
+        n_max = max(a.coeffs.shape[-1], reconstructed.coeffs.shape[-1])
+        a_padded = torch.zeros(n_max)
+        a_padded[: a.coeffs.shape[-1]] = a.coeffs
+        r_padded = torch.zeros(n_max)
+        r_padded[: reconstructed.coeffs.shape[-1]] = reconstructed.coeffs
+
+        torch.testing.assert_close(a_padded, r_padded, atol=1e-5, rtol=1e-5)
+
+    def test_div_operator(self):
+        """Test // operator."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0, 3.0]))
+        b = chebyshev_t(torch.tensor([1.0, 1.0]))
+        q = a // b
+        assert isinstance(q, ChebyshevT)
+
+    def test_mod_operator(self):
+        """Test % operator."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0, 3.0]))
+        b = chebyshev_t(torch.tensor([1.0, 1.0]))
+        r = a % b
+        assert isinstance(r, ChebyshevT)

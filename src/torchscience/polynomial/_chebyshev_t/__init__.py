@@ -6,12 +6,15 @@ from ._chebyshev_t_antiderivative import chebyshev_t_antiderivative
 from ._chebyshev_t_companion import chebyshev_t_companion
 from ._chebyshev_t_degree import chebyshev_t_degree
 from ._chebyshev_t_derivative import chebyshev_t_derivative
+from ._chebyshev_t_div import chebyshev_t_div
+from ._chebyshev_t_divmod import chebyshev_t_divmod
 from ._chebyshev_t_equal import chebyshev_t_equal
 from ._chebyshev_t_evaluate import chebyshev_t_evaluate
 from ._chebyshev_t_fit import chebyshev_t_fit
 from ._chebyshev_t_from_roots import chebyshev_t_from_roots
 from ._chebyshev_t_integral import chebyshev_t_integral
 from ._chebyshev_t_interpolate import chebyshev_t_interpolate
+from ._chebyshev_t_mod import chebyshev_t_mod
 from ._chebyshev_t_multiply import chebyshev_t_multiply
 from ._chebyshev_t_mulx import chebyshev_t_mulx
 from ._chebyshev_t_negate import chebyshev_t_negate
@@ -34,12 +37,15 @@ __all__ = [
     "chebyshev_t_companion",
     "chebyshev_t_degree",
     "chebyshev_t_derivative",
+    "chebyshev_t_div",
+    "chebyshev_t_divmod",
     "chebyshev_t_equal",
     "chebyshev_t_evaluate",
     "chebyshev_t_fit",
     "chebyshev_t_from_roots",
     "chebyshev_t_integral",
     "chebyshev_t_interpolate",
+    "chebyshev_t_mod",
     "chebyshev_t_multiply",
     "chebyshev_t_mulx",
     "chebyshev_t_negate",

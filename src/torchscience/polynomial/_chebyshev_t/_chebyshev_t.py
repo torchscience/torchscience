@@ -87,6 +87,16 @@ class ChebyshevT:
 
         return chebyshev_t_pow(self, n)
 
+    def __floordiv__(self, other: "ChebyshevT") -> "ChebyshevT":
+        from ._chebyshev_t_div import chebyshev_t_div
+
+        return chebyshev_t_div(self, other)
+
+    def __mod__(self, other: "ChebyshevT") -> "ChebyshevT":
+        from ._chebyshev_t_mod import chebyshev_t_mod
+
+        return chebyshev_t_mod(self, other)
+
 
 def chebyshev_t(coeffs: Tensor) -> ChebyshevT:
     """Create Chebyshev series from coefficient tensor.
