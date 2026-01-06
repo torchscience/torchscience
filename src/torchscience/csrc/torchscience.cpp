@@ -73,6 +73,7 @@
 #include "cpu/information_theory/kullback_leibler_divergence.h"
 #include "cpu/information_theory/jensen_shannon_divergence.h"
 #include "cpu/information_theory/shannon_entropy.h"
+#include "cpu/information_theory/joint_entropy.h"
 #include "cpu/information_theory/cross_entropy.h"
 #include "cpu/information_theory/chi_squared_divergence.h"
 #include "cpu/information_theory/renyi_entropy.h"
@@ -515,6 +516,11 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("shannon_entropy(Tensor p, int dim, str input_type, str reduction, float? base) -> Tensor");
   module.def("shannon_entropy_backward(Tensor grad_output, Tensor p, int dim, str input_type, str reduction, float? base) -> Tensor");
   module.def("shannon_entropy_backward_backward(Tensor gg_p, Tensor grad_output, Tensor p, int dim, str input_type, str reduction, float? base) -> (Tensor, Tensor)");
+
+  // Joint entropy
+  module.def("joint_entropy(Tensor joint, int[] dims, str input_type, str reduction, float? base) -> Tensor");
+  module.def("joint_entropy_backward(Tensor grad_output, Tensor joint, int[] dims, str input_type, str reduction, float? base) -> Tensor");
+  module.def("joint_entropy_backward_backward(Tensor gg_joint, Tensor grad_output, Tensor joint, int[] dims, str input_type, str reduction, float? base) -> (Tensor, Tensor)");
 
   // Renyi entropy
   module.def("renyi_entropy(Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> Tensor");
