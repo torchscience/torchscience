@@ -4,6 +4,7 @@ from ._chi_squared_divergence import chi_squared_divergence
 from ._cross_entropy import cross_entropy
 from ._f_divergence import f_divergence
 from ._jensen_shannon_divergence import jensen_shannon_divergence
+from ._joint_entropy import joint_entropy
 from ._kullback_leibler_divergence import kullback_leibler_divergence
 from ._renyi_divergence import renyi_divergence
 from ._renyi_entropy import renyi_entropy
@@ -15,6 +16,7 @@ __all__ = [
     "cross_entropy",
     "f_divergence",
     "jensen_shannon_divergence",
+    "joint_entropy",
     "kullback_leibler_divergence",
     "renyi_divergence",
     "renyi_entropy",
