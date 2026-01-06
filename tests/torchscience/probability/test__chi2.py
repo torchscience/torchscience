@@ -49,3 +49,41 @@ class TestChi2CdfForward:
             dtype=torch.float32,
         )
         assert torch.allclose(result, expected, atol=1e-5)
+
+
+class TestChi2CdfGradients:
+    """Test gradient computation."""
+
+    def test_gradcheck_x(self):
+        """Gradient check for x parameter."""
+        x = torch.tensor(
+            [1.0, 2.0, 5.0], dtype=torch.float64, requires_grad=True
+        )
+        df = torch.tensor(5.0, dtype=torch.float64)
+
+        def fn(x_):
+            return torch.ops.torchscience.chi2_cdf(x_, df)
+
+        assert torch.autograd.gradcheck(fn, (x,), eps=1e-6, atol=1e-4)
+
+    def test_gradcheck_df(self):
+        """Gradient check for df parameter."""
+        x = torch.tensor([2.0, 5.0, 10.0], dtype=torch.float64)
+        df = torch.tensor(5.0, dtype=torch.float64, requires_grad=True)
+
+        def fn(df_):
+            return torch.ops.torchscience.chi2_cdf(x, df_)
+
+        assert torch.autograd.gradcheck(fn, (df,), eps=1e-6, atol=1e-4)
+
+    def test_gradcheck_both(self):
+        """Gradient check for both parameters."""
+        x = torch.tensor(
+            [1.0, 2.0, 5.0], dtype=torch.float64, requires_grad=True
+        )
+        df = torch.tensor(5.0, dtype=torch.float64, requires_grad=True)
+
+        def fn(x_, df_):
+            return torch.ops.torchscience.chi2_cdf(x_, df_)
+
+        assert torch.autograd.gradcheck(fn, (x, df), eps=1e-6, atol=1e-4)

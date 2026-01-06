@@ -107,6 +107,7 @@
 #include "meta/probability/normal.h"
 #include "meta/probability/chi2.h"
 #include "autograd/probability/normal.h"
+#include "autograd/probability/chi2.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/distance/hellinger_distance.h"
@@ -433,6 +434,7 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("one_sample_t_test(Tensor input, float popmean, str alternative) -> (Tensor, Tensor, Tensor)");
   module.def("two_sample_t_test(Tensor input1, Tensor input2, bool equal_var, str alternative) -> (Tensor, Tensor, Tensor)");
   module.def("paired_t_test(Tensor input1, Tensor input2, str alternative) -> (Tensor, Tensor, Tensor)");
+  module.def("shapiro_wilk(Tensor input) -> (Tensor, Tensor)");
 
   // integral_transform
   module.def("hilbert_transform(Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
