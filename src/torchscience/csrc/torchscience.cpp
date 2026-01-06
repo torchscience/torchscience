@@ -61,6 +61,8 @@
 #include "cpu/statistics/hypothesis_test/paired_t_test.h"
 #include "cpu/statistics/hypothesis_test/shapiro_wilk.h"
 #include "cpu/statistics/hypothesis_test/anderson_darling.h"
+#include "cpu/statistics/hypothesis_test/f_oneway.h"
+#include "cpu/statistics/hypothesis_test/jarque_bera.h"
 #include "cpu/integral_transform/hilbert_transform.h"
 #include "cpu/integral_transform/inverse_hilbert_transform.h"
 #include "cpu/test/sum_squares.h"
@@ -74,6 +76,7 @@
 #include "cpu/information_theory/jensen_shannon_divergence.h"
 #include "cpu/information_theory/shannon_entropy.h"
 #include "cpu/information_theory/joint_entropy.h"
+#include "cpu/information_theory/conditional_entropy.h"
 #include "cpu/information_theory/cross_entropy.h"
 #include "cpu/information_theory/chi_squared_divergence.h"
 #include "cpu/information_theory/renyi_entropy.h"
@@ -148,6 +151,8 @@
 #include "autograd/optimization/test_functions.h"
 #include "autograd/optimization/combinatorial.h"
 #include "autograd/statistics/descriptive/kurtosis.h"
+#include "autograd/statistics/hypothesis_test/jarque_bera.h"
+#include "autograd/statistics/hypothesis_test/f_oneway.h"
 #include "autograd/integral_transform/hilbert_transform.h"
 #include "autograd/integral_transform/inverse_hilbert_transform.h"
 #include "autograd/test/sum_squares.h"
@@ -155,6 +160,7 @@
 #include "autograd/information_theory/jensen_shannon_divergence.h"
 #include "autograd/information_theory/shannon_entropy.h"
 #include "autograd/information_theory/joint_entropy.h"
+#include "autograd/information_theory/conditional_entropy.h"
 #include "autograd/information_theory/cross_entropy.h"
 #include "autograd/information_theory/chi_squared_divergence.h"
 #include "autograd/information_theory/renyi_entropy.h"
@@ -195,6 +201,8 @@
 #include "meta/statistics/hypothesis_test/paired_t_test.h"
 #include "meta/statistics/hypothesis_test/shapiro_wilk.h"
 #include "meta/statistics/hypothesis_test/anderson_darling.h"
+#include "meta/statistics/hypothesis_test/f_oneway.h"
+#include "meta/statistics/hypothesis_test/jarque_bera.h"
 #include "meta/integral_transform/hilbert_transform.h"
 #include "meta/integral_transform/inverse_hilbert_transform.h"
 #include "meta/test/sum_squares.h"
@@ -208,6 +216,7 @@
 #include "meta/information_theory/jensen_shannon_divergence.h"
 #include "meta/information_theory/shannon_entropy.h"
 #include "meta/information_theory/joint_entropy.h"
+#include "meta/information_theory/conditional_entropy.h"
 #include "meta/information_theory/cross_entropy.h"
 #include "meta/information_theory/chi_squared_divergence.h"
 #include "meta/information_theory/renyi_entropy.h"
@@ -467,6 +476,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("paired_t_test(Tensor input1, Tensor input2, str alternative) -> (Tensor, Tensor, Tensor)");
   module.def("shapiro_wilk(Tensor input) -> (Tensor, Tensor)");
   module.def("anderson_darling(Tensor input) -> (Tensor, Tensor, Tensor)");
+  module.def("f_oneway(Tensor data, Tensor group_sizes) -> (Tensor, Tensor)");
+  module.def("f_oneway_backward(Tensor grad_statistic, Tensor data, Tensor group_sizes) -> Tensor");
+  module.def("jarque_bera(Tensor input) -> (Tensor, Tensor)");
+  module.def("jarque_bera_backward(Tensor grad_statistic, Tensor input) -> Tensor");
 
   // integral_transform
   module.def("hilbert_transform(Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
@@ -523,6 +536,11 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("joint_entropy(Tensor joint, int[] dims, str input_type, str reduction, float? base) -> Tensor");
   module.def("joint_entropy_backward(Tensor grad_output, Tensor joint, int[] dims, str input_type, str reduction, float? base) -> Tensor");
   module.def("joint_entropy_backward_backward(Tensor gg_joint, Tensor grad_output, Tensor joint, int[] dims, str input_type, str reduction, float? base) -> (Tensor, Tensor)");
+
+  // Conditional entropy
+  module.def("conditional_entropy(Tensor joint, int condition_dim, int target_dim, str input_type, str reduction, float? base) -> Tensor");
+  module.def("conditional_entropy_backward(Tensor grad_output, Tensor joint, int condition_dim, int target_dim, str input_type, str reduction, float? base) -> Tensor");
+  module.def("conditional_entropy_backward_backward(Tensor gg_joint, Tensor grad_output, Tensor joint, int condition_dim, int target_dim, str input_type, str reduction, float? base) -> (Tensor, Tensor)");
 
   // Renyi entropy
   module.def("renyi_entropy(Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> Tensor");
