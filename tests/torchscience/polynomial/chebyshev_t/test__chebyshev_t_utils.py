@@ -7,7 +7,9 @@ from numpy.polynomial import chebyshev as np_cheb
 from torchscience.polynomial import (
     chebyshev_t,
     chebyshev_t_degree,
+    chebyshev_t_equal,
     chebyshev_t_trim,
+    chebyshev_t_weight,
 )
 
 
@@ -72,3 +74,64 @@ class TestChebyshevTTrim:
         t_np = np_cheb.chebtrim(coeffs, tol=1e-10)
 
         np.testing.assert_allclose(t.coeffs.numpy(), t_np, rtol=1e-6)
+
+
+class TestChebyshevTEqual:
+    """Tests for chebyshev_t_equal."""
+
+    def test_equal_same(self):
+        """Equal series are equal."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0, 3.0]))
+        b = chebyshev_t(torch.tensor([1.0, 2.0, 3.0]))
+        assert chebyshev_t_equal(a, b)
+
+    def test_equal_different(self):
+        """Different series are not equal."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0, 3.0]))
+        b = chebyshev_t(torch.tensor([1.0, 2.0, 4.0]))
+        assert not chebyshev_t_equal(a, b)
+
+    def test_equal_different_length_padded(self):
+        """Series with trailing zeros are equal."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0]))
+        b = chebyshev_t(torch.tensor([1.0, 2.0, 0.0]))
+        assert chebyshev_t_equal(a, b)
+
+    def test_equal_with_tolerance(self):
+        """Near-equal series within tolerance."""
+        a = chebyshev_t(torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64))
+        b = chebyshev_t(
+            torch.tensor([1.0, 2.0, 3.0 + 1e-8], dtype=torch.float64)
+        )
+        assert chebyshev_t_equal(a, b, tol=1e-6)
+        assert not chebyshev_t_equal(a, b, tol=1e-10)
+
+
+class TestChebyshevTWeight:
+    """Tests for chebyshev_t_weight."""
+
+    def test_weight_at_zero(self):
+        """w(0) = 1."""
+        x = torch.tensor([0.0])
+        w = chebyshev_t_weight(x)
+        torch.testing.assert_close(w, torch.tensor([1.0]))
+
+    def test_weight_symmetric(self):
+        """w(-x) = w(x)."""
+        x = torch.tensor([0.3, 0.5, 0.7])
+        w_pos = chebyshev_t_weight(x)
+        w_neg = chebyshev_t_weight(-x)
+        torch.testing.assert_close(w_pos, w_neg)
+
+    def test_weight_formula(self):
+        """w(x) = 1/sqrt(1-x^2)."""
+        x = torch.tensor([0.0, 0.3, 0.5, 0.7])
+        w = chebyshev_t_weight(x)
+        expected = 1.0 / torch.sqrt(1.0 - x**2)
+        torch.testing.assert_close(w, expected)
+
+    def test_weight_near_boundary(self):
+        """Weight increases near |x|=1."""
+        x = torch.tensor([0.9, 0.99, 0.999])
+        w = chebyshev_t_weight(x)
+        assert w[0] < w[1] < w[2]

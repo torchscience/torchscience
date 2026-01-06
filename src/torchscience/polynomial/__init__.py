@@ -123,6 +123,7 @@ from ._chebyshev_t import (
     chebyshev_t_companion,
     chebyshev_t_degree,
     chebyshev_t_derivative,
+    chebyshev_t_equal,
     chebyshev_t_evaluate,
     chebyshev_t_fit,
     chebyshev_t_from_roots,
@@ -139,6 +140,7 @@ from ._chebyshev_t import (
     chebyshev_t_to_polynomial,
     chebyshev_t_trim,
     chebyshev_t_vandermonde,
+    chebyshev_t_weight,
     polynomial_to_chebyshev_t,
 )
 from ._degree_error import DegreeError
@@ -179,6 +181,7 @@ __all__ = [
     "chebyshev_t_companion",
     "chebyshev_t_degree",
     "chebyshev_t_derivative",
+    "chebyshev_t_equal",
     "chebyshev_t_evaluate",
     "chebyshev_t_fit",
     "chebyshev_t_from_roots",
@@ -195,6 +198,7 @@ __all__ = [
     "chebyshev_t_to_polynomial",
     "chebyshev_t_trim",
     "chebyshev_t_vandermonde",
+    "chebyshev_t_weight",
     "polynomial_to_chebyshev_t",
     "DegreeError",
     "Polynomial",
