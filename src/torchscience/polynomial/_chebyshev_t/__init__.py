@@ -4,6 +4,7 @@ from ._chebyshev_t import ChebyshevT, chebyshev_t
 from ._chebyshev_t_add import chebyshev_t_add
 from ._chebyshev_t_antiderivative import chebyshev_t_antiderivative
 from ._chebyshev_t_companion import chebyshev_t_companion
+from ._chebyshev_t_degree import chebyshev_t_degree
 from ._chebyshev_t_derivative import chebyshev_t_derivative
 from ._chebyshev_t_evaluate import chebyshev_t_evaluate
 from ._chebyshev_t_fit import chebyshev_t_fit
@@ -19,6 +20,7 @@ from ._chebyshev_t_roots import chebyshev_t_roots
 from ._chebyshev_t_scale import chebyshev_t_scale
 from ._chebyshev_t_subtract import chebyshev_t_subtract
 from ._chebyshev_t_to_polynomial import chebyshev_t_to_polynomial
+from ._chebyshev_t_trim import chebyshev_t_trim
 from ._chebyshev_t_vandermonde import chebyshev_t_vandermonde
 from ._polynomial_to_chebyshev_t import polynomial_to_chebyshev_t
 
@@ -28,6 +30,7 @@ __all__ = [
     "chebyshev_t_add",
     "chebyshev_t_antiderivative",
     "chebyshev_t_companion",
+    "chebyshev_t_degree",
     "chebyshev_t_derivative",
     "chebyshev_t_evaluate",
     "chebyshev_t_fit",
@@ -43,6 +46,7 @@ __all__ = [
     "chebyshev_t_scale",
     "chebyshev_t_subtract",
     "chebyshev_t_to_polynomial",
+    "chebyshev_t_trim",
     "chebyshev_t_vandermonde",
     "polynomial_to_chebyshev_t",
 ]
