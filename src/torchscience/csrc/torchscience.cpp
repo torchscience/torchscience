@@ -60,6 +60,7 @@
 #include "cpu/statistics/hypothesis_test/two_sample_t_test.h"
 #include "cpu/statistics/hypothesis_test/paired_t_test.h"
 #include "cpu/statistics/hypothesis_test/shapiro_wilk.h"
+#include "cpu/statistics/hypothesis_test/anderson_darling.h"
 #include "cpu/integral_transform/hilbert_transform.h"
 #include "cpu/integral_transform/inverse_hilbert_transform.h"
 #include "cpu/test/sum_squares.h"
@@ -105,10 +106,13 @@
 // probability
 #include "cpu/probability/normal.h"
 #include "cpu/probability/chi2.h"
+#include "cpu/probability/f.h"
 #include "meta/probability/normal.h"
 #include "meta/probability/chi2.h"
+#include "meta/probability/f.h"
 #include "autograd/probability/normal.h"
 #include "autograd/probability/chi2.h"
+#include "autograd/probability/f.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/distance/hellinger_distance.h"
@@ -170,6 +174,7 @@
 #include "meta/statistics/hypothesis_test/two_sample_t_test.h"
 #include "meta/statistics/hypothesis_test/paired_t_test.h"
 #include "meta/statistics/hypothesis_test/shapiro_wilk.h"
+#include "meta/statistics/hypothesis_test/anderson_darling.h"
 #include "meta/integral_transform/hilbert_transform.h"
 #include "meta/integral_transform/inverse_hilbert_transform.h"
 #include "meta/test/sum_squares.h"
@@ -437,6 +442,7 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("two_sample_t_test(Tensor input1, Tensor input2, bool equal_var, str alternative) -> (Tensor, Tensor, Tensor)");
   module.def("paired_t_test(Tensor input1, Tensor input2, str alternative) -> (Tensor, Tensor, Tensor)");
   module.def("shapiro_wilk(Tensor input) -> (Tensor, Tensor)");
+  module.def("anderson_darling(Tensor input) -> (Tensor, Tensor, Tensor)");
 
   // integral_transform
   module.def("hilbert_transform(Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
