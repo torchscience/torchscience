@@ -18,6 +18,7 @@ from ._chebyshev_t_pow import chebyshev_t_pow
 from ._chebyshev_t_roots import chebyshev_t_roots
 from ._chebyshev_t_scale import chebyshev_t_scale
 from ._chebyshev_t_subtract import chebyshev_t_subtract
+from ._chebyshev_t_to_polynomial import chebyshev_t_to_polynomial
 from ._chebyshev_t_vandermonde import chebyshev_t_vandermonde
 
 __all__ = [
@@ -40,5 +41,6 @@ __all__ = [
     "chebyshev_t_roots",
     "chebyshev_t_scale",
     "chebyshev_t_subtract",
+    "chebyshev_t_to_polynomial",
     "chebyshev_t_vandermonde",
 ]
