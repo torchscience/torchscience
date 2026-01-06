@@ -4,14 +4,16 @@ import torch
 from torch import Tensor
 
 __all__ = [
-    "f_cdf",
-    "f_pdf",
-    "f_ppf",
-    "f_sf",
+    "f_cumulative_distribution",
+    "f_probability_density",
+    "f_quantile",
+    "f_survival",
 ]
 
 
-def f_cdf(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
+def f_cumulative_distribution(
+    x: Tensor, dfn: Tensor | float, dfd: Tensor | float
+) -> Tensor:
     r"""Cumulative distribution function of the F-distribution.
 
     .. math::
@@ -37,7 +39,7 @@ def f_cdf(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
     Examples
     --------
     >>> x = torch.tensor([0.5, 1.0, 2.0])
-    >>> f_cdf(x, dfn=5.0, dfd=10.0)
+    >>> f_cumulative_distribution(x, dfn=5.0, dfd=10.0)
     tensor([0.2211, 0.5000, 0.8406])
 
     Notes
@@ -54,9 +56,9 @@ def f_cdf(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
 
     See Also
     --------
-    f_pdf : Probability density function
-    f_ppf : Inverse CDF (quantile function)
-    f_sf : Survival function (1 - CDF)
+    f_probability_density : Probability density function
+    f_quantile : Inverse CDF (quantile function)
+    f_survival : Survival function (1 - CDF)
     """
     dfn_t = (
         dfn
@@ -68,10 +70,12 @@ def f_cdf(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
         if isinstance(dfd, Tensor)
         else torch.as_tensor(dfd, dtype=x.dtype, device=x.device)
     )
-    return torch.ops.torchscience.f_cdf(x, dfn_t, dfd_t)
+    return torch.ops.torchscience.f_cumulative_distribution(x, dfn_t, dfd_t)
 
 
-def f_pdf(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
+def f_probability_density(
+    x: Tensor, dfn: Tensor | float, dfd: Tensor | float
+) -> Tensor:
     r"""Probability density function of the F-distribution.
 
     .. math::
@@ -94,7 +98,7 @@ def f_pdf(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
     Examples
     --------
     >>> x = torch.linspace(0.1, 3, 5)
-    >>> f_pdf(x, dfn=5.0, dfd=10.0)
+    >>> f_probability_density(x, dfn=5.0, dfd=10.0)
     tensor([0.2156, 0.6694, 0.4579, 0.2013, 0.0719])
 
     Notes
@@ -104,7 +108,7 @@ def f_pdf(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
 
     See Also
     --------
-    f_cdf : Cumulative distribution function
+    f_cumulative_distribution : Cumulative distribution function
     """
     dfn_t = (
         dfn
@@ -116,10 +120,10 @@ def f_pdf(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
         if isinstance(dfd, Tensor)
         else torch.as_tensor(dfd, dtype=x.dtype, device=x.device)
     )
-    return torch.ops.torchscience.f_pdf(x, dfn_t, dfd_t)
+    return torch.ops.torchscience.f_probability_density(x, dfn_t, dfd_t)
 
 
-def f_ppf(p: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
+def f_quantile(p: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
     r"""Percent point function (quantile function) of the F-distribution.
 
     Returns :math:`x` such that :math:`P(X \le x) = p` for :math:`X \sim F(d_1, d_2)`.
@@ -141,7 +145,7 @@ def f_ppf(p: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
     Examples
     --------
     >>> p = torch.tensor([0.05, 0.5, 0.95])
-    >>> f_ppf(p, dfn=5.0, dfd=10.0)
+    >>> f_quantile(p, dfn=5.0, dfd=10.0)
     tensor([0.2621, 0.9356, 3.3258])
 
     Notes
@@ -151,7 +155,7 @@ def f_ppf(p: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
 
     See Also
     --------
-    f_cdf : Inverse of PPF
+    f_cumulative_distribution : Inverse of PPF
     """
     dfn_t = (
         dfn
@@ -163,10 +167,10 @@ def f_ppf(p: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
         if isinstance(dfd, Tensor)
         else torch.as_tensor(dfd, dtype=p.dtype, device=p.device)
     )
-    return torch.ops.torchscience.f_ppf(p, dfn_t, dfd_t)
+    return torch.ops.torchscience.f_quantile(p, dfn_t, dfd_t)
 
 
-def f_sf(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
+def f_survival(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
     r"""Survival function (1 - CDF) of the F-distribution.
 
     .. math::
@@ -174,7 +178,7 @@ def f_sf(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
 
     where :math:`1 - x' = \frac{d_2}{d_1 x + d_2}`.
 
-    More numerically stable than ``1 - f_cdf(x, dfn, dfd)`` for large x.
+    More numerically stable than ``1 - f_cumulative_distribution(x, dfn, dfd)`` for large x.
 
     Parameters
     ----------
@@ -193,12 +197,12 @@ def f_sf(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
     Examples
     --------
     >>> x = torch.tensor([0.5, 1.0, 2.0])
-    >>> f_sf(x, dfn=5.0, dfd=10.0)
+    >>> f_survival(x, dfn=5.0, dfd=10.0)
     tensor([0.7789, 0.5000, 0.1594])
 
     See Also
     --------
-    f_cdf : CDF = 1 - SF
+    f_cumulative_distribution : CDF = 1 - SF
     """
     dfn_t = (
         dfn
@@ -210,4 +214,4 @@ def f_sf(x: Tensor, dfn: Tensor | float, dfd: Tensor | float) -> Tensor:
         if isinstance(dfd, Tensor)
         else torch.as_tensor(dfd, dtype=x.dtype, device=x.device)
     )
-    return torch.ops.torchscience.f_sf(x, dfn_t, dfd_t)
+    return torch.ops.torchscience.f_survival(x, dfn_t, dfd_t)

@@ -3,10 +3,16 @@
 import torch
 from torch import Tensor
 
-__all__ = ["gamma_cdf", "gamma_pdf", "gamma_ppf"]
+__all__ = [
+    "gamma_cumulative_distribution",
+    "gamma_probability_density",
+    "gamma_quantile",
+]
 
 
-def gamma_cdf(x: Tensor, shape: Tensor, scale: Tensor) -> Tensor:
+def gamma_cumulative_distribution(
+    x: Tensor, shape: Tensor, scale: Tensor
+) -> Tensor:
     r"""Cumulative distribution function of the gamma distribution.
 
     .. math::
@@ -33,13 +39,17 @@ def gamma_cdf(x: Tensor, shape: Tensor, scale: Tensor) -> Tensor:
     >>> x = torch.tensor([1.0, 2.0, 3.0])
     >>> shape = torch.tensor(2.0)
     >>> scale = torch.tensor(1.0)
-    >>> gamma_cdf(x, shape, scale)
+    >>> gamma_cumulative_distribution(x, shape, scale)
     tensor([0.2642, 0.5940, 0.8009])
     """
-    return torch.ops.torchscience.gamma_cdf(x, shape, scale)
+    return torch.ops.torchscience.gamma_cumulative_distribution(
+        x, shape, scale
+    )
 
 
-def gamma_pdf(x: Tensor, shape: Tensor, scale: Tensor) -> Tensor:
+def gamma_probability_density(
+    x: Tensor, shape: Tensor, scale: Tensor
+) -> Tensor:
     r"""Probability density function of the gamma distribution.
 
     .. math::
@@ -59,10 +69,10 @@ def gamma_pdf(x: Tensor, shape: Tensor, scale: Tensor) -> Tensor:
     Tensor
         PDF values.
     """
-    return torch.ops.torchscience.gamma_pdf(x, shape, scale)
+    return torch.ops.torchscience.gamma_probability_density(x, shape, scale)
 
 
-def gamma_ppf(p: Tensor, shape: Tensor, scale: Tensor) -> Tensor:
+def gamma_quantile(p: Tensor, shape: Tensor, scale: Tensor) -> Tensor:
     r"""Quantile function (inverse CDF) of the gamma distribution.
 
     Parameters
@@ -79,4 +89,4 @@ def gamma_ppf(p: Tensor, shape: Tensor, scale: Tensor) -> Tensor:
     Tensor
         Quantiles.
     """
-    return torch.ops.torchscience.gamma_ppf(p, shape, scale)
+    return torch.ops.torchscience.gamma_quantile(p, shape, scale)

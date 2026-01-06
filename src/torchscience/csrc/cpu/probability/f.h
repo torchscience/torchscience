@@ -5,20 +5,20 @@
 #include <ATen/Parallel.h>
 #include <torch/library.h>
 
-#include "../../kernel/probability/f_cdf.h"
-#include "../../kernel/probability/f_cdf_backward.h"
-#include "../../kernel/probability/f_pdf.h"
-#include "../../kernel/probability/f_pdf_backward.h"
-#include "../../kernel/probability/f_ppf.h"
-#include "../../kernel/probability/f_ppf_backward.h"
-#include "../../kernel/probability/f_sf.h"
-#include "../../kernel/probability/f_sf_backward.h"
+#include "../../kernel/probability/f_cumulative_distribution.h"
+#include "../../kernel/probability/f_cumulative_distribution_backward.h"
+#include "../../kernel/probability/f_probability_density.h"
+#include "../../kernel/probability/f_probability_density_backward.h"
+#include "../../kernel/probability/f_quantile.h"
+#include "../../kernel/probability/f_quantile_backward.h"
+#include "../../kernel/probability/f_survival.h"
+#include "../../kernel/probability/f_survival_backward.h"
 
 namespace torchscience::cpu::probability {
 
 // reduce_grad is defined in normal.h and already available in this namespace
 
-at::Tensor f_cdf(
+at::Tensor f_cumulative_distribution(
     const at::Tensor& x,
     const at::Tensor& dfn,
     const at::Tensor& dfd) {
@@ -30,7 +30,7 @@ at::Tensor f_cdf(
   auto output = at::empty_like(x_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, x.scalar_type(), "f_cdf_cpu", [&] {
+      at::kBFloat16, at::kHalf, x.scalar_type(), "f_cumulative_distribution_cpu", [&] {
         auto x_data = x_b.data_ptr<scalar_t>();
         auto dfn_data = dfn_b.data_ptr<scalar_t>();
         auto dfd_data = dfd_b.data_ptr<scalar_t>();
@@ -39,7 +39,7 @@ at::Tensor f_cdf(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            out_data[i] = kernel::probability::f_cdf<scalar_t>(
+            out_data[i] = kernel::probability::f_cumulative_distribution<scalar_t>(
                 x_data[i], dfn_data[i], dfd_data[i]);
           }
         });
@@ -48,7 +48,7 @@ at::Tensor f_cdf(
   return output;
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> f_cdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> f_cumulative_distribution_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& dfn,
@@ -64,7 +64,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_cdf_backward(
   auto grad_dfd = at::empty_like(dfd_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, x.scalar_type(), "f_cdf_backward_cpu", [&] {
+      at::kBFloat16, at::kHalf, x.scalar_type(), "f_cumulative_distribution_backward_cpu", [&] {
         auto grad_data = grad_b.data_ptr<scalar_t>();
         auto x_data = x_b.data_ptr<scalar_t>();
         auto dfn_data = dfn_b.data_ptr<scalar_t>();
@@ -76,7 +76,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_cdf_backward(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            auto [gx, gdfn, gdfd] = kernel::probability::f_cdf_backward<scalar_t>(
+            auto [gx, gdfn, gdfd] = kernel::probability::f_cumulative_distribution_backward<scalar_t>(
                 grad_data[i], x_data[i], dfn_data[i], dfd_data[i]);
             grad_x_data[i] = gx;
             grad_dfn_data[i] = gdfn;
@@ -91,7 +91,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_cdf_backward(
       reduce_grad(grad_dfd, dfd));
 }
 
-at::Tensor f_pdf(
+at::Tensor f_probability_density(
     const at::Tensor& x,
     const at::Tensor& dfn,
     const at::Tensor& dfd) {
@@ -103,7 +103,7 @@ at::Tensor f_pdf(
   auto output = at::empty_like(x_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, x.scalar_type(), "f_pdf_cpu", [&] {
+      at::kBFloat16, at::kHalf, x.scalar_type(), "f_probability_density_cpu", [&] {
         auto x_data = x_b.data_ptr<scalar_t>();
         auto dfn_data = dfn_b.data_ptr<scalar_t>();
         auto dfd_data = dfd_b.data_ptr<scalar_t>();
@@ -112,7 +112,7 @@ at::Tensor f_pdf(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            out_data[i] = kernel::probability::f_pdf<scalar_t>(
+            out_data[i] = kernel::probability::f_probability_density<scalar_t>(
                 x_data[i], dfn_data[i], dfd_data[i]);
           }
         });
@@ -121,7 +121,7 @@ at::Tensor f_pdf(
   return output;
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> f_pdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> f_probability_density_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& dfn,
@@ -137,7 +137,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_pdf_backward(
   auto grad_dfd = at::empty_like(dfd_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, x.scalar_type(), "f_pdf_backward_cpu", [&] {
+      at::kBFloat16, at::kHalf, x.scalar_type(), "f_probability_density_backward_cpu", [&] {
         auto grad_data = grad_b.data_ptr<scalar_t>();
         auto x_data = x_b.data_ptr<scalar_t>();
         auto dfn_data = dfn_b.data_ptr<scalar_t>();
@@ -149,7 +149,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_pdf_backward(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            auto [gx, gdfn, gdfd] = kernel::probability::f_pdf_backward<scalar_t>(
+            auto [gx, gdfn, gdfd] = kernel::probability::f_probability_density_backward<scalar_t>(
                 grad_data[i], x_data[i], dfn_data[i], dfd_data[i]);
             grad_x_data[i] = gx;
             grad_dfn_data[i] = gdfn;
@@ -164,7 +164,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_pdf_backward(
       reduce_grad(grad_dfd, dfd));
 }
 
-at::Tensor f_ppf(
+at::Tensor f_quantile(
     const at::Tensor& p,
     const at::Tensor& dfn,
     const at::Tensor& dfd) {
@@ -176,7 +176,7 @@ at::Tensor f_ppf(
   auto output = at::empty_like(p_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, p.scalar_type(), "f_ppf_cpu", [&] {
+      at::kBFloat16, at::kHalf, p.scalar_type(), "f_quantile_cpu", [&] {
         auto p_data = p_b.data_ptr<scalar_t>();
         auto dfn_data = dfn_b.data_ptr<scalar_t>();
         auto dfd_data = dfd_b.data_ptr<scalar_t>();
@@ -185,7 +185,7 @@ at::Tensor f_ppf(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            out_data[i] = kernel::probability::f_ppf<scalar_t>(
+            out_data[i] = kernel::probability::f_quantile<scalar_t>(
                 p_data[i], dfn_data[i], dfd_data[i]);
           }
         });
@@ -194,7 +194,7 @@ at::Tensor f_ppf(
   return output;
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> f_ppf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> f_quantile_backward(
     const at::Tensor& grad,
     const at::Tensor& p,
     const at::Tensor& dfn,
@@ -210,7 +210,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_ppf_backward(
   auto grad_dfd = at::empty_like(dfd_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, p.scalar_type(), "f_ppf_backward_cpu", [&] {
+      at::kBFloat16, at::kHalf, p.scalar_type(), "f_quantile_backward_cpu", [&] {
         auto grad_data = grad_b.data_ptr<scalar_t>();
         auto p_data = p_b.data_ptr<scalar_t>();
         auto dfn_data = dfn_b.data_ptr<scalar_t>();
@@ -222,7 +222,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_ppf_backward(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            auto [gp, gdfn, gdfd] = kernel::probability::f_ppf_backward<scalar_t>(
+            auto [gp, gdfn, gdfd] = kernel::probability::f_quantile_backward<scalar_t>(
                 grad_data[i], p_data[i], dfn_data[i], dfd_data[i]);
             grad_p_data[i] = gp;
             grad_dfn_data[i] = gdfn;
@@ -237,7 +237,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_ppf_backward(
       reduce_grad(grad_dfd, dfd));
 }
 
-at::Tensor f_sf(
+at::Tensor f_survival(
     const at::Tensor& x,
     const at::Tensor& dfn,
     const at::Tensor& dfd) {
@@ -249,7 +249,7 @@ at::Tensor f_sf(
   auto output = at::empty_like(x_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, x.scalar_type(), "f_sf_cpu", [&] {
+      at::kBFloat16, at::kHalf, x.scalar_type(), "f_survival_cpu", [&] {
         auto x_data = x_b.data_ptr<scalar_t>();
         auto dfn_data = dfn_b.data_ptr<scalar_t>();
         auto dfd_data = dfd_b.data_ptr<scalar_t>();
@@ -258,7 +258,7 @@ at::Tensor f_sf(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            out_data[i] = kernel::probability::f_sf<scalar_t>(
+            out_data[i] = kernel::probability::f_survival<scalar_t>(
                 x_data[i], dfn_data[i], dfd_data[i]);
           }
         });
@@ -267,7 +267,7 @@ at::Tensor f_sf(
   return output;
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> f_sf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> f_survival_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& dfn,
@@ -283,7 +283,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_sf_backward(
   auto grad_dfd = at::empty_like(dfd_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, x.scalar_type(), "f_sf_backward_cpu", [&] {
+      at::kBFloat16, at::kHalf, x.scalar_type(), "f_survival_backward_cpu", [&] {
         auto grad_data = grad_b.data_ptr<scalar_t>();
         auto x_data = x_b.data_ptr<scalar_t>();
         auto dfn_data = dfn_b.data_ptr<scalar_t>();
@@ -295,7 +295,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_sf_backward(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            auto [gx, gdfn, gdfd] = kernel::probability::f_sf_backward<scalar_t>(
+            auto [gx, gdfn, gdfd] = kernel::probability::f_survival_backward<scalar_t>(
                 grad_data[i], x_data[i], dfn_data[i], dfd_data[i]);
             grad_x_data[i] = gx;
             grad_dfn_data[i] = gdfn;
@@ -311,14 +311,14 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_sf_backward(
 }
 
 TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
-  m.impl("f_cdf", &f_cdf);
-  m.impl("f_cdf_backward", &f_cdf_backward);
-  m.impl("f_pdf", &f_pdf);
-  m.impl("f_pdf_backward", &f_pdf_backward);
-  m.impl("f_ppf", &f_ppf);
-  m.impl("f_ppf_backward", &f_ppf_backward);
-  m.impl("f_sf", &f_sf);
-  m.impl("f_sf_backward", &f_sf_backward);
+  m.impl("f_cumulative_distribution", &f_cumulative_distribution);
+  m.impl("f_cumulative_distribution_backward", &f_cumulative_distribution_backward);
+  m.impl("f_probability_density", &f_probability_density);
+  m.impl("f_probability_density_backward", &f_probability_density_backward);
+  m.impl("f_quantile", &f_quantile);
+  m.impl("f_quantile_backward", &f_quantile_backward);
+  m.impl("f_survival", &f_survival);
+  m.impl("f_survival_backward", &f_survival_backward);
 }
 
 }  // namespace torchscience::cpu::probability

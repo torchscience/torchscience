@@ -9,53 +9,53 @@ complementing torch.distributions with:
 Example
 -------
 >>> import torch
->>> from torchscience.probability import normal_cdf, normal_ppf
+>>> from torchscience.probability import normal_cumulative_distribution, normal_quantile
 >>>
 >>> # Compute CDF
 >>> x = torch.tensor([0.0, 1.0, 2.0])
->>> p = normal_cdf(x)  # tensor([0.5, 0.8413, 0.9772])
+>>> p = normal_cumulative_distribution(x)  # tensor([0.5, 0.8413, 0.9772])
 >>>
 >>> # Compute quantiles
 >>> probs = torch.tensor([0.025, 0.5, 0.975])
->>> quantiles = normal_ppf(probs)  # tensor([-1.96, 0.0, 1.96])
+>>> quantiles = normal_quantile(probs)  # tensor([-1.96, 0.0, 1.96])
 """
 
 from ._beta import (
-    beta_cdf,
-    beta_pdf,
-    beta_ppf,
+    beta_cumulative_distribution,
+    beta_probability_density,
+    beta_quantile,
 )
 from ._binomial import (
-    binomial_cdf,
+    binomial_cumulative_distribution,
     binomial_pmf,
 )
 from ._chi2 import (
-    chi2_cdf,
-    chi2_pdf,
-    chi2_ppf,
-    chi2_sf,
+    chi2_cumulative_distribution,
+    chi2_probability_density,
+    chi2_quantile,
+    chi2_survival,
 )
 from ._exceptions import DomainError, ProbabilityError
 from ._f import (
-    f_cdf,
-    f_pdf,
-    f_ppf,
-    f_sf,
+    f_cumulative_distribution,
+    f_probability_density,
+    f_quantile,
+    f_survival,
 )
 from ._gamma import (
-    gamma_cdf,
-    gamma_pdf,
-    gamma_ppf,
+    gamma_cumulative_distribution,
+    gamma_probability_density,
+    gamma_quantile,
 )
 from ._normal import (
-    normal_cdf,
+    normal_cumulative_distribution,
     normal_logpdf,
-    normal_pdf,
-    normal_ppf,
-    normal_sf,
+    normal_probability_density,
+    normal_quantile,
+    normal_survival,
 )
 from ._poisson import (
-    poisson_cdf,
+    poisson_cumulative_distribution,
     poisson_pmf,
 )
 
@@ -63,33 +63,33 @@ __all__ = [
     "DomainError",
     "ProbabilityError",
     # Beta distribution
-    "beta_cdf",
-    "beta_pdf",
-    "beta_ppf",
+    "beta_cumulative_distribution",
+    "beta_probability_density",
+    "beta_quantile",
     # Chi-squared distribution
-    "chi2_cdf",
-    "chi2_pdf",
-    "chi2_ppf",
-    "chi2_sf",
+    "chi2_cumulative_distribution",
+    "chi2_probability_density",
+    "chi2_quantile",
+    "chi2_survival",
     # F distribution
-    "f_cdf",
-    "f_pdf",
-    "f_ppf",
-    "f_sf",
+    "f_cumulative_distribution",
+    "f_probability_density",
+    "f_quantile",
+    "f_survival",
     # Gamma distribution
-    "gamma_cdf",
-    "gamma_pdf",
-    "gamma_ppf",
+    "gamma_cumulative_distribution",
+    "gamma_probability_density",
+    "gamma_quantile",
     # Normal distribution
-    "normal_cdf",
+    "normal_cumulative_distribution",
     "normal_logpdf",
-    "normal_pdf",
-    "normal_ppf",
-    "normal_sf",
+    "normal_probability_density",
+    "normal_quantile",
+    "normal_survival",
     # Binomial distribution
-    "binomial_cdf",
+    "binomial_cumulative_distribution",
     "binomial_pmf",
     # Poisson distribution
-    "poisson_cdf",
+    "poisson_cumulative_distribution",
     "poisson_pmf",
 ]

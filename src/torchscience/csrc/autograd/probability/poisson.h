@@ -16,7 +16,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::poisson_cdf", "")
+        .findSchemaOrThrow("torchscience::poisson_cumulative_distribution", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&)>()
         .call(k, rate);
   }
@@ -38,7 +38,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::poisson_cdf_backward", "")
+        .findSchemaOrThrow("torchscience::poisson_cumulative_distribution_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, k, rate);
@@ -47,7 +47,7 @@ public:
   }
 };
 
-inline at::Tensor poisson_cdf(
+inline at::Tensor poisson_cumulative_distribution(
     const at::Tensor& k,
     const at::Tensor& rate
 ) {
@@ -107,6 +107,6 @@ inline at::Tensor poisson_pmf(
 }  // namespace torchscience::autograd::probability
 
 TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {
-  m.impl("poisson_cdf", &torchscience::autograd::probability::poisson_cdf);
+  m.impl("poisson_cumulative_distribution", &torchscience::autograd::probability::poisson_cumulative_distribution);
   m.impl("poisson_pmf", &torchscience::autograd::probability::poisson_pmf);
 }

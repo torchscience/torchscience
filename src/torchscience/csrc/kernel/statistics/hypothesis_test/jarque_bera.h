@@ -6,7 +6,7 @@
 
 #include <c10/macros/Macros.h>
 
-#include "../../probability/chi2_sf.h"
+#include "../../probability/chi2_survival.h"
 
 namespace torchscience::kernel::statistics::hypothesis_test {
 
@@ -26,7 +26,7 @@ namespace torchscience::kernel::statistics::hypothesis_test {
 template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
 std::tuple<T, T> jarque_bera(const T* data, int64_t n) {
-    using torchscience::kernel::probability::chi2_sf;
+    using torchscience::kernel::probability::chi2_survival;
 
     T nan = std::numeric_limits<T>::quiet_NaN();
 
@@ -70,7 +70,7 @@ std::tuple<T, T> jarque_bera(const T* data, int64_t n) {
     T jb = (T(n) / T(6)) * (skewness * skewness + excess_kurtosis * excess_kurtosis / T(4));
 
     // P-value from chi-square survival function with df=2
-    T pvalue = chi2_sf(jb, T(2));
+    T pvalue = chi2_survival(jb, T(2));
 
     return std::make_tuple(jb, pvalue);
 }

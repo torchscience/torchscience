@@ -6,7 +6,7 @@ import torchscience  # noqa: F401 - Load C++ extension
 
 
 class TestBinomialCdfForward:
-    """Test binomial_cdf forward correctness."""
+    """Test binomial_cumulative_distribution forward correctness."""
 
     def test_scipy_comparison(self):
         """Compare against scipy.stats.binom.cdf."""
@@ -14,7 +14,9 @@ class TestBinomialCdfForward:
         n = torch.tensor(10.0)
         p = torch.tensor(0.3)
 
-        result = torch.ops.torchscience.binomial_cdf(k, n, p)
+        result = torch.ops.torchscience.binomial_cumulative_distribution(
+            k, n, p
+        )
         expected = torch.tensor(
             scipy.stats.binom.cdf(k.numpy(), n=10, p=0.3),
             dtype=torch.float32,
@@ -27,12 +29,16 @@ class TestBinomialCdfForward:
         p = torch.tensor(0.5)
 
         assert torch.allclose(
-            torch.ops.torchscience.binomial_cdf(torch.tensor([-1.0]), n, p),
+            torch.ops.torchscience.binomial_cumulative_distribution(
+                torch.tensor([-1.0]), n, p
+            ),
             torch.tensor([0.0]),
             atol=1e-6,
         )
         assert torch.allclose(
-            torch.ops.torchscience.binomial_cdf(torch.tensor([10.0]), n, p),
+            torch.ops.torchscience.binomial_cumulative_distribution(
+                torch.tensor([10.0]), n, p
+            ),
             torch.tensor([1.0]),
             atol=1e-6,
         )
@@ -42,8 +48,12 @@ class TestBinomialCdfForward:
         n = torch.tensor(1.0)
         p = torch.tensor(0.3)
 
-        cdf_0 = torch.ops.torchscience.binomial_cdf(torch.tensor([0.0]), n, p)
-        cdf_1 = torch.ops.torchscience.binomial_cdf(torch.tensor([1.0]), n, p)
+        cdf_0 = torch.ops.torchscience.binomial_cumulative_distribution(
+            torch.tensor([0.0]), n, p
+        )
+        cdf_1 = torch.ops.torchscience.binomial_cumulative_distribution(
+            torch.tensor([1.0]), n, p
+        )
 
         assert torch.allclose(cdf_0, torch.tensor([0.7]), atol=1e-5)
         assert torch.allclose(cdf_1, torch.tensor([1.0]), atol=1e-5)
@@ -57,7 +67,9 @@ class TestBinomialCdfForward:
         n_t = torch.tensor(float(n))
         p_t = torch.tensor(p)
 
-        result = torch.ops.torchscience.binomial_cdf(k, n_t, p_t)
+        result = torch.ops.torchscience.binomial_cumulative_distribution(
+            k, n_t, p_t
+        )
         expected = torch.tensor(
             scipy.stats.binom.cdf(k.numpy(), n=n, p=p),
             dtype=torch.float32,
@@ -75,7 +87,9 @@ class TestBinomialCdfGradients:
         p = torch.tensor(0.5, dtype=torch.float64, requires_grad=True)
 
         def fn(p_):
-            return torch.ops.torchscience.binomial_cdf(k, n, p_)
+            return torch.ops.torchscience.binomial_cumulative_distribution(
+                k, n, p_
+            )
 
         assert torch.autograd.gradcheck(fn, (p,), eps=1e-6, atol=1e-4)
 
@@ -85,7 +99,7 @@ class TestBinomialCdfGradients:
         n = torch.tensor(10.0, dtype=torch.float64)
         p = torch.tensor(0.5, dtype=torch.float64, requires_grad=True)
 
-        cdf = torch.ops.torchscience.binomial_cdf(k, n, p)
+        cdf = torch.ops.torchscience.binomial_cumulative_distribution(k, n, p)
         grad_p = torch.autograd.grad(cdf.sum(), p)[0]
 
         # For k < n*p (expectation), increasing p decreases CDF

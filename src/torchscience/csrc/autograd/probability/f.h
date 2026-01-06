@@ -20,7 +20,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::f_cdf", "")
+        .findSchemaOrThrow("torchscience::f_cumulative_distribution", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(x, dfn, dfd);
   }
@@ -43,7 +43,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::f_cdf_backward", "")
+        .findSchemaOrThrow("torchscience::f_cumulative_distribution_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, x, dfn, dfd);
@@ -52,7 +52,7 @@ public:
   }
 };
 
-inline at::Tensor f_cdf(
+inline at::Tensor f_cumulative_distribution(
     const at::Tensor& x,
     const at::Tensor& dfn,
     const at::Tensor& dfd
@@ -76,7 +76,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::f_pdf", "")
+        .findSchemaOrThrow("torchscience::f_probability_density", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(x, dfn, dfd);
   }
@@ -99,7 +99,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::f_pdf_backward", "")
+        .findSchemaOrThrow("torchscience::f_probability_density_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, x, dfn, dfd);
@@ -108,7 +108,7 @@ public:
   }
 };
 
-inline at::Tensor f_pdf(
+inline at::Tensor f_probability_density(
     const at::Tensor& x,
     const at::Tensor& dfn,
     const at::Tensor& dfd
@@ -132,7 +132,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::f_ppf", "")
+        .findSchemaOrThrow("torchscience::f_quantile", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(p, dfn, dfd);
   }
@@ -155,7 +155,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::f_ppf_backward", "")
+        .findSchemaOrThrow("torchscience::f_quantile_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, p, dfn, dfd);
@@ -164,7 +164,7 @@ public:
   }
 };
 
-inline at::Tensor f_ppf(
+inline at::Tensor f_quantile(
     const at::Tensor& p,
     const at::Tensor& dfn,
     const at::Tensor& dfd
@@ -188,7 +188,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::f_sf", "")
+        .findSchemaOrThrow("torchscience::f_survival", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(x, dfn, dfd);
   }
@@ -211,7 +211,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::f_sf_backward", "")
+        .findSchemaOrThrow("torchscience::f_survival_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, x, dfn, dfd);
@@ -220,7 +220,7 @@ public:
   }
 };
 
-inline at::Tensor f_sf(
+inline at::Tensor f_survival(
     const at::Tensor& x,
     const at::Tensor& dfn,
     const at::Tensor& dfd
@@ -229,10 +229,10 @@ inline at::Tensor f_sf(
 }
 
 TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {
-  m.impl("f_cdf", &f_cdf);
-  m.impl("f_pdf", &f_pdf);
-  m.impl("f_ppf", &f_ppf);
-  m.impl("f_sf", &f_sf);
+  m.impl("f_cumulative_distribution", &f_cumulative_distribution);
+  m.impl("f_probability_density", &f_probability_density);
+  m.impl("f_quantile", &f_quantile);
+  m.impl("f_survival", &f_survival);
 }
 
 }  // namespace torchscience::autograd::probability

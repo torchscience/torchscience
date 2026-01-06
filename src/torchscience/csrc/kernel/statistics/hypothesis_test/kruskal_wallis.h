@@ -9,7 +9,7 @@
 #include <c10/macros/Macros.h>
 
 #include "ranking.h"
-#include "../../probability/chi2_sf.h"
+#include "../../probability/chi2_survival.h"
 
 namespace torchscience::kernel::statistics::hypothesis_test {
 
@@ -31,7 +31,7 @@ std::tuple<T, T> kruskal_wallis(
     const int64_t* group_sizes,
     int64_t k
 ) {
-    using torchscience::kernel::probability::chi2_sf;
+    using torchscience::kernel::probability::chi2_survival;
 
     T nan = std::numeric_limits<T>::quiet_NaN();
 
@@ -82,7 +82,7 @@ std::tuple<T, T> kruskal_wallis(
 
     // P-value from chi-squared distribution with k-1 degrees of freedom
     T df = T(k - 1);
-    T pvalue = chi2_sf(H, df);
+    T pvalue = chi2_survival(H, df);
 
     return std::make_tuple(H, pvalue);
 }

@@ -5,7 +5,7 @@
 
 namespace torchscience::meta::probability {
 
-at::Tensor binomial_cdf(
+at::Tensor binomial_cumulative_distribution(
     const at::Tensor& k,
     const at::Tensor& n,
     const at::Tensor& p) {
@@ -14,7 +14,7 @@ at::Tensor binomial_cdf(
   return at::empty(result_shape, k.options());
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> binomial_cdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> binomial_cumulative_distribution_backward(
     const at::Tensor& grad,
     const at::Tensor& k,
     const at::Tensor& n,
@@ -46,8 +46,8 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> binomial_pmf_backward(
 }
 
 TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
-  m.impl("binomial_cdf", &binomial_cdf);
-  m.impl("binomial_cdf_backward", &binomial_cdf_backward);
+  m.impl("binomial_cumulative_distribution", &binomial_cumulative_distribution);
+  m.impl("binomial_cumulative_distribution_backward", &binomial_cumulative_distribution_backward);
   m.impl("binomial_pmf", &binomial_pmf);
   m.impl("binomial_pmf_backward", &binomial_pmf_backward);
 }

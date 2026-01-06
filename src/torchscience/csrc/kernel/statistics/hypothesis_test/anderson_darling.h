@@ -16,7 +16,7 @@ namespace torchscience::kernel::statistics::hypothesis_test {
  */
 template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
-T normal_cdf(T x) {
+T normal_cumulative_distribution(T x) {
     return T(0.5) * (T(1) + std::erf(x / std::sqrt(T(2))));
 }
 
@@ -86,8 +86,8 @@ std::tuple<T, std::array<T, 5>> anderson_darling(const T* data, int64_t n) {
     // Compute A^2
     T A2 = T(0);
     for (int64_t i = 0; i < n; ++i) {
-        T F_yi = normal_cdf(y[i]);
-        T F_yn_minus_i = normal_cdf(y[n - 1 - i]);
+        T F_yi = normal_cumulative_distribution(y[i]);
+        T F_yn_minus_i = normal_cumulative_distribution(y[n - 1 - i]);
 
         // Clamp to avoid log(0)
         F_yi = std::max(F_yi, T(1e-15));

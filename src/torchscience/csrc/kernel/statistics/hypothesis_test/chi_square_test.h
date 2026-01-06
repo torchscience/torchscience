@@ -6,7 +6,7 @@
 
 #include <c10/macros/Macros.h>
 
-#include "../../probability/chi2_sf.h"
+#include "../../probability/chi2_survival.h"
 
 namespace torchscience::kernel::statistics::hypothesis_test {
 
@@ -31,7 +31,7 @@ std::tuple<T, T> chi_square_test(
     int64_t k,
     int64_t ddof
 ) {
-    using torchscience::kernel::probability::chi2_sf;
+    using torchscience::kernel::probability::chi2_survival;
 
     T nan = std::numeric_limits<T>::quiet_NaN();
 
@@ -73,7 +73,7 @@ std::tuple<T, T> chi_square_test(
         }
     }
 
-    T pvalue = chi2_sf(chi2, df);
+    T pvalue = chi2_survival(chi2, df);
     return std::make_tuple(chi2, pvalue);
 }
 

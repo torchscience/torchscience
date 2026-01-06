@@ -6,7 +6,7 @@
 
 #include <c10/macros/Macros.h>
 
-#include "../../probability/f_sf.h"
+#include "../../probability/f_survival.h"
 
 namespace torchscience::kernel::statistics::hypothesis_test {
 
@@ -37,7 +37,7 @@ std::tuple<T, T> f_oneway(
     const int64_t* group_sizes,
     int64_t k
 ) {
-    using torchscience::kernel::probability::f_sf;
+    using torchscience::kernel::probability::f_survival;
 
     T nan = std::numeric_limits<T>::quiet_NaN();
 
@@ -109,7 +109,7 @@ std::tuple<T, T> f_oneway(
     T F = ms_between / ms_within;
 
     // P-value from F-distribution survival function
-    T pvalue = f_sf(F, df_between, df_within);
+    T pvalue = f_survival(F, df_between, df_within);
 
     return std::make_tuple(F, pvalue);
 }

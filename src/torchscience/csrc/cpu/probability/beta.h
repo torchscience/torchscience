@@ -5,18 +5,18 @@
 #include <ATen/Parallel.h>
 #include <torch/library.h>
 
-#include "../../kernel/probability/beta_cdf.h"
-#include "../../kernel/probability/beta_cdf_backward.h"
-#include "../../kernel/probability/beta_pdf.h"
-#include "../../kernel/probability/beta_pdf_backward.h"
-#include "../../kernel/probability/beta_ppf.h"
-#include "../../kernel/probability/beta_ppf_backward.h"
+#include "../../kernel/probability/beta_cumulative_distribution.h"
+#include "../../kernel/probability/beta_cumulative_distribution_backward.h"
+#include "../../kernel/probability/beta_probability_density.h"
+#include "../../kernel/probability/beta_probability_density_backward.h"
+#include "../../kernel/probability/beta_quantile.h"
+#include "../../kernel/probability/beta_quantile_backward.h"
 
 namespace torchscience::cpu::probability {
 
 // reduce_grad is defined in normal.h and already available
 
-at::Tensor beta_cdf(
+at::Tensor beta_cumulative_distribution(
     const at::Tensor& x,
     const at::Tensor& a,
     const at::Tensor& b) {
@@ -28,7 +28,7 @@ at::Tensor beta_cdf(
   auto output = at::empty_like(x_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, x.scalar_type(), "beta_cdf_cpu", [&] {
+      at::kBFloat16, at::kHalf, x.scalar_type(), "beta_cumulative_distribution_cpu", [&] {
         auto x_data = x_b.data_ptr<scalar_t>();
         auto a_data = a_b.data_ptr<scalar_t>();
         auto b_data = b_b.data_ptr<scalar_t>();
@@ -37,7 +37,7 @@ at::Tensor beta_cdf(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            out_data[i] = kernel::probability::beta_cdf<scalar_t>(
+            out_data[i] = kernel::probability::beta_cumulative_distribution<scalar_t>(
                 x_data[i], a_data[i], b_data[i]);
           }
         });
@@ -46,7 +46,7 @@ at::Tensor beta_cdf(
   return output;
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_cdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_cumulative_distribution_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& a,
@@ -62,7 +62,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_cdf_backward(
   auto grad_b_out = at::empty_like(b_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, x.scalar_type(), "beta_cdf_backward_cpu", [&] {
+      at::kBFloat16, at::kHalf, x.scalar_type(), "beta_cumulative_distribution_backward_cpu", [&] {
         auto grad_data = grad_b.data_ptr<scalar_t>();
         auto x_data = x_b.data_ptr<scalar_t>();
         auto a_data = a_b.data_ptr<scalar_t>();
@@ -74,7 +74,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_cdf_backward(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            auto [gx, ga, gb] = kernel::probability::beta_cdf_backward<scalar_t>(
+            auto [gx, ga, gb] = kernel::probability::beta_cumulative_distribution_backward<scalar_t>(
                 grad_data[i], x_data[i], a_data[i], b_data[i]);
             grad_x_data[i] = gx;
             grad_a_data[i] = ga;
@@ -89,7 +89,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_cdf_backward(
       reduce_grad(grad_b_out, b));
 }
 
-at::Tensor beta_pdf(
+at::Tensor beta_probability_density(
     const at::Tensor& x,
     const at::Tensor& a,
     const at::Tensor& b) {
@@ -101,7 +101,7 @@ at::Tensor beta_pdf(
   auto output = at::empty_like(x_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, x.scalar_type(), "beta_pdf_cpu", [&] {
+      at::kBFloat16, at::kHalf, x.scalar_type(), "beta_probability_density_cpu", [&] {
         auto x_data = x_b.data_ptr<scalar_t>();
         auto a_data = a_b.data_ptr<scalar_t>();
         auto b_data = b_b.data_ptr<scalar_t>();
@@ -110,7 +110,7 @@ at::Tensor beta_pdf(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            out_data[i] = kernel::probability::beta_pdf<scalar_t>(
+            out_data[i] = kernel::probability::beta_probability_density<scalar_t>(
                 x_data[i], a_data[i], b_data[i]);
           }
         });
@@ -119,7 +119,7 @@ at::Tensor beta_pdf(
   return output;
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_pdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_probability_density_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& a,
@@ -135,7 +135,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_pdf_backward(
   auto grad_b_out = at::empty_like(b_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, x.scalar_type(), "beta_pdf_backward_cpu", [&] {
+      at::kBFloat16, at::kHalf, x.scalar_type(), "beta_probability_density_backward_cpu", [&] {
         auto grad_data = grad_b.data_ptr<scalar_t>();
         auto x_data = x_b.data_ptr<scalar_t>();
         auto a_data = a_b.data_ptr<scalar_t>();
@@ -147,7 +147,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_pdf_backward(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            auto [gx, ga, gb] = kernel::probability::beta_pdf_backward<scalar_t>(
+            auto [gx, ga, gb] = kernel::probability::beta_probability_density_backward<scalar_t>(
                 grad_data[i], x_data[i], a_data[i], b_data[i]);
             grad_x_data[i] = gx;
             grad_a_data[i] = ga;
@@ -162,7 +162,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_pdf_backward(
       reduce_grad(grad_b_out, b));
 }
 
-at::Tensor beta_ppf(
+at::Tensor beta_quantile(
     const at::Tensor& p,
     const at::Tensor& a,
     const at::Tensor& b) {
@@ -174,7 +174,7 @@ at::Tensor beta_ppf(
   auto output = at::empty_like(p_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, p.scalar_type(), "beta_ppf_cpu", [&] {
+      at::kBFloat16, at::kHalf, p.scalar_type(), "beta_quantile_cpu", [&] {
         auto p_data = p_b.data_ptr<scalar_t>();
         auto a_data = a_b.data_ptr<scalar_t>();
         auto b_data = b_b.data_ptr<scalar_t>();
@@ -183,7 +183,7 @@ at::Tensor beta_ppf(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            out_data[i] = kernel::probability::beta_ppf<scalar_t>(
+            out_data[i] = kernel::probability::beta_quantile<scalar_t>(
                 p_data[i], a_data[i], b_data[i]);
           }
         });
@@ -192,7 +192,7 @@ at::Tensor beta_ppf(
   return output;
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_ppf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_quantile_backward(
     const at::Tensor& grad,
     const at::Tensor& p,
     const at::Tensor& a,
@@ -208,7 +208,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_ppf_backward(
   auto grad_b_out = at::empty_like(b_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, p.scalar_type(), "beta_ppf_backward_cpu", [&] {
+      at::kBFloat16, at::kHalf, p.scalar_type(), "beta_quantile_backward_cpu", [&] {
         auto grad_data = grad_b.data_ptr<scalar_t>();
         auto p_data = p_b.data_ptr<scalar_t>();
         auto a_data = a_b.data_ptr<scalar_t>();
@@ -220,7 +220,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_ppf_backward(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            auto [gp, ga, gb] = kernel::probability::beta_ppf_backward<scalar_t>(
+            auto [gp, ga, gb] = kernel::probability::beta_quantile_backward<scalar_t>(
                 grad_data[i], p_data[i], a_data[i], b_data[i]);
             grad_p_data[i] = gp;
             grad_a_data[i] = ga;
@@ -236,12 +236,12 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_ppf_backward(
 }
 
 TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
-  m.impl("beta_cdf", &beta_cdf);
-  m.impl("beta_cdf_backward", &beta_cdf_backward);
-  m.impl("beta_pdf", &beta_pdf);
-  m.impl("beta_pdf_backward", &beta_pdf_backward);
-  m.impl("beta_ppf", &beta_ppf);
-  m.impl("beta_ppf_backward", &beta_ppf_backward);
+  m.impl("beta_cumulative_distribution", &beta_cumulative_distribution);
+  m.impl("beta_cumulative_distribution_backward", &beta_cumulative_distribution_backward);
+  m.impl("beta_probability_density", &beta_probability_density);
+  m.impl("beta_probability_density_backward", &beta_probability_density_backward);
+  m.impl("beta_quantile", &beta_quantile);
+  m.impl("beta_quantile_backward", &beta_quantile_backward);
 }
 
 }  // namespace torchscience::cpu::probability

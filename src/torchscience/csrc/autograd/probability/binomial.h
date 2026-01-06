@@ -17,7 +17,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::binomial_cdf", "")
+        .findSchemaOrThrow("torchscience::binomial_cumulative_distribution", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(k, n, p);
   }
@@ -40,7 +40,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::binomial_cdf_backward", "")
+        .findSchemaOrThrow("torchscience::binomial_cumulative_distribution_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, k, n, p);
@@ -49,7 +49,7 @@ public:
   }
 };
 
-inline at::Tensor binomial_cdf(
+inline at::Tensor binomial_cumulative_distribution(
     const at::Tensor& k,
     const at::Tensor& n,
     const at::Tensor& p
@@ -113,6 +113,6 @@ inline at::Tensor binomial_pmf(
 }  // namespace torchscience::autograd::probability
 
 TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {
-  m.impl("binomial_cdf", &torchscience::autograd::probability::binomial_cdf);
+  m.impl("binomial_cumulative_distribution", &torchscience::autograd::probability::binomial_cumulative_distribution);
   m.impl("binomial_pmf", &torchscience::autograd::probability::binomial_pmf);
 }

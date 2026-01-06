@@ -6,14 +6,16 @@ import torchscience  # noqa: F401 - Load C++ extension
 
 
 class TestPoissonCdfForward:
-    """Test poisson_cdf forward correctness."""
+    """Test poisson_cumulative_distribution forward correctness."""
 
     def test_scipy_comparison(self):
         """Compare against scipy.stats.poisson.cdf."""
         k = torch.arange(0, 20, dtype=torch.float32)
         rate = torch.tensor(5.0)
 
-        result = torch.ops.torchscience.poisson_cdf(k, rate)
+        result = torch.ops.torchscience.poisson_cumulative_distribution(
+            k, rate
+        )
         expected = torch.tensor(
             scipy.stats.poisson.cdf(k.numpy(), mu=5),
             dtype=torch.float32,
@@ -23,7 +25,9 @@ class TestPoissonCdfForward:
     def test_boundary(self):
         """CDF(-1) = 0."""
         rate = torch.tensor(5.0)
-        result = torch.ops.torchscience.poisson_cdf(torch.tensor([-1.0]), rate)
+        result = torch.ops.torchscience.poisson_cumulative_distribution(
+            torch.tensor([-1.0]), rate
+        )
         assert torch.allclose(result, torch.tensor([0.0]), atol=1e-6)
 
     def test_at_zero(self):
@@ -31,7 +35,9 @@ class TestPoissonCdfForward:
         k = torch.tensor([0.0])
         rate = torch.tensor(3.0)
 
-        result = torch.ops.torchscience.poisson_cdf(k, rate)
+        result = torch.ops.torchscience.poisson_cumulative_distribution(
+            k, rate
+        )
         expected = torch.exp(-rate)
 
         assert torch.allclose(result, expected.unsqueeze(0), atol=1e-5)
@@ -42,7 +48,9 @@ class TestPoissonCdfForward:
         k = torch.arange(0, 30, dtype=torch.float32)
         rate_t = torch.tensor(rate)
 
-        result = torch.ops.torchscience.poisson_cdf(k, rate_t)
+        result = torch.ops.torchscience.poisson_cumulative_distribution(
+            k, rate_t
+        )
         expected = torch.tensor(
             scipy.stats.poisson.cdf(k.numpy(), mu=rate),
             dtype=torch.float32,
@@ -59,7 +67,9 @@ class TestPoissonCdfGradients:
         rate = torch.tensor(5.0, dtype=torch.float64, requires_grad=True)
 
         def fn(rate_):
-            return torch.ops.torchscience.poisson_cdf(k, rate_)
+            return torch.ops.torchscience.poisson_cumulative_distribution(
+                k, rate_
+            )
 
         assert torch.autograd.gradcheck(fn, (rate,), eps=1e-6, atol=1e-4)
 
@@ -68,7 +78,7 @@ class TestPoissonCdfGradients:
         k = torch.tensor([3.0], dtype=torch.float64)
         rate = torch.tensor(5.0, dtype=torch.float64, requires_grad=True)
 
-        cdf = torch.ops.torchscience.poisson_cdf(k, rate)
+        cdf = torch.ops.torchscience.poisson_cumulative_distribution(k, rate)
         grad_rate = torch.autograd.grad(cdf.sum(), rate)[0]
 
         # For k < rate (expectation), increasing rate decreases CDF

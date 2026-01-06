@@ -9,8 +9,8 @@
 
 #include "ranking.h"
 #include "t_test_common.h"
-#include "../../probability/normal_sf.h"
-#include "../../probability/normal_cdf.h"
+#include "../../probability/normal_survival.h"
+#include "../../probability/normal_cumulative_distribution.h"
 
 namespace torchscience::kernel::statistics::hypothesis_test {
 
@@ -34,8 +34,8 @@ std::tuple<T, T> mann_whitney_u(
     int64_t n2,
     Alternative alternative
 ) {
-    using torchscience::kernel::probability::normal_sf;
-    using torchscience::kernel::probability::normal_cdf;
+    using torchscience::kernel::probability::normal_survival;
+    using torchscience::kernel::probability::normal_cumulative_distribution;
 
     T nan = std::numeric_limits<T>::quiet_NaN();
 
@@ -93,13 +93,13 @@ std::tuple<T, T> mann_whitney_u(
 
     if (alternative == Alternative::TWO_SIDED) {
         z = (U - mu + T(0.5)) / sigma;  // continuity correction
-        pvalue = T(2) * normal_cdf(-std::abs(z), loc, scale);
+        pvalue = T(2) * normal_cumulative_distribution(-std::abs(z), loc, scale);
     } else if (alternative == Alternative::LESS) {
         z = (U1 - mu + T(0.5)) / sigma;
-        pvalue = normal_cdf(z, loc, scale);
+        pvalue = normal_cumulative_distribution(z, loc, scale);
     } else {  // GREATER
         z = (U1 - mu - T(0.5)) / sigma;
-        pvalue = normal_sf(z, loc, scale);
+        pvalue = normal_survival(z, loc, scale);
     }
 
     return std::make_tuple(U1, pvalue);

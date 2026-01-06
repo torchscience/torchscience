@@ -22,7 +22,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::normal_cdf_backward", "")
+        .findSchemaOrThrow("torchscience::normal_cumulative_distribution_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, x, loc, scale);
@@ -52,7 +52,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::normal_cdf_backward_backward", "")
+        .findSchemaOrThrow("torchscience::normal_cumulative_distribution_backward_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&,
             const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
@@ -79,7 +79,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::normal_cdf", "")
+        .findSchemaOrThrow("torchscience::normal_cumulative_distribution", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(x, loc, scale);
   }
@@ -106,7 +106,7 @@ public:
   }
 };
 
-inline at::Tensor normal_cdf(
+inline at::Tensor normal_cumulative_distribution(
     const at::Tensor& x,
     const at::Tensor& loc,
     const at::Tensor& scale
@@ -130,7 +130,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::normal_pdf", "")
+        .findSchemaOrThrow("torchscience::normal_probability_density", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(x, loc, scale);
   }
@@ -153,7 +153,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::normal_pdf_backward", "")
+        .findSchemaOrThrow("torchscience::normal_probability_density_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, x, loc, scale);
@@ -162,7 +162,7 @@ public:
   }
 };
 
-inline at::Tensor normal_pdf(
+inline at::Tensor normal_probability_density(
     const at::Tensor& x,
     const at::Tensor& loc,
     const at::Tensor& scale
@@ -186,7 +186,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::normal_ppf", "")
+        .findSchemaOrThrow("torchscience::normal_quantile", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(p, loc, scale);
   }
@@ -209,7 +209,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::normal_ppf_backward", "")
+        .findSchemaOrThrow("torchscience::normal_quantile_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, p, loc, scale);
@@ -218,7 +218,7 @@ public:
   }
 };
 
-inline at::Tensor normal_ppf(
+inline at::Tensor normal_quantile(
     const at::Tensor& p,
     const at::Tensor& loc,
     const at::Tensor& scale
@@ -242,7 +242,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::normal_sf", "")
+        .findSchemaOrThrow("torchscience::normal_survival", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(x, loc, scale);
   }
@@ -265,7 +265,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::normal_sf_backward", "")
+        .findSchemaOrThrow("torchscience::normal_survival_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, x, loc, scale);
@@ -274,7 +274,7 @@ public:
   }
 };
 
-inline at::Tensor normal_sf(
+inline at::Tensor normal_survival(
     const at::Tensor& x,
     const at::Tensor& loc,
     const at::Tensor& scale
@@ -341,9 +341,9 @@ inline at::Tensor normal_logpdf(
 }  // namespace torchscience::autograd::probability
 
 TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {
-  m.impl("normal_cdf", &torchscience::autograd::probability::normal_cdf);
-  m.impl("normal_pdf", &torchscience::autograd::probability::normal_pdf);
-  m.impl("normal_ppf", &torchscience::autograd::probability::normal_ppf);
-  m.impl("normal_sf", &torchscience::autograd::probability::normal_sf);
+  m.impl("normal_cumulative_distribution", &torchscience::autograd::probability::normal_cumulative_distribution);
+  m.impl("normal_probability_density", &torchscience::autograd::probability::normal_probability_density);
+  m.impl("normal_quantile", &torchscience::autograd::probability::normal_quantile);
+  m.impl("normal_survival", &torchscience::autograd::probability::normal_survival);
   m.impl("normal_logpdf", &torchscience::autograd::probability::normal_logpdf);
 }

@@ -44,7 +44,7 @@ def regularized_gamma_p(a: Tensor, x: Tensor) -> Tensor:
 
     The function is used to compute:
 
-    - Chi-squared CDF: chi2_cdf(x, k) = P(k/2, x/2)
+    - Chi-squared CDF: chi2_cumulative_distribution(x, k) = P(k/2, x/2)
     - Gamma CDF: gamma_cdf(x, k, theta) = P(k, x/theta)
     - Poisson CDF (via complement): poisson_cdf(k, lambda) = Q(k+1, lambda)
 

@@ -3,10 +3,12 @@
 import torch
 from torch import Tensor
 
-__all__ = ["binomial_cdf", "binomial_pmf"]
+__all__ = ["binomial_cumulative_distribution", "binomial_pmf"]
 
 
-def binomial_cdf(k: Tensor, n: Tensor, p: Tensor) -> Tensor:
+def binomial_cumulative_distribution(
+    k: Tensor, n: Tensor, p: Tensor
+) -> Tensor:
     r"""Cumulative distribution function of the binomial distribution.
 
     .. math::
@@ -37,10 +39,10 @@ def binomial_cdf(k: Tensor, n: Tensor, p: Tensor) -> Tensor:
     >>> k = torch.tensor([0.0, 3.0, 5.0, 10.0])
     >>> n = torch.tensor(10.0)
     >>> p = torch.tensor(0.3)
-    >>> binomial_cdf(k, n, p)
+    >>> binomial_cumulative_distribution(k, n, p)
     tensor([0.0282, 0.6496, 0.9527, 1.0000])
     """
-    return torch.ops.torchscience.binomial_cdf(k, n, p)
+    return torch.ops.torchscience.binomial_cumulative_distribution(k, n, p)
 
 
 def binomial_pmf(k: Tensor, n: Tensor, p: Tensor) -> Tensor:

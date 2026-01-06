@@ -5,7 +5,7 @@
 
 namespace torchscience::meta::probability {
 
-at::Tensor gamma_cdf(
+at::Tensor gamma_cumulative_distribution(
     const at::Tensor& x,
     const at::Tensor& shape,
     const at::Tensor& scale) {
@@ -14,7 +14,7 @@ at::Tensor gamma_cdf(
   return at::empty(result_shape, x.options());
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> gamma_cdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> gamma_cumulative_distribution_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& shape,
@@ -25,7 +25,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> gamma_cdf_backward(
       at::empty_like(scale));
 }
 
-at::Tensor gamma_pdf(
+at::Tensor gamma_probability_density(
     const at::Tensor& x,
     const at::Tensor& shape,
     const at::Tensor& scale) {
@@ -34,7 +34,7 @@ at::Tensor gamma_pdf(
   return at::empty(result_shape, x.options());
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> gamma_pdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> gamma_probability_density_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& shape,
@@ -45,7 +45,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> gamma_pdf_backward(
       at::empty_like(scale));
 }
 
-at::Tensor gamma_ppf(
+at::Tensor gamma_quantile(
     const at::Tensor& p,
     const at::Tensor& shape,
     const at::Tensor& scale) {
@@ -54,7 +54,7 @@ at::Tensor gamma_ppf(
   return at::empty(result_shape, p.options());
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> gamma_ppf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> gamma_quantile_backward(
     const at::Tensor& grad,
     const at::Tensor& p,
     const at::Tensor& shape,
@@ -66,12 +66,12 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> gamma_ppf_backward(
 }
 
 TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
-  m.impl("gamma_cdf", &gamma_cdf);
-  m.impl("gamma_cdf_backward", &gamma_cdf_backward);
-  m.impl("gamma_pdf", &gamma_pdf);
-  m.impl("gamma_pdf_backward", &gamma_pdf_backward);
-  m.impl("gamma_ppf", &gamma_ppf);
-  m.impl("gamma_ppf_backward", &gamma_ppf_backward);
+  m.impl("gamma_cumulative_distribution", &gamma_cumulative_distribution);
+  m.impl("gamma_cumulative_distribution_backward", &gamma_cumulative_distribution_backward);
+  m.impl("gamma_probability_density", &gamma_probability_density);
+  m.impl("gamma_probability_density_backward", &gamma_probability_density_backward);
+  m.impl("gamma_quantile", &gamma_quantile);
+  m.impl("gamma_quantile_backward", &gamma_quantile_backward);
 }
 
 }  // namespace torchscience::meta::probability

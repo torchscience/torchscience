@@ -6,7 +6,7 @@ import torchscience  # noqa: F401 - Load C++ extensions
 
 
 class TestBetaCdfForward:
-    """Test beta_cdf forward correctness."""
+    """Test beta_cumulative_distribution forward correctness."""
 
     def test_scipy_comparison(self):
         """Compare against scipy.stats.beta.cdf."""
@@ -14,7 +14,7 @@ class TestBetaCdfForward:
         a = torch.tensor(2.0)
         b = torch.tensor(5.0)
 
-        result = torch.ops.torchscience.beta_cdf(x, a, b)
+        result = torch.ops.torchscience.beta_cumulative_distribution(x, a, b)
         expected = torch.tensor(
             scipy.stats.beta.cdf(x.numpy(), a=2, b=5),
             dtype=torch.float32,
@@ -27,12 +27,16 @@ class TestBetaCdfForward:
         b = torch.tensor(3.0)
 
         assert torch.allclose(
-            torch.ops.torchscience.beta_cdf(torch.tensor([0.0]), a, b),
+            torch.ops.torchscience.beta_cumulative_distribution(
+                torch.tensor([0.0]), a, b
+            ),
             torch.tensor([0.0]),
             atol=1e-6,
         )
         assert torch.allclose(
-            torch.ops.torchscience.beta_cdf(torch.tensor([1.0]), a, b),
+            torch.ops.torchscience.beta_cumulative_distribution(
+                torch.tensor([1.0]), a, b
+            ),
             torch.tensor([1.0]),
             atol=1e-6,
         )
@@ -43,7 +47,7 @@ class TestBetaCdfForward:
         a = torch.tensor(1.0)
         b = torch.tensor(1.0)
 
-        result = torch.ops.torchscience.beta_cdf(x, a, b)
+        result = torch.ops.torchscience.beta_cumulative_distribution(x, a, b)
         assert torch.allclose(result, x, atol=1e-5)
 
     @pytest.mark.parametrize(
@@ -55,7 +59,9 @@ class TestBetaCdfForward:
         a_t = torch.tensor(float(a))
         b_t = torch.tensor(float(b))
 
-        result = torch.ops.torchscience.beta_cdf(x, a_t, b_t)
+        result = torch.ops.torchscience.beta_cumulative_distribution(
+            x, a_t, b_t
+        )
         expected = torch.tensor(
             scipy.stats.beta.cdf(x.numpy(), a=a, b=b),
             dtype=torch.float32,
@@ -75,7 +81,9 @@ class TestBetaCdfGradients:
         b = torch.tensor(3.0, dtype=torch.float64)
 
         def fn(x_):
-            return torch.ops.torchscience.beta_cdf(x_, a, b)
+            return torch.ops.torchscience.beta_cumulative_distribution(
+                x_, a, b
+            )
 
         assert torch.autograd.gradcheck(fn, (x,), eps=1e-6, atol=1e-4)
 
@@ -86,7 +94,9 @@ class TestBetaCdfGradients:
         b = torch.tensor(3.0, dtype=torch.float64)
 
         def fn(a_):
-            return torch.ops.torchscience.beta_cdf(x, a_, b)
+            return torch.ops.torchscience.beta_cumulative_distribution(
+                x, a_, b
+            )
 
         assert torch.autograd.gradcheck(fn, (a,), eps=1e-6, atol=1e-4)
 
@@ -97,11 +107,13 @@ class TestBetaCdfGradients:
         b = torch.tensor(3.0, dtype=torch.float64, requires_grad=True)
 
         def fn(b_):
-            return torch.ops.torchscience.beta_cdf(x, a, b_)
+            return torch.ops.torchscience.beta_cumulative_distribution(
+                x, a, b_
+            )
 
         assert torch.autograd.gradcheck(fn, (b,), eps=1e-6, atol=1e-4)
 
-    def test_grad_x_is_pdf(self):
+    def test_grad_x_is_probability_density(self):
         """dCDF/dx = PDF."""
         x = torch.linspace(
             0.1, 0.9, 50, dtype=torch.float64, requires_grad=True
@@ -109,7 +121,7 @@ class TestBetaCdfGradients:
         a = torch.tensor(2.0, dtype=torch.float64)
         b = torch.tensor(3.0, dtype=torch.float64)
 
-        cdf = torch.ops.torchscience.beta_cdf(x, a, b)
+        cdf = torch.ops.torchscience.beta_cumulative_distribution(x, a, b)
         grad_x = torch.autograd.grad(cdf.sum(), x)[0]
 
         # Compare to scipy PDF
@@ -121,7 +133,7 @@ class TestBetaCdfGradients:
 
 
 class TestBetaPdfForward:
-    """Test beta_pdf forward correctness."""
+    """Test beta_probability_density forward correctness."""
 
     def test_scipy_comparison(self):
         """Compare against scipy.stats.beta.pdf."""
@@ -129,7 +141,7 @@ class TestBetaPdfForward:
         a = torch.tensor(2.0)
         b = torch.tensor(5.0)
 
-        result = torch.ops.torchscience.beta_pdf(x, a, b)
+        result = torch.ops.torchscience.beta_probability_density(x, a, b)
         expected = torch.tensor(
             scipy.stats.beta.pdf(x.numpy(), a=2, b=5),
             dtype=torch.float32,
@@ -138,7 +150,7 @@ class TestBetaPdfForward:
 
 
 class TestBetaPpfForward:
-    """Test beta_ppf forward correctness."""
+    """Test beta_quantile forward correctness."""
 
     def test_scipy_comparison(self):
         """Compare against scipy.stats.beta.ppf."""
@@ -146,20 +158,20 @@ class TestBetaPpfForward:
         a = torch.tensor(2.0)
         b = torch.tensor(5.0)
 
-        result = torch.ops.torchscience.beta_ppf(p, a, b)
+        result = torch.ops.torchscience.beta_quantile(p, a, b)
         expected = torch.tensor(
             scipy.stats.beta.ppf(p.numpy(), a=2, b=5),
             dtype=torch.float32,
         )
         assert torch.allclose(result, expected, atol=1e-4)
 
-    def test_cdf_ppf_roundtrip(self):
+    def test_cumulative_distribution_quantile_roundtrip(self):
         """ppf(cdf(x)) = x."""
         x = torch.linspace(0.1, 0.9, 50)
         a = torch.tensor(2.0)
         b = torch.tensor(3.0)
 
-        p = torch.ops.torchscience.beta_cdf(x, a, b)
-        x_recovered = torch.ops.torchscience.beta_ppf(p, a, b)
+        p = torch.ops.torchscience.beta_cumulative_distribution(x, a, b)
+        x_recovered = torch.ops.torchscience.beta_quantile(p, a, b)
 
         assert torch.allclose(x, x_recovered, atol=1e-5)

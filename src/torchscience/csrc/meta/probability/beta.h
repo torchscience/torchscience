@@ -5,7 +5,7 @@
 
 namespace torchscience::meta::probability {
 
-at::Tensor beta_cdf(
+at::Tensor beta_cumulative_distribution(
     const at::Tensor& x,
     const at::Tensor& a,
     const at::Tensor& b) {
@@ -14,7 +14,7 @@ at::Tensor beta_cdf(
   return at::empty(result_shape, x.options());
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_cdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_cumulative_distribution_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& a,
@@ -25,7 +25,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_cdf_backward(
       at::empty_like(b));
 }
 
-at::Tensor beta_pdf(
+at::Tensor beta_probability_density(
     const at::Tensor& x,
     const at::Tensor& a,
     const at::Tensor& b) {
@@ -34,7 +34,7 @@ at::Tensor beta_pdf(
   return at::empty(result_shape, x.options());
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_pdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_probability_density_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& a,
@@ -45,7 +45,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_pdf_backward(
       at::empty_like(b));
 }
 
-at::Tensor beta_ppf(
+at::Tensor beta_quantile(
     const at::Tensor& p,
     const at::Tensor& a,
     const at::Tensor& b) {
@@ -54,7 +54,7 @@ at::Tensor beta_ppf(
   return at::empty(result_shape, p.options());
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_ppf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_quantile_backward(
     const at::Tensor& grad,
     const at::Tensor& p,
     const at::Tensor& a,
@@ -66,12 +66,12 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> beta_ppf_backward(
 }
 
 TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
-  m.impl("beta_cdf", &beta_cdf);
-  m.impl("beta_cdf_backward", &beta_cdf_backward);
-  m.impl("beta_pdf", &beta_pdf);
-  m.impl("beta_pdf_backward", &beta_pdf_backward);
-  m.impl("beta_ppf", &beta_ppf);
-  m.impl("beta_ppf_backward", &beta_ppf_backward);
+  m.impl("beta_cumulative_distribution", &beta_cumulative_distribution);
+  m.impl("beta_cumulative_distribution_backward", &beta_cumulative_distribution_backward);
+  m.impl("beta_probability_density", &beta_probability_density);
+  m.impl("beta_probability_density_backward", &beta_probability_density_backward);
+  m.impl("beta_quantile", &beta_quantile);
+  m.impl("beta_quantile_backward", &beta_quantile_backward);
 }
 
 }  // namespace torchscience::meta::probability

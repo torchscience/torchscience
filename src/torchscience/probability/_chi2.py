@@ -4,14 +4,14 @@ import torch
 from torch import Tensor
 
 __all__ = [
-    "chi2_cdf",
-    "chi2_pdf",
-    "chi2_ppf",
-    "chi2_sf",
+    "chi2_cumulative_distribution",
+    "chi2_probability_density",
+    "chi2_quantile",
+    "chi2_survival",
 ]
 
 
-def chi2_cdf(x: Tensor, df: Tensor | float) -> Tensor:
+def chi2_cumulative_distribution(x: Tensor, df: Tensor | float) -> Tensor:
     r"""Cumulative distribution function of the chi-squared distribution.
 
     .. math::
@@ -35,7 +35,7 @@ def chi2_cdf(x: Tensor, df: Tensor | float) -> Tensor:
     --------
     >>> x = torch.tensor([1.0, 5.0, 10.0])
     >>> df = torch.tensor(5.0)
-    >>> chi2_cdf(x, df)
+    >>> chi2_cumulative_distribution(x, df)
     tensor([0.0374, 0.5841, 0.9247])
 
     Notes
@@ -48,19 +48,19 @@ def chi2_cdf(x: Tensor, df: Tensor | float) -> Tensor:
 
     See Also
     --------
-    chi2_pdf : Probability density function
-    chi2_ppf : Inverse CDF (quantile function)
-    chi2_sf : Survival function (1 - CDF)
+    chi2_probability_density : Probability density function
+    chi2_quantile : Inverse CDF (quantile function)
+    chi2_survival : Survival function (1 - CDF)
     """
     df_t = (
         df
         if isinstance(df, Tensor)
         else torch.as_tensor(df, dtype=x.dtype, device=x.device)
     )
-    return torch.ops.torchscience.chi2_cdf(x, df_t)
+    return torch.ops.torchscience.chi2_cumulative_distribution(x, df_t)
 
 
-def chi2_pdf(x: Tensor, df: Tensor | float) -> Tensor:
+def chi2_probability_density(x: Tensor, df: Tensor | float) -> Tensor:
     r"""Probability density function of the chi-squared distribution.
 
     .. math::
@@ -81,7 +81,7 @@ def chi2_pdf(x: Tensor, df: Tensor | float) -> Tensor:
     Examples
     --------
     >>> x = torch.linspace(0, 10, 5)
-    >>> chi2_pdf(x, df=3.0)
+    >>> chi2_probability_density(x, df=3.0)
     tensor([0.0000, 0.2420, 0.1353, 0.0519, 0.0167])
 
     Notes
@@ -91,17 +91,17 @@ def chi2_pdf(x: Tensor, df: Tensor | float) -> Tensor:
 
     See Also
     --------
-    chi2_cdf : Cumulative distribution function
+    chi2_cumulative_distribution : Cumulative distribution function
     """
     df_t = (
         df
         if isinstance(df, Tensor)
         else torch.as_tensor(df, dtype=x.dtype, device=x.device)
     )
-    return torch.ops.torchscience.chi2_pdf(x, df_t)
+    return torch.ops.torchscience.chi2_probability_density(x, df_t)
 
 
-def chi2_ppf(p: Tensor, df: Tensor | float) -> Tensor:
+def chi2_quantile(p: Tensor, df: Tensor | float) -> Tensor:
     r"""Percent point function (quantile function) of the chi-squared distribution.
 
     Returns :math:`x` such that :math:`P(X \le x) = p` for :math:`X \sim \chi^2(k)`.
@@ -121,7 +121,7 @@ def chi2_ppf(p: Tensor, df: Tensor | float) -> Tensor:
     Examples
     --------
     >>> p = torch.tensor([0.05, 0.5, 0.95])
-    >>> chi2_ppf(p, df=5.0)
+    >>> chi2_quantile(p, df=5.0)
     tensor([ 1.1455,  4.3515, 11.0705])
 
     Notes
@@ -131,17 +131,17 @@ def chi2_ppf(p: Tensor, df: Tensor | float) -> Tensor:
 
     See Also
     --------
-    chi2_cdf : Inverse of PPF
+    chi2_cumulative_distribution : Inverse of PPF
     """
     df_t = (
         df
         if isinstance(df, Tensor)
         else torch.as_tensor(df, dtype=p.dtype, device=p.device)
     )
-    return torch.ops.torchscience.chi2_ppf(p, df_t)
+    return torch.ops.torchscience.chi2_quantile(p, df_t)
 
 
-def chi2_sf(x: Tensor, df: Tensor | float) -> Tensor:
+def chi2_survival(x: Tensor, df: Tensor | float) -> Tensor:
     r"""Survival function (1 - CDF) of the chi-squared distribution.
 
     .. math::
@@ -149,7 +149,7 @@ def chi2_sf(x: Tensor, df: Tensor | float) -> Tensor:
 
     where :math:`Q(a, x)` is the regularized upper incomplete gamma function.
 
-    More numerically stable than ``1 - chi2_cdf(x, df)`` for large x.
+    More numerically stable than ``1 - chi2_cumulative_distribution(x, df)`` for large x.
 
     Parameters
     ----------
@@ -166,16 +166,16 @@ def chi2_sf(x: Tensor, df: Tensor | float) -> Tensor:
     Examples
     --------
     >>> x = torch.tensor([1.0, 5.0, 10.0])
-    >>> chi2_sf(x, df=5.0)
+    >>> chi2_survival(x, df=5.0)
     tensor([0.9626, 0.4159, 0.0753])
 
     See Also
     --------
-    chi2_cdf : CDF = 1 - SF
+    chi2_cumulative_distribution : CDF = 1 - SF
     """
     df_t = (
         df
         if isinstance(df, Tensor)
         else torch.as_tensor(df, dtype=x.dtype, device=x.device)
     )
-    return torch.ops.torchscience.chi2_sf(x, df_t)
+    return torch.ops.torchscience.chi2_survival(x, df_t)

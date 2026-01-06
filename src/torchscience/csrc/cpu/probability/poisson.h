@@ -5,8 +5,8 @@
 #include <ATen/Parallel.h>
 #include <torch/library.h>
 
-#include "../../kernel/probability/poisson_cdf.h"
-#include "../../kernel/probability/poisson_cdf_backward.h"
+#include "../../kernel/probability/poisson_cumulative_distribution.h"
+#include "../../kernel/probability/poisson_cumulative_distribution_backward.h"
 #include "../../kernel/probability/poisson_pmf.h"
 #include "../../kernel/probability/poisson_pmf_backward.h"
 
@@ -14,7 +14,7 @@ namespace torchscience::cpu::probability {
 
 // reduce_grad is defined in normal.h and already available
 
-at::Tensor poisson_cdf(
+at::Tensor poisson_cumulative_distribution(
     const at::Tensor& k,
     const at::Tensor& rate) {
   auto tensors = at::broadcast_tensors({k, rate});
@@ -24,7 +24,7 @@ at::Tensor poisson_cdf(
   auto output = at::empty_like(k_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, k.scalar_type(), "poisson_cdf_cpu", [&] {
+      at::kBFloat16, at::kHalf, k.scalar_type(), "poisson_cumulative_distribution_cpu", [&] {
         auto k_data = k_b.data_ptr<scalar_t>();
         auto rate_data = rate_b.data_ptr<scalar_t>();
         auto out_data = output.data_ptr<scalar_t>();
@@ -32,7 +32,7 @@ at::Tensor poisson_cdf(
 
         at::parallel_for(0, numel, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            out_data[i] = kernel::probability::poisson_cdf<scalar_t>(
+            out_data[i] = kernel::probability::poisson_cumulative_distribution<scalar_t>(
                 k_data[i], rate_data[i]);
           }
         });
@@ -41,7 +41,7 @@ at::Tensor poisson_cdf(
   return output;
 }
 
-std::tuple<at::Tensor, at::Tensor> poisson_cdf_backward(
+std::tuple<at::Tensor, at::Tensor> poisson_cumulative_distribution_backward(
     const at::Tensor& grad,
     const at::Tensor& k,
     const at::Tensor& rate) {
@@ -54,7 +54,7 @@ std::tuple<at::Tensor, at::Tensor> poisson_cdf_backward(
   auto grad_rate = at::empty_like(rate_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, k.scalar_type(), "poisson_cdf_backward_cpu", [&] {
+      at::kBFloat16, at::kHalf, k.scalar_type(), "poisson_cumulative_distribution_backward_cpu", [&] {
         auto grad_data = grad_b.data_ptr<scalar_t>();
         auto k_data = k_b.data_ptr<scalar_t>();
         auto rate_data = rate_b.data_ptr<scalar_t>();
@@ -64,7 +64,7 @@ std::tuple<at::Tensor, at::Tensor> poisson_cdf_backward(
 
         at::parallel_for(0, numel, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            auto [gk, gr] = kernel::probability::poisson_cdf_backward<scalar_t>(
+            auto [gk, gr] = kernel::probability::poisson_cumulative_distribution_backward<scalar_t>(
                 grad_data[i], k_data[i], rate_data[i]);
             grad_k_data[i] = gk;
             grad_rate_data[i] = gr;
@@ -141,8 +141,8 @@ std::tuple<at::Tensor, at::Tensor> poisson_pmf_backward(
 }
 
 TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
-  m.impl("poisson_cdf", &poisson_cdf);
-  m.impl("poisson_cdf_backward", &poisson_cdf_backward);
+  m.impl("poisson_cumulative_distribution", &poisson_cumulative_distribution);
+  m.impl("poisson_cumulative_distribution_backward", &poisson_cumulative_distribution_backward);
   m.impl("poisson_pmf", &poisson_pmf);
   m.impl("poisson_pmf_backward", &poisson_pmf_backward);
 }

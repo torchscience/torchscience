@@ -5,7 +5,7 @@
 
 namespace torchscience::meta::probability {
 
-at::Tensor normal_cdf(
+at::Tensor normal_cumulative_distribution(
     const at::Tensor& x,
     const at::Tensor& loc,
     const at::Tensor& scale) {
@@ -17,7 +17,7 @@ at::Tensor normal_cdf(
   return at::empty(output_shape, x.options().dtype(output_dtype));
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_cdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_cumulative_distribution_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& loc,
@@ -28,7 +28,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_cdf_backward(
       at::empty_like(scale));
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> normal_cdf_backward_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> normal_cumulative_distribution_backward_backward(
     const at::Tensor& gg_x,
     const at::Tensor& gg_loc,
     const at::Tensor& gg_scale,
@@ -43,7 +43,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> normal_cdf_backward_b
       at::empty_like(scale));
 }
 
-at::Tensor normal_pdf(
+at::Tensor normal_probability_density(
     const at::Tensor& x,
     const at::Tensor& loc,
     const at::Tensor& scale) {
@@ -54,7 +54,7 @@ at::Tensor normal_pdf(
   return at::empty(output_shape, x.options().dtype(output_dtype));
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_pdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_probability_density_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& loc,
@@ -65,7 +65,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_pdf_backward(
       at::empty_like(scale));
 }
 
-at::Tensor normal_ppf(
+at::Tensor normal_quantile(
     const at::Tensor& p,
     const at::Tensor& loc,
     const at::Tensor& scale) {
@@ -76,7 +76,7 @@ at::Tensor normal_ppf(
   return at::empty(output_shape, p.options().dtype(output_dtype));
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_ppf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_quantile_backward(
     const at::Tensor& grad,
     const at::Tensor& p,
     const at::Tensor& loc,
@@ -87,7 +87,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_ppf_backward(
       at::empty_like(scale));
 }
 
-at::Tensor normal_sf(
+at::Tensor normal_survival(
     const at::Tensor& x,
     const at::Tensor& loc,
     const at::Tensor& scale) {
@@ -98,7 +98,7 @@ at::Tensor normal_sf(
   return at::empty(output_shape, x.options().dtype(output_dtype));
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_sf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_survival_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& loc,
@@ -132,15 +132,15 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_logpdf_backward(
 }
 
 TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
-  m.impl("normal_cdf", &normal_cdf);
-  m.impl("normal_cdf_backward", &normal_cdf_backward);
-  m.impl("normal_cdf_backward_backward", &normal_cdf_backward_backward);
-  m.impl("normal_pdf", &normal_pdf);
-  m.impl("normal_pdf_backward", &normal_pdf_backward);
-  m.impl("normal_ppf", &normal_ppf);
-  m.impl("normal_ppf_backward", &normal_ppf_backward);
-  m.impl("normal_sf", &normal_sf);
-  m.impl("normal_sf_backward", &normal_sf_backward);
+  m.impl("normal_cumulative_distribution", &normal_cumulative_distribution);
+  m.impl("normal_cumulative_distribution_backward", &normal_cumulative_distribution_backward);
+  m.impl("normal_cumulative_distribution_backward_backward", &normal_cumulative_distribution_backward_backward);
+  m.impl("normal_probability_density", &normal_probability_density);
+  m.impl("normal_probability_density_backward", &normal_probability_density_backward);
+  m.impl("normal_quantile", &normal_quantile);
+  m.impl("normal_quantile_backward", &normal_quantile_backward);
+  m.impl("normal_survival", &normal_survival);
+  m.impl("normal_survival_backward", &normal_survival_backward);
   m.impl("normal_logpdf", &normal_logpdf);
   m.impl("normal_logpdf_backward", &normal_logpdf_backward);
 }

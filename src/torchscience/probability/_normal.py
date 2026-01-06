@@ -4,15 +4,15 @@ import torch
 from torch import Tensor
 
 __all__ = [
-    "normal_cdf",
-    "normal_pdf",
-    "normal_ppf",
-    "normal_sf",
+    "normal_cumulative_distribution",
+    "normal_probability_density",
+    "normal_quantile",
+    "normal_survival",
     "normal_logpdf",
 ]
 
 
-def normal_cdf(
+def normal_cumulative_distribution(
     x: Tensor,
     loc: Tensor | float = 0.0,
     scale: Tensor | float = 1.0,
@@ -39,10 +39,10 @@ def normal_cdf(
     Examples
     --------
     >>> x = torch.tensor([0.0, 1.0, 2.0])
-    >>> normal_cdf(x)
+    >>> normal_cumulative_distribution(x)
     tensor([0.5000, 0.8413, 0.9772])
 
-    >>> normal_cdf(x, loc=1.0, scale=0.5)
+    >>> normal_cumulative_distribution(x, loc=1.0, scale=0.5)
     tensor([0.0228, 0.5000, 0.9772])
 
     Notes
@@ -54,9 +54,9 @@ def normal_cdf(
 
     See Also
     --------
-    normal_pdf : Probability density function
-    normal_ppf : Inverse CDF (quantile function)
-    normal_sf : Survival function (1 - CDF)
+    normal_probability_density : Probability density function
+    normal_quantile : Inverse CDF (quantile function)
+    normal_survival : Survival function (1 - CDF)
     """
     loc_t = (
         loc
@@ -68,10 +68,12 @@ def normal_cdf(
         if isinstance(scale, Tensor)
         else torch.as_tensor(scale, dtype=x.dtype, device=x.device)
     )
-    return torch.ops.torchscience.normal_cdf(x, loc_t, scale_t)
+    return torch.ops.torchscience.normal_cumulative_distribution(
+        x, loc_t, scale_t
+    )
 
 
-def normal_pdf(
+def normal_probability_density(
     x: Tensor,
     loc: Tensor | float = 0.0,
     scale: Tensor | float = 1.0,
@@ -98,13 +100,13 @@ def normal_pdf(
     Examples
     --------
     >>> x = torch.tensor([0.0])
-    >>> normal_pdf(x)  # Peak of standard normal
+    >>> normal_probability_density(x)  # Peak of standard normal
     tensor([0.3989])
 
     See Also
     --------
     normal_logpdf : Log PDF (more numerically stable)
-    normal_cdf : Cumulative distribution function
+    normal_cumulative_distribution : Cumulative distribution function
     """
     loc_t = (
         loc
@@ -116,10 +118,10 @@ def normal_pdf(
         if isinstance(scale, Tensor)
         else torch.as_tensor(scale, dtype=x.dtype, device=x.device)
     )
-    return torch.ops.torchscience.normal_pdf(x, loc_t, scale_t)
+    return torch.ops.torchscience.normal_probability_density(x, loc_t, scale_t)
 
 
-def normal_ppf(
+def normal_quantile(
     p: Tensor,
     loc: Tensor | float = 0.0,
     scale: Tensor | float = 1.0,
@@ -148,12 +150,12 @@ def normal_ppf(
     Examples
     --------
     >>> p = torch.tensor([0.025, 0.5, 0.975])
-    >>> normal_ppf(p)
+    >>> normal_quantile(p)
     tensor([-1.9600,  0.0000,  1.9600])
 
     See Also
     --------
-    normal_cdf : Inverse of PPF
+    normal_cumulative_distribution : Inverse of PPF
     """
     loc_t = (
         loc
@@ -165,10 +167,10 @@ def normal_ppf(
         if isinstance(scale, Tensor)
         else torch.as_tensor(scale, dtype=p.dtype, device=p.device)
     )
-    return torch.ops.torchscience.normal_ppf(p, loc_t, scale_t)
+    return torch.ops.torchscience.normal_quantile(p, loc_t, scale_t)
 
 
-def normal_sf(
+def normal_survival(
     x: Tensor,
     loc: Tensor | float = 0.0,
     scale: Tensor | float = 1.0,
@@ -178,7 +180,7 @@ def normal_sf(
     .. math::
         S(x) = P(X > x) = 1 - \Phi(x) = \frac{1}{2} \text{erfc}\left(\frac{x - \mu}{\sigma \sqrt{2}}\right)
 
-    More numerically stable than ``1 - normal_cdf(x)`` for large x.
+    More numerically stable than ``1 - normal_cumulative_distribution(x)`` for large x.
 
     Parameters
     ----------
@@ -197,12 +199,12 @@ def normal_sf(
     Examples
     --------
     >>> x = torch.tensor([0.0, 1.0, 2.0])
-    >>> normal_sf(x)
+    >>> normal_survival(x)
     tensor([0.5000, 0.1587, 0.0228])
 
     See Also
     --------
-    normal_cdf : CDF = 1 - SF
+    normal_cumulative_distribution : CDF = 1 - SF
     """
     loc_t = (
         loc
@@ -214,7 +216,7 @@ def normal_sf(
         if isinstance(scale, Tensor)
         else torch.as_tensor(scale, dtype=x.dtype, device=x.device)
     )
-    return torch.ops.torchscience.normal_sf(x, loc_t, scale_t)
+    return torch.ops.torchscience.normal_survival(x, loc_t, scale_t)
 
 
 def normal_logpdf(
@@ -227,7 +229,7 @@ def normal_logpdf(
     .. math::
         \log \phi(x) = -\frac{1}{2}\log(2\pi) - \log(\sigma) - \frac{(x-\mu)^2}{2\sigma^2}
 
-    More numerically stable than ``log(normal_pdf(x))`` for extreme x.
+    More numerically stable than ``log(normal_probability_density(x))`` for extreme x.
 
     Parameters
     ----------
@@ -251,7 +253,7 @@ def normal_logpdf(
 
     See Also
     --------
-    normal_pdf : Exp of log PDF
+    normal_probability_density : Exp of log PDF
     """
     loc_t = (
         loc

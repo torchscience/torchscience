@@ -5,7 +5,7 @@
 
 namespace torchscience::meta::probability {
 
-at::Tensor f_cdf(
+at::Tensor f_cumulative_distribution(
     const at::Tensor& x,
     const at::Tensor& dfn,
     const at::Tensor& dfd) {
@@ -14,7 +14,7 @@ at::Tensor f_cdf(
   return at::empty(result_shape, x.options());
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> f_cdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> f_cumulative_distribution_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& dfn,
@@ -25,7 +25,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_cdf_backward(
       at::empty_like(dfd));
 }
 
-at::Tensor f_pdf(
+at::Tensor f_probability_density(
     const at::Tensor& x,
     const at::Tensor& dfn,
     const at::Tensor& dfd) {
@@ -34,7 +34,7 @@ at::Tensor f_pdf(
   return at::empty(result_shape, x.options());
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> f_pdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> f_probability_density_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& dfn,
@@ -45,7 +45,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_pdf_backward(
       at::empty_like(dfd));
 }
 
-at::Tensor f_ppf(
+at::Tensor f_quantile(
     const at::Tensor& p,
     const at::Tensor& dfn,
     const at::Tensor& dfd) {
@@ -54,7 +54,7 @@ at::Tensor f_ppf(
   return at::empty(result_shape, p.options());
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> f_ppf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> f_quantile_backward(
     const at::Tensor& grad,
     const at::Tensor& p,
     const at::Tensor& dfn,
@@ -65,7 +65,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_ppf_backward(
       at::empty_like(dfd));
 }
 
-at::Tensor f_sf(
+at::Tensor f_survival(
     const at::Tensor& x,
     const at::Tensor& dfn,
     const at::Tensor& dfd) {
@@ -74,7 +74,7 @@ at::Tensor f_sf(
   return at::empty(result_shape, x.options());
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> f_sf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> f_survival_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& dfn,
@@ -86,14 +86,14 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> f_sf_backward(
 }
 
 TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
-  m.impl("f_cdf", &f_cdf);
-  m.impl("f_cdf_backward", &f_cdf_backward);
-  m.impl("f_pdf", &f_pdf);
-  m.impl("f_pdf_backward", &f_pdf_backward);
-  m.impl("f_ppf", &f_ppf);
-  m.impl("f_ppf_backward", &f_ppf_backward);
-  m.impl("f_sf", &f_sf);
-  m.impl("f_sf_backward", &f_sf_backward);
+  m.impl("f_cumulative_distribution", &f_cumulative_distribution);
+  m.impl("f_cumulative_distribution_backward", &f_cumulative_distribution_backward);
+  m.impl("f_probability_density", &f_probability_density);
+  m.impl("f_probability_density_backward", &f_probability_density_backward);
+  m.impl("f_quantile", &f_quantile);
+  m.impl("f_quantile_backward", &f_quantile_backward);
+  m.impl("f_survival", &f_survival);
+  m.impl("f_survival_backward", &f_survival_backward);
 }
 
 }  // namespace torchscience::meta::probability

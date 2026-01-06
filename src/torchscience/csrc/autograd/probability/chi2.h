@@ -19,7 +19,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::chi2_cdf", "")
+        .findSchemaOrThrow("torchscience::chi2_cumulative_distribution", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&)>()
         .call(x, df);
   }
@@ -41,7 +41,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::chi2_cdf_backward", "")
+        .findSchemaOrThrow("torchscience::chi2_cumulative_distribution_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, x, df);
@@ -50,7 +50,7 @@ public:
   }
 };
 
-inline at::Tensor chi2_cdf(
+inline at::Tensor chi2_cumulative_distribution(
     const at::Tensor& x,
     const at::Tensor& df
 ) {
@@ -72,7 +72,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::chi2_pdf", "")
+        .findSchemaOrThrow("torchscience::chi2_probability_density", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&)>()
         .call(x, df);
   }
@@ -94,7 +94,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::chi2_pdf_backward", "")
+        .findSchemaOrThrow("torchscience::chi2_probability_density_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, x, df);
@@ -103,7 +103,7 @@ public:
   }
 };
 
-inline at::Tensor chi2_pdf(
+inline at::Tensor chi2_probability_density(
     const at::Tensor& x,
     const at::Tensor& df
 ) {
@@ -125,7 +125,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::chi2_ppf", "")
+        .findSchemaOrThrow("torchscience::chi2_quantile", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&)>()
         .call(p, df);
   }
@@ -147,7 +147,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::chi2_ppf_backward", "")
+        .findSchemaOrThrow("torchscience::chi2_quantile_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, p, df);
@@ -156,7 +156,7 @@ public:
   }
 };
 
-inline at::Tensor chi2_ppf(
+inline at::Tensor chi2_quantile(
     const at::Tensor& p,
     const at::Tensor& df
 ) {
@@ -178,7 +178,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::chi2_sf", "")
+        .findSchemaOrThrow("torchscience::chi2_survival", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&)>()
         .call(x, df);
   }
@@ -200,7 +200,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::chi2_sf_backward", "")
+        .findSchemaOrThrow("torchscience::chi2_survival_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, x, df);
@@ -209,7 +209,7 @@ public:
   }
 };
 
-inline at::Tensor chi2_sf(
+inline at::Tensor chi2_survival(
     const at::Tensor& x,
     const at::Tensor& df
 ) {
@@ -219,8 +219,8 @@ inline at::Tensor chi2_sf(
 }  // namespace torchscience::autograd::probability
 
 TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {
-  m.impl("chi2_cdf", &torchscience::autograd::probability::chi2_cdf);
-  m.impl("chi2_pdf", &torchscience::autograd::probability::chi2_pdf);
-  m.impl("chi2_ppf", &torchscience::autograd::probability::chi2_ppf);
-  m.impl("chi2_sf", &torchscience::autograd::probability::chi2_sf);
+  m.impl("chi2_cumulative_distribution", &torchscience::autograd::probability::chi2_cumulative_distribution);
+  m.impl("chi2_probability_density", &torchscience::autograd::probability::chi2_probability_density);
+  m.impl("chi2_quantile", &torchscience::autograd::probability::chi2_quantile);
+  m.impl("chi2_survival", &torchscience::autograd::probability::chi2_survival);
 }

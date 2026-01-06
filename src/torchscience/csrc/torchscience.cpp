@@ -667,63 +667,63 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("laplace_mechanism_backward(Tensor grad_output) -> Tensor");
 
   // Probability - Normal distribution
-  module.def("normal_cdf(Tensor x, Tensor loc, Tensor scale) -> Tensor");
-  module.def("normal_cdf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
-  module.def("normal_cdf_backward_backward(Tensor grad_grad_x, Tensor grad_grad_loc, Tensor grad_grad_scale, Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor, Tensor)");
-  module.def("normal_pdf(Tensor x, Tensor loc, Tensor scale) -> Tensor");
-  module.def("normal_pdf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
-  module.def("normal_ppf(Tensor p, Tensor loc, Tensor scale) -> Tensor");
-  module.def("normal_ppf_backward(Tensor grad, Tensor p, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
-  module.def("normal_sf(Tensor x, Tensor loc, Tensor scale) -> Tensor");
-  module.def("normal_sf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("normal_cumulative_distribution(Tensor x, Tensor loc, Tensor scale) -> Tensor");
+  module.def("normal_cumulative_distribution_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("normal_cumulative_distribution_backward_backward(Tensor grad_grad_x, Tensor grad_grad_loc, Tensor grad_grad_scale, Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor, Tensor)");
+  module.def("normal_probability_density(Tensor x, Tensor loc, Tensor scale) -> Tensor");
+  module.def("normal_probability_density_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("normal_quantile(Tensor p, Tensor loc, Tensor scale) -> Tensor");
+  module.def("normal_quantile_backward(Tensor grad, Tensor p, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("normal_survival(Tensor x, Tensor loc, Tensor scale) -> Tensor");
+  module.def("normal_survival_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
   module.def("normal_logpdf(Tensor x, Tensor loc, Tensor scale) -> Tensor");
   module.def("normal_logpdf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
 
   // Probability - Chi-squared distribution
-  module.def("chi2_cdf(Tensor x, Tensor df) -> Tensor");
-  module.def("chi2_cdf_backward(Tensor grad, Tensor x, Tensor df) -> (Tensor, Tensor)");
-  module.def("chi2_pdf(Tensor x, Tensor df) -> Tensor");
-  module.def("chi2_pdf_backward(Tensor grad, Tensor x, Tensor df) -> (Tensor, Tensor)");
-  module.def("chi2_ppf(Tensor p, Tensor df) -> Tensor");
-  module.def("chi2_ppf_backward(Tensor grad, Tensor p, Tensor df) -> (Tensor, Tensor)");
-  module.def("chi2_sf(Tensor x, Tensor df) -> Tensor");
-  module.def("chi2_sf_backward(Tensor grad, Tensor x, Tensor df) -> (Tensor, Tensor)");
+  module.def("chi2_cumulative_distribution(Tensor x, Tensor df) -> Tensor");
+  module.def("chi2_cumulative_distribution_backward(Tensor grad, Tensor x, Tensor df) -> (Tensor, Tensor)");
+  module.def("chi2_probability_density(Tensor x, Tensor df) -> Tensor");
+  module.def("chi2_probability_density_backward(Tensor grad, Tensor x, Tensor df) -> (Tensor, Tensor)");
+  module.def("chi2_quantile(Tensor p, Tensor df) -> Tensor");
+  module.def("chi2_quantile_backward(Tensor grad, Tensor p, Tensor df) -> (Tensor, Tensor)");
+  module.def("chi2_survival(Tensor x, Tensor df) -> Tensor");
+  module.def("chi2_survival_backward(Tensor grad, Tensor x, Tensor df) -> (Tensor, Tensor)");
 
   // Probability - F distribution
-  module.def("f_cdf(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
-  module.def("f_cdf_backward(Tensor grad, Tensor x, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
-  module.def("f_pdf(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
-  module.def("f_pdf_backward(Tensor grad, Tensor x, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
-  module.def("f_ppf(Tensor p, Tensor dfn, Tensor dfd) -> Tensor");
-  module.def("f_ppf_backward(Tensor grad, Tensor p, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
-  module.def("f_sf(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
-  module.def("f_sf_backward(Tensor grad, Tensor x, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
+  module.def("f_cumulative_distribution(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
+  module.def("f_cumulative_distribution_backward(Tensor grad, Tensor x, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
+  module.def("f_probability_density(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
+  module.def("f_probability_density_backward(Tensor grad, Tensor x, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
+  module.def("f_quantile(Tensor p, Tensor dfn, Tensor dfd) -> Tensor");
+  module.def("f_quantile_backward(Tensor grad, Tensor p, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
+  module.def("f_survival(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
+  module.def("f_survival_backward(Tensor grad, Tensor x, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
 
   // Probability - Beta distribution
-  module.def("beta_cdf(Tensor x, Tensor a, Tensor b) -> Tensor");
-  module.def("beta_cdf_backward(Tensor grad, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
-  module.def("beta_pdf(Tensor x, Tensor a, Tensor b) -> Tensor");
-  module.def("beta_pdf_backward(Tensor grad, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
-  module.def("beta_ppf(Tensor p, Tensor a, Tensor b) -> Tensor");
-  module.def("beta_ppf_backward(Tensor grad, Tensor p, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
+  module.def("beta_cumulative_distribution(Tensor x, Tensor a, Tensor b) -> Tensor");
+  module.def("beta_cumulative_distribution_backward(Tensor grad, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
+  module.def("beta_probability_density(Tensor x, Tensor a, Tensor b) -> Tensor");
+  module.def("beta_probability_density_backward(Tensor grad, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
+  module.def("beta_quantile(Tensor p, Tensor a, Tensor b) -> Tensor");
+  module.def("beta_quantile_backward(Tensor grad, Tensor p, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
 
   // Probability - Gamma distribution
-  module.def("gamma_cdf(Tensor x, Tensor shape, Tensor scale) -> Tensor");
-  module.def("gamma_cdf_backward(Tensor grad, Tensor x, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
-  module.def("gamma_pdf(Tensor x, Tensor shape, Tensor scale) -> Tensor");
-  module.def("gamma_pdf_backward(Tensor grad, Tensor x, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
-  module.def("gamma_ppf(Tensor p, Tensor shape, Tensor scale) -> Tensor");
-  module.def("gamma_ppf_backward(Tensor grad, Tensor p, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("gamma_cumulative_distribution(Tensor x, Tensor shape, Tensor scale) -> Tensor");
+  module.def("gamma_cumulative_distribution_backward(Tensor grad, Tensor x, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("gamma_probability_density(Tensor x, Tensor shape, Tensor scale) -> Tensor");
+  module.def("gamma_probability_density_backward(Tensor grad, Tensor x, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("gamma_quantile(Tensor p, Tensor shape, Tensor scale) -> Tensor");
+  module.def("gamma_quantile_backward(Tensor grad, Tensor p, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
 
   // Probability - Binomial distribution
-  module.def("binomial_cdf(Tensor k, Tensor n, Tensor p) -> Tensor");
-  module.def("binomial_cdf_backward(Tensor grad, Tensor k, Tensor n, Tensor p) -> (Tensor, Tensor, Tensor)");
+  module.def("binomial_cumulative_distribution(Tensor k, Tensor n, Tensor p) -> Tensor");
+  module.def("binomial_cumulative_distribution_backward(Tensor grad, Tensor k, Tensor n, Tensor p) -> (Tensor, Tensor, Tensor)");
   module.def("binomial_pmf(Tensor k, Tensor n, Tensor p) -> Tensor");
   module.def("binomial_pmf_backward(Tensor grad, Tensor k, Tensor n, Tensor p) -> (Tensor, Tensor, Tensor)");
 
   // Probability - Poisson distribution
-  module.def("poisson_cdf(Tensor k, Tensor rate) -> Tensor");
-  module.def("poisson_cdf_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
+  module.def("poisson_cumulative_distribution(Tensor k, Tensor rate) -> Tensor");
+  module.def("poisson_cumulative_distribution_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
   module.def("poisson_pmf(Tensor k, Tensor rate) -> Tensor");
   module.def("poisson_pmf_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
 }

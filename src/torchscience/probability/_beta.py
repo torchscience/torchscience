@@ -3,10 +3,14 @@
 import torch
 from torch import Tensor
 
-__all__ = ["beta_cdf", "beta_pdf", "beta_ppf"]
+__all__ = [
+    "beta_cumulative_distribution",
+    "beta_probability_density",
+    "beta_quantile",
+]
 
 
-def beta_cdf(x: Tensor, a: Tensor, b: Tensor) -> Tensor:
+def beta_cumulative_distribution(x: Tensor, a: Tensor, b: Tensor) -> Tensor:
     r"""Cumulative distribution function of the beta distribution.
 
     .. math::
@@ -33,13 +37,13 @@ def beta_cdf(x: Tensor, a: Tensor, b: Tensor) -> Tensor:
     >>> x = torch.tensor([0.25, 0.5, 0.75])
     >>> a = torch.tensor(2.0)
     >>> b = torch.tensor(5.0)
-    >>> beta_cdf(x, a, b)
+    >>> beta_cumulative_distribution(x, a, b)
     tensor([0.3672, 0.8125, 0.9727])
     """
-    return torch.ops.torchscience.beta_cdf(x, a, b)
+    return torch.ops.torchscience.beta_cumulative_distribution(x, a, b)
 
 
-def beta_pdf(x: Tensor, a: Tensor, b: Tensor) -> Tensor:
+def beta_probability_density(x: Tensor, a: Tensor, b: Tensor) -> Tensor:
     r"""Probability density function of the beta distribution.
 
     .. math::
@@ -61,10 +65,10 @@ def beta_pdf(x: Tensor, a: Tensor, b: Tensor) -> Tensor:
     Tensor
         PDF values.
     """
-    return torch.ops.torchscience.beta_pdf(x, a, b)
+    return torch.ops.torchscience.beta_probability_density(x, a, b)
 
 
-def beta_ppf(p: Tensor, a: Tensor, b: Tensor) -> Tensor:
+def beta_quantile(p: Tensor, a: Tensor, b: Tensor) -> Tensor:
     r"""Quantile function (inverse CDF) of the beta distribution.
 
     Parameters
@@ -81,4 +85,4 @@ def beta_ppf(p: Tensor, a: Tensor, b: Tensor) -> Tensor:
     Tensor
         Quantiles.
     """
-    return torch.ops.torchscience.beta_ppf(p, a, b)
+    return torch.ops.torchscience.beta_quantile(p, a, b)

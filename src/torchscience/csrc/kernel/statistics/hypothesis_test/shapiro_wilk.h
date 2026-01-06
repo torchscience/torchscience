@@ -16,7 +16,7 @@ namespace torchscience::kernel::statistics::hypothesis_test {
  */
 template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE
-T approx_inv_normal_cdf(T p) {
+T approx_inv_normal_cumulative_distribution(T p) {
     // Constants for Abramowitz & Stegun approximation
     constexpr T a1 = T(-3.969683028665376e+01);
     constexpr T a2 = T(2.209460984245205e+02);
@@ -174,7 +174,7 @@ std::tuple<T, T> shapiro_wilk(const T* data, int64_t n) {
         // Blom's approximation for expected normal order statistics
         T p = (T(i + 1) - T(0.375)) / (T(n) + T(0.25));
         // Approximate inverse normal CDF using rational approximation
-        m[i] = approx_inv_normal_cdf(p);
+        m[i] = approx_inv_normal_cumulative_distribution(p);
     }
 
     // Compute m'*m
