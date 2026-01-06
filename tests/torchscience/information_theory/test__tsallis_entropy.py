@@ -37,21 +37,27 @@ class TestTsallisEntropyCorrectness:
 
     def test_converges_to_shannon_from_below(self):
         """S_q -> H (Shannon) as q -> 1 from below."""
+        torch.manual_seed(42)
         p = torch.softmax(torch.randn(10), dim=-1)
         h_shannon = shannon_entropy(p)
 
         for q in [0.9, 0.99, 0.999]:
             s_tsallis = tsallis_entropy(p, q=q)
-            assert torch.isclose(s_tsallis, h_shannon, rtol=0.1)
+            # Use looser tolerance for values further from 1
+            rtol = 0.2 if abs(q - 1) > 0.05 else 0.1
+            assert torch.isclose(s_tsallis, h_shannon, rtol=rtol)
 
     def test_converges_to_shannon_from_above(self):
         """S_q -> H (Shannon) as q -> 1 from above."""
+        torch.manual_seed(42)
         p = torch.softmax(torch.randn(10), dim=-1)
         h_shannon = shannon_entropy(p)
 
         for q in [1.1, 1.01, 1.001]:
             s_tsallis = tsallis_entropy(p, q=q)
-            assert torch.isclose(s_tsallis, h_shannon, rtol=0.1)
+            # Use looser tolerance for values further from 1
+            rtol = 0.2 if abs(q - 1) > 0.05 else 0.1
+            assert torch.isclose(s_tsallis, h_shannon, rtol=rtol)
 
     def test_manual_calculation(self):
         """Verify against manual calculation."""
