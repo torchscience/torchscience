@@ -135,3 +135,45 @@ class TestPolynomialToChebyshevT:
         c_np = np_cheb.poly2cheb(coeffs)
 
         np.testing.assert_allclose(c.coeffs.numpy(), c_np, rtol=1e-10)
+
+
+class TestConversionAutograd:
+    """Tests for autograd support in conversion."""
+
+    def test_to_polynomial_gradcheck(self):
+        """Gradcheck for chebyshev_t_to_polynomial."""
+        coeffs = torch.tensor(
+            [1.0, 2.0, 3.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(c):
+            return chebyshev_t_to_polynomial(chebyshev_t(c)).coeffs
+
+        assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
+
+    def test_from_polynomial_gradcheck(self):
+        """Gradcheck for polynomial_to_chebyshev_t."""
+        coeffs = torch.tensor(
+            [1.0, 2.0, 3.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(c):
+            return polynomial_to_chebyshev_t(polynomial(c)).coeffs
+
+        assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
+
+    def test_roundtrip_gradgradcheck(self):
+        """Second-order gradients through roundtrip."""
+        coeffs = torch.tensor(
+            [1.0, 2.0, 3.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def fn(c):
+            cheb = chebyshev_t(c)
+            poly = chebyshev_t_to_polynomial(cheb)
+            back = polynomial_to_chebyshev_t(poly)
+            return back.coeffs.sum()
+
+        assert torch.autograd.gradgradcheck(
+            fn, (coeffs,), raise_exception=True
+        )
