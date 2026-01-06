@@ -137,6 +137,7 @@ from ._chebyshev_t import (
     chebyshev_t_subtract,
     chebyshev_t_to_polynomial,
     chebyshev_t_vandermonde,
+    polynomial_to_chebyshev_t,
 )
 from ._degree_error import DegreeError
 from ._polynomial import (
@@ -190,6 +191,7 @@ __all__ = [
     "chebyshev_t_subtract",
     "chebyshev_t_to_polynomial",
     "chebyshev_t_vandermonde",
+    "polynomial_to_chebyshev_t",
     "DegreeError",
     "Polynomial",
     "PolynomialError",

@@ -8,7 +8,9 @@ from torchscience.polynomial import (
     chebyshev_t,
     chebyshev_t_evaluate,
     chebyshev_t_to_polynomial,
+    polynomial,
     polynomial_evaluate,
+    polynomial_to_chebyshev_t,
 )
 
 
@@ -70,3 +72,66 @@ class TestChebyshevTToPolynomial:
         p_np = np_cheb.cheb2poly(coeffs)
 
         np.testing.assert_allclose(p.coeffs.numpy(), p_np, rtol=1e-10)
+
+
+class TestPolynomialToChebyshevT:
+    """Tests for polynomial_to_chebyshev_t."""
+
+    def test_constant_to_cheb(self):
+        """Constant 1 = T_0."""
+        p = polynomial(torch.tensor([1.0]))
+        c = polynomial_to_chebyshev_t(p)
+        torch.testing.assert_close(c.coeffs, torch.tensor([1.0]))
+
+    def test_x_to_cheb(self):
+        """x = T_1."""
+        p = polynomial(torch.tensor([0.0, 1.0]))  # x
+        c = polynomial_to_chebyshev_t(p)
+        torch.testing.assert_close(c.coeffs, torch.tensor([0.0, 1.0]))
+
+    def test_x2_to_cheb(self):
+        """x^2 = (T_2 + T_0)/2 = 0.5*T_0 + 0.5*T_2."""
+        p = polynomial(torch.tensor([0.0, 0.0, 1.0]))  # x^2
+        c = polynomial_to_chebyshev_t(p)
+        torch.testing.assert_close(c.coeffs, torch.tensor([0.5, 0.0, 0.5]))
+
+    def test_x3_to_cheb(self):
+        """x^3 = (3*T_1 + T_3)/4 = 0.75*T_1 + 0.25*T_3."""
+        p = polynomial(torch.tensor([0.0, 0.0, 0.0, 1.0]))  # x^3
+        c = polynomial_to_chebyshev_t(p)
+        torch.testing.assert_close(
+            c.coeffs, torch.tensor([0.0, 0.75, 0.0, 0.25])
+        )
+
+    def test_roundtrip_cheb_power_cheb(self):
+        """cheb -> power -> cheb preserves coefficients."""
+        coeffs_orig = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float64)
+        c = chebyshev_t(coeffs_orig)
+        p = chebyshev_t_to_polynomial(c)
+        c_back = polynomial_to_chebyshev_t(p)
+
+        torch.testing.assert_close(
+            c_back.coeffs, coeffs_orig, atol=1e-10, rtol=1e-10
+        )
+
+    def test_roundtrip_power_cheb_power(self):
+        """power -> cheb -> power preserves coefficients."""
+        coeffs_orig = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float64)
+        p = polynomial(coeffs_orig)
+        c = polynomial_to_chebyshev_t(p)
+        p_back = chebyshev_t_to_polynomial(c)
+
+        torch.testing.assert_close(
+            p_back.coeffs, coeffs_orig, atol=1e-10, rtol=1e-10
+        )
+
+    def test_vs_numpy(self):
+        """Compare with numpy.polynomial.chebyshev.poly2cheb."""
+        coeffs = [1.0, 2.0, 3.0, 4.0, 5.0]
+
+        p = polynomial(torch.tensor(coeffs, dtype=torch.float64))
+        c = polynomial_to_chebyshev_t(p)
+
+        c_np = np_cheb.poly2cheb(coeffs)
+
+        np.testing.assert_allclose(c.coeffs.numpy(), c_np, rtol=1e-10)
