@@ -64,6 +64,9 @@
 #include "cpu/statistics/hypothesis_test/f_oneway.h"
 #include "cpu/statistics/hypothesis_test/jarque_bera.h"
 #include "cpu/statistics/hypothesis_test/chi_square_test.h"
+#include "cpu/statistics/hypothesis_test/mann_whitney_u.h"
+#include "cpu/statistics/hypothesis_test/wilcoxon_signed_rank.h"
+#include "cpu/statistics/hypothesis_test/kruskal_wallis.h"
 #include "cpu/integral_transform/hilbert_transform.h"
 #include "cpu/integral_transform/inverse_hilbert_transform.h"
 #include "cpu/test/sum_squares.h"
@@ -210,6 +213,9 @@
 #include "meta/statistics/hypothesis_test/f_oneway.h"
 #include "meta/statistics/hypothesis_test/jarque_bera.h"
 #include "meta/statistics/hypothesis_test/chi_square_test.h"
+#include "meta/statistics/hypothesis_test/mann_whitney_u.h"
+#include "meta/statistics/hypothesis_test/wilcoxon_signed_rank.h"
+#include "meta/statistics/hypothesis_test/kruskal_wallis.h"
 #include "meta/integral_transform/hilbert_transform.h"
 #include "meta/integral_transform/inverse_hilbert_transform.h"
 #include "meta/test/sum_squares.h"
@@ -491,6 +497,11 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("jarque_bera_backward(Tensor grad_statistic, Tensor input) -> Tensor");
   module.def("chi_square_test(Tensor observed, Tensor? expected, int ddof) -> (Tensor, Tensor)");
   module.def("chi_square_test_backward(Tensor grad_statistic, Tensor observed, Tensor? expected) -> Tensor");
+
+  // Non-parametric rank-based tests (no gradients)
+  module.def("mann_whitney_u(Tensor x, Tensor y, str alternative) -> (Tensor, Tensor)");
+  module.def("wilcoxon_signed_rank(Tensor x, Tensor? y, str alternative, str zero_method) -> (Tensor, Tensor)");
+  module.def("kruskal_wallis(Tensor data, Tensor group_sizes) -> (Tensor, Tensor)");
 
   // integral_transform
   module.def("hilbert_transform(Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
