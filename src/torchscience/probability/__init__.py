@@ -20,6 +20,11 @@ Example
 >>> quantiles = normal_ppf(probs)  # tensor([-1.96, 0.0, 1.96])
 """
 
+from ._beta import (
+    beta_cdf,
+    beta_pdf,
+    beta_ppf,
+)
 from ._chi2 import (
     chi2_cdf,
     chi2_pdf,
@@ -33,6 +38,11 @@ from ._f import (
     f_ppf,
     f_sf,
 )
+from ._gamma import (
+    gamma_cdf,
+    gamma_pdf,
+    gamma_ppf,
+)
 from ._normal import (
     normal_cdf,
     normal_logpdf,
@@ -44,6 +54,10 @@ from ._normal import (
 __all__ = [
     "DomainError",
     "ProbabilityError",
+    # Beta distribution
+    "beta_cdf",
+    "beta_pdf",
+    "beta_ppf",
     # Chi-squared distribution
     "chi2_cdf",
     "chi2_pdf",
@@ -54,6 +68,10 @@ __all__ = [
     "f_pdf",
     "f_ppf",
     "f_sf",
+    # Gamma distribution
+    "gamma_cdf",
+    "gamma_pdf",
+    "gamma_ppf",
     # Normal distribution
     "normal_cdf",
     "normal_logpdf",
