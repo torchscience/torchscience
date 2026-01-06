@@ -103,7 +103,9 @@
 
 // probability
 #include "cpu/probability/normal.h"
+#include "cpu/probability/chi2.h"
 #include "meta/probability/normal.h"
+#include "meta/probability/chi2.h"
 #include "autograd/probability/normal.h"
 
 #include "autograd/distance/minkowski_distance.h"
@@ -575,4 +577,24 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("normal_sf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
   module.def("normal_logpdf(Tensor x, Tensor loc, Tensor scale) -> Tensor");
   module.def("normal_logpdf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
+
+  // Probability - Chi-squared distribution
+  module.def("chi2_cdf(Tensor x, Tensor df) -> Tensor");
+  module.def("chi2_cdf_backward(Tensor grad, Tensor x, Tensor df) -> (Tensor, Tensor)");
+  module.def("chi2_pdf(Tensor x, Tensor df) -> Tensor");
+  module.def("chi2_pdf_backward(Tensor grad, Tensor x, Tensor df) -> (Tensor, Tensor)");
+  module.def("chi2_ppf(Tensor p, Tensor df) -> Tensor");
+  module.def("chi2_ppf_backward(Tensor grad, Tensor p, Tensor df) -> (Tensor, Tensor)");
+  module.def("chi2_sf(Tensor x, Tensor df) -> Tensor");
+  module.def("chi2_sf_backward(Tensor grad, Tensor x, Tensor df) -> (Tensor, Tensor)");
+
+  // Probability - F distribution
+  module.def("f_cdf(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
+  module.def("f_cdf_backward(Tensor grad, Tensor x, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
+  module.def("f_pdf(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
+  module.def("f_pdf_backward(Tensor grad, Tensor x, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
+  module.def("f_ppf(Tensor p, Tensor dfn, Tensor dfd) -> Tensor");
+  module.def("f_ppf_backward(Tensor grad, Tensor p, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
+  module.def("f_sf(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
+  module.def("f_sf_backward(Tensor grad, Tensor x, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
 }
