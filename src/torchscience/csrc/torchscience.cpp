@@ -75,6 +75,7 @@
 #include "cpu/information_theory/shannon_entropy.h"
 #include "cpu/information_theory/cross_entropy.h"
 #include "cpu/information_theory/chi_squared_divergence.h"
+#include "cpu/information_theory/renyi_entropy.h"
 #include "cpu/space_partitioning/kd_tree.h"
 #include "cpu/space_partitioning/k_nearest_neighbors.h"
 #include "cpu/space_partitioning/range_search.h"
@@ -107,12 +108,18 @@
 #include "cpu/probability/normal.h"
 #include "cpu/probability/chi2.h"
 #include "cpu/probability/f.h"
+#include "cpu/probability/beta.h"
+#include "cpu/probability/gamma.h"
 #include "meta/probability/normal.h"
 #include "meta/probability/chi2.h"
 #include "meta/probability/f.h"
+#include "meta/probability/beta.h"
+#include "meta/probability/gamma.h"
 #include "autograd/probability/normal.h"
 #include "autograd/probability/chi2.h"
 #include "autograd/probability/f.h"
+#include "autograd/probability/beta.h"
+#include "autograd/probability/gamma.h"
 
 #include "autograd/distance/minkowski_distance.h"
 #include "autograd/distance/hellinger_distance.h"
@@ -140,6 +147,7 @@
 #include "autograd/information_theory/shannon_entropy.h"
 #include "autograd/information_theory/cross_entropy.h"
 #include "autograd/information_theory/chi_squared_divergence.h"
+#include "autograd/information_theory/renyi_entropy.h"
 #include "autograd/geometry/transform/reflect.h"
 #include "autograd/geometry/transform/refract.h"
 #include "autograd/geometry/transform/quaternion_multiply.h"
@@ -189,6 +197,7 @@
 #include "meta/information_theory/shannon_entropy.h"
 #include "meta/information_theory/cross_entropy.h"
 #include "meta/information_theory/chi_squared_divergence.h"
+#include "meta/information_theory/renyi_entropy.h"
 #include "meta/space_partitioning/kd_tree.h"
 #include "meta/space_partitioning/k_nearest_neighbors.h"
 #include "meta/space_partitioning/range_search.h"
@@ -495,6 +504,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("shannon_entropy_backward(Tensor grad_output, Tensor p, int dim, str input_type, str reduction, float? base) -> Tensor");
   module.def("shannon_entropy_backward_backward(Tensor gg_p, Tensor grad_output, Tensor p, int dim, str input_type, str reduction, float? base) -> (Tensor, Tensor)");
 
+  // Renyi entropy
+  module.def("renyi_entropy(Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> Tensor");
+  module.def("renyi_entropy_backward(Tensor grad_output, Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> Tensor");
+
   // Cross-entropy
   module.def("cross_entropy(Tensor p, Tensor q, int dim, str input_type, str reduction, float? base) -> Tensor");
   module.def("cross_entropy_backward(Tensor grad_output, Tensor p, Tensor q, int dim, str input_type, str reduction, float? base) -> (Tensor, Tensor)");
@@ -607,4 +620,20 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("f_ppf_backward(Tensor grad, Tensor p, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
   module.def("f_sf(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
   module.def("f_sf_backward(Tensor grad, Tensor x, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
+
+  // Probability - Beta distribution
+  module.def("beta_cdf(Tensor x, Tensor a, Tensor b) -> Tensor");
+  module.def("beta_cdf_backward(Tensor grad, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
+  module.def("beta_pdf(Tensor x, Tensor a, Tensor b) -> Tensor");
+  module.def("beta_pdf_backward(Tensor grad, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
+  module.def("beta_ppf(Tensor p, Tensor a, Tensor b) -> Tensor");
+  module.def("beta_ppf_backward(Tensor grad, Tensor p, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
+
+  // Probability - Gamma distribution
+  module.def("gamma_cdf(Tensor x, Tensor shape, Tensor scale) -> Tensor");
+  module.def("gamma_cdf_backward(Tensor grad, Tensor x, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("gamma_pdf(Tensor x, Tensor shape, Tensor scale) -> Tensor");
+  module.def("gamma_pdf_backward(Tensor grad, Tensor x, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("gamma_ppf(Tensor p, Tensor shape, Tensor scale) -> Tensor");
+  module.def("gamma_ppf_backward(Tensor grad, Tensor p, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
 }
