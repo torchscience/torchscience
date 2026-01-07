@@ -1,9 +1,11 @@
 from ._cosine_wave import cosine_wave
+from ._sawtooth_wave import sawtooth_wave
 from ._sine_wave import sine_wave
 from ._square_wave import square_wave
 
 __all__ = [
     "cosine_wave",
+    "sawtooth_wave",
     "sine_wave",
     "square_wave",
 ]

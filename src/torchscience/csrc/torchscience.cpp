@@ -23,6 +23,7 @@
 #include "cpu/signal_processing/waveform/sine_wave.h"
 #include "cpu/signal_processing/waveform/sine_wave_backward.h"
 #include "cpu/signal_processing/waveform/square_wave.h"
+#include "cpu/signal_processing/waveform/sawtooth_wave.h"
 #include "meta/signal_processing/waveform/sine_wave.h"
 #include "autograd/signal_processing/waveform/sine_wave.h"
 // noise - CompositeExplicitAutograd
@@ -442,6 +443,10 @@ TORCH_LIBRARY(torchscience, module) {
              "Tensor frequency, float sample_rate=1.0, Tensor amplitude, Tensor phase, Tensor duty, "
              "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
 
+  module.def("sawtooth_wave(int? n=None, Tensor? t=None, *, "
+             "Tensor frequency, float sample_rate=1.0, Tensor amplitude, Tensor phase, "
+             "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
+
   // signal_processing.window_function
   module.def("rectangular_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
 
@@ -676,8 +681,8 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("normal_quantile_backward(Tensor grad, Tensor p, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
   module.def("normal_survival(Tensor x, Tensor loc, Tensor scale) -> Tensor");
   module.def("normal_survival_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
-  module.def("normal_logpdf(Tensor x, Tensor loc, Tensor scale) -> Tensor");
-  module.def("normal_logpdf_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  module.def("normal_log_probability_density(Tensor x, Tensor loc, Tensor scale) -> Tensor");
+  module.def("normal_log_probability_density_backward(Tensor grad, Tensor x, Tensor loc, Tensor scale) -> (Tensor, Tensor, Tensor)");
 
   // Probability - Chi-squared distribution
   module.def("chi2_cumulative_distribution(Tensor x, Tensor df) -> Tensor");
@@ -718,12 +723,12 @@ TORCH_LIBRARY(torchscience, module) {
   // Probability - Binomial distribution
   module.def("binomial_cumulative_distribution(Tensor k, Tensor n, Tensor p) -> Tensor");
   module.def("binomial_cumulative_distribution_backward(Tensor grad, Tensor k, Tensor n, Tensor p) -> (Tensor, Tensor, Tensor)");
-  module.def("binomial_pmf(Tensor k, Tensor n, Tensor p) -> Tensor");
-  module.def("binomial_pmf_backward(Tensor grad, Tensor k, Tensor n, Tensor p) -> (Tensor, Tensor, Tensor)");
+  module.def("binomial_probability_mass(Tensor k, Tensor n, Tensor p) -> Tensor");
+  module.def("binomial_probability_mass_backward(Tensor grad, Tensor k, Tensor n, Tensor p) -> (Tensor, Tensor, Tensor)");
 
   // Probability - Poisson distribution
   module.def("poisson_cumulative_distribution(Tensor k, Tensor rate) -> Tensor");
   module.def("poisson_cumulative_distribution_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
-  module.def("poisson_pmf(Tensor k, Tensor rate) -> Tensor");
-  module.def("poisson_pmf_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
+  module.def("poisson_probability_mass(Tensor k, Tensor rate) -> Tensor");
+  module.def("poisson_probability_mass_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
 }
