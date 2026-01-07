@@ -25,6 +25,7 @@
 #include "cpu/signal_processing/waveform/square_wave.h"
 #include "cpu/signal_processing/waveform/sawtooth_wave.h"
 #include "cpu/signal_processing/waveform/triangle_wave.h"
+#include "cpu/signal_processing/waveform/pulse_wave.h"
 #include "meta/signal_processing/waveform/sine_wave.h"
 #include "autograd/signal_processing/waveform/sine_wave.h"
 // noise - CompositeExplicitAutograd
@@ -450,6 +451,10 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("triangle_wave(int? n=None, Tensor? t=None, *, "
              "Tensor frequency, float sample_rate=1.0, Tensor amplitude, Tensor phase, "
+             "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
+
+  module.def("pulse_wave(int? n=None, Tensor? t=None, *, "
+             "Tensor frequency, float sample_rate=1.0, Tensor amplitude, Tensor phase, Tensor duty_cycle, "
              "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
 
   // signal_processing.window_function
