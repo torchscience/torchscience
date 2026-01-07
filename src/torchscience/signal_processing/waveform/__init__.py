@@ -1,4 +1,5 @@
 from ._cosine_wave import cosine_wave
+from ._gaussian_pulse_wave import gaussian_pulse_wave
 from ._impulse_wave import impulse_wave
 from ._pulse_wave import pulse_wave
 from ._ramp_wave import ramp_wave
@@ -10,6 +11,7 @@ from ._triangle_wave import triangle_wave
 
 __all__ = [
     "cosine_wave",
+    "gaussian_pulse_wave",
     "impulse_wave",
     "pulse_wave",
     "ramp_wave",
