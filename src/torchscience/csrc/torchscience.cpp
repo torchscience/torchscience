@@ -28,6 +28,7 @@
 #include "cpu/signal_processing/waveform/pulse_wave.h"
 #include "cpu/signal_processing/waveform/impulse_wave.h"
 #include "cpu/signal_processing/waveform/step_wave.h"
+#include "cpu/signal_processing/waveform/ramp_wave.h"
 #include "meta/signal_processing/waveform/sine_wave.h"
 #include "autograd/signal_processing/waveform/sine_wave.h"
 // noise - CompositeExplicitAutograd
@@ -465,6 +466,10 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("step_wave(int n, *, "
              "Tensor position, Tensor amplitude, "
+             "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
+
+  module.def("ramp_wave(int n, *, "
+             "Tensor position, Tensor slope, "
              "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
 
   // signal_processing.window_function
