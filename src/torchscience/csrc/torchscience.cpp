@@ -31,6 +31,7 @@
 #include "cpu/signal_processing/waveform/ramp_wave.h"
 #include "cpu/signal_processing/waveform/gaussian_pulse_wave.h"
 #include "cpu/signal_processing/waveform/sinc_pulse_wave.h"
+#include "cpu/signal_processing/waveform/linear_chirp_wave.h"
 #include "meta/signal_processing/waveform/sine_wave.h"
 #include "autograd/signal_processing/waveform/sine_wave.h"
 // noise - CompositeExplicitAutograd
@@ -480,6 +481,11 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("sinc_pulse_wave(int n, *, "
              "Tensor center, Tensor bandwidth, Tensor amplitude, "
+             "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
+
+  module.def("linear_chirp_wave(int? n=None, Tensor? t=None, *, "
+             "Tensor f0, Tensor f1, float t1=1.0, float sample_rate=1.0, "
+             "Tensor amplitude, Tensor phase, "
              "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
 
   // signal_processing.window_function

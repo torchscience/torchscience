@@ -1,6 +1,7 @@
 from ._cosine_wave import cosine_wave
 from ._gaussian_pulse_wave import gaussian_pulse_wave
 from ._impulse_wave import impulse_wave
+from ._linear_chirp_wave import linear_chirp_wave
 from ._pulse_wave import pulse_wave
 from ._ramp_wave import ramp_wave
 from ._sawtooth_wave import sawtooth_wave
@@ -14,6 +15,7 @@ __all__ = [
     "cosine_wave",
     "gaussian_pulse_wave",
     "impulse_wave",
+    "linear_chirp_wave",
     "pulse_wave",
     "ramp_wave",
     "sawtooth_wave",
