@@ -152,6 +152,10 @@ from ._exceptions import (
     ParameterError,
     ParameterMismatchError,
 )
+from ._legendre_polynomial_p import (
+    LegendrePolynomialP,
+    legendre_polynomial_p,
+)
 from ._polynomial import (
     Polynomial,
     polynomial,
@@ -213,6 +217,8 @@ __all__ = [
     "polynomial_to_chebyshev_polynomial_t",
     "DegreeError",
     "DomainError",
+    "LegendrePolynomialP",
+    "legendre_polynomial_p",
     "ParameterError",
     "ParameterMismatchError",
     "Polynomial",
