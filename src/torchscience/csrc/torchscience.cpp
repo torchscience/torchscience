@@ -34,6 +34,7 @@
 #include "cpu/signal_processing/waveform/linear_chirp_wave.h"
 #include "cpu/signal_processing/waveform/logarithmic_chirp_wave.h"
 #include "cpu/signal_processing/waveform/hyperbolic_chirp_wave.h"
+#include "cpu/signal_processing/waveform/frequency_modulated_wave.h"
 #include "meta/signal_processing/waveform/sine_wave.h"
 #include "autograd/signal_processing/waveform/sine_wave.h"
 // noise - CompositeExplicitAutograd
@@ -498,6 +499,18 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("hyperbolic_chirp_wave(int? n=None, Tensor? t=None, *, "
              "Tensor f0, Tensor f1, float t1=1.0, float sample_rate=1.0, "
              "Tensor amplitude, Tensor phase, "
+             "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
+
+  // Sinusoidal FM
+  module.def("frequency_modulated_wave(int? n=None, Tensor? t=None, *, "
+             "Tensor carrier_frequency, Tensor modulator_frequency, Tensor modulation_index, "
+             "float sample_rate=1.0, Tensor amplitude, Tensor phase, "
+             "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
+
+  // Arbitrary modulating signal FM - different name to avoid overload issues
+  module.def("frequency_modulated_wave_arbitrary(int? n=None, Tensor? t=None, *, "
+             "Tensor carrier_frequency, Tensor modulating_signal, Tensor modulation_index, "
+             "float sample_rate=1.0, Tensor amplitude, Tensor phase, "
              "ScalarType? dtype=None, Layout? layout=None, Device? device=None) -> Tensor");
 
   // signal_processing.window_function
