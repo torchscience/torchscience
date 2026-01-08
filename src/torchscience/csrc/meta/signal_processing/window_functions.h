@@ -52,6 +52,8 @@ TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(triangular)
 TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(periodic_triangular)
 TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(welch)
 TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(periodic_welch)
+TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(parzen)
+TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(periodic_parzen)
 
 #undef TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW
 
@@ -231,6 +233,8 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
   m.impl("periodic_triangular_window", torchscience::meta::window_function::periodic_triangular_window);
   m.impl("welch_window", torchscience::meta::window_function::welch_window);
   m.impl("periodic_welch_window", torchscience::meta::window_function::periodic_welch_window);
+  m.impl("parzen_window", torchscience::meta::window_function::parzen_window);
+  m.impl("periodic_parzen_window", torchscience::meta::window_function::periodic_parzen_window);
 
   m.impl("gaussian_window", torchscience::meta::window_function::gaussian_window);
   m.impl("periodic_gaussian_window", torchscience::meta::window_function::periodic_gaussian_window);
