@@ -155,7 +155,11 @@ from ._exceptions import (
 from ._legendre_polynomial_p import (
     LegendrePolynomialP,
     legendre_polynomial_p,
+    legendre_polynomial_p_add,
     legendre_polynomial_p_evaluate,
+    legendre_polynomial_p_negate,
+    legendre_polynomial_p_scale,
+    legendre_polynomial_p_subtract,
 )
 from ._polynomial import (
     Polynomial,
@@ -220,7 +224,11 @@ __all__ = [
     "DomainError",
     "LegendrePolynomialP",
     "legendre_polynomial_p",
+    "legendre_polynomial_p_add",
     "legendre_polynomial_p_evaluate",
+    "legendre_polynomial_p_negate",
+    "legendre_polynomial_p_scale",
+    "legendre_polynomial_p_subtract",
     "ParameterError",
     "ParameterMismatchError",
     "Polynomial",
