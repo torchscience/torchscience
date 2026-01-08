@@ -147,6 +147,11 @@ from ._chebyshev_t import (
     polynomial_to_chebyshev_t,
 )
 from ._degree_error import DegreeError
+from ._exceptions import (
+    DomainError,
+    ParameterError,
+    ParameterMismatchError,
+)
 from ._polynomial import (
     Polynomial,
     polynomial,
@@ -207,6 +212,9 @@ __all__ = [
     "chebyshev_t_weight",
     "polynomial_to_chebyshev_t",
     "DegreeError",
+    "DomainError",
+    "ParameterError",
+    "ParameterMismatchError",
     "Polynomial",
     "PolynomialError",
     "polynomial",
