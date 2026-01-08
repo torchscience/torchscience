@@ -14,6 +14,7 @@
 #include "../../kernel/signal_processing/window_function/gaussian.h"
 #include "../../kernel/signal_processing/window_function/general_hamming.h"
 #include "../../kernel/signal_processing/window_function/general_cosine.h"
+#include "../../kernel/signal_processing/window_function/triangular.h"
 
 namespace torchscience::cpu::window_function {
 
@@ -98,6 +99,7 @@ TORCHSCIENCE_DEFINE_PARAMETERLESS_WINDOW(blackman)
 TORCHSCIENCE_DEFINE_PARAMETERLESS_WINDOW(bartlett)
 TORCHSCIENCE_DEFINE_PARAMETERLESS_WINDOW(cosine)
 TORCHSCIENCE_DEFINE_PARAMETERLESS_WINDOW(nuttall)
+TORCHSCIENCE_DEFINE_PARAMETERLESS_WINDOW(triangular)
 
 #undef TORCHSCIENCE_DEFINE_PARAMETERLESS_WINDOW
 
@@ -179,13 +181,17 @@ inline at::Tensor gaussian_window_backward_impl(
     return grad_std;
   }
 
+  // Ensure contiguous tensors for data_ptr access
+  at::Tensor grad_output_contig = grad_output.contiguous();
+  at::Tensor output_contig = output.contiguous();
+
   AT_DISPATCH_FLOATING_TYPES_AND2(
     at::kBFloat16, at::kHalf,
-    grad_output.scalar_type(),
+    grad_output_contig.scalar_type(),
     "gaussian_window_backward",
     [&] {
-      auto* grad_out_ptr = grad_output.data_ptr<scalar_t>();
-      auto* out_ptr = output.data_ptr<scalar_t>();
+      auto* grad_out_ptr = grad_output_contig.data_ptr<scalar_t>();
+      auto* out_ptr = output_contig.data_ptr<scalar_t>();
       scalar_t std_val = std_input.item<scalar_t>();
       scalar_t accum = scalar_t(0);
 
@@ -298,13 +304,17 @@ inline at::Tensor general_hamming_window_backward_impl(
     return grad_alpha;
   }
 
+  // Ensure contiguous tensors for data_ptr access
+  at::Tensor grad_output_contig = grad_output.contiguous();
+  at::Tensor output_contig = output.contiguous();
+
   AT_DISPATCH_FLOATING_TYPES_AND2(
     at::kBFloat16, at::kHalf,
-    grad_output.scalar_type(),
+    grad_output_contig.scalar_type(),
     "general_hamming_window_backward",
     [&] {
-      auto* grad_out_ptr = grad_output.data_ptr<scalar_t>();
-      auto* out_ptr = output.data_ptr<scalar_t>();
+      auto* grad_out_ptr = grad_output_contig.data_ptr<scalar_t>();
+      auto* out_ptr = output_contig.data_ptr<scalar_t>();
       scalar_t alpha_val = alpha_input.item<scalar_t>();
       scalar_t accum = scalar_t(0);
 
@@ -426,12 +436,15 @@ inline at::Tensor general_cosine_window_backward_impl(
     return grad_coeffs;
   }
 
+  // Ensure contiguous tensor for data_ptr access
+  at::Tensor grad_output_contig = grad_output.contiguous();
+
   AT_DISPATCH_FLOATING_TYPES_AND2(
     at::kBFloat16, at::kHalf,
-    grad_output.scalar_type(),
+    grad_output_contig.scalar_type(),
     "general_cosine_window_backward",
     [&] {
-      auto* grad_out_ptr = grad_output.data_ptr<scalar_t>();
+      auto* grad_out_ptr = grad_output_contig.data_ptr<scalar_t>();
       auto grad_coeffs_accessor = grad_coeffs.accessor<scalar_t, 1>();
 
       for (int64_t j = 0; j < num_coeffs; ++j) {
@@ -486,6 +499,8 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
   m.impl("periodic_cosine_window", torchscience::cpu::window_function::periodic_cosine_window);
   m.impl("nuttall_window", torchscience::cpu::window_function::nuttall_window);
   m.impl("periodic_nuttall_window", torchscience::cpu::window_function::periodic_nuttall_window);
+  m.impl("triangular_window", torchscience::cpu::window_function::triangular_window);
+  m.impl("periodic_triangular_window", torchscience::cpu::window_function::periodic_triangular_window);
 
   m.impl("gaussian_window", torchscience::cpu::window_function::gaussian_window);
   m.impl("periodic_gaussian_window", torchscience::cpu::window_function::periodic_gaussian_window);

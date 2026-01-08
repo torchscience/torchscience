@@ -48,6 +48,8 @@ TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(cosine)
 TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(periodic_cosine)
 TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(nuttall)
 TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(periodic_nuttall)
+TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(triangular)
+TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(periodic_triangular)
 
 #undef TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW
 
@@ -223,6 +225,8 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
   m.impl("periodic_cosine_window", torchscience::meta::window_function::periodic_cosine_window);
   m.impl("nuttall_window", torchscience::meta::window_function::nuttall_window);
   m.impl("periodic_nuttall_window", torchscience::meta::window_function::periodic_nuttall_window);
+  m.impl("triangular_window", torchscience::meta::window_function::triangular_window);
+  m.impl("periodic_triangular_window", torchscience::meta::window_function::periodic_triangular_window);
 
   m.impl("gaussian_window", torchscience::meta::window_function::gaussian_window);
   m.impl("periodic_gaussian_window", torchscience::meta::window_function::periodic_gaussian_window);

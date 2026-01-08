@@ -16,7 +16,9 @@ from ._periodic_general_hamming_window import periodic_general_hamming_window
 from ._periodic_hamming_window import periodic_hamming_window
 from ._periodic_hann_window import periodic_hann_window
 from ._periodic_nuttall_window import periodic_nuttall_window
+from ._periodic_triangular_window import periodic_triangular_window
 from ._rectangular_window import rectangular_window
+from ._triangular_window import triangular_window
 
 __all__ = [
     "bartlett_window",
@@ -37,5 +39,7 @@ __all__ = [
     "periodic_hamming_window",
     "periodic_hann_window",
     "periodic_nuttall_window",
+    "periodic_triangular_window",
     "rectangular_window",
+    "triangular_window",
 ]
