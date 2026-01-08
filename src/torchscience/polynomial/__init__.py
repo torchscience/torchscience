@@ -155,6 +155,7 @@ from ._exceptions import (
 from ._legendre_polynomial_p import (
     LegendrePolynomialP,
     legendre_polynomial_p,
+    legendre_polynomial_p_evaluate,
 )
 from ._polynomial import (
     Polynomial,
@@ -219,6 +220,7 @@ __all__ = [
     "DomainError",
     "LegendrePolynomialP",
     "legendre_polynomial_p",
+    "legendre_polynomial_p_evaluate",
     "ParameterError",
     "ParameterMismatchError",
     "Polynomial",
