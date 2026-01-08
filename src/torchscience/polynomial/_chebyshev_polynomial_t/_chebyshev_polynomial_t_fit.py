@@ -5,6 +5,8 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
+from torchscience.polynomial._exceptions import DomainError
+
 from ._chebyshev_polynomial_t import ChebyshevPolynomialT
 from ._chebyshev_polynomial_t_vandermonde import (
     chebyshev_polynomial_t_vandermonde,
@@ -21,7 +23,7 @@ def chebyshev_polynomial_t_fit(
     Parameters
     ----------
     x : Tensor
-        Sample points, shape (n,).
+        Sample points, shape (n,). Must be in [-1, 1].
     y : Tensor
         Sample values, shape (n,).
     degree : int
@@ -31,6 +33,11 @@ def chebyshev_polynomial_t_fit(
     -------
     ChebyshevPolynomialT
         Fitted Chebyshev series.
+
+    Raises
+    ------
+    DomainError
+        If any sample points are outside [-1, 1].
 
     Notes
     -----
@@ -42,6 +49,14 @@ def chebyshev_polynomial_t_fit(
     >>> y = x**2
     >>> c = chebyshev_polynomial_t_fit(x, y, degree=2)
     """
+    domain = ChebyshevPolynomialT.DOMAIN
+
+    if ((x < domain[0]) | (x > domain[1])).any():
+        raise DomainError(
+            f"Fitting points must be in [{domain[0]}, {domain[1]}] "
+            f"for ChebyshevPolynomialT"
+        )
+
     # Build Vandermonde matrix
     V = chebyshev_polynomial_t_vandermonde(x, degree)
 

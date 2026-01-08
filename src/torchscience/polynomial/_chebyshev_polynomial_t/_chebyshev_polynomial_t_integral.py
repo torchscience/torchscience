@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 from torch import Tensor
 
 from ._chebyshev_polynomial_t import ChebyshevPolynomialT
@@ -44,6 +46,16 @@ def chebyshev_polynomial_t_integral(
     >>> chebyshev_polynomial_t_integral(a, torch.tensor(-1.0), torch.tensor(1.0))
     tensor(2.)
     """
+    domain = ChebyshevPolynomialT.DOMAIN
+
+    if (lower < domain[0]).any() or (upper > domain[1]).any():
+        warnings.warn(
+            f"Integration bounds extend outside natural domain "
+            f"[{domain[0]}, {domain[1]}] for ChebyshevPolynomialT. "
+            f"Results may be numerically unstable.",
+            stacklevel=2,
+        )
+
     # Compute antiderivative with C=0
     antideriv = chebyshev_polynomial_t_antiderivative(a, constant=0.0)
 

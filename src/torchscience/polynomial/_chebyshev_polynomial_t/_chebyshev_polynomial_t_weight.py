@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import warnings
+
 import torch
 from torch import Tensor
+
+from ._chebyshev_polynomial_t import ChebyshevPolynomialT
 
 
 def chebyshev_polynomial_t_weight(
@@ -36,4 +40,13 @@ def chebyshev_polynomial_t_weight(
     >>> chebyshev_polynomial_t_weight(torch.tensor([0.0]))
     tensor([1.])
     """
+    domain = ChebyshevPolynomialT.DOMAIN
+
+    if ((x < domain[0]) | (x > domain[1])).any():
+        warnings.warn(
+            f"Evaluating ChebyshevPolynomialT weight function outside natural domain "
+            f"[{domain[0]}, {domain[1]}]. Results may be NaN or complex.",
+            stacklevel=2,
+        )
+
     return 1.0 / torch.sqrt(1.0 - x**2)

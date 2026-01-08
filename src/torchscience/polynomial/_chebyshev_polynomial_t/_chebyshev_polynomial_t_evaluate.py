@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 from torch import Tensor
 
 from torchscience.polynomial._chebyshev_polynomial_t._chebyshev_polynomial_t import (
@@ -27,6 +29,11 @@ def chebyshev_polynomial_t_evaluate(
     Tensor
         Values c(x), shape is broadcast of c's batch dims with x's shape.
 
+    Warnings
+    --------
+    UserWarning
+        If any evaluation points are outside the natural domain [-1, 1].
+
     Notes
     -----
     Uses Clenshaw's algorithm for numerical stability:
@@ -41,6 +48,17 @@ def chebyshev_polynomial_t_evaluate(
     >>> chebyshev_polynomial_t_evaluate(c, torch.tensor([0.0]))
     tensor([-2.])  # 1 + 0 + 3*(-1) = -2
     """
+    # Domain check only applies to real tensors (complex roots are expected)
+    if not x.is_complex():
+        domain = ChebyshevPolynomialT.DOMAIN
+
+        if ((x < domain[0]) | (x > domain[1])).any():
+            warnings.warn(
+                f"Evaluating ChebyshevPolynomialT outside natural domain "
+                f"[{domain[0]}, {domain[1]}]. Results may be numerically unstable.",
+                stacklevel=2,
+            )
+
     coeffs = c.coeffs
     n = coeffs.shape[-1]
 
