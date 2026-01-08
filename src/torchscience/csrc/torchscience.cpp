@@ -531,6 +531,8 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("periodic_nuttall_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
   module.def("triangular_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
   module.def("periodic_triangular_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("welch_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("periodic_welch_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
 
   // Parameterized windows: Gaussian
   module.def("gaussian_window(int n, Tensor std, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
