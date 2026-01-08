@@ -1,4 +1,5 @@
 from ._bartlett_window import bartlett_window
+from ._blackman_harris_window import blackman_harris_window
 from ._blackman_window import blackman_window
 from ._cosine_window import cosine_window
 from ._gaussian_window import gaussian_window
@@ -9,6 +10,7 @@ from ._hann_window import hann_window
 from ._nuttall_window import nuttall_window
 from ._parzen_window import parzen_window
 from ._periodic_bartlett_window import periodic_bartlett_window
+from ._periodic_blackman_harris_window import periodic_blackman_harris_window
 from ._periodic_blackman_window import periodic_blackman_window
 from ._periodic_cosine_window import periodic_cosine_window
 from ._periodic_gaussian_window import periodic_gaussian_window
@@ -26,6 +28,7 @@ from ._welch_window import welch_window
 
 __all__ = [
     "bartlett_window",
+    "blackman_harris_window",
     "blackman_window",
     "cosine_window",
     "gaussian_window",
@@ -36,6 +39,7 @@ __all__ = [
     "nuttall_window",
     "parzen_window",
     "periodic_bartlett_window",
+    "periodic_blackman_harris_window",
     "periodic_blackman_window",
     "periodic_cosine_window",
     "periodic_gaussian_window",

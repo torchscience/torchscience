@@ -98,6 +98,7 @@ DEFINE_PARAMETERLESS_WINDOW_ROUTER(nuttall)
 DEFINE_PARAMETERLESS_WINDOW_ROUTER(triangular)
 DEFINE_PARAMETERLESS_WINDOW_ROUTER(welch)
 DEFINE_PARAMETERLESS_WINDOW_ROUTER(parzen)
+DEFINE_PARAMETERLESS_WINDOW_ROUTER(blackman_harris)
 
 #undef DEFINE_PARAMETERLESS_WINDOW_ROUTER
 
@@ -241,6 +242,8 @@ TORCH_LIBRARY_IMPL(torchscience, CompositeExplicitAutograd, module) {
   module.impl("periodic_welch_window", &torchscience::composite::window_function::periodic_welch_window);
   module.impl("parzen_window", &torchscience::composite::window_function::parzen_window);
   module.impl("periodic_parzen_window", &torchscience::composite::window_function::periodic_parzen_window);
+  module.impl("blackman_harris_window", &torchscience::composite::window_function::blackman_harris_window);
+  module.impl("periodic_blackman_harris_window", &torchscience::composite::window_function::periodic_blackman_harris_window);
 
   module.impl("gaussian_window", &torchscience::composite::window_function::gaussian_window);
   module.impl("periodic_gaussian_window", &torchscience::composite::window_function::periodic_gaussian_window);
