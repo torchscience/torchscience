@@ -3,6 +3,7 @@ from ._bartlett_window import bartlett_window
 from ._blackman_harris_window import blackman_harris_window
 from ._blackman_window import blackman_window
 from ._cosine_window import cosine_window
+from ._exponential_window import exponential_window
 from ._flat_top_window import flat_top_window
 from ._gaussian_window import gaussian_window
 from ._general_cosine_window import general_cosine_window
@@ -18,6 +19,7 @@ from ._periodic_bartlett_window import periodic_bartlett_window
 from ._periodic_blackman_harris_window import periodic_blackman_harris_window
 from ._periodic_blackman_window import periodic_blackman_window
 from ._periodic_cosine_window import periodic_cosine_window
+from ._periodic_exponential_window import periodic_exponential_window
 from ._periodic_flat_top_window import periodic_flat_top_window
 from ._periodic_gaussian_window import periodic_gaussian_window
 from ._periodic_general_cosine_window import periodic_general_cosine_window
@@ -44,6 +46,7 @@ __all__ = [
     "blackman_harris_window",
     "blackman_window",
     "cosine_window",
+    "exponential_window",
     "flat_top_window",
     "gaussian_window",
     "general_cosine_window",
@@ -59,6 +62,7 @@ __all__ = [
     "periodic_blackman_harris_window",
     "periodic_blackman_window",
     "periodic_cosine_window",
+    "periodic_exponential_window",
     "periodic_flat_top_window",
     "periodic_gaussian_window",
     "periodic_general_cosine_window",
