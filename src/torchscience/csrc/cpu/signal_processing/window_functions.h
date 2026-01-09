@@ -19,6 +19,7 @@
 #include "../../kernel/signal_processing/window_function/parzen.h"
 #include "../../kernel/signal_processing/window_function/blackman_harris.h"
 #include "../../kernel/signal_processing/window_function/flat_top.h"
+#include "../../kernel/signal_processing/window_function/sine.h"
 
 namespace torchscience::cpu::window_function {
 
@@ -108,6 +109,7 @@ TORCHSCIENCE_DEFINE_PARAMETERLESS_WINDOW(welch)
 TORCHSCIENCE_DEFINE_PARAMETERLESS_WINDOW(parzen)
 TORCHSCIENCE_DEFINE_PARAMETERLESS_WINDOW(blackman_harris)
 TORCHSCIENCE_DEFINE_PARAMETERLESS_WINDOW(flat_top)
+TORCHSCIENCE_DEFINE_PARAMETERLESS_WINDOW(sine)
 
 #undef TORCHSCIENCE_DEFINE_PARAMETERLESS_WINDOW
 
@@ -517,6 +519,8 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
   m.impl("periodic_blackman_harris_window", torchscience::cpu::window_function::periodic_blackman_harris_window);
   m.impl("flat_top_window", torchscience::cpu::window_function::flat_top_window);
   m.impl("periodic_flat_top_window", torchscience::cpu::window_function::periodic_flat_top_window);
+  m.impl("sine_window", torchscience::cpu::window_function::sine_window);
+  m.impl("periodic_sine_window", torchscience::cpu::window_function::periodic_sine_window);
 
   m.impl("gaussian_window", torchscience::cpu::window_function::gaussian_window);
   m.impl("periodic_gaussian_window", torchscience::cpu::window_function::periodic_gaussian_window);

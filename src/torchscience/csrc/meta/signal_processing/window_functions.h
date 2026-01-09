@@ -58,6 +58,8 @@ TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(blackman_harris)
 TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(periodic_blackman_harris)
 TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(flat_top)
 TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(periodic_flat_top)
+TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(sine)
+TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(periodic_sine)
 
 #undef TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW
 
@@ -243,6 +245,8 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
   m.impl("periodic_blackman_harris_window", torchscience::meta::window_function::periodic_blackman_harris_window);
   m.impl("flat_top_window", torchscience::meta::window_function::flat_top_window);
   m.impl("periodic_flat_top_window", torchscience::meta::window_function::periodic_flat_top_window);
+  m.impl("sine_window", torchscience::meta::window_function::sine_window);
+  m.impl("periodic_sine_window", torchscience::meta::window_function::periodic_sine_window);
 
   m.impl("gaussian_window", torchscience::meta::window_function::gaussian_window);
   m.impl("periodic_gaussian_window", torchscience::meta::window_function::periodic_gaussian_window);
