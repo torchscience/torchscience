@@ -73,3 +73,15 @@ TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(regularized_gamma_p, a, x)
 #include "../kernel/special_functions/regularized_gamma_q_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(regularized_gamma_q, a, x)
+
+#include "../kernel/special_functions/modified_bessel_i_0.h"
+#include "../kernel/special_functions/modified_bessel_i_0_backward.h"
+#include "../kernel/special_functions/modified_bessel_i_0_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(modified_bessel_i_0, z)
+
+#include "../kernel/special_functions/modified_bessel_i_1.h"
+#include "../kernel/special_functions/modified_bessel_i_1_backward.h"
+#include "../kernel/special_functions/modified_bessel_i_1_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(modified_bessel_i_1, z)
