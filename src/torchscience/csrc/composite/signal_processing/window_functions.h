@@ -102,6 +102,7 @@ DEFINE_PARAMETERLESS_WINDOW_ROUTER(blackman_harris)
 DEFINE_PARAMETERLESS_WINDOW_ROUTER(flat_top)
 DEFINE_PARAMETERLESS_WINDOW_ROUTER(sine)
 DEFINE_PARAMETERLESS_WINDOW_ROUTER(bartlett_hann)
+DEFINE_PARAMETERLESS_WINDOW_ROUTER(lanczos)
 
 #undef DEFINE_PARAMETERLESS_WINDOW_ROUTER
 
@@ -253,6 +254,8 @@ TORCH_LIBRARY_IMPL(torchscience, CompositeExplicitAutograd, module) {
   module.impl("periodic_sine_window", &torchscience::composite::window_function::periodic_sine_window);
   module.impl("bartlett_hann_window", &torchscience::composite::window_function::bartlett_hann_window);
   module.impl("periodic_bartlett_hann_window", &torchscience::composite::window_function::periodic_bartlett_hann_window);
+  module.impl("lanczos_window", &torchscience::composite::window_function::lanczos_window);
+  module.impl("periodic_lanczos_window", &torchscience::composite::window_function::periodic_lanczos_window);
 
   module.impl("gaussian_window", &torchscience::composite::window_function::gaussian_window);
   module.impl("periodic_gaussian_window", &torchscience::composite::window_function::periodic_gaussian_window);

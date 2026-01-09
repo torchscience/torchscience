@@ -9,6 +9,7 @@ from ._general_cosine_window import general_cosine_window
 from ._general_hamming_window import general_hamming_window
 from ._hamming_window import hamming_window
 from ._hann_window import hann_window
+from ._lanczos_window import lanczos_window
 from ._nuttall_window import nuttall_window
 from ._parzen_window import parzen_window
 from ._periodic_bartlett_hann_window import periodic_bartlett_hann_window
@@ -22,6 +23,7 @@ from ._periodic_general_cosine_window import periodic_general_cosine_window
 from ._periodic_general_hamming_window import periodic_general_hamming_window
 from ._periodic_hamming_window import periodic_hamming_window
 from ._periodic_hann_window import periodic_hann_window
+from ._periodic_lanczos_window import periodic_lanczos_window
 from ._periodic_nuttall_window import periodic_nuttall_window
 from ._periodic_parzen_window import periodic_parzen_window
 from ._periodic_sine_window import periodic_sine_window
@@ -44,6 +46,7 @@ __all__ = [
     "general_hamming_window",
     "hamming_window",
     "hann_window",
+    "lanczos_window",
     "nuttall_window",
     "parzen_window",
     "periodic_bartlett_hann_window",
@@ -57,6 +60,7 @@ __all__ = [
     "periodic_general_hamming_window",
     "periodic_hamming_window",
     "periodic_hann_window",
+    "periodic_lanczos_window",
     "periodic_nuttall_window",
     "periodic_parzen_window",
     "periodic_sine_window",

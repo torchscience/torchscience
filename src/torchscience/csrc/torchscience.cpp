@@ -543,6 +543,8 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("periodic_sine_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
   module.def("bartlett_hann_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
   module.def("periodic_bartlett_hann_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("lanczos_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
+  module.def("periodic_lanczos_window(int n, ScalarType? dtype, Layout? layout, Device? device, bool requires_grad) -> Tensor");
 
   // Parameterized windows: Gaussian
   module.def("gaussian_window(int n, Tensor std, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");

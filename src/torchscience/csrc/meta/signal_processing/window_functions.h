@@ -62,6 +62,8 @@ TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(sine)
 TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(periodic_sine)
 TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(bartlett_hann)
 TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(periodic_bartlett_hann)
+TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(lanczos)
+TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW(periodic_lanczos)
 
 #undef TORCHSCIENCE_DEFINE_META_PARAMETERLESS_WINDOW
 
@@ -251,6 +253,8 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
   m.impl("periodic_sine_window", torchscience::meta::window_function::periodic_sine_window);
   m.impl("bartlett_hann_window", torchscience::meta::window_function::bartlett_hann_window);
   m.impl("periodic_bartlett_hann_window", torchscience::meta::window_function::periodic_bartlett_hann_window);
+  m.impl("lanczos_window", torchscience::meta::window_function::lanczos_window);
+  m.impl("periodic_lanczos_window", torchscience::meta::window_function::periodic_lanczos_window);
 
   m.impl("gaussian_window", torchscience::meta::window_function::gaussian_window);
   m.impl("periodic_gaussian_window", torchscience::meta::window_function::periodic_gaussian_window);
