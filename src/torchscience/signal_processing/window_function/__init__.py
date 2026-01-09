@@ -9,6 +9,7 @@ from ._gaussian_window import gaussian_window
 from ._general_cosine_window import general_cosine_window
 from ._general_hamming_window import general_hamming_window
 from ._hamming_window import hamming_window
+from ._hann_poisson_window import hann_poisson_window
 from ._hann_window import hann_window
 from ._kaiser_window import kaiser_window
 from ._lanczos_window import lanczos_window
@@ -25,6 +26,7 @@ from ._periodic_gaussian_window import periodic_gaussian_window
 from ._periodic_general_cosine_window import periodic_general_cosine_window
 from ._periodic_general_hamming_window import periodic_general_hamming_window
 from ._periodic_hamming_window import periodic_hamming_window
+from ._periodic_hann_poisson_window import periodic_hann_poisson_window
 from ._periodic_hann_window import periodic_hann_window
 from ._periodic_kaiser_window import periodic_kaiser_window
 from ._periodic_lanczos_window import periodic_lanczos_window
@@ -52,6 +54,7 @@ __all__ = [
     "general_cosine_window",
     "general_hamming_window",
     "hamming_window",
+    "hann_poisson_window",
     "hann_window",
     "kaiser_window",
     "lanczos_window",
@@ -68,6 +71,7 @@ __all__ = [
     "periodic_general_cosine_window",
     "periodic_general_hamming_window",
     "periodic_hamming_window",
+    "periodic_hann_poisson_window",
     "periodic_hann_window",
     "periodic_kaiser_window",
     "periodic_lanczos_window",
