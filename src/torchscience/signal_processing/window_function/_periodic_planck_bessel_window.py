@@ -4,7 +4,7 @@ import torch
 from torch import Tensor
 
 
-def planck_bessel_window(
+def periodic_planck_bessel_window(
     n: int,
     epsilon: Union[float, Tensor] = 0.1,
     beta: Union[float, Tensor] = 8.0,
@@ -14,30 +14,29 @@ def planck_bessel_window(
     device: Optional[torch.device] = None,
 ) -> Tensor:
     """
-    Planck-Bessel window function (symmetric).
+    Planck-Bessel window function (periodic).
 
-    Computes a symmetric Planck-Bessel window of length n. This window combines
-    the Planck taper window with the Kaiser-Bessel window, providing smooth
-    transitions at the edges with excellent sidelobe suppression.
+    Computes a periodic Planck-Bessel window of length n. The periodic version
+    is designed for spectral analysis where the window will be used with DFT/FFT.
 
     Mathematical Definition
     -----------------------
-    The symmetric Planck-Bessel window is defined as the product of a Planck
-    taper window and a Kaiser-Bessel window:
+    The periodic Planck-Bessel window uses a denominator of n (instead of n-1)
+    for proper periodicity:
 
         w[k] = planck_taper[k] * kaiser[k]
 
     where:
-        planck_taper[k] uses the Planck function for smooth tapering:
-            - For k in [0, epsilon * (n-1)]:
-                z = epsilon * (n-1) * (1/k + 1/(k - epsilon*(n-1)))
+        planck_taper[k] uses the Planck function with denominator n:
+            - For k in (0, epsilon * n):
+                z = epsilon * n * (1/k + 1/(k - epsilon*n))
                 planck_taper[k] = 1 / (1 + exp(z))
-            - For k in [epsilon * (n-1), (1-epsilon) * (n-1)]:
+            - For k in [epsilon * n, (1-epsilon) * n]:
                 planck_taper[k] = 1
-            - For k in [(1-epsilon) * (n-1), n-1]:
-                planck_taper[k] = planck_taper[n-1-k]  (mirrored from left)
+            - For k in ((1-epsilon) * n, n):
+                planck_taper[k] = planck_taper[n-k]  (mirrored from left)
 
-        kaiser[k] = I_0(beta * sqrt(1 - ((k - (n-1)/2) / ((n-1)/2))^2)) / I_0(beta)
+        kaiser[k] = I_0(beta * sqrt(1 - ((k - n/2) / (n/2))^2)) / I_0(beta)
             where I_0 is the modified Bessel function of the first kind, order 0.
 
     Properties
@@ -45,9 +44,7 @@ def planck_bessel_window(
     - Combines smooth Planck taper transitions with Kaiser-Bessel sidelobe control
     - epsilon controls the width of the taper regions at the edges
     - beta controls the Kaiser-Bessel shape (sidelobe suppression)
-    - When epsilon = 0, reduces to the Kaiser window
-    - When beta = 0, reduces to the Planck taper window
-    - Commonly used in gravitational wave data analysis
+    - Designed for spectral analysis with FFT
 
     Parameters
     ----------
@@ -56,7 +53,7 @@ def planck_bessel_window(
     epsilon : float or Tensor, optional
         Planck taper parameter controlling the width of the taper regions.
         Must be in [0, 0.5]. Default is 0.1.
-        - epsilon = 0: no Planck taper (reduces to Kaiser window)
+        - epsilon = 0: no Planck taper (reduces to periodic Kaiser window)
         - epsilon = 0.5: taper extends to the center
     beta : float or Tensor, optional
         Kaiser-Bessel shape parameter. Default is 8.0.
@@ -84,13 +81,12 @@ def planck_bessel_window(
 
     See Also
     --------
-    periodic_planck_bessel_window : Periodic version for spectral analysis.
-    planck_taper_window : Pure Planck taper window.
-    kaiser_window : Pure Kaiser-Bessel window.
+    planck_bessel_window : Symmetric version.
+    periodic_kaiser_window : Pure periodic Kaiser-Bessel window.
     """
     if n < 0:
         raise ValueError(
-            f"planck_bessel_window: n must be non-negative, got {n}"
+            f"periodic_planck_bessel_window: n must be non-negative, got {n}"
         )
 
     if n == 0:
@@ -108,8 +104,8 @@ def planck_bessel_window(
     if not isinstance(beta, Tensor):
         beta = torch.tensor(beta, dtype=epsilon.dtype, device=epsilon.device)
 
-    # For symmetric window, denominator is n - 1
-    N = float(n - 1)
+    # For periodic window, denominator is n
+    N = float(n)
 
     k = torch.arange(n, dtype=epsilon.dtype, device=epsilon.device)
 
@@ -145,10 +141,9 @@ def planck_bessel_window(
             planck_taper = planck_taper.clone()
         planck_taper[right_mask] = 1.0 / (1.0 + torch.exp(z_right))
 
-    # Boundary points: k = 0 and k = N are exactly 0
+    # Boundary point: k = 0 is exactly 0
+    # Note: for periodic window, k = n-1 is NOT forced to 0
     planck_taper[0] = 0.0
-    if n > 1:
-        planck_taper[-1] = 0.0
 
     # === Kaiser-Bessel component ===
     # Kaiser window = I_0(beta * sqrt(1 - x^2)) / I_0(beta)

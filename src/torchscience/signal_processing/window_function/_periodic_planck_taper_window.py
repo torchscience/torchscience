@@ -4,7 +4,7 @@ import torch
 from torch import Tensor
 
 
-def planck_taper_window(
+def periodic_planck_taper_window(
     n: int,
     epsilon: Union[float, Tensor] = 0.1,
     *,
@@ -13,16 +13,15 @@ def planck_taper_window(
     device: Optional[torch.device] = None,
 ) -> Tensor:
     """
-    Planck-taper window function (symmetric).
+    Planck-taper window function (periodic).
 
-    Computes a symmetric Planck-taper window of length n. The Planck-taper
-    window provides smooth transitions using a sigmoid function, creating
-    infinitely differentiable tapers while maintaining a flat central region.
+    Computes a periodic Planck-taper window of length n. The periodic version
+    is designed for spectral analysis where the window will be used with DFT/FFT.
 
     Mathematical Definition
     -----------------------
-    The symmetric Planck-taper window is defined for normalized position
-    t = k / (n - 1) where k = 0, 1, ..., n-1:
+    The periodic Planck-taper window is defined for normalized position
+    t = k / n where k = 0, 1, ..., n-1:
 
     For 0 < t < epsilon:
         w(t) = 1 / (1 + exp(Z⁺(t)))
@@ -35,17 +34,16 @@ def planck_taper_window(
         w(t) = 1 / (1 + exp(Z⁻(t)))
         where Z⁻(t) = epsilon * (1/(1 - t) + 1/(1 - t - epsilon))
 
-    At the boundaries t = 0 and t = 1:
+    At the boundary t = 0:
         w(t) = 0
 
     Properties
     ----------
     - Infinitely differentiable (C∞) at all points
     - epsilon controls the fraction of the window that is tapered on each side
-    - epsilon = 0: rectangular window (all ones, discontinuous at edges)
+    - epsilon = 0: rectangular window (all ones)
     - epsilon = 0.5: fully tapered (no flat region)
-    - The window uses a smooth sigmoid transition based on the Planck function
-    - Symmetric about the center
+    - Designed for spectral analysis with FFT
 
     Parameters
     ----------
@@ -73,19 +71,14 @@ def planck_taper_window(
     This function supports autograd - gradients flow through the epsilon
     parameter.
 
-    The Planck-taper window is named after the physicist Max Planck and uses
-    a similar functional form to the Planck distribution. It provides an
-    alternative to the Tukey window with smoother (infinitely differentiable)
-    transitions.
-
     See Also
     --------
-    periodic_planck_taper_window : Periodic version for spectral analysis.
-    tukey_window : Cosine-tapered window with similar flat-top structure.
+    planck_taper_window : Symmetric version.
+    periodic_tukey_window : Periodic cosine-tapered window.
     """
     if n < 0:
         raise ValueError(
-            f"planck_taper_window: n must be non-negative, got {n}"
+            f"periodic_planck_taper_window: n must be non-negative, got {n}"
         )
 
     if n == 0:
@@ -100,9 +93,8 @@ def planck_taper_window(
         target_dtype = dtype or torch.float32
         epsilon = torch.tensor(epsilon, dtype=target_dtype, device=device)
 
-    # Normalized positions t in [0, 1]
-    # For symmetric window, denominator is n - 1
-    denom = float(n - 1)
+    # For periodic window, denominator is n
+    denom = float(n)
     k = torch.arange(n, dtype=epsilon.dtype, device=epsilon.device)
     t = k / denom
 
@@ -131,9 +123,8 @@ def planck_taper_window(
     )
     window[right_mask] = 1.0 / (1.0 + torch.exp(z_right))
 
-    # Boundary points: t = 0 and t = 1 are exactly 0
+    # Boundary point: t = 0 is exactly 0
     window[0] = 0.0
-    window[n - 1] = 0.0
 
     if dtype is not None and window.dtype != dtype:
         window = window.to(dtype=dtype)

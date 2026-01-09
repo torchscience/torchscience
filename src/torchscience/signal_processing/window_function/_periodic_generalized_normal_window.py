@@ -4,7 +4,7 @@ import torch
 from torch import Tensor
 
 
-def generalized_normal_window(
+def periodic_generalized_normal_window(
     n: int,
     p: Union[float, Tensor],
     sigma: Union[float, Tensor],
@@ -14,28 +14,27 @@ def generalized_normal_window(
     device: Optional[torch.device] = None,
 ) -> Tensor:
     """
-    Generalized normal (generalized Gaussian) window function (symmetric).
+    Generalized normal (generalized Gaussian) window function (periodic).
 
-    Computes a symmetric generalized normal window of length n. This window
-    generalizes the Gaussian window by allowing control over the shape via
-    the exponent parameter p.
+    Computes a periodic generalized normal window of length n. The periodic
+    version is designed for spectral analysis where the window will be used
+    with DFT/FFT.
 
     Mathematical Definition
     -----------------------
-    The symmetric generalized normal window is defined as:
+    The periodic generalized normal window is defined as:
 
         w[k] = exp(-|(k - center) / sigma|^p)
 
-    for k = 0, 1, ..., n-1, where center = (n-1)/2.
+    for k = 0, 1, ..., n-1, where center = n/2 for the periodic version.
 
     Properties
     ----------
-    - p = 2: Standard Gaussian window
-    - p = 1: Laplacian (double exponential) window
+    - p = 2: Standard periodic Gaussian window
+    - p = 1: Periodic Laplacian (double exponential) window
     - p < 2: Heavier tails than Gaussian (more peaked)
     - p > 2: Lighter tails than Gaussian (flatter top, approaches rectangular)
-    - p -> infinity: Approaches rectangular window
-    - sigma controls the effective width of the window
+    - Designed for spectral analysis with FFT
 
     Parameters
     ----------
@@ -69,12 +68,13 @@ def generalized_normal_window(
 
     See Also
     --------
-    gaussian_window : Special case with p = 2.
-    exponential_window : Related window with exponential decay.
+    generalized_normal_window : Symmetric version for filter design.
+    periodic_gaussian_window : Special case with p = 2.
+    periodic_exponential_window : Related window with exponential decay.
     """
     if n < 0:
         raise ValueError(
-            f"generalized_normal_window: n must be non-negative, got {n}"
+            f"periodic_generalized_normal_window: n must be non-negative, got {n}"
         )
 
     if n == 0:
@@ -99,8 +99,8 @@ def generalized_normal_window(
         p = p.to(dtype=common_dtype)
         sigma = sigma.to(dtype=common_dtype)
 
-    # For symmetric window, center = (n - 1) / 2
-    center = (n - 1) / 2.0
+    # For periodic window, center = n / 2
+    center = n / 2.0
 
     k = torch.arange(n, dtype=p.dtype, device=p.device)
 
