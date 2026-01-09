@@ -106,8 +106,8 @@ class TestBinomialCdfGradients:
         assert grad_p < 0
 
 
-class TestBinomialPmfForward:
-    """Test binomial_pmf forward correctness."""
+class TestBinomialProbabilityMassForward:
+    """Test binomial_probability_mass forward correctness."""
 
     def test_scipy_comparison(self):
         """Compare against scipy.stats.binom.pmf."""
@@ -115,7 +115,7 @@ class TestBinomialPmfForward:
         n = torch.tensor(10.0)
         p = torch.tensor(0.3)
 
-        result = torch.ops.torchscience.binomial_pmf(k, n, p)
+        result = torch.ops.torchscience.binomial_probability_mass(k, n, p)
         expected = torch.tensor(
             scipy.stats.binom.pmf(k.numpy(), n=10, p=0.3),
             dtype=torch.float32,
@@ -128,7 +128,7 @@ class TestBinomialPmfForward:
         n = torch.tensor(10.0)
         p = torch.tensor(0.5)
 
-        pmf = torch.ops.torchscience.binomial_pmf(k, n, p)
+        pmf = torch.ops.torchscience.binomial_probability_mass(k, n, p)
         assert torch.allclose(pmf.sum(), torch.tensor(1.0), atol=1e-5)
 
     def test_mode(self):
@@ -137,7 +137,7 @@ class TestBinomialPmfForward:
         n = torch.tensor(20.0)
         p = torch.tensor(0.4)
 
-        pmf = torch.ops.torchscience.binomial_pmf(k, n, p)
+        pmf = torch.ops.torchscience.binomial_probability_mass(k, n, p)
         mode = k[pmf.argmax()]
 
         # Mode should be floor(n*p+p) or floor(n*p+p)-1
@@ -150,11 +150,11 @@ class TestBinomialPmfForward:
         n = torch.tensor(10.0)
         p = torch.tensor(0.5)
 
-        pmf = torch.ops.torchscience.binomial_pmf(k, n, p)
+        pmf = torch.ops.torchscience.binomial_probability_mass(k, n, p)
         assert torch.allclose(pmf, torch.zeros_like(pmf))
 
 
-class TestBinomialPmfGradients:
+class TestBinomialProbabilityMassGradients:
     """Test gradient computation for p."""
 
     def test_gradcheck_p(self):
@@ -164,6 +164,6 @@ class TestBinomialPmfGradients:
         p = torch.tensor(0.5, dtype=torch.float64, requires_grad=True)
 
         def fn(p_):
-            return torch.ops.torchscience.binomial_pmf(k, n, p_)
+            return torch.ops.torchscience.binomial_probability_mass(k, n, p_)
 
         assert torch.autograd.gradcheck(fn, (p,), eps=1e-6, atol=1e-4)

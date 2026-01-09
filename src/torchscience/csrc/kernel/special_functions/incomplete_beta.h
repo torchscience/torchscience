@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include <limits>
 
 #include "beta.h"
 
@@ -25,6 +26,11 @@ c10::complex<T> incomplete_beta_cf(c10::complex<T> a, c10::complex<T> b, c10::co
 
 template <typename T>
 T incomplete_beta(T x, T a, T b) {
+  // Check for invalid parameters (non-positive a or b)
+  if (a <= T(0) || b <= T(0)) {
+    return std::numeric_limits<T>::quiet_NaN();
+  }
+
   if (x <= T(0)) {
     return T(0);
   }
@@ -62,6 +68,13 @@ c10::complex<T> incomplete_beta(
 ) {
   c10::complex<T> zero(T(0), T(0));
   c10::complex<T> one(T(1), T(0));
+
+  // Check for invalid parameters (non-positive real parts of a or b)
+  // For complex parameters, the function is undefined when Re(a) <= 0 or Re(b) <= 0
+  if (a.real() <= T(0) || b.real() <= T(0)) {
+    T nan_val = std::numeric_limits<T>::quiet_NaN();
+    return c10::complex<T>(nan_val, nan_val);
+  }
 
   if (std::abs(x) < detail::beta_eps<T>()) {
     return zero;

@@ -1,7 +1,3 @@
-"""Scale a Legendre series by a scalar."""
-
-from __future__ import annotations
-
 from torch import Tensor
 
 from ._legendre_polynomial_p import LegendrePolynomialP

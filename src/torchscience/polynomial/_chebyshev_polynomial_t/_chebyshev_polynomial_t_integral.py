@@ -1,7 +1,3 @@
-"""Definite integral of Chebyshev series."""
-
-from __future__ import annotations
-
 import warnings
 
 from torch import Tensor

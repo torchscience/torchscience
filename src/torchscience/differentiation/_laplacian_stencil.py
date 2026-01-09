@@ -4,10 +4,10 @@ from collections import defaultdict
 
 import torch
 
-from torchscience.differentiation import (
-    FiniteDifferenceStencil,
+from torchscience.differentiation._finite_difference_stencil import (
     finite_difference_stencil,
 )
+from torchscience.differentiation._stencil import FiniteDifferenceStencil
 
 
 def laplacian_stencil(

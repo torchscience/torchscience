@@ -283,9 +283,9 @@ inline at::Tensor normal_survival(
 }
 
 /**
- * Autograd function for normal logpdf.
+ * Autograd function for normal log probability density.
  */
-class NormalLogpdfFunction : public torch::autograd::Function<NormalLogpdfFunction> {
+class NormalLogProbabilityDensityFunction : public torch::autograd::Function<NormalLogProbabilityDensityFunction> {
 public:
   static at::Tensor forward(
       torch::autograd::AutogradContext* ctx,
@@ -298,7 +298,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::normal_logpdf", "")
+        .findSchemaOrThrow("torchscience::normal_log_probability_density", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(x, loc, scale);
   }
@@ -321,7 +321,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::normal_logpdf_backward", "")
+        .findSchemaOrThrow("torchscience::normal_log_probability_density_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, x, loc, scale);
@@ -330,12 +330,12 @@ public:
   }
 };
 
-inline at::Tensor normal_logpdf(
+inline at::Tensor normal_log_probability_density(
     const at::Tensor& x,
     const at::Tensor& loc,
     const at::Tensor& scale
 ) {
-  return NormalLogpdfFunction::apply(x, loc, scale);
+  return NormalLogProbabilityDensityFunction::apply(x, loc, scale);
 }
 
 }  // namespace torchscience::autograd::probability
@@ -345,5 +345,5 @@ TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {
   m.impl("normal_probability_density", &torchscience::autograd::probability::normal_probability_density);
   m.impl("normal_quantile", &torchscience::autograd::probability::normal_quantile);
   m.impl("normal_survival", &torchscience::autograd::probability::normal_survival);
-  m.impl("normal_logpdf", &torchscience::autograd::probability::normal_logpdf);
+  m.impl("normal_log_probability_density", &torchscience::autograd::probability::normal_log_probability_density);
 }

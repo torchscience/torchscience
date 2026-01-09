@@ -84,9 +84,6 @@ class TestBeta:
         torch.testing.assert_close(result, expected, rtol=1e-5, atol=1e-5)
 
     @pytest.mark.parametrize("dtype", [torch.complex64, torch.complex128])
-    @pytest.mark.xfail(
-        reason="Complex dispatch not yet implemented in CPU macros"
-    )
     def test_complex_dtypes(self, dtype):
         """Test forward pass for complex dtypes."""
         a = torch.tensor([2.0 + 0.5j, 3.0 + 0.0j], dtype=dtype)
@@ -195,9 +192,6 @@ class TestBeta:
     # Complex input tests
     # =========================================================================
 
-    @pytest.mark.xfail(
-        reason="Complex dispatch not yet implemented in CPU macros"
-    )
     def test_complex_symmetry(self):
         """Test B(a, b) = B(b, a) for complex inputs."""
         a = torch.tensor([2.0 + 1.0j, 3.0 + 0.5j], dtype=torch.complex128)
@@ -208,9 +202,6 @@ class TestBeta:
             result_ab, result_ba, rtol=1e-10, atol=1e-10
         )
 
-    @pytest.mark.xfail(
-        reason="Complex dispatch not yet implemented in CPU macros"
-    )
     def test_complex_real_axis(self):
         """Test complex inputs on real axis match real results."""
         a_real = torch.tensor([2.0, 3.0], dtype=torch.float64)

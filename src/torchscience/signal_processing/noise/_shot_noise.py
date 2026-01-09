@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Union
+from typing import Sequence, Union
 
 import torch
 from torch import Generator, Tensor
@@ -10,11 +10,13 @@ def shot_noise(
     size: Sequence[int],
     rate: Union[float, Tensor],
     *,
-    dtype: Optional[torch.dtype] = None,
-    layout: Optional[torch.layout] = None,
-    device: Optional[torch.device] = None,
+    generator: Generator | None = None,
+    out: Tensor | None = None,
+    dtype: torch.dtype | None = None,
+    layout: torch.layout | None = torch.strided,
+    device: torch.device | None = None,
     requires_grad: bool = False,
-    generator: Optional[Generator] = None,
+    pin_memory: bool | None = False,
 ) -> Tensor:
     """
     Generate differentiable shot noise using Gaussian approximation.
@@ -43,18 +45,20 @@ def shot_noise(
         Rate parameter (λ) representing the expected count. Must be
         non-negative. If a tensor, it is broadcast with `size` to allow
         spatially-varying rates across the output.
+    generator : torch.Generator, optional
+        A pseudorandom number generator for sampling. If None, uses the default
+        generator.
+    out : Tensor, optional
     dtype : torch.dtype, optional
-        The desired data type of the returned tensor. Default: torch.float32.
+        The desired data type of the returned tensor. If None, uses the default
+        floating point type.
     layout : torch.layout, optional
         The desired layout of the returned tensor. Default: torch.strided.
     device : torch.device, optional
-        The desired device of the returned tensor. Default: same as rate
-        tensor, or CPU if rate is a scalar.
+        The desired device of the returned tensor. Default: CPU.
     requires_grad : bool, optional
         If True, the returned tensor will require gradients. Default: False.
-    generator : torch.Generator, optional
-        A pseudorandom number generator for sampling. If None, uses the
-        default generator.
+    pin_memory : bool, optional
 
     Returns
     -------

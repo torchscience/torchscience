@@ -9,6 +9,7 @@ from ._exceptions import (
 )
 from ._ray_intersect import RayHit, ray_intersect
 from ._ray_occluded import ray_occluded
+from .intersection import RaySphereHit, ray_sphere_intersection
 
 __all__ = [
     "ClosestPoint",
@@ -17,8 +18,10 @@ __all__ = [
     "GeometryError",
     "InsufficientPointsError",
     "RayHit",
+    "RaySphereHit",
     "closest_point",
     "convex_hull",
     "ray_intersect",
     "ray_occluded",
+    "ray_sphere_intersection",
 ]

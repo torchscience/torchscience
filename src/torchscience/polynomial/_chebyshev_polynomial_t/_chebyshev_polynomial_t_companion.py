@@ -1,7 +1,3 @@
-"""Chebyshev companion matrix."""
-
-from __future__ import annotations
-
 import math
 
 import torch

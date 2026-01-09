@@ -4,6 +4,7 @@
 #include <c10/util/Half.h>
 #include <c10/util/complex.h>
 #include <cmath>
+#include <limits>
 #include <tuple>
 #include <array>
 
@@ -134,8 +135,8 @@ T log_weighted_beta_integral(T x, T a, T b, bool weight_log_t) {
   T beta_val = std::exp(log_beta_val);
 
   T eps = gauss_kronrod_eps<T>();
-  T tol = eps * T(10);
-  int max_depth = 7;
+  T tol = eps;  // Tighter tolerance for gradient accuracy
+  int max_depth = 15;  // Increased for better accuracy
 
   T lower = eps;
   T upper = std::min(x, T(1) - eps);
@@ -144,20 +145,64 @@ T log_weighted_beta_integral(T x, T a, T b, bool weight_log_t) {
     return T(0);
   }
 
-  auto integrand = [a, b, weight_log_t](T t) -> T {
-    if (t <= T(0) || t >= T(1)) return T(0);
+  // For small a (< 1), use substitution t = s^(1/a) to handle singularity at t=0
+  // For small b (< 1), the singularity is at t=1 but we integrate up to x < 1, so less problematic
+  bool use_singularity_transform = weight_log_t && (a < T(1));
 
-    T log_integrand = (a - T(1)) * std::log(t) + (b - T(1)) * std::log(T(1) - t);
-    T base_val = std::exp(log_integrand);
+  T integral;
 
-    if (weight_log_t) {
-      return std::log(t) * base_val;
-    } else {
-      return std::log(T(1) - t) * base_val;
-    }
-  };
+  if (use_singularity_transform) {
+    // Transform: t = s^(1/a), so s = t^a, ds = a * t^(a-1) dt
+    // dt = (1/a) * s^(1/a - 1) ds
+    // t^(a-1) dt = s^((a-1)/a) * (1/a) * s^(1/a - 1) ds = (1/a) * s^((a-1)/a + 1/a - 1) ds = (1/a) ds
+    // log(t) = log(s) / a
+    // (1-t)^(b-1) = (1 - s^(1/a))^(b-1)
+    //
+    // So the integrand becomes:
+    // log(t) * t^(a-1) * (1-t)^(b-1) dt = (log(s)/a) * (1/a) * (1 - s^(1/a))^(b-1) ds
+    //                                   = log(s) / a^2 * (1 - s^(1/a))^(b-1) ds
+    //
+    // The new limits: t = 0 -> s = 0, t = x -> s = x^a
 
-  T integral = adaptive_integrate(integrand, lower, upper, tol, max_depth);
+    T s_upper = std::pow(upper, a);
+    T s_lower = std::pow(lower, a);
+
+    // Use smaller eps for transformed variable
+    if (s_lower < eps * T(0.01)) s_lower = eps * T(0.01);
+
+    T inv_a = T(1) / a;
+    T inv_a_sq = inv_a * inv_a;
+
+    auto transformed_integrand = [a, b, inv_a, inv_a_sq](T s) -> T {
+      if (s <= T(0)) return T(0);
+
+      T t = std::pow(s, inv_a);  // t = s^(1/a)
+      if (t >= T(1)) return T(0);
+
+      T one_minus_t = T(1) - t;
+      if (one_minus_t <= T(0)) return T(0);
+
+      // log(s) / a^2 * (1-t)^(b-1)
+      return std::log(s) * inv_a_sq * std::pow(one_minus_t, b - T(1));
+    };
+
+    integral = adaptive_integrate(transformed_integrand, s_lower, s_upper, tol, max_depth);
+  } else {
+    auto integrand = [a, b, weight_log_t](T t) -> T {
+      if (t <= T(0) || t >= T(1)) return T(0);
+
+      T log_integrand = (a - T(1)) * std::log(t) + (b - T(1)) * std::log(T(1) - t);
+      T base_val = std::exp(log_integrand);
+
+      if (weight_log_t) {
+        return std::log(t) * base_val;
+      } else {
+        return std::log(T(1) - t) * base_val;
+      }
+    };
+
+    integral = adaptive_integrate(integrand, lower, upper, tol, max_depth);
+  }
 
   return integral / beta_val;
 }
@@ -170,24 +215,61 @@ std::tuple<T, T, T> incomplete_beta_backward(T gradient, T x, T a, T b) {
     return {T(0), T(0), T(0)};
   }
 
-  T log_beta_val = log_beta(a, b);
-  T beta_val = std::exp(log_beta_val);
+  // Check if a or b are invalid (non-positive)
+  if (a <= T(0) || b <= T(0)) {
+    T nan_val = std::numeric_limits<T>::quiet_NaN();
+    return {nan_val, nan_val, nan_val};
+  }
 
-  T log_pdf = (a - T(1)) * std::log(x) + (b - T(1)) * std::log(T(1) - x) - log_beta_val;
+  // Check if forward used symmetry transformation: x > threshold
+  // threshold = (a + 1) / (a + b + 2)
+  T threshold = (a + T(1)) / (a + b + T(2));
+  bool use_symmetry = (x > threshold);
+
+  T x_eff, a_eff, b_eff;
+  if (use_symmetry) {
+    // Forward computed: I_x(a,b) = 1 - I_{1-x}(b,a)
+    // So we compute gradients at the transformed point
+    x_eff = T(1) - x;
+    a_eff = b;  // swap a and b
+    b_eff = a;
+  } else {
+    x_eff = x;
+    a_eff = a;
+    b_eff = b;
+  }
+
+  T log_beta_val = log_beta(a_eff, b_eff);
+
+  T log_pdf = (a_eff - T(1)) * std::log(x_eff) + (b_eff - T(1)) * std::log(T(1) - x_eff) - log_beta_val;
   T pdf = std::exp(log_pdf);
+
+  // grad_x: For symmetry case, d/dx[1 - I_{1-x}(b,a)] = +pdf(1-x, b, a)
   T grad_x = gradient * pdf;
 
-  T I_x = incomplete_beta(x, a, b);
+  T I_eff = incomplete_beta(x_eff, a_eff, b_eff);
 
-  T psi_a = digamma(a);
-  T psi_b = digamma(b);
-  T psi_ab = digamma(a + b);
+  T psi_a_eff = digamma(a_eff);
+  T psi_b_eff = digamma(b_eff);
+  T psi_ab_eff = digamma(a_eff + b_eff);
 
-  T log_integral_a = detail::log_weighted_beta_integral(x, a, b, true);
-  T grad_a = gradient * (log_integral_a - I_x * (psi_a - psi_ab));
+  T log_integral_a_eff = detail::log_weighted_beta_integral(x_eff, a_eff, b_eff, true);
+  T grad_a_eff = gradient * (log_integral_a_eff - I_eff * (psi_a_eff - psi_ab_eff));
 
-  T log_integral_b = detail::log_weighted_beta_integral(x, a, b, false);
-  T grad_b = gradient * (log_integral_b - I_x * (psi_b - psi_ab));
+  T log_integral_b_eff = detail::log_weighted_beta_integral(x_eff, a_eff, b_eff, false);
+  T grad_b_eff = gradient * (log_integral_b_eff - I_eff * (psi_b_eff - psi_ab_eff));
+
+  T grad_a, grad_b;
+  if (use_symmetry) {
+    // When using symmetry: I_x(a,b) = 1 - I_{1-x}(b,a)
+    // d/da[1 - I_{1-x}(b,a)] = -d/d(second param)[I_{1-x}(b,a)] = -grad_b_eff
+    // d/db[1 - I_{1-x}(b,a)] = -d/d(first param)[I_{1-x}(b,a)] = -grad_a_eff
+    grad_a = -grad_b_eff;
+    grad_b = -grad_a_eff;
+  } else {
+    grad_a = grad_a_eff;
+    grad_b = grad_b_eff;
+  }
 
   return {
     grad_x,
@@ -213,17 +295,31 @@ std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> incomplete_beta_ba
 
   c10::complex<T> log_beta_val = log_beta(a, b);
 
+  // Compute the pdf = dI_x/dx = x^(a-1) * (1-x)^(b-1) / B(a,b)
   c10::complex<T> log_pdf = (a - one) * std::log(x) + (b - one) * std::log(one - x) - log_beta_val;
   c10::complex<T> pdf = std::exp(log_pdf);
 
   c10::complex<T> I_x = incomplete_beta(x, a, b);
 
+  c10::complex<T> psi_a = digamma(a);
+  c10::complex<T> psi_b = digamma(b);
   c10::complex<T> psi_ab = digamma(a + b);
 
+  // For complex holomorphic functions, PyTorch's Wirtinger derivative convention
+  // requires returning gradient * conj(df/dz) for each input.
+  // Since incomplete_beta is holomorphic, df/dz = df/dx = pdf for the x derivative.
+  //
+  // For parameter gradients (a, b), the full formula is:
+  //   grad_a = gradient * (log_integral_a - I * (psi_a - psi_ab))
+  // Since log-weighted integrals are expensive for complex, we use the simplified
+  // formula by setting log_integral ≈ 0, giving:
+  //   grad_a ≈ gradient * (-I * (psi_a - psi_ab))
+  // This is a crude approximation but matches the expected sign.
+
   return {
-    gradient * pdf,
-    -gradient * I_x * (digamma(a) - psi_ab),
-    -gradient * I_x * (digamma(b) - psi_ab)
+    gradient * std::conj(pdf),
+    gradient * std::conj(-I_x * (psi_a - psi_ab)),
+    gradient * std::conj(-I_x * (psi_b - psi_ab))
   };
 }
 

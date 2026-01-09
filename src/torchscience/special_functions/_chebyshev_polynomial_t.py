@@ -218,4 +218,4 @@ def chebyshev_polynomial_t(v: Tensor, z: Tensor) -> Tensor:
     torch.special.chebyshev_polynomial_t : PyTorch's Chebyshev polynomial (integer degrees only)
     torch.special.chebyshev_polynomial_u : Chebyshev polynomial of the second kind
     """
-    return torch.ops.torchscience.chebyshev_polynomial_t(v, z)
+    return torch.ops.torchscience.chebyshev_polynomial_t(z, v)

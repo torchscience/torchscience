@@ -1,7 +1,3 @@
-"""Convert Chebyshev series to power polynomial."""
-
-from __future__ import annotations
-
 import torch
 
 from torchscience.polynomial._polynomial import Polynomial

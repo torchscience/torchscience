@@ -1,7 +1,3 @@
-"""Add two Legendre series."""
-
-from __future__ import annotations
-
 import torch
 
 from ._legendre_polynomial_p import LegendrePolynomialP

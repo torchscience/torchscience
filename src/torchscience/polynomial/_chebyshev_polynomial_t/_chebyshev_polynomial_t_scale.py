@@ -1,7 +1,3 @@
-"""Scale a Chebyshev series by a scalar."""
-
-from __future__ import annotations
-
 from torch import Tensor
 
 from ._chebyshev_polynomial_t import ChebyshevPolynomialT

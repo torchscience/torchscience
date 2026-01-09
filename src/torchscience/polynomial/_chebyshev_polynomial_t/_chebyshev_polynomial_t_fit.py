@@ -1,7 +1,3 @@
-"""Least-squares Chebyshev series fit."""
-
-from __future__ import annotations
-
 import torch
 from torch import Tensor
 

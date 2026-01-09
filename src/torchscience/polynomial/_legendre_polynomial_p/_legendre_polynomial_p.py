@@ -1,7 +1,3 @@
-"""LegendrePolynomialP tensorclass for Legendre series."""
-
-from __future__ import annotations
-
 from tensordict.tensorclass import tensorclass
 from torch import Tensor
 

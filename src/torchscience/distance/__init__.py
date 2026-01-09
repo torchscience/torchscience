@@ -15,10 +15,12 @@ bhattacharyya_distance
 
 from ._bhattacharyya_distance import bhattacharyya_distance
 from ._hellinger_distance import hellinger_distance
+from ._minkowski_distance import minkowski_distance
 from ._total_variation_distance import total_variation_distance
 
 __all__ = [
-    "hellinger_distance",
-    "total_variation_distance",
     "bhattacharyya_distance",
+    "hellinger_distance",
+    "minkowski_distance",
+    "total_variation_distance",
 ]

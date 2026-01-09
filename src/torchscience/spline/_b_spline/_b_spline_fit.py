@@ -1,12 +1,16 @@
-from typing import Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
 
 import torch
 from torch import Tensor
 
 from .._degree_error import DegreeError
 from .._knot_error import KnotError
-from ._b_spline import BSpline
 from ._b_spline_basis import b_spline_basis
+
+if TYPE_CHECKING:
+    from ._b_spline import BSpline
 
 
 def b_spline_fit(
@@ -138,6 +142,9 @@ def b_spline_fit(
     else:
         y_dim = y.shape[1:]
         control_points = control_points.reshape(n_control, *y_dim)
+
+    # Lazy import to avoid circular dependency
+    from ._b_spline import BSpline
 
     return BSpline(
         knots=knots,

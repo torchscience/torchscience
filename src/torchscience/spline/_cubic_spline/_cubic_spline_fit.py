@@ -1,11 +1,15 @@
-from typing import Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
 
 import torch
 from torch import Tensor
 
 from .._knot_error import KnotError
 from .._solve_tridiagonal import solve_tridiagonal
-from ._cubic_spline import CubicSpline
+
+if TYPE_CHECKING:
+    from ._cubic_spline import CubicSpline
 
 
 def cubic_spline_fit(
@@ -224,6 +228,9 @@ def cubic_spline_fit(
     else:
         # Remove the trailing dimension for scalar values
         coeffs = coeffs.squeeze(-1)
+
+    # Lazy import to avoid circular dependency
+    from ._cubic_spline import CubicSpline
 
     return CubicSpline(
         knots=x,

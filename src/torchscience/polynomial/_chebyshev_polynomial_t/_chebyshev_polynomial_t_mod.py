@@ -1,7 +1,3 @@
-"""Remainder of Chebyshev series division."""
-
-from __future__ import annotations
-
 from ._chebyshev_polynomial_t import ChebyshevPolynomialT
 from ._chebyshev_polynomial_t_divmod import chebyshev_polynomial_t_divmod
 

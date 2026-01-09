@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from torch import Tensor
 
-from torchscience.differentiation import (
-    apply_stencil,
+from torchscience.differentiation._apply import apply_stencil
+from torchscience.differentiation._finite_difference_stencil import (
     finite_difference_stencil,
 )
 

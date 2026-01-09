@@ -14,8 +14,8 @@
 #include "../../kernel/probability/normal_quantile_backward.h"
 #include "../../kernel/probability/normal_survival.h"
 #include "../../kernel/probability/normal_survival_backward.h"
-#include "../../kernel/probability/normal_logpdf.h"
-#include "../../kernel/probability/normal_logpdf_backward.h"
+#include "../../kernel/probability/normal_log_probability_density.h"
+#include "../../kernel/probability/normal_log_probability_density_backward.h"
 
 namespace torchscience::cpu::probability {
 
@@ -391,7 +391,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_survival_backward(
       reduce_grad(grad_scale, scale));
 }
 
-at::Tensor normal_logpdf(
+at::Tensor normal_log_probability_density(
     const at::Tensor& x,
     const at::Tensor& loc,
     const at::Tensor& scale) {
@@ -404,7 +404,7 @@ at::Tensor normal_logpdf(
   auto output = at::empty_like(x_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, x.scalar_type(), "normal_logpdf_cpu", [&] {
+      at::kBFloat16, at::kHalf, x.scalar_type(), "normal_log_probability_density_cpu", [&] {
         auto x_data = x_b.data_ptr<scalar_t>();
         auto loc_data = loc_b.data_ptr<scalar_t>();
         auto scale_data = scale_b.data_ptr<scalar_t>();
@@ -413,7 +413,7 @@ at::Tensor normal_logpdf(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            out_data[i] = kernel::probability::normal_logpdf<scalar_t>(
+            out_data[i] = kernel::probability::normal_log_probability_density<scalar_t>(
                 x_data[i], loc_data[i], scale_data[i]);
           }
         });
@@ -422,7 +422,7 @@ at::Tensor normal_logpdf(
   return output;
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_logpdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_log_probability_density_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& loc,
@@ -439,7 +439,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_logpdf_backward(
   auto grad_scale = at::empty_like(scale_b);
 
   AT_DISPATCH_FLOATING_TYPES_AND2(
-      at::kBFloat16, at::kHalf, x.scalar_type(), "normal_logpdf_backward_cpu", [&] {
+      at::kBFloat16, at::kHalf, x.scalar_type(), "normal_log_probability_density_backward_cpu", [&] {
         auto grad_data = grad_b.data_ptr<scalar_t>();
         auto x_data = x_b.data_ptr<scalar_t>();
         auto loc_data = loc_b.data_ptr<scalar_t>();
@@ -451,7 +451,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_logpdf_backward(
 
         at::parallel_for(0, n, 1000, [&](int64_t begin, int64_t end) {
           for (int64_t i = begin; i < end; ++i) {
-            kernel::probability::normal_logpdf_backward<scalar_t>(
+            kernel::probability::normal_log_probability_density_backward<scalar_t>(
                 grad_data[i], x_data[i], loc_data[i], scale_data[i],
                 grad_x_data[i], grad_loc_data[i], grad_scale_data[i]);
           }
@@ -475,8 +475,8 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
   m.impl("normal_quantile_backward", &normal_quantile_backward);
   m.impl("normal_survival", &normal_survival);
   m.impl("normal_survival_backward", &normal_survival_backward);
-  m.impl("normal_logpdf", &normal_logpdf);
-  m.impl("normal_logpdf_backward", &normal_logpdf_backward);
+  m.impl("normal_log_probability_density", &normal_log_probability_density);
+  m.impl("normal_log_probability_density_backward", &normal_log_probability_density_backward);
 }
 
 }  // namespace torchscience::cpu::probability

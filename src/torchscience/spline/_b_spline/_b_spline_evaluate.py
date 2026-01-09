@@ -1,9 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import torch
 from torch import Tensor
 
 from .._extrapolation_error import ExtrapolationError
-from ._b_spline import BSpline
 from ._b_spline_basis import b_spline_basis
+
+if TYPE_CHECKING:
+    from ._b_spline import BSpline
 
 
 def b_spline_evaluate(

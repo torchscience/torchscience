@@ -27,7 +27,7 @@ from ._beta import (
 )
 from ._binomial import (
     binomial_cumulative_distribution,
-    binomial_pmf,
+    binomial_probability_mass,
 )
 from ._chi2 import (
     chi2_cumulative_distribution,
@@ -49,14 +49,14 @@ from ._gamma import (
 )
 from ._normal import (
     normal_cumulative_distribution,
-    normal_logpdf,
+    normal_log_probability_density,
     normal_probability_density,
     normal_quantile,
     normal_survival,
 )
 from ._poisson import (
     poisson_cumulative_distribution,
-    poisson_pmf,
+    poisson_probability_mass,
 )
 
 __all__ = [
@@ -66,6 +66,9 @@ __all__ = [
     "beta_cumulative_distribution",
     "beta_probability_density",
     "beta_quantile",
+    # Binomial distribution
+    "binomial_cumulative_distribution",
+    "binomial_probability_mass",
     # Chi-squared distribution
     "chi2_cumulative_distribution",
     "chi2_probability_density",
@@ -82,14 +85,11 @@ __all__ = [
     "gamma_quantile",
     # Normal distribution
     "normal_cumulative_distribution",
-    "normal_logpdf",
+    "normal_log_probability_density",
     "normal_probability_density",
     "normal_quantile",
     "normal_survival",
-    # Binomial distribution
-    "binomial_cumulative_distribution",
-    "binomial_pmf",
     # Poisson distribution
     "poisson_cumulative_distribution",
-    "poisson_pmf",
+    "poisson_probability_mass",
 ]

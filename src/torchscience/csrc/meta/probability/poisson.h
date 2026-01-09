@@ -21,14 +21,14 @@ std::tuple<at::Tensor, at::Tensor> poisson_cumulative_distribution_backward(
       at::empty_like(rate));
 }
 
-at::Tensor poisson_pmf(
+at::Tensor poisson_probability_mass(
     const at::Tensor& k,
     const at::Tensor& rate) {
   auto result_shape = at::infer_size(k.sizes(), rate.sizes());
   return at::empty(result_shape, k.options());
 }
 
-std::tuple<at::Tensor, at::Tensor> poisson_pmf_backward(
+std::tuple<at::Tensor, at::Tensor> poisson_probability_mass_backward(
     const at::Tensor& grad,
     const at::Tensor& k,
     const at::Tensor& rate) {
@@ -40,8 +40,8 @@ std::tuple<at::Tensor, at::Tensor> poisson_pmf_backward(
 TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
   m.impl("poisson_cumulative_distribution", &poisson_cumulative_distribution);
   m.impl("poisson_cumulative_distribution_backward", &poisson_cumulative_distribution_backward);
-  m.impl("poisson_pmf", &poisson_pmf);
-  m.impl("poisson_pmf_backward", &poisson_pmf_backward);
+  m.impl("poisson_probability_mass", &poisson_probability_mass);
+  m.impl("poisson_probability_mass_backward", &poisson_probability_mass_backward);
 }
 
 }  // namespace torchscience::meta::probability

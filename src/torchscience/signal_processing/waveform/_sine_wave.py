@@ -104,13 +104,13 @@ def sine_wave(
     result = torch.ops.torchscience.sine_wave(
         n,
         t,
-        frequency,
-        sample_rate,
-        amplitude,
-        phase,
-        dtype,
-        layout,
-        device,
+        frequency=frequency,
+        sample_rate=sample_rate,
+        amplitude=amplitude,
+        phase=phase,
+        dtype=dtype,
+        layout=layout,
+        device=device,
     )
 
     if requires_grad and not result.requires_grad:

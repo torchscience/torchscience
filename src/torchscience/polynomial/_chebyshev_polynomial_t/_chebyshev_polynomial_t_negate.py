@@ -1,7 +1,3 @@
-"""Negate a Chebyshev series."""
-
-from __future__ import annotations
-
 from ._chebyshev_polynomial_t import ChebyshevPolynomialT
 
 

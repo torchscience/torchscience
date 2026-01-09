@@ -50,6 +50,8 @@ DegreeError
     Invalid degree for given knots.
 """
 
+# Import base exception first
+# Import spline implementations
 from ._b_spline import (
     BSpline,
     b_spline,
@@ -66,6 +68,8 @@ from ._cubic_spline import (
     cubic_spline_fit,
     cubic_spline_integral,
 )
+
+# Import exception subclasses
 from ._degree_error import DegreeError
 from ._extrapolation_error import ExtrapolationError
 from ._knot_error import KnotError

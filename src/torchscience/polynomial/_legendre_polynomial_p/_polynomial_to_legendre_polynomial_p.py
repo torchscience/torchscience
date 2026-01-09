@@ -1,7 +1,3 @@
-"""Convert power polynomial to Legendre series."""
-
-from __future__ import annotations
-
 import torch
 
 from torchscience.polynomial._polynomial import Polynomial

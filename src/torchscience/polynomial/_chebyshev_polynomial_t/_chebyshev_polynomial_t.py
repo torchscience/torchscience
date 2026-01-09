@@ -1,7 +1,3 @@
-"""ChebyshevPolynomialT tensorclass for Chebyshev series of the first kind."""
-
-from __future__ import annotations
-
 from tensordict.tensorclass import tensorclass
 from torch import Tensor
 

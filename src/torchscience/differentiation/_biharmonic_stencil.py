@@ -4,10 +4,8 @@ from collections import defaultdict
 
 import torch
 
-from torchscience.differentiation import (
-    FiniteDifferenceStencil,
-    laplacian_stencil,
-)
+from torchscience.differentiation._laplacian_stencil import laplacian_stencil
+from torchscience.differentiation._stencil import FiniteDifferenceStencil
 
 
 def biharmonic_stencil(

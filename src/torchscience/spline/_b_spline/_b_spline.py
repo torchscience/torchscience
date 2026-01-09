@@ -2,6 +2,7 @@ from typing import Callable, Optional
 
 import torch
 from tensordict.tensorclass import tensorclass
+from torch import Tensor
 
 from ._b_spline_evaluate import b_spline_evaluate
 from ._b_spline_fit import b_spline_fit

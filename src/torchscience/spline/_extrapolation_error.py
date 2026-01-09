@@ -1,4 +1,4 @@
-from torchscience.spline import SplineError
+from ._spline_error import SplineError
 
 
 class ExtrapolationError(SplineError):

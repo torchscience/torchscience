@@ -157,6 +157,10 @@ def kurtosis(
     torch.var : Variance (second central moment).
     torch.std : Standard deviation.
     """
+    # Handle complex inputs by computing kurtosis of magnitudes
+    if input.is_complex():
+        input = input.abs()
+
     # Handle dim parameter
     if dim is None:
         dim_list = None

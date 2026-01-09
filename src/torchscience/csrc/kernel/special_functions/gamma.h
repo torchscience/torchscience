@@ -10,13 +10,58 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-constexpr T pole_tolerance();
+inline T pole_tolerance() {
+  // Default for low-precision types
+  return T(1e-3);
+}
 
 template <>
-constexpr float pole_tolerance<float>() { return 1e-6f; }
+inline float pole_tolerance<float>() { return 1e-6f; }
 
 template <>
-constexpr double pole_tolerance<double>() { return 1e-12; }
+inline double pole_tolerance<double>() { return 1e-12; }
+
+// Real sin_pi with range reduction for accurate computation at large arguments
+template <typename T>
+T sin_pi_real(T x) {
+  // Handle special cases
+  if (std::isnan(x)) {
+    return std::numeric_limits<T>::quiet_NaN();
+  }
+  if (std::isinf(x)) {
+    return std::numeric_limits<T>::quiet_NaN();
+  }
+
+  // For integers, sin(n*pi) = 0 exactly
+  T rounded = std::round(x);
+  if (x == rounded) {
+    // Return signed zero to preserve sign information
+    return std::copysign(T(0), x);
+  }
+
+  // Range reduction: x_mod = x mod 2, in range [-1, 1]
+  T x_mod = std::fmod(x, T(2));
+
+  // Now compute sin(pi * x_mod) where x_mod is in [-2, 2]
+  // Use symmetry to reduce to [0, 1]
+  if (x_mod < T(-1)) {
+    x_mod += T(2);
+  } else if (x_mod > T(1)) {
+    x_mod -= T(2);
+  }
+
+  // Now x_mod is in [-1, 1]
+  // sin(pi*x) for x in [-1, 1]
+  return std::sin(static_cast<T>(M_PI) * x_mod);
+}
+
+// Check if a real value is at a pole (non-positive integer)
+template <typename T>
+bool is_pole(T z) {
+  if (z > T(0)) return false;
+  T rounded = std::round(z);
+  return std::abs(z - rounded) < pole_tolerance<T>();
+}
 
 } // namespace detail
 
@@ -36,8 +81,28 @@ T gamma(T z) {
     1.5056327351493116e-7
   };
 
+  // Handle poles at non-positive integers
+  if (detail::is_pole(z)) {
+    return std::numeric_limits<T>::infinity();
+  }
+
   if (z < T(0.5)) {
-    return static_cast<T>(M_PI) / (std::sin(static_cast<T>(M_PI) * z) * gamma(T(1) - z));
+    // Use reflection formula: Gamma(z) = pi / (sin(pi*z) * Gamma(1-z))
+    T sin_piz = detail::sin_pi_real(z);
+
+    // If sin(pi*z) is zero, we're at a pole (should be caught above, but safety check)
+    if (sin_piz == T(0)) {
+      return std::numeric_limits<T>::infinity();
+    }
+
+    T gamma_1mz = gamma(T(1) - z);
+
+    // If Gamma(1-z) overflows, Gamma(z) underflows to zero
+    if (std::isinf(gamma_1mz)) {
+      return T(0);
+    }
+
+    return static_cast<T>(M_PI) / (sin_piz * gamma_1mz);
   }
 
   T z_adj = z - T(1);
@@ -50,7 +115,10 @@ T gamma(T z) {
 
   T t = z_adj + static_cast<T>(kGammaG) + T(0.5);
 
-  return std::sqrt(static_cast<T>(2 * M_PI)) * std::pow(t, z_adj + T(0.5)) * std::exp(-t) * x;
+  // Use log-space computation to avoid intermediate overflow:
+  // sqrt(2π) * t^(z_adj + 0.5) * exp(-t) * x = sqrt(2π) * x * exp((z_adj + 0.5) * log(t) - t)
+  T log_result = std::log(std::sqrt(static_cast<T>(2 * M_PI)) * x) + (z_adj + T(0.5)) * std::log(t) - t;
+  return std::exp(log_result);
 }
 
 template <typename T>
@@ -80,7 +148,16 @@ c10::complex<T> gamma(c10::complex<T> z) {
   }
 
   if (z.real() < T(0.5)) {
-    return static_cast<T>(M_PI) / (sin_pi(z) * gamma(c10::complex<T>(T(1), T(0)) - z));
+    // Use reflection formula: Gamma(z) = pi / (sin(pi*z) * Gamma(1-z))
+    c10::complex<T> sin_piz = sin_pi(z);
+    c10::complex<T> gamma_1mz = gamma(c10::complex<T>(T(1), T(0)) - z);
+
+    // If Gamma(1-z) overflows, Gamma(z) underflows to zero
+    if (std::isinf(gamma_1mz.real()) || std::isinf(gamma_1mz.imag())) {
+      return c10::complex<T>(T(0), T(0));
+    }
+
+    return static_cast<T>(M_PI) / (sin_piz * gamma_1mz);
   }
 
   c10::complex<T> z_adj = z - c10::complex<T>(T(1), T(0));
@@ -93,7 +170,10 @@ c10::complex<T> gamma(c10::complex<T> z) {
 
   c10::complex<T> t = z_adj + c10::complex<T>(static_cast<T>(kGammaG) + T(0.5), T(0));
 
-  return std::sqrt(static_cast<T>(2 * M_PI)) * std::pow(t, z_adj + c10::complex<T>(T(0.5), T(0))) * std::exp(-t) * x;
+  // Use log-space computation to avoid intermediate overflow:
+  // sqrt(2π) * t^(z_adj + 0.5) * exp(-t) * x = sqrt(2π) * x * exp((z_adj + 0.5) * log(t) - t)
+  c10::complex<T> log_result = std::log(std::sqrt(static_cast<T>(2 * M_PI)) * x) + (z_adj + c10::complex<T>(T(0.5), T(0))) * std::log(t) - t;
+  return std::exp(log_result);
 }
 
 } // namespace torchscience::kernel::special_functions

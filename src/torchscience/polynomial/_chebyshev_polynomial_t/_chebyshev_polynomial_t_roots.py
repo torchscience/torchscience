@@ -1,7 +1,3 @@
-"""Find roots of Chebyshev series."""
-
-from __future__ import annotations
-
 import torch
 from torch import Tensor
 
@@ -38,9 +34,4 @@ def chebyshev_polynomial_t_roots(
     >>> roots.real.sort().values
     tensor([-0.7071,  0.7071])
     """
-    A = chebyshev_polynomial_t_companion(c)
-
-    # Compute eigenvalues
-    eigenvalues = torch.linalg.eigvals(A)
-
-    return eigenvalues
+    return torch.linalg.eigvals(chebyshev_polynomial_t_companion(c))

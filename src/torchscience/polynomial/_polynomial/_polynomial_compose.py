@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from ._polynomial import Polynomial, polynomial
 from ._polynomial_multiply import polynomial_multiply
 

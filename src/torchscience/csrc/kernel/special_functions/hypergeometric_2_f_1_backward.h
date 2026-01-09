@@ -65,7 +65,7 @@ std::tuple<T, T, T, T> hypergeometric_2_f_1_backward(T grad, T a, T b, T c, T z)
   using detail::is_complex_v;
 
   // d/dz 2F1(a,b;c;z) = (a*b/c) * 2F1(a+1, b+1; c+1; z)
-  T dz = grad * (a * b / c) * hypergeometric_2_f_1(a + T(1), b + T(1), c + T(1), z);
+  T dfdz = (a * b / c) * hypergeometric_2_f_1(a + T(1), b + T(1), c + T(1), z);
 
   double z_abs;
   if constexpr (is_complex_v<T>) {
@@ -77,27 +77,44 @@ std::tuple<T, T, T, T> hypergeometric_2_f_1_backward(T grad, T a, T b, T c, T z)
                         !hyp2f1_is_nonpositive_integer(a) &&
                         !hyp2f1_is_nonpositive_integer(b);
 
+  T dfda, dfdb, dfdc;
+
   if (use_analytical) {
     auto result = hyp2f1_series_with_grads(a, b, c, z);
-    return {grad * result.grad_a, grad * result.grad_b, grad * result.grad_c, dz};
+    dfda = result.grad_a;
+    dfdb = result.grad_b;
+    dfdc = result.grad_c;
+  } else {
+    // Fallback to finite differences
+    using real_t = detail::real_type_t<T>;
+    real_t eps_real = std::sqrt(hyp2f1_epsilon<T>());
+    T eps = T(eps_real);
+
+    T f_a_plus = hypergeometric_2_f_1(a + eps, b, c, z);
+    T f_a_minus = hypergeometric_2_f_1(a - eps, b, c, z);
+    dfda = (f_a_plus - f_a_minus) / (T(2) * eps);
+
+    T f_b_plus = hypergeometric_2_f_1(a, b + eps, c, z);
+    T f_b_minus = hypergeometric_2_f_1(a, b - eps, c, z);
+    dfdb = (f_b_plus - f_b_minus) / (T(2) * eps);
+
+    T f_c_plus = hypergeometric_2_f_1(a, b, c + eps, z);
+    T f_c_minus = hypergeometric_2_f_1(a, b, c - eps, z);
+    dfdc = (f_c_plus - f_c_minus) / (T(2) * eps);
   }
 
-  // Fallback to finite differences
-  T eps = std::sqrt(hyp2f1_epsilon<T>());
-
-  T f_a_plus = hypergeometric_2_f_1(a + eps, b, c, z);
-  T f_a_minus = hypergeometric_2_f_1(a - eps, b, c, z);
-  T da = grad * (f_a_plus - f_a_minus) / (T(2) * eps);
-
-  T f_b_plus = hypergeometric_2_f_1(a, b + eps, c, z);
-  T f_b_minus = hypergeometric_2_f_1(a, b - eps, c, z);
-  T db = grad * (f_b_plus - f_b_minus) / (T(2) * eps);
-
-  T f_c_plus = hypergeometric_2_f_1(a, b, c + eps, z);
-  T f_c_minus = hypergeometric_2_f_1(a, b, c - eps, z);
-  T dc = grad * (f_c_plus - f_c_minus) / (T(2) * eps);
-
-  return {da, db, dc, dz};
+  // For complex types, PyTorch expects grad * conj(derivative) for holomorphic functions
+  // This handles both real and imaginary parts of the output correctly
+  if constexpr (is_complex_v<T>) {
+    return {
+      grad * std::conj(dfda),
+      grad * std::conj(dfdb),
+      grad * std::conj(dfdc),
+      grad * std::conj(dfdz)
+    };
+  } else {
+    return {grad * dfda, grad * dfdb, grad * dfdc, grad * dfdz};
+  }
 }
 
 } // namespace torchscience::kernel::special_functions

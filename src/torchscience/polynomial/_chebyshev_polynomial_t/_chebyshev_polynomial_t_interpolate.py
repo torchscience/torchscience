@@ -1,7 +1,3 @@
-"""Chebyshev interpolation at optimal nodes."""
-
-from __future__ import annotations
-
 from typing import Callable
 
 import torch

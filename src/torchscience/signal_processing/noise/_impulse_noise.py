@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Union
+from typing import Sequence, Union
 
 import torch
 from torch import Generator, Tensor
@@ -13,10 +13,13 @@ def impulse_noise(
     p_pepper: Union[float, Tensor] = 0.0,
     salt_value: float = 1.0,
     pepper_value: float = -1.0,
-    dtype: Optional[torch.dtype] = None,
-    layout: Optional[torch.layout] = None,
-    device: Optional[torch.device] = None,
-    generator: Optional[Generator] = None,
+    generator: Generator | None = None,
+    out: Tensor | None = None,
+    dtype: torch.dtype | None = None,
+    layout: torch.layout | None = torch.strided,
+    device: torch.device | None = None,
+    requires_grad: bool = False,
+    pin_memory: bool | None = False,
 ) -> Tensor:
     """
     Generate impulse noise (salt-and-pepper noise).
@@ -55,15 +58,20 @@ def impulse_noise(
     pepper_value : float, optional
         Value used for pepper noise. Default: -1.0 (suitable for normalized
         signals in [-1, 1] range). Use 0.0 for [0, 1] normalized images.
+    generator : torch.Generator, optional
+        A pseudorandom number generator for sampling. If None, uses the default
+        generator.
+    out : Tensor, optional
     dtype : torch.dtype, optional
-        The desired data type of the returned tensor. Default: torch.float32.
+        The desired data type of the returned tensor. If None, uses the default
+        floating point type.
     layout : torch.layout, optional
         The desired layout of the returned tensor. Default: torch.strided.
     device : torch.device, optional
         The desired device of the returned tensor. Default: CPU.
-    generator : torch.Generator, optional
-        A pseudorandom number generator for sampling. If None, uses the
-        default generator.
+    requires_grad : bool, optional
+        If True, the returned tensor will require gradients. Default: False.
+    pin_memory : bool, optional
 
     Returns
     -------

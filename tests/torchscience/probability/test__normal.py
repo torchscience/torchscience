@@ -6,7 +6,7 @@ import torch
 import torchscience._csrc  # noqa: F401 - Load C++ operators
 from torchscience.probability import (
     normal_cumulative_distribution,
-    normal_logpdf,
+    normal_log_probability_density,
     normal_probability_density,
     normal_quantile,
     normal_survival,
@@ -425,8 +425,8 @@ class TestNormalSfGradients:
         assert torch.autograd.gradcheck(fn, (scale,), eps=1e-6, atol=1e-4)
 
 
-class TestNormalLogpdfForward:
-    """Test normal_logpdf forward correctness."""
+class TestNormalLogProbabilityDensityForward:
+    """Test normal_log_probability_density forward correctness."""
 
     def test_log_of_probability_density(self):
         """logpdf(x) = log(pdf(x))."""
@@ -434,7 +434,9 @@ class TestNormalLogpdfForward:
         loc = torch.tensor(0.0)
         scale = torch.tensor(1.0)
 
-        logpdf = torch.ops.torchscience.normal_logpdf(x, loc, scale)
+        logpdf = torch.ops.torchscience.normal_log_probability_density(
+            x, loc, scale
+        )
         pdf = torch.ops.torchscience.normal_probability_density(x, loc, scale)
 
         assert torch.allclose(logpdf, torch.log(pdf), atol=1e-6)
@@ -445,7 +447,9 @@ class TestNormalLogpdfForward:
         loc = torch.tensor(1.0)
         scale = torch.tensor(0.5)
 
-        result = torch.ops.torchscience.normal_logpdf(x, loc, scale)
+        result = torch.ops.torchscience.normal_log_probability_density(
+            x, loc, scale
+        )
         expected = torch.tensor(
             scipy.stats.norm.logpdf(x.numpy(), loc=1.0, scale=0.5),
             dtype=torch.float32,
@@ -458,14 +462,16 @@ class TestNormalLogpdfForward:
         scale = torch.tensor(1.5)
         x = loc.clone()
 
-        result = torch.ops.torchscience.normal_logpdf(x, loc, scale)
+        result = torch.ops.torchscience.normal_log_probability_density(
+            x, loc, scale
+        )
         expected = -torch.log(scale * math.sqrt(2 * math.pi))
 
         assert torch.allclose(result, expected, atol=1e-6)
 
 
-class TestNormalLogpdfGradients:
-    """Test normal_logpdf gradient computation."""
+class TestNormalLogProbabilityDensityGradients:
+    """Test normal_log_probability_density gradient computation."""
 
     def test_gradcheck_x(self):
         """Gradient check for x parameter."""
@@ -476,7 +482,9 @@ class TestNormalLogpdfGradients:
         scale = torch.tensor(1.0, dtype=torch.float64)
 
         def fn(x_):
-            return torch.ops.torchscience.normal_logpdf(x_, loc, scale)
+            return torch.ops.torchscience.normal_log_probability_density(
+                x_, loc, scale
+            )
 
         assert torch.autograd.gradcheck(fn, (x,), eps=1e-6, atol=1e-4)
 
@@ -487,7 +495,9 @@ class TestNormalLogpdfGradients:
         scale = torch.tensor(1.0, dtype=torch.float64)
 
         def fn(loc_):
-            return torch.ops.torchscience.normal_logpdf(x, loc_, scale)
+            return torch.ops.torchscience.normal_log_probability_density(
+                x, loc_, scale
+            )
 
         assert torch.autograd.gradcheck(fn, (loc,), eps=1e-6, atol=1e-4)
 
@@ -498,7 +508,9 @@ class TestNormalLogpdfGradients:
         scale = torch.tensor(1.5, dtype=torch.float64, requires_grad=True)
 
         def fn(scale_):
-            return torch.ops.torchscience.normal_logpdf(x, loc, scale_)
+            return torch.ops.torchscience.normal_log_probability_density(
+                x, loc, scale_
+            )
 
         assert torch.autograd.gradcheck(fn, (scale,), eps=1e-6, atol=1e-4)
 
@@ -508,7 +520,9 @@ class TestNormalLogpdfGradients:
         loc = torch.tensor(0.0, dtype=torch.float64)
         scale = torch.tensor(1.0, dtype=torch.float64)
 
-        logpdf = torch.ops.torchscience.normal_logpdf(x, loc, scale)
+        logpdf = torch.ops.torchscience.normal_log_probability_density(
+            x, loc, scale
+        )
         grad_x = torch.autograd.grad(logpdf.sum(), x)[0]
 
         assert torch.allclose(grad_x, torch.zeros_like(grad_x), atol=1e-6)
@@ -526,7 +540,7 @@ class TestNormalPythonAPI:
                 normal_probability_density,
                 normal_quantile,
                 normal_survival,
-                normal_logpdf,
+                normal_log_probability_density,
             ]
         )
 
@@ -545,7 +559,7 @@ class TestNormalPythonAPI:
         cdf = normal_cumulative_distribution(x, loc=1.0, scale=2.0)
         pdf = normal_probability_density(x, loc=1.0, scale=2.0)
         sf = normal_survival(x, loc=1.0, scale=2.0)
-        logpdf = normal_logpdf(x, loc=1.0, scale=2.0)
+        logpdf = normal_log_probability_density(x, loc=1.0, scale=2.0)
 
         assert cdf.shape == x.shape
         assert pdf.shape == x.shape
@@ -580,8 +594,10 @@ class TestNormalPythonAPI:
             torch.ops.torchscience.normal_survival(x, loc, scale),
         )
         assert torch.allclose(
-            normal_logpdf(x, loc, scale),
-            torch.ops.torchscience.normal_logpdf(x, loc, scale),
+            normal_log_probability_density(x, loc, scale),
+            torch.ops.torchscience.normal_log_probability_density(
+                x, loc, scale
+            ),
         )
 
         p = torch.tensor([0.1, 0.5, 0.9])

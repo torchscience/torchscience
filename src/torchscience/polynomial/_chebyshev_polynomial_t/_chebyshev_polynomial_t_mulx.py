@@ -1,7 +1,3 @@
-"""Multiply Chebyshev series by x."""
-
-from __future__ import annotations
-
 import torch
 
 from ._chebyshev_polynomial_t import ChebyshevPolynomialT

@@ -25,7 +25,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> binomial_cumulative_distribution_
       at::empty_like(p));
 }
 
-at::Tensor binomial_pmf(
+at::Tensor binomial_probability_mass(
     const at::Tensor& k,
     const at::Tensor& n,
     const at::Tensor& p) {
@@ -34,7 +34,7 @@ at::Tensor binomial_pmf(
   return at::empty(result_shape, k.options());
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> binomial_pmf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> binomial_probability_mass_backward(
     const at::Tensor& grad,
     const at::Tensor& k,
     const at::Tensor& n,
@@ -48,8 +48,8 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> binomial_pmf_backward(
 TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
   m.impl("binomial_cumulative_distribution", &binomial_cumulative_distribution);
   m.impl("binomial_cumulative_distribution_backward", &binomial_cumulative_distribution_backward);
-  m.impl("binomial_pmf", &binomial_pmf);
-  m.impl("binomial_pmf_backward", &binomial_pmf_backward);
+  m.impl("binomial_probability_mass", &binomial_probability_mass);
+  m.impl("binomial_probability_mass_backward", &binomial_probability_mass_backward);
 }
 
 }  // namespace torchscience::meta::probability

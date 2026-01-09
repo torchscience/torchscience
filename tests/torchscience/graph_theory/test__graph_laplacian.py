@@ -3,7 +3,6 @@
 import pytest
 import torch
 
-import torchscience.differentiation._laplacian
 from torchscience.graph_theory import graph_laplacian
 
 
@@ -337,9 +336,7 @@ class TestGraphLaplacianReference:
         L_ours = graph_laplacian(adj)
 
         # Scipy implementation
-        L_scipy = torchscience.differentiation._laplacian.laplacian(
-            adj_np, normed=False
-        )
+        L_scipy = scipy_sparse.csgraph.laplacian(adj_np, normed=False)
 
         torch.testing.assert_close(
             L_ours, torch.from_numpy(L_scipy), rtol=1e-5, atol=1e-5
@@ -361,9 +358,7 @@ class TestGraphLaplacianReference:
         L_ours = graph_laplacian(adj, normalization="symmetric")
 
         # Scipy implementation (normed=True gives symmetric normalized)
-        L_scipy = torchscience.differentiation._laplacian.laplacian(
-            adj_np, normed=True
-        )
+        L_scipy = scipy_sparse.csgraph.laplacian(adj_np, normed=True)
 
         torch.testing.assert_close(
             L_ours, torch.from_numpy(L_scipy), rtol=1e-5, atol=1e-5

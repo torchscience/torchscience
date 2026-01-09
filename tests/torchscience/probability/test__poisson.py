@@ -85,15 +85,15 @@ class TestPoissonCdfGradients:
         assert grad_rate < 0
 
 
-class TestPoissonPmfForward:
-    """Test poisson_pmf forward correctness."""
+class TestPoissonProbabilityMassForward:
+    """Test poisson_probability_mass forward correctness."""
 
     def test_scipy_comparison(self):
         """Compare against scipy.stats.poisson.pmf."""
         k = torch.arange(0, 20, dtype=torch.float32)
         rate = torch.tensor(5.0)
 
-        result = torch.ops.torchscience.poisson_pmf(k, rate)
+        result = torch.ops.torchscience.poisson_probability_mass(k, rate)
         expected = torch.tensor(
             scipy.stats.poisson.pmf(k.numpy(), mu=5),
             dtype=torch.float32,
@@ -105,7 +105,7 @@ class TestPoissonPmfForward:
         k = torch.arange(0, 50, dtype=torch.float32)
         rate = torch.tensor(10.0)
 
-        pmf = torch.ops.torchscience.poisson_pmf(k, rate)
+        pmf = torch.ops.torchscience.poisson_probability_mass(k, rate)
         # For rate=10, 50 terms should capture almost all probability
         assert torch.allclose(pmf.sum(), torch.tensor(1.0), atol=1e-5)
 
@@ -114,7 +114,7 @@ class TestPoissonPmfForward:
         k = torch.arange(0, 20, dtype=torch.float32)
         rate = torch.tensor(7.3)
 
-        pmf = torch.ops.torchscience.poisson_pmf(k, rate)
+        pmf = torch.ops.torchscience.poisson_probability_mass(k, rate)
         mode = k[pmf.argmax()]
 
         assert mode == 7.0  # floor(7.3)
@@ -124,11 +124,11 @@ class TestPoissonPmfForward:
         k = torch.tensor([-1.0, -2.0, -5.0])
         rate = torch.tensor(5.0)
 
-        pmf = torch.ops.torchscience.poisson_pmf(k, rate)
+        pmf = torch.ops.torchscience.poisson_probability_mass(k, rate)
         assert torch.allclose(pmf, torch.zeros_like(pmf))
 
 
-class TestPoissonPmfGradients:
+class TestPoissonProbabilityMassGradients:
     """Test gradient computation for rate."""
 
     def test_gradcheck_rate(self):
@@ -137,6 +137,6 @@ class TestPoissonPmfGradients:
         rate = torch.tensor(5.0, dtype=torch.float64, requires_grad=True)
 
         def fn(rate_):
-            return torch.ops.torchscience.poisson_pmf(k, rate_)
+            return torch.ops.torchscience.poisson_probability_mass(k, rate_)
 
         assert torch.autograd.gradcheck(fn, (rate,), eps=1e-6, atol=1e-4)

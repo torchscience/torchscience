@@ -5,7 +5,7 @@ from typing import Tuple, Union
 import torch
 from torch import Tensor
 
-from torchscience.differentiation import derivative
+from torchscience.differentiation._derivative import derivative
 
 
 def hessian(

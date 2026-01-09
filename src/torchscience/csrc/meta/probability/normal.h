@@ -109,7 +109,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_survival_backward(
       at::empty_like(scale));
 }
 
-at::Tensor normal_logpdf(
+at::Tensor normal_log_probability_density(
     const at::Tensor& x,
     const at::Tensor& loc,
     const at::Tensor& scale) {
@@ -120,7 +120,7 @@ at::Tensor normal_logpdf(
   return at::empty(output_shape, x.options().dtype(output_dtype));
 }
 
-std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_logpdf_backward(
+std::tuple<at::Tensor, at::Tensor, at::Tensor> normal_log_probability_density_backward(
     const at::Tensor& grad,
     const at::Tensor& x,
     const at::Tensor& loc,
@@ -141,8 +141,8 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
   m.impl("normal_quantile_backward", &normal_quantile_backward);
   m.impl("normal_survival", &normal_survival);
   m.impl("normal_survival_backward", &normal_survival_backward);
-  m.impl("normal_logpdf", &normal_logpdf);
-  m.impl("normal_logpdf_backward", &normal_logpdf_backward);
+  m.impl("normal_log_probability_density", &normal_log_probability_density);
+  m.impl("normal_log_probability_density_backward", &normal_log_probability_density_backward);
 }
 
 }  // namespace torchscience::meta::probability

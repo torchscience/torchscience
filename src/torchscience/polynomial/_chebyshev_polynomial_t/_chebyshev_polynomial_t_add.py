@@ -1,7 +1,3 @@
-"""Add two Chebyshev series."""
-
-from __future__ import annotations
-
 import torch
 
 from ._chebyshev_polynomial_t import ChebyshevPolynomialT
@@ -56,10 +52,13 @@ def chebyshev_polynomial_t_add(
         a_coeffs = torch.cat([a_coeffs, padding], dim=-1)
     else:
         pad_shape = list(b_coeffs.shape)
+
         pad_shape[-1] = n_a - n_b
+
         padding = torch.zeros(
             pad_shape, dtype=b_coeffs.dtype, device=b_coeffs.device
         )
+
         b_coeffs = torch.cat([b_coeffs, padding], dim=-1)
 
     return ChebyshevPolynomialT(coeffs=a_coeffs + b_coeffs)

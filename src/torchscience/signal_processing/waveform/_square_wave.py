@@ -81,14 +81,14 @@ def square_wave(
     result = torch.ops.torchscience.square_wave(
         n,
         t,
-        frequency,
-        sample_rate,
-        amplitude,
-        phase,
-        duty,
-        dtype,
-        layout,
-        device,
+        frequency=frequency,
+        sample_rate=sample_rate,
+        amplitude=amplitude,
+        phase=phase,
+        duty=duty,
+        dtype=dtype,
+        layout=layout,
+        device=device,
     )
 
     if requires_grad and not result.requires_grad:

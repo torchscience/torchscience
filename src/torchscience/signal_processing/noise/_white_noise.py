@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Sequence
 
 import torch
 from torch import Generator, Tensor
@@ -9,11 +9,13 @@ import torchscience._csrc  # noqa: F401 - Load C++ operators
 def white_noise(
     size: Sequence[int],
     *,
-    dtype: Optional[torch.dtype] = None,
-    layout: Optional[torch.layout] = None,
-    device: Optional[torch.device] = None,
+    generator: Generator | None = None,
+    out: Tensor | None = None,
+    dtype: torch.dtype | None = None,
+    layout: torch.layout | None = torch.strided,
+    device: torch.device | None = None,
     requires_grad: bool = False,
-    generator: Optional[Generator] = None,
+    pin_memory: bool | None = False,
 ) -> Tensor:
     """
     Generate white noise with flat power spectral density.
@@ -41,18 +43,20 @@ def white_noise(
         Shape of the output tensor. The last dimension is treated as the
         time/sample axis. Other dimensions are batch dimensions generating
         independent noise sequences.
+    generator : torch.Generator, optional
+        A pseudorandom number generator for sampling. If None, uses the default
+        generator.
+    out : Tensor, optional
     dtype : torch.dtype, optional
-        The desired data type of the returned tensor. If None, uses the
-        default floating point type.
+        The desired data type of the returned tensor. If None, uses the default
+        floating point type.
     layout : torch.layout, optional
         The desired layout of the returned tensor. Default: torch.strided.
     device : torch.device, optional
         The desired device of the returned tensor. Default: CPU.
     requires_grad : bool, optional
         If True, the returned tensor will require gradients. Default: False.
-    generator : torch.Generator, optional
-        A pseudorandom number generator for sampling. If None, uses the
-        default generator.
+    pin_memory : bool, optional
 
     Returns
     -------

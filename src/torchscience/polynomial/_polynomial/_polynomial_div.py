@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from ._polynomial import Polynomial
 from ._polynomial_divmod import polynomial_divmod
 

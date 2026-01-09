@@ -57,7 +57,7 @@ inline at::Tensor binomial_cumulative_distribution(
   return BinomialCdfFunction::apply(k, n, p);
 }
 
-class BinomialPmfFunction : public torch::autograd::Function<BinomialPmfFunction> {
+class BinomialProbabilityMassFunction : public torch::autograd::Function<BinomialProbabilityMassFunction> {
 public:
   static at::Tensor forward(
       torch::autograd::AutogradContext* ctx,
@@ -70,7 +70,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     return c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::binomial_pmf", "")
+        .findSchemaOrThrow("torchscience::binomial_probability_mass", "")
         .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(k, n, p);
   }
@@ -93,7 +93,7 @@ public:
     at::AutoDispatchBelowAutograd guard;
 
     auto result = c10::Dispatcher::singleton()
-        .findSchemaOrThrow("torchscience::binomial_pmf_backward", "")
+        .findSchemaOrThrow("torchscience::binomial_probability_mass_backward", "")
         .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
             const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
         .call(grad_output, k, n, p);
@@ -102,17 +102,17 @@ public:
   }
 };
 
-inline at::Tensor binomial_pmf(
+inline at::Tensor binomial_probability_mass(
     const at::Tensor& k,
     const at::Tensor& n,
     const at::Tensor& p
 ) {
-  return BinomialPmfFunction::apply(k, n, p);
+  return BinomialProbabilityMassFunction::apply(k, n, p);
 }
 
 }  // namespace torchscience::autograd::probability
 
 TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {
   m.impl("binomial_cumulative_distribution", &torchscience::autograd::probability::binomial_cumulative_distribution);
-  m.impl("binomial_pmf", &torchscience::autograd::probability::binomial_pmf);
+  m.impl("binomial_probability_mass", &torchscience::autograd::probability::binomial_probability_mass);
 }

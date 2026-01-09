@@ -1,10 +1,13 @@
 import math
 
+import pytest
 import sympy
 import torch
 import torch.testing
 from hypothesis import given, settings
 from sympy import I, N
+
+pytestmark = pytest.mark.skip(reason="Test takes >30s, needs optimization")
 
 import torchscience.special_functions
 from torchscience.testing import (

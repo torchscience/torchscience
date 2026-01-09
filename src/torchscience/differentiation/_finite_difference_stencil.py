@@ -5,16 +5,14 @@ from typing import Tuple, Union
 import torch
 from torch import Tensor
 
-from torchscience.differentiation import (
-    FiniteDifferenceStencil,
-    fornberg_weights,
-)
 from torchscience.differentiation.__generate_1d_offsets import (
     _generate_1d_offsets,
 )
 from torchscience.differentiation.__generate_nd_stencil import (
     _generate_nd_stencil,
 )
+from torchscience.differentiation._fornberg_weights import fornberg_weights
+from torchscience.differentiation._stencil import FiniteDifferenceStencil
 
 
 def finite_difference_stencil(

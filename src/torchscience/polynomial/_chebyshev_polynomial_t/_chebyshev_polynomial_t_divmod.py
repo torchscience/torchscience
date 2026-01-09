@@ -1,7 +1,3 @@
-"""Division of Chebyshev series."""
-
-from __future__ import annotations
-
 from typing import Tuple
 
 from torchscience.polynomial._polynomial import polynomial_divmod

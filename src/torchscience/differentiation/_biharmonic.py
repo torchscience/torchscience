@@ -4,7 +4,7 @@ from typing import Tuple, Union
 
 from torch import Tensor
 
-from torchscience.differentiation import laplacian
+from torchscience.differentiation._laplacian import laplacian
 
 
 def biharmonic(

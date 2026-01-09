@@ -2,7 +2,7 @@ import pytest
 import torch
 import torch.testing
 
-from torchscience.signal_processing.noise import brown_noise
+from torchscience.signal_processing.noise import brownian_noise
 
 
 class TestBrownNoiseShape:
@@ -10,40 +10,40 @@ class TestBrownNoiseShape:
 
     def test_1d_shape(self):
         """Test 1D output shape."""
-        result = brown_noise([100])
+        result = brownian_noise([100])
         assert result.shape == torch.Size([100])
 
     def test_2d_shape(self):
         """Test 2D (batched) output shape."""
-        result = brown_noise([4, 100])
+        result = brownian_noise([4, 100])
         assert result.shape == torch.Size([4, 100])
 
     def test_3d_shape(self):
         """Test 3D (batch, channels, samples) output shape."""
-        result = brown_noise([2, 3, 100])
+        result = brownian_noise([2, 3, 100])
         assert result.shape == torch.Size([2, 3, 100])
 
     def test_empty_last_dim(self):
         """Test empty tensor when last dim is 0."""
-        result = brown_noise([10, 0])
+        result = brownian_noise([10, 0])
         assert result.shape == torch.Size([10, 0])
         assert result.numel() == 0
 
     def test_empty_batch_dim(self):
         """Test empty tensor when batch dim is 0."""
-        result = brown_noise([0, 100])
+        result = brownian_noise([0, 100])
         assert result.shape == torch.Size([0, 100])
         assert result.numel() == 0
 
     def test_single_sample(self):
         """Test n=1 returns zeros."""
-        result = brown_noise([1])
+        result = brownian_noise([1])
         assert result.shape == torch.Size([1])
         torch.testing.assert_close(result, torch.zeros(1), rtol=0, atol=0)
 
     def test_two_samples(self):
         """Test minimal case n=2."""
-        result = brown_noise([2])
+        result = brownian_noise([2])
         assert result.shape == torch.Size([2])
 
 
@@ -59,7 +59,7 @@ class TestBrownNoiseDtype:
     )
     def test_standard_dtypes(self, dtype):
         """Test standard floating point dtypes."""
-        result = brown_noise([100], dtype=dtype)
+        result = brownian_noise([100], dtype=dtype)
         assert result.dtype == dtype
 
     @pytest.mark.parametrize(
@@ -71,12 +71,12 @@ class TestBrownNoiseDtype:
     )
     def test_half_precision_dtypes(self, dtype):
         """Test half-precision dtypes."""
-        result = brown_noise([100], dtype=dtype)
+        result = brownian_noise([100], dtype=dtype)
         assert result.dtype == dtype
 
     def test_default_dtype(self):
         """Test default dtype is float32."""
-        result = brown_noise([100])
+        result = brownian_noise([100])
         assert result.dtype == torch.float32
 
 
@@ -85,7 +85,7 @@ class TestBrownNoiseDevice:
 
     def test_cpu_device(self):
         """Test CPU device."""
-        result = brown_noise([100], device="cpu")
+        result = brownian_noise([100], device="cpu")
         assert result.device.type == "cpu"
 
     @pytest.mark.skipif(
@@ -93,7 +93,7 @@ class TestBrownNoiseDevice:
     )
     def test_cuda_device(self):
         """Test CUDA device."""
-        result = brown_noise([100], device="cuda")
+        result = brownian_noise([100], device="cuda")
         assert result.device.type == "cuda"
 
 
@@ -103,14 +103,14 @@ class TestBrownNoiseStatistics:
     def test_approximately_zero_mean(self):
         """Test output has approximately zero mean."""
         torch.manual_seed(42)
-        result = brown_noise([10000], dtype=torch.float64)
+        result = brownian_noise([10000], dtype=torch.float64)
         mean = result.mean().item()
         assert abs(mean) < 0.1, f"Mean {mean} too far from 0"
 
     def test_approximately_unit_variance(self):
         """Test output has approximately unit variance."""
         torch.manual_seed(42)
-        result = brown_noise([10000], dtype=torch.float64)
+        result = brownian_noise([10000], dtype=torch.float64)
         var = result.var().item()
         assert 0.5 < var < 3.0, f"Variance {var} not near 1"
 
@@ -118,7 +118,7 @@ class TestBrownNoiseStatistics:
         """Test different batch elements are independent."""
         torch.manual_seed(42)
         # Use longer sequences to reduce spurious correlation
-        result = brown_noise([100, 10000], dtype=torch.float64)
+        result = brownian_noise([100, 10000], dtype=torch.float64)
 
         # Compute correlation between first two batch elements
         x = result[0] - result[0].mean()
@@ -137,7 +137,7 @@ class TestBrownNoiseSpectrum:
         """Test that power spectrum follows 1/f^2 (slope -2 on log-log)."""
         torch.manual_seed(42)
         n = 4096
-        result = brown_noise([n], dtype=torch.float64)
+        result = brownian_noise([n], dtype=torch.float64)
 
         # Compute power spectrum
         spectrum = torch.fft.rfft(result)
@@ -165,7 +165,7 @@ class TestBrownNoiseSpectrum:
     def test_dc_component_near_zero(self):
         """Test that DC component is near zero (zero mean)."""
         torch.manual_seed(42)
-        result = brown_noise([1000], dtype=torch.float64)
+        result = brownian_noise([1000], dtype=torch.float64)
 
         spectrum = torch.fft.rfft(result)
         dc = spectrum[0].abs().item()
@@ -180,20 +180,20 @@ class TestBrownNoiseReproducibility:
     def test_generator_reproducibility(self):
         """Test same generator seed gives same output."""
         g1 = torch.Generator().manual_seed(42)
-        result1 = brown_noise([100], generator=g1)
+        result1 = brownian_noise([100], generator=g1)
 
         g2 = torch.Generator().manual_seed(42)
-        result2 = brown_noise([100], generator=g2)
+        result2 = brownian_noise([100], generator=g2)
 
         torch.testing.assert_close(result1, result2)
 
     def test_different_seeds_different_output(self):
         """Test different seeds give different output."""
         g1 = torch.Generator().manual_seed(42)
-        result1 = brown_noise([100], generator=g1)
+        result1 = brownian_noise([100], generator=g1)
 
         g2 = torch.Generator().manual_seed(43)
-        result2 = brown_noise([100], generator=g2)
+        result2 = brownian_noise([100], generator=g2)
 
         assert not torch.allclose(result1, result2)
 
@@ -203,12 +203,12 @@ class TestBrownNoiseGradient:
 
     def test_requires_grad_propagates(self):
         """Test requires_grad parameter works."""
-        result = brown_noise([100], requires_grad=True)
+        result = brownian_noise([100], requires_grad=True)
         assert result.requires_grad
 
     def test_gradient_flows(self):
         """Test gradients can be computed."""
-        result = brown_noise([100], dtype=torch.float64, requires_grad=True)
+        result = brownian_noise([100], dtype=torch.float64, requires_grad=True)
         loss = result.sum()
         loss.backward()
         # Should not raise
@@ -219,16 +219,16 @@ class TestBrownNoiseCompile:
 
     def test_basic_compile(self):
         """Test basic torch.compile works."""
-        compiled = torch.compile(brown_noise)
+        compiled = torch.compile(brownian_noise)
         result = compiled([100])
         assert result.shape == torch.Size([100])
 
     def test_compile_matches_eager(self):
         """Test compiled output matches eager mode."""
         g1 = torch.Generator().manual_seed(42)
-        eager = brown_noise([100], generator=g1)
+        eager = brownian_noise([100], generator=g1)
 
-        compiled = torch.compile(brown_noise)
+        compiled = torch.compile(brownian_noise)
         g2 = torch.Generator().manual_seed(42)
         compiled_result = compiled([100], generator=g2)
 
@@ -240,16 +240,16 @@ class TestBrownNoiseEdgeCases:
 
     def test_large_tensor(self):
         """Test with large tensor."""
-        result = brown_noise([100000])
+        result = brownian_noise([100000])
         assert result.shape == torch.Size([100000])
 
     def test_small_tensor(self):
         """Test with small tensor (n=2)."""
-        result = brown_noise([2])
+        result = brownian_noise([2])
         assert result.shape == torch.Size([2])
         assert torch.isfinite(result).all()
 
     def test_contiguous_output(self):
         """Test output is contiguous."""
-        result = brown_noise([100])
+        result = brownian_noise([100])
         assert result.is_contiguous()
