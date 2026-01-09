@@ -220,6 +220,57 @@ inline at::Tensor periodic_general_cosine_window_backward(
   return general_cosine_window_backward(grad_output, output, n, coeffs_input);
 }
 
+// =============================================================================
+// Parameterized windows: Tukey
+// =============================================================================
+
+inline at::Tensor tukey_window(
+  int64_t n,
+  const at::Tensor& alpha_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  (void)device;
+  auto out_dtype = dtype.value_or(alpha_input.scalar_type());
+  auto options = at::TensorOptions()
+    .dtype(out_dtype)
+    .layout(layout.value_or(at::kStrided))
+    .device(at::kMeta);
+  return at::empty({n}, options);
+}
+
+inline at::Tensor periodic_tukey_window(
+  int64_t n,
+  const at::Tensor& alpha_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  return tukey_window(n, alpha_input, dtype, layout, device);
+}
+
+inline at::Tensor tukey_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& alpha_input
+) {
+  (void)grad_output;
+  (void)output;
+  (void)n;
+  return at::empty_like(alpha_input, at::TensorOptions().dtype(alpha_input.scalar_type()).device(at::kMeta));
+}
+
+inline at::Tensor periodic_tukey_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& alpha_input
+) {
+  return tukey_window_backward(grad_output, output, n, alpha_input);
+}
+
 }  // namespace torchscience::meta::window_function
 
 // =============================================================================
@@ -270,4 +321,9 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
   m.impl("periodic_general_cosine_window", torchscience::meta::window_function::periodic_general_cosine_window);
   m.impl("general_cosine_window_backward", torchscience::meta::window_function::general_cosine_window_backward);
   m.impl("periodic_general_cosine_window_backward", torchscience::meta::window_function::periodic_general_cosine_window_backward);
+
+  m.impl("tukey_window", torchscience::meta::window_function::tukey_window);
+  m.impl("periodic_tukey_window", torchscience::meta::window_function::periodic_tukey_window);
+  m.impl("tukey_window_backward", torchscience::meta::window_function::tukey_window_backward);
+  m.impl("periodic_tukey_window_backward", torchscience::meta::window_function::periodic_tukey_window_backward);
 }

@@ -28,10 +28,12 @@ from ._periodic_nuttall_window import periodic_nuttall_window
 from ._periodic_parzen_window import periodic_parzen_window
 from ._periodic_sine_window import periodic_sine_window
 from ._periodic_triangular_window import periodic_triangular_window
+from ._periodic_tukey_window import periodic_tukey_window
 from ._periodic_welch_window import periodic_welch_window
 from ._rectangular_window import rectangular_window
 from ._sine_window import sine_window
 from ._triangular_window import triangular_window
+from ._tukey_window import tukey_window
 from ._welch_window import welch_window
 
 __all__ = [
@@ -65,9 +67,11 @@ __all__ = [
     "periodic_parzen_window",
     "periodic_sine_window",
     "periodic_triangular_window",
+    "periodic_tukey_window",
     "periodic_welch_window",
     "rectangular_window",
     "sine_window",
     "triangular_window",
+    "tukey_window",
     "welch_window",
 ]

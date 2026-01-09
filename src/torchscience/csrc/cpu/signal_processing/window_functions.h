@@ -22,6 +22,7 @@
 #include "../../kernel/signal_processing/window_function/sine.h"
 #include "../../kernel/signal_processing/window_function/bartlett_hann.h"
 #include "../../kernel/signal_processing/window_function/lanczos.h"
+#include "../../kernel/signal_processing/window_function/tukey.h"
 
 namespace torchscience::cpu::window_function {
 
@@ -494,6 +495,129 @@ inline at::Tensor periodic_general_cosine_window_backward(
   return general_cosine_window_backward_impl(grad_output, output, n, coeffs_input, true);
 }
 
+// =============================================================================
+// Tukey window
+// =============================================================================
+
+inline at::Tensor tukey_window_impl(
+  int64_t n,
+  const at::Tensor& alpha_input,
+  bool periodic,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  TORCH_CHECK(n >= 0, "tukey_window: n must be non-negative, got ", n);
+  TORCH_CHECK(alpha_input.dim() == 0, "tukey_window: alpha must be a scalar tensor");
+
+  auto out_dtype = dtype.value_or(alpha_input.scalar_type());
+  auto options = at::TensorOptions()
+    .dtype(out_dtype)
+    .layout(layout.value_or(at::kStrided))
+    .device(device.value_or(alpha_input.device()));
+
+  auto output = at::empty({n}, options);
+
+  if (n == 0) {
+    return output;
+  }
+
+  AT_DISPATCH_FLOATING_TYPES_AND2(
+    at::kBFloat16, at::kHalf,
+    output.scalar_type(),
+    "tukey_window",
+    [&] {
+      auto* out_ptr = output.data_ptr<scalar_t>();
+      scalar_t alpha_val = alpha_input.item<scalar_t>();
+      at::parallel_for(0, n, 1024, [&](int64_t begin, int64_t end) {
+        for (int64_t i = begin; i < end; ++i) {
+          out_ptr[i] = kernel::window_function::tukey<scalar_t>(i, n, alpha_val, periodic);
+        }
+      });
+    }
+  );
+
+  return output;
+}
+
+inline at::Tensor tukey_window(
+  int64_t n,
+  const at::Tensor& alpha_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  return tukey_window_impl(n, alpha_input, false, dtype, layout, device);
+}
+
+inline at::Tensor periodic_tukey_window(
+  int64_t n,
+  const at::Tensor& alpha_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  return tukey_window_impl(n, alpha_input, true, dtype, layout, device);
+}
+
+inline at::Tensor tukey_window_backward_impl(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& alpha_input,
+  bool periodic
+) {
+  auto grad_alpha = at::zeros_like(alpha_input);
+
+  if (n == 0) {
+    return grad_alpha;
+  }
+
+  // Ensure contiguous tensors for data_ptr access
+  at::Tensor grad_output_contig = grad_output.contiguous();
+  at::Tensor output_contig = output.contiguous();
+
+  AT_DISPATCH_FLOATING_TYPES_AND2(
+    at::kBFloat16, at::kHalf,
+    grad_output_contig.scalar_type(),
+    "tukey_window_backward",
+    [&] {
+      auto* grad_out_ptr = grad_output_contig.data_ptr<scalar_t>();
+      auto* out_ptr = output_contig.data_ptr<scalar_t>();
+      scalar_t alpha_val = alpha_input.item<scalar_t>();
+      scalar_t accum = scalar_t(0);
+
+      for (int64_t i = 0; i < n; ++i) {
+        accum += kernel::window_function::tukey_backward<scalar_t>(
+          grad_out_ptr[i], i, n, alpha_val, periodic, out_ptr[i]
+        );
+      }
+
+      grad_alpha.fill_(accum);
+    }
+  );
+
+  return grad_alpha;
+}
+
+inline at::Tensor tukey_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& alpha_input
+) {
+  return tukey_window_backward_impl(grad_output, output, n, alpha_input, false);
+}
+
+inline at::Tensor periodic_tukey_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& alpha_input
+) {
+  return tukey_window_backward_impl(grad_output, output, n, alpha_input, true);
+}
+
 }  // namespace torchscience::cpu::window_function
 
 // =============================================================================
@@ -544,4 +668,9 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
   m.impl("periodic_general_cosine_window", torchscience::cpu::window_function::periodic_general_cosine_window);
   m.impl("general_cosine_window_backward", torchscience::cpu::window_function::general_cosine_window_backward);
   m.impl("periodic_general_cosine_window_backward", torchscience::cpu::window_function::periodic_general_cosine_window_backward);
+
+  m.impl("tukey_window", torchscience::cpu::window_function::tukey_window);
+  m.impl("periodic_tukey_window", torchscience::cpu::window_function::periodic_tukey_window);
+  m.impl("tukey_window_backward", torchscience::cpu::window_function::tukey_window_backward);
+  m.impl("periodic_tukey_window_backward", torchscience::cpu::window_function::periodic_tukey_window_backward);
 }

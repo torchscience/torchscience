@@ -564,6 +564,12 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("general_cosine_window_backward(Tensor grad_output, Tensor output, int n, Tensor coeffs) -> Tensor");
   module.def("periodic_general_cosine_window_backward(Tensor grad_output, Tensor output, int n, Tensor coeffs) -> Tensor");
 
+  // Parameterized windows: Tukey
+  module.def("tukey_window(int n, Tensor alpha, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_tukey_window(int n, Tensor alpha, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("tukey_window_backward(Tensor grad_output, Tensor output, int n, Tensor alpha) -> Tensor");
+  module.def("periodic_tukey_window_backward(Tensor grad_output, Tensor output, int n, Tensor alpha) -> Tensor");
+
   // statistics.descriptive
   module.def("kurtosis(Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");
   module.def("kurtosis_backward(Tensor grad_output, Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");

@@ -219,6 +219,42 @@ inline at::Tensor periodic_general_cosine_window(
     .redispatch(ks, n, coeffs_input, dtype, layout, device);
 }
 
+inline at::Tensor tukey_window(
+  int64_t n,
+  const at::Tensor& alpha_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  at::Device target_device = device.value_or(alpha_input.device());
+  c10::DispatchKeySet ks = target_device.type() == at::kMeta
+    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
+    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  return c10::Dispatcher::singleton()
+    .findSchemaOrThrow("torchscience::tukey_window", "")
+    .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
+                      c10::optional<at::Layout>, c10::optional<at::Device>)>()
+    .redispatch(ks, n, alpha_input, dtype, layout, device);
+}
+
+inline at::Tensor periodic_tukey_window(
+  int64_t n,
+  const at::Tensor& alpha_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  at::Device target_device = device.value_or(alpha_input.device());
+  c10::DispatchKeySet ks = target_device.type() == at::kMeta
+    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
+    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  return c10::Dispatcher::singleton()
+    .findSchemaOrThrow("torchscience::periodic_tukey_window", "")
+    .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
+                      c10::optional<at::Layout>, c10::optional<at::Device>)>()
+    .redispatch(ks, n, alpha_input, dtype, layout, device);
+}
+
 } // namespace torchscience::composite::window_function
 
 // =============================================================================
@@ -263,4 +299,6 @@ TORCH_LIBRARY_IMPL(torchscience, CompositeExplicitAutograd, module) {
   module.impl("periodic_general_hamming_window", &torchscience::composite::window_function::periodic_general_hamming_window);
   module.impl("general_cosine_window", &torchscience::composite::window_function::general_cosine_window);
   module.impl("periodic_general_cosine_window", &torchscience::composite::window_function::periodic_general_cosine_window);
+  module.impl("tukey_window", &torchscience::composite::window_function::tukey_window);
+  module.impl("periodic_tukey_window", &torchscience::composite::window_function::periodic_tukey_window);
 }
