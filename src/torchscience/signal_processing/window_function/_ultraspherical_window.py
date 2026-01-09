@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def _gegenbauer_polynomial(n: int, mu: Tensor, x: Tensor) -> Tensor:
     """Evaluate Gegenbauer polynomial C_n^mu(x) using the recurrence relation.
@@ -140,68 +142,15 @@ def ultraspherical_window(
         x_mu = x_mu.to(dtype=target_dtype)
 
     # Validate parameters
-    if mu <= 0:
+    if mu.item() <= 0:
         raise ValueError(
-            f"ultraspherical_window: mu must be positive, got {mu}"
+            f"ultraspherical_window: mu must be positive, got {mu.item()}"
         )
-    if x_mu <= 1:
+    if x_mu.item() <= 1:
         raise ValueError(
-            f"ultraspherical_window: x_mu must be > 1, got {x_mu}"
+            f"ultraspherical_window: x_mu must be > 1, got {x_mu.item()}"
         )
 
-    target_device = device or mu.device
-
-    # For a symmetric N-point window, we use the Fourier series representation.
-    # The window coefficient at position k (0 to N-1) is computed as a sum of
-    # cosines weighted by the frequency response.
-    #
-    # For a symmetric window centered at (N-1)/2, we compute:
-    # w[k] = sum_{m=0}^{M} c_m * cos(pi * m * (2*k - (N-1)) / N)
-    #
-    # where M = floor((N-1)/2) for odd N, or N/2 for even N,
-    # and c_m = (2 - delta_{m,0} - delta_{m,N/2}) * W_m / N
-    # with W_m being the frequency response.
-
-    # Sample indices for window output
-    k = torch.arange(n, dtype=target_dtype, device=target_device)
-
-    # Compute window using direct Fourier series summation
-    # For a symmetric window, we sum cosines centered at (N-1)/2
-    center = (n - 1) / 2.0
-    window = torch.zeros(n, dtype=target_dtype, device=target_device)
-
-    # Number of frequency components to sum
-    # For even N: use N/2 + 1 components (DC to Nyquist)
-    # For odd N: use (N+1)/2 components
-    n_freqs = n // 2 + 1
-
-    for m in range(n_freqs):
-        # Frequency (normalized angular frequency)
-        omega = torch.pi * m / (n - 1) if n > 1 else torch.tensor(0.0)
-
-        # Argument to Gegenbauer polynomial: x_mu * cos(omega)
-        arg = x_mu * torch.cos(
-            torch.tensor(omega, dtype=target_dtype, device=target_device)
-        )
-
-        # Evaluate frequency response: C_{N-1}^{mu}(arg) / C_{N-1}^{mu}(x_mu)
-        c_n_arg = _gegenbauer_polynomial(n - 1, mu, arg.unsqueeze(0))
-        c_n_x_mu = _gegenbauer_polynomial(n - 1, mu, x_mu.unsqueeze(0))
-        freq_mag = c_n_arg / c_n_x_mu
-
-        # Compute cosine term for each output sample
-        # cos(omega * (k - center)) = cos(pi * m * (k - center) / (N-1))
-        cosine_term = torch.cos(omega * (k - center))
-
-        # Weighting: DC and Nyquist (if present) are weighted by 1, others by 2
-        weight = 1.0 if (m == 0 or (n % 2 == 0 and m == n // 2)) else 2.0
-
-        window = window + weight * freq_mag * cosine_term
-
-    # Normalize so maximum is 1
-    window = window / window.abs().max()
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window
+    return torch.ops.torchscience.ultraspherical_window(
+        n, mu, x_mu, dtype, layout, device
+    )

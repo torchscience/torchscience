@@ -3,7 +3,7 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
-from ._dolph_chebyshev_window import dolph_chebyshev_window
+import torchscience._csrc  # noqa: F401 - Load C++ operators
 
 
 def periodic_dolph_chebyshev_window(
@@ -75,9 +75,19 @@ def periodic_dolph_chebyshev_window(
         target_dtype = dtype or torch.float32
         return torch.ones(1, dtype=target_dtype, layout=layout, device=device)
 
-    # Periodic window is symmetric window of length n+1, truncated to n points
-    window_extended = dolph_chebyshev_window(
-        n + 1, attenuation, dtype=dtype, layout=layout, device=device
-    )
+    target_dtype = dtype or torch.float32
 
-    return window_extended[:-1]
+    if not isinstance(attenuation, Tensor):
+        attenuation = torch.tensor(
+            attenuation, dtype=target_dtype, device=device
+        )
+
+    # Validate attenuation > 0
+    if attenuation.item() <= 0:
+        raise ValueError(
+            f"periodic_dolph_chebyshev_window: attenuation must be positive, got {attenuation.item()}"
+        )
+
+    return torch.ops.torchscience.periodic_dolph_chebyshev_window(
+        n, attenuation, dtype, layout, device
+    )

@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def _chebyshev_polynomial_analytic(order: float, x: Tensor) -> Tensor:
     """Evaluate Chebyshev polynomial T_n(x) using analytic formulas.
@@ -144,7 +146,6 @@ def dolph_chebyshev_window(
         target_dtype = dtype or torch.float32
         return torch.ones(1, dtype=target_dtype, layout=layout, device=device)
 
-    # Convert parameters to tensors
     target_dtype = dtype or torch.float32
 
     if not isinstance(attenuation, Tensor):
@@ -152,56 +153,12 @@ def dolph_chebyshev_window(
             attenuation, dtype=target_dtype, device=device
         )
 
-    # Ensure consistent dtype
-    if attenuation.dtype != target_dtype:
-        attenuation = attenuation.to(dtype=target_dtype)
-
-    # Validate parameters
-    if attenuation <= 0:
+    # Validate attenuation > 0
+    if attenuation.item() <= 0:
         raise ValueError(
-            f"dolph_chebyshev_window: attenuation must be positive, got {attenuation}"
+            f"dolph_chebyshev_window: attenuation must be positive, got {attenuation.item()}"
         )
 
-    # Compute beta from attenuation (in dB)
-    # beta = cosh(acosh(10^(|A|/20)) / (N-1))
-    target_device = device or attenuation.device
-    order = float(n - 1)
-    amplitude_ratio = torch.pow(
-        torch.tensor(10.0, dtype=target_dtype, device=target_device),
-        torch.abs(attenuation) / 20.0,
+    return torch.ops.torchscience.dolph_chebyshev_window(
+        n, attenuation, dtype, layout, device
     )
-    beta = torch.cosh(torch.acosh(amplitude_ratio) / order)
-
-    # Compute the DFT coefficients using Chebyshev polynomial
-    # x[k] = beta * cos(pi * k / N) for k = 0, 1, ..., N-1
-    k = torch.arange(n, dtype=target_dtype, device=target_device)
-    x = beta * torch.cos(torch.pi * k / n)
-
-    # Evaluate T_{N-1}(x) using analytic formula
-    p = _chebyshev_polynomial_analytic(order, x)
-
-    # Compute the window coefficients via FFT
-    # The approach differs for even vs odd N
-    if n % 2 == 1:
-        # Odd N: direct FFT
-        w = torch.fft.fft(p).real
-        half = (n + 1) // 2
-        w = w[:half]
-        # Mirror to create full symmetric window
-        window = torch.cat([w[1:half].flip(0), w])
-    else:
-        # Even N: apply phase shift before FFT
-        phase = torch.exp(1j * torch.pi / n * k)
-        p_shifted = p * phase
-        w = torch.fft.fft(p_shifted).real
-        half = n // 2 + 1
-        # Mirror to create full symmetric window
-        window = torch.cat([w[1:half].flip(0), w[1:half]])
-
-    # Normalize so maximum is 1
-    window = window / window.abs().max()
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window

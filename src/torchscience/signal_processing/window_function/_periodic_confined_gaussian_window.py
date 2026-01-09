@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def periodic_confined_gaussian_window(
     n: int,
@@ -92,40 +94,7 @@ def periodic_confined_gaussian_window(
         target_dtype = dtype or torch.float32
         std = torch.tensor(std, dtype=target_dtype, device=device)
 
-    # Window length (periodic: use n as denominator)
-    L = float(n)
-    half_L = L / 2.0
-
-    # Actual standard deviation
-    sigma = std * L
-
-    # Sample positions centered at L/2
-    k = torch.arange(n, dtype=std.dtype, device=std.device)
-    x = k - half_L  # x_k = k - L/2
-
-    # Define Gaussian function: g(t) = exp(-t^2 / (2 * sigma^2))
-    def g(t: Tensor) -> Tensor:
-        return torch.exp(-t * t / (2.0 * sigma * sigma))
-
-    # Main Gaussian term
-    g_x = g(x)
-
-    # Correction term to force zeros at boundaries
-    # g(L/2) * [g(x - L) + g(x + L)] / [g(-3L/2) + g(L/2)]
-    g_half_L = g(torch.tensor(half_L, dtype=std.dtype, device=std.device))
-    g_neg_3half_L = g(
-        torch.tensor(-1.5 * L, dtype=std.dtype, device=std.device)
+    # Note: C++ op expects `sigma` parameter, which corresponds to `std` here
+    return torch.ops.torchscience.periodic_confined_gaussian_window(
+        n, std, dtype, layout, device
     )
-
-    numerator = g(x - L) + g(x + L)
-    denominator = g_neg_3half_L + g_half_L
-
-    correction = g_half_L * numerator / denominator
-
-    # Confined Gaussian window
-    window = g_x - correction
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window

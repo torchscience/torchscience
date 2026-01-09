@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def confined_gaussian_window(
     n: int,
@@ -90,32 +92,6 @@ def confined_gaussian_window(
         target_dtype = dtype or torch.float32
         sigma = torch.tensor(sigma, dtype=target_dtype, device=device)
 
-    # Compute normalized positions t in [-0.5, 0.5]
-    # t_k = (k - (n-1)/2) / (n-1)
-    k = torch.arange(n, dtype=sigma.dtype, device=sigma.device)
-    center = (n - 1) / 2.0
-    t = (k - center) / (n - 1)
-
-    # Gaussian function: G(t) = exp(-0.5 * (t / sigma)^2)
-    def gaussian(x: Tensor) -> Tensor:
-        return torch.exp(-0.5 * (x / sigma) ** 2)
-
-    # Compute the confined Gaussian window
-    # w[k] = G(t_k) - G(0.5) * (G(t_k - 1) + G(t_k + 1)) / (G(0.5) + G(1.5))
-    g_t = gaussian(t)
-    g_t_minus_1 = gaussian(t - 1)
-    g_t_plus_1 = gaussian(t + 1)
-    g_half = gaussian(
-        torch.tensor(0.5, dtype=sigma.dtype, device=sigma.device)
+    return torch.ops.torchscience.confined_gaussian_window(
+        n, sigma, dtype, layout, device
     )
-    g_three_half = gaussian(
-        torch.tensor(1.5, dtype=sigma.dtype, device=sigma.device)
-    )
-
-    correction = g_half / (g_half + g_three_half)
-    window = g_t - correction * (g_t_minus_1 + g_t_plus_1)
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window

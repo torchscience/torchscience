@@ -3,7 +3,7 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
-from ._ultraspherical_window import _gegenbauer_polynomial
+import torchscience._csrc  # noqa: F401 - Load C++ operators
 
 
 def periodic_ultraspherical_window(
@@ -107,57 +107,15 @@ def periodic_ultraspherical_window(
         x_mu = x_mu.to(dtype=target_dtype)
 
     # Validate parameters
-    if mu <= 0:
+    if mu.item() <= 0:
         raise ValueError(
-            f"periodic_ultraspherical_window: mu must be positive, got {mu}"
+            f"periodic_ultraspherical_window: mu must be positive, got {mu.item()}"
         )
-    if x_mu <= 1:
+    if x_mu.item() <= 1:
         raise ValueError(
-            f"periodic_ultraspherical_window: x_mu must be > 1, got {x_mu}"
+            f"periodic_ultraspherical_window: x_mu must be > 1, got {x_mu.item()}"
         )
 
-    target_device = device or mu.device
-
-    # For a periodic N-point window, we use a Fourier series with denominator n
-    # instead of n-1 to ensure proper periodicity for FFT applications.
-
-    # Sample indices for window output
-    k = torch.arange(n, dtype=target_dtype, device=target_device)
-
-    # Compute window using direct Fourier series summation
-    # For a periodic window, center is at n/2
-    center = n / 2.0
-    window = torch.zeros(n, dtype=target_dtype, device=target_device)
-
-    # Number of frequency components to sum
-    n_freqs = n // 2 + 1
-
-    for m in range(n_freqs):
-        # Frequency (normalized angular frequency) - use n as denominator for periodic
-        omega = torch.pi * m / n if n > 0 else torch.tensor(0.0)
-
-        # Argument to Gegenbauer polynomial: x_mu * cos(omega)
-        arg = x_mu * torch.cos(
-            torch.tensor(omega, dtype=target_dtype, device=target_device)
-        )
-
-        # Evaluate frequency response: C_{N-1}^{mu}(arg) / C_{N-1}^{mu}(x_mu)
-        c_n_arg = _gegenbauer_polynomial(n - 1, mu, arg.unsqueeze(0))
-        c_n_x_mu = _gegenbauer_polynomial(n - 1, mu, x_mu.unsqueeze(0))
-        freq_mag = c_n_arg / c_n_x_mu
-
-        # Compute cosine term for each output sample
-        cosine_term = torch.cos(omega * (k - center))
-
-        # Weighting: DC and Nyquist (if present) are weighted by 1, others by 2
-        weight = 1.0 if (m == 0 or (n % 2 == 0 and m == n // 2)) else 2.0
-
-        window = window + weight * freq_mag * cosine_term
-
-    # Normalize so maximum is 1
-    window = window / window.abs().max()
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window
+    return torch.ops.torchscience.periodic_ultraspherical_window(
+        n, mu, x_mu, dtype, layout, device
+    )

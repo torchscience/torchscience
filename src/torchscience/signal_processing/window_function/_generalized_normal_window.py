@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def generalized_normal_window(
     n: int,
@@ -99,16 +101,6 @@ def generalized_normal_window(
         p = p.to(dtype=common_dtype)
         sigma = sigma.to(dtype=common_dtype)
 
-    # For symmetric window, center = (n - 1) / 2
-    center = (n - 1) / 2.0
-
-    k = torch.arange(n, dtype=p.dtype, device=p.device)
-
-    # w[k] = exp(-|(k - center) / sigma|^p)
-    normalized = torch.abs(k - center) / sigma
-    window = torch.exp(-torch.pow(normalized, p))
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window
+    return torch.ops.torchscience.generalized_normal_window(
+        n, p, sigma, dtype, layout, device
+    )

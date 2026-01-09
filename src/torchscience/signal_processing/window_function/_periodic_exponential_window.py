@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def periodic_exponential_window(
     n: int,
@@ -76,15 +78,6 @@ def periodic_exponential_window(
         target_dtype = dtype or torch.float32
         tau = torch.tensor(tau, dtype=target_dtype, device=device)
 
-    # For periodic window, center = n / 2
-    center = n / 2.0
-
-    k = torch.arange(n, dtype=tau.dtype, device=tau.device)
-
-    # w[k] = exp(-|k - center| / tau)
-    window = torch.exp(-torch.abs(k - center) / tau)
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window
+    return torch.ops.torchscience.periodic_exponential_window(
+        n, tau, dtype, layout, device
+    )

@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def approximate_confined_gaussian_window(
     n: int,
@@ -101,23 +103,6 @@ def approximate_confined_gaussian_window(
         target_dtype = dtype or torch.float32
         sigma = torch.tensor(sigma, dtype=target_dtype, device=device)
 
-    # For symmetric window, center = (n - 1) / 2
-    center = (n - 1) / 2.0
-
-    k = torch.arange(n, dtype=sigma.dtype, device=sigma.device)
-
-    # Standard Gaussian: G[k] = exp(-0.5 * ((k - center) / (sigma * center))^2)
-    normalized_x = (k - center) / (sigma * center)
-    G = torch.exp(-0.5 * normalized_x * normalized_x)
-
-    # Endpoint value: G[0] = G[n-1] = exp(-0.5 / sigma^2)
-    G_endpoint = torch.exp(-0.5 / (sigma * sigma))
-
-    # Approximate confined Gaussian: shift and normalize
-    # w[k] = (G[k] - G[0]) / (1 - G[0])
-    window = (G - G_endpoint) / (1.0 - G_endpoint)
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window
+    return torch.ops.torchscience.approximate_confined_gaussian_window(
+        n, sigma, dtype, layout, device
+    )

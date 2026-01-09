@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def periodic_kaiser_window(
     n: int,
@@ -78,25 +80,11 @@ def periodic_kaiser_window(
         target_dtype = dtype or torch.float32
         return torch.ones(1, dtype=target_dtype, layout=layout, device=device)
 
+    target_dtype = dtype or torch.float32
+
     if not isinstance(beta, Tensor):
-        target_dtype = dtype or torch.float32
         beta = torch.tensor(beta, dtype=target_dtype, device=device)
 
-    # Compute the window
-    # For periodic window, denominator is n
-    denom = float(n)
-    center = denom / 2.0
-
-    k = torch.arange(n, dtype=beta.dtype, device=beta.device)
-    x = (k - center) / center  # normalized position in [-1, 1]
-
-    # Argument to I0: beta * sqrt(1 - x^2)
-    arg = beta * torch.sqrt(torch.clamp(1.0 - x * x, min=0.0))
-
-    # Kaiser window = I0(arg) / I0(beta)
-    window = torch.i0(arg) / torch.i0(beta)
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window
+    return torch.ops.torchscience.periodic_kaiser_window(
+        n, beta, dtype, layout, device
+    )

@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def generalized_adaptive_polynomial_window(
     n: int,
@@ -98,21 +100,6 @@ def generalized_adaptive_polynomial_window(
     if not isinstance(beta, Tensor):
         beta = torch.tensor(beta, dtype=alpha.dtype, device=alpha.device)
 
-    # For symmetric window, denominator is n - 1
-    denom = float(n - 1)
-
-    k = torch.arange(n, dtype=alpha.dtype, device=alpha.device)
-
-    # Normalized position x in [-1, 1]
-    x = 2.0 * k / denom - 1.0
-
-    # w[k] = (1 - |x|^alpha)^beta
-    # Use clamp to ensure numerical stability (avoid negative values due to
-    # floating point errors)
-    abs_x_alpha = torch.abs(x).pow(alpha)
-    window = torch.clamp(1.0 - abs_x_alpha, min=0.0).pow(beta)
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window
+    return torch.ops.torchscience.generalized_adaptive_polynomial_window(
+        n, alpha, beta, dtype, layout, device
+    )

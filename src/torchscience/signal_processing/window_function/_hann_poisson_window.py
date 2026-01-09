@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def hann_poisson_window(
     n: int,
@@ -83,20 +85,6 @@ def hann_poisson_window(
         target_dtype = dtype or torch.float32
         alpha = torch.tensor(alpha, dtype=target_dtype, device=device)
 
-    # For symmetric window, denominator is n - 1
-    denom = float(n - 1)
-
-    k = torch.arange(n, dtype=alpha.dtype, device=alpha.device)
-
-    # Hann component: 0.5 * (1 - cos(2 * pi * k / (n - 1)))
-    hann = 0.5 * (1.0 - torch.cos(2.0 * torch.pi * k / denom))
-
-    # Poisson component: exp(-alpha * |n - 1 - 2k| / (n - 1))
-    poisson = torch.exp(-alpha * torch.abs(denom - 2.0 * k) / denom)
-
-    window = hann * poisson
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window
+    return torch.ops.torchscience.hann_poisson_window(
+        n, alpha, dtype, layout, device
+    )

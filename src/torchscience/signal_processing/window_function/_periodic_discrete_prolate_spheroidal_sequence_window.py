@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def _dpss_tridiagonal_eigenvector_periodic(
     n: int,
@@ -151,21 +153,12 @@ def periodic_discrete_prolate_spheroidal_sequence_window(
     target_device = device if device is not None else nw.device
 
     # Validate parameters
-    if nw <= 0:
+    if nw.item() <= 0:
         raise ValueError(
             f"periodic_discrete_prolate_spheroidal_sequence_window: nw must be "
-            f"positive, got {nw}"
+            f"positive, got {nw.item()}"
         )
 
-    # Compute the principal DPSS eigenvector (periodic version)
-    window = _dpss_tridiagonal_eigenvector_periodic(
-        n, nw, target_dtype, target_device
+    return torch.ops.torchscience.periodic_discrete_prolate_spheroidal_sequence_window(
+        n, nw, dtype, layout, device
     )
-
-    # Normalize so maximum value is 1
-    window = window / window.abs().max()
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window

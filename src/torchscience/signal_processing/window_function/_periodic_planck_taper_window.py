@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def periodic_planck_taper_window(
     n: int,
@@ -89,44 +91,11 @@ def periodic_planck_taper_window(
         target_dtype = dtype or torch.float32
         return torch.ones(1, dtype=target_dtype, layout=layout, device=device)
 
+    target_dtype = dtype or torch.float32
+
     if not isinstance(epsilon, Tensor):
-        target_dtype = dtype or torch.float32
         epsilon = torch.tensor(epsilon, dtype=target_dtype, device=device)
 
-    # For periodic window, denominator is n
-    denom = float(n)
-    k = torch.arange(n, dtype=epsilon.dtype, device=epsilon.device)
-    t = k / denom
-
-    # Initialize window to ones (flat region)
-    window = torch.ones_like(t)
-
-    # Handle epsilon = 0 case (rectangular window)
-    if epsilon == 0:
-        if dtype is not None and window.dtype != dtype:
-            window = window.to(dtype=dtype)
-        return window
-
-    # Left taper region: 0 < t < epsilon
-    # Z⁺(t) = epsilon * (1/t + 1/(t - epsilon))
-    left_mask = (t > 0) & (t < epsilon)
-    t_left = t[left_mask]
-    z_left = epsilon * (1.0 / t_left + 1.0 / (t_left - epsilon))
-    window[left_mask] = 1.0 / (1.0 + torch.exp(z_left))
-
-    # Right taper region: 1 - epsilon < t < 1
-    # Z⁻(t) = epsilon * (1/(1-t) + 1/(1-t-epsilon))
-    right_mask = (t > 1 - epsilon) & (t < 1)
-    t_right = t[right_mask]
-    z_right = epsilon * (
-        1.0 / (1.0 - t_right) + 1.0 / (1.0 - t_right - epsilon)
+    return torch.ops.torchscience.periodic_planck_taper_window(
+        n, epsilon, dtype, layout, device
     )
-    window[right_mask] = 1.0 / (1.0 + torch.exp(z_right))
-
-    # Boundary point: t = 0 is exactly 0
-    window[0] = 0.0
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window

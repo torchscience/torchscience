@@ -580,6 +580,60 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("tukey_window_backward(Tensor grad_output, Tensor output, int n, Tensor alpha) -> Tensor");
   module.def("periodic_tukey_window_backward(Tensor grad_output, Tensor output, int n, Tensor alpha) -> Tensor");
 
+  // Parameterized windows: Exponential
+  module.def("exponential_window(int n, Tensor tau, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_exponential_window(int n, Tensor tau, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("exponential_window_backward(Tensor grad_output, Tensor output, int n, Tensor tau) -> Tensor");
+  module.def("periodic_exponential_window_backward(Tensor grad_output, Tensor output, int n, Tensor tau) -> Tensor");
+
+  // Parameterized windows: Hann-Poisson
+  module.def("hann_poisson_window(int n, Tensor alpha, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_hann_poisson_window(int n, Tensor alpha, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("hann_poisson_window_backward(Tensor grad_output, Tensor output, int n, Tensor alpha) -> Tensor");
+  module.def("periodic_hann_poisson_window_backward(Tensor grad_output, Tensor output, int n, Tensor alpha) -> Tensor");
+
+  // Parameterized windows: Generalized Normal (two parameters)
+  module.def("generalized_normal_window(int n, Tensor p, Tensor sigma, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_generalized_normal_window(int n, Tensor p, Tensor sigma, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("generalized_normal_window_backward(Tensor grad_output, Tensor output, int n, Tensor p, Tensor sigma) -> (Tensor, Tensor)");
+  module.def("periodic_generalized_normal_window_backward(Tensor grad_output, Tensor output, int n, Tensor p, Tensor sigma) -> (Tensor, Tensor)");
+
+  // Parameterized windows: Kaiser
+  module.def("kaiser_window(int n, Tensor beta, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_kaiser_window(int n, Tensor beta, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("kaiser_window_backward(Tensor grad_output, Tensor output, int n, Tensor beta) -> Tensor");
+  module.def("periodic_kaiser_window_backward(Tensor grad_output, Tensor output, int n, Tensor beta) -> Tensor");
+
+  // Parameterized windows: Planck-taper
+  module.def("planck_taper_window(int n, Tensor epsilon, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_planck_taper_window(int n, Tensor epsilon, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("planck_taper_window_backward(Tensor grad_output, Tensor output, int n, Tensor epsilon) -> Tensor");
+  module.def("periodic_planck_taper_window_backward(Tensor grad_output, Tensor output, int n, Tensor epsilon) -> Tensor");
+
+  // Parameterized windows: Planck-Bessel (two parameters)
+  module.def("planck_bessel_window(int n, Tensor epsilon, Tensor beta, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_planck_bessel_window(int n, Tensor epsilon, Tensor beta, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("planck_bessel_window_backward(Tensor grad_output, Tensor output, int n, Tensor epsilon, Tensor beta) -> (Tensor, Tensor)");
+  module.def("periodic_planck_bessel_window_backward(Tensor grad_output, Tensor output, int n, Tensor epsilon, Tensor beta) -> (Tensor, Tensor)");
+
+  // FFT-based windows: Dolph-Chebyshev (no explicit backward - uses CompositeImplicitAutograd)
+  module.def("dolph_chebyshev_window(int n, Tensor attenuation, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_dolph_chebyshev_window(int n, Tensor attenuation, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+
+  // FFT-based windows: Ultraspherical (two parameters, no explicit backward)
+  module.def("ultraspherical_window(int n, Tensor mu, Tensor x_mu, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_ultraspherical_window(int n, Tensor mu, Tensor x_mu, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+
+  // Phase 5: Eigenvalue-based and polynomial windows (CompositeImplicitAutograd)
+  module.def("discrete_prolate_spheroidal_sequence_window(int n, Tensor nw, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_discrete_prolate_spheroidal_sequence_window(int n, Tensor nw, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("approximate_confined_gaussian_window(int n, Tensor sigma, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_approximate_confined_gaussian_window(int n, Tensor sigma, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("confined_gaussian_window(int n, Tensor sigma, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_confined_gaussian_window(int n, Tensor sigma, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("generalized_adaptive_polynomial_window(int n, Tensor alpha, Tensor beta, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+  module.def("periodic_generalized_adaptive_polynomial_window(int n, Tensor alpha, Tensor beta, ScalarType? dtype, Layout? layout, Device? device) -> Tensor");
+
   // statistics.descriptive
   module.def("kurtosis(Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");
   module.def("kurtosis_backward(Tensor grad_output, Tensor input, int[]? dim, bool keepdim, bool fisher, bool bias) -> Tensor");

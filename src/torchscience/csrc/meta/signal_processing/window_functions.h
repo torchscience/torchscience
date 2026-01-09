@@ -271,6 +271,326 @@ inline at::Tensor periodic_tukey_window_backward(
   return tukey_window_backward(grad_output, output, n, alpha_input);
 }
 
+// =============================================================================
+// Parameterized windows: Exponential
+// =============================================================================
+
+inline at::Tensor exponential_window(
+  int64_t n,
+  const at::Tensor& tau_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  (void)device;
+  auto out_dtype = dtype.value_or(tau_input.scalar_type());
+  auto options = at::TensorOptions()
+    .dtype(out_dtype)
+    .layout(layout.value_or(at::kStrided))
+    .device(at::kMeta);
+  return at::empty({n}, options);
+}
+
+inline at::Tensor periodic_exponential_window(
+  int64_t n,
+  const at::Tensor& tau_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  return exponential_window(n, tau_input, dtype, layout, device);
+}
+
+inline at::Tensor exponential_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& tau_input
+) {
+  (void)grad_output;
+  (void)output;
+  (void)n;
+  return at::empty_like(tau_input, at::TensorOptions().dtype(tau_input.scalar_type()).device(at::kMeta));
+}
+
+inline at::Tensor periodic_exponential_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& tau_input
+) {
+  return exponential_window_backward(grad_output, output, n, tau_input);
+}
+
+// =============================================================================
+// Parameterized windows: Hann-Poisson
+// =============================================================================
+
+inline at::Tensor hann_poisson_window(
+  int64_t n,
+  const at::Tensor& alpha_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  (void)device;
+  auto out_dtype = dtype.value_or(alpha_input.scalar_type());
+  auto options = at::TensorOptions()
+    .dtype(out_dtype)
+    .layout(layout.value_or(at::kStrided))
+    .device(at::kMeta);
+  return at::empty({n}, options);
+}
+
+inline at::Tensor periodic_hann_poisson_window(
+  int64_t n,
+  const at::Tensor& alpha_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  return hann_poisson_window(n, alpha_input, dtype, layout, device);
+}
+
+inline at::Tensor hann_poisson_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& alpha_input
+) {
+  (void)grad_output;
+  (void)output;
+  (void)n;
+  return at::empty_like(alpha_input, at::TensorOptions().dtype(alpha_input.scalar_type()).device(at::kMeta));
+}
+
+inline at::Tensor periodic_hann_poisson_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& alpha_input
+) {
+  return hann_poisson_window_backward(grad_output, output, n, alpha_input);
+}
+
+// =============================================================================
+// Parameterized windows: Generalized Normal (two parameters)
+// =============================================================================
+
+inline at::Tensor generalized_normal_window(
+  int64_t n,
+  const at::Tensor& p_input,
+  const at::Tensor& sigma_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  (void)device;
+  auto promoted = at::result_type(p_input, sigma_input);
+  auto out_dtype = dtype.value_or(promoted);
+  auto options = at::TensorOptions()
+    .dtype(out_dtype)
+    .layout(layout.value_or(at::kStrided))
+    .device(at::kMeta);
+  return at::empty({n}, options);
+}
+
+inline at::Tensor periodic_generalized_normal_window(
+  int64_t n,
+  const at::Tensor& p_input,
+  const at::Tensor& sigma_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  return generalized_normal_window(n, p_input, sigma_input, dtype, layout, device);
+}
+
+inline std::tuple<at::Tensor, at::Tensor> generalized_normal_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& p_input,
+  const at::Tensor& sigma_input
+) {
+  (void)grad_output;
+  (void)output;
+  (void)n;
+  auto grad_p = at::empty_like(p_input, at::TensorOptions().dtype(p_input.scalar_type()).device(at::kMeta));
+  auto grad_sigma = at::empty_like(sigma_input, at::TensorOptions().dtype(sigma_input.scalar_type()).device(at::kMeta));
+  return std::make_tuple(grad_p, grad_sigma);
+}
+
+inline std::tuple<at::Tensor, at::Tensor> periodic_generalized_normal_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& p_input,
+  const at::Tensor& sigma_input
+) {
+  return generalized_normal_window_backward(grad_output, output, n, p_input, sigma_input);
+}
+
+// =============================================================================
+// Parameterized windows: Kaiser
+// =============================================================================
+
+inline at::Tensor kaiser_window(
+  int64_t n,
+  const at::Tensor& beta_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  (void)device;
+  auto out_dtype = dtype.value_or(beta_input.scalar_type());
+  auto options = at::TensorOptions()
+    .dtype(out_dtype)
+    .layout(layout.value_or(at::kStrided))
+    .device(at::kMeta);
+  return at::empty({n}, options);
+}
+
+inline at::Tensor periodic_kaiser_window(
+  int64_t n,
+  const at::Tensor& beta_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  return kaiser_window(n, beta_input, dtype, layout, device);
+}
+
+inline at::Tensor kaiser_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& beta_input
+) {
+  (void)grad_output;
+  (void)output;
+  (void)n;
+  return at::empty_like(beta_input, at::TensorOptions().dtype(beta_input.scalar_type()).device(at::kMeta));
+}
+
+inline at::Tensor periodic_kaiser_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& beta_input
+) {
+  return kaiser_window_backward(grad_output, output, n, beta_input);
+}
+
+// =============================================================================
+// Parameterized windows: Planck-taper
+// =============================================================================
+
+inline at::Tensor planck_taper_window(
+  int64_t n,
+  const at::Tensor& epsilon_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  (void)device;
+  auto out_dtype = dtype.value_or(epsilon_input.scalar_type());
+  auto options = at::TensorOptions()
+    .dtype(out_dtype)
+    .layout(layout.value_or(at::kStrided))
+    .device(at::kMeta);
+  return at::empty({n}, options);
+}
+
+inline at::Tensor periodic_planck_taper_window(
+  int64_t n,
+  const at::Tensor& epsilon_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  return planck_taper_window(n, epsilon_input, dtype, layout, device);
+}
+
+inline at::Tensor planck_taper_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& epsilon_input
+) {
+  (void)grad_output;
+  (void)output;
+  (void)n;
+  return at::empty_like(epsilon_input, at::TensorOptions().dtype(epsilon_input.scalar_type()).device(at::kMeta));
+}
+
+inline at::Tensor periodic_planck_taper_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& epsilon_input
+) {
+  return planck_taper_window_backward(grad_output, output, n, epsilon_input);
+}
+
+// =============================================================================
+// Parameterized windows: Planck-Bessel (two parameters)
+// =============================================================================
+
+inline at::Tensor planck_bessel_window(
+  int64_t n,
+  const at::Tensor& epsilon_input,
+  const at::Tensor& beta_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  (void)device;
+  auto promoted = at::result_type(epsilon_input, beta_input);
+  auto out_dtype = dtype.value_or(promoted);
+  auto options = at::TensorOptions()
+    .dtype(out_dtype)
+    .layout(layout.value_or(at::kStrided))
+    .device(at::kMeta);
+  return at::empty({n}, options);
+}
+
+inline at::Tensor periodic_planck_bessel_window(
+  int64_t n,
+  const at::Tensor& epsilon_input,
+  const at::Tensor& beta_input,
+  c10::optional<at::ScalarType> dtype,
+  c10::optional<at::Layout> layout,
+  c10::optional<at::Device> device
+) {
+  return planck_bessel_window(n, epsilon_input, beta_input, dtype, layout, device);
+}
+
+inline std::tuple<at::Tensor, at::Tensor> planck_bessel_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& epsilon_input,
+  const at::Tensor& beta_input
+) {
+  (void)grad_output;
+  (void)output;
+  (void)n;
+  auto grad_epsilon = at::empty_like(epsilon_input, at::TensorOptions().dtype(epsilon_input.scalar_type()).device(at::kMeta));
+  auto grad_beta = at::empty_like(beta_input, at::TensorOptions().dtype(beta_input.scalar_type()).device(at::kMeta));
+  return std::make_tuple(grad_epsilon, grad_beta);
+}
+
+inline std::tuple<at::Tensor, at::Tensor> periodic_planck_bessel_window_backward(
+  const at::Tensor& grad_output,
+  const at::Tensor& output,
+  int64_t n,
+  const at::Tensor& epsilon_input,
+  const at::Tensor& beta_input
+) {
+  return planck_bessel_window_backward(grad_output, output, n, epsilon_input, beta_input);
+}
+
 }  // namespace torchscience::meta::window_function
 
 // =============================================================================
@@ -326,4 +646,34 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
   m.impl("periodic_tukey_window", torchscience::meta::window_function::periodic_tukey_window);
   m.impl("tukey_window_backward", torchscience::meta::window_function::tukey_window_backward);
   m.impl("periodic_tukey_window_backward", torchscience::meta::window_function::periodic_tukey_window_backward);
+
+  m.impl("exponential_window", torchscience::meta::window_function::exponential_window);
+  m.impl("periodic_exponential_window", torchscience::meta::window_function::periodic_exponential_window);
+  m.impl("exponential_window_backward", torchscience::meta::window_function::exponential_window_backward);
+  m.impl("periodic_exponential_window_backward", torchscience::meta::window_function::periodic_exponential_window_backward);
+
+  m.impl("hann_poisson_window", torchscience::meta::window_function::hann_poisson_window);
+  m.impl("periodic_hann_poisson_window", torchscience::meta::window_function::periodic_hann_poisson_window);
+  m.impl("hann_poisson_window_backward", torchscience::meta::window_function::hann_poisson_window_backward);
+  m.impl("periodic_hann_poisson_window_backward", torchscience::meta::window_function::periodic_hann_poisson_window_backward);
+
+  m.impl("generalized_normal_window", torchscience::meta::window_function::generalized_normal_window);
+  m.impl("periodic_generalized_normal_window", torchscience::meta::window_function::periodic_generalized_normal_window);
+  m.impl("generalized_normal_window_backward", torchscience::meta::window_function::generalized_normal_window_backward);
+  m.impl("periodic_generalized_normal_window_backward", torchscience::meta::window_function::periodic_generalized_normal_window_backward);
+
+  m.impl("kaiser_window", torchscience::meta::window_function::kaiser_window);
+  m.impl("periodic_kaiser_window", torchscience::meta::window_function::periodic_kaiser_window);
+  m.impl("kaiser_window_backward", torchscience::meta::window_function::kaiser_window_backward);
+  m.impl("periodic_kaiser_window_backward", torchscience::meta::window_function::periodic_kaiser_window_backward);
+
+  m.impl("planck_taper_window", torchscience::meta::window_function::planck_taper_window);
+  m.impl("periodic_planck_taper_window", torchscience::meta::window_function::periodic_planck_taper_window);
+  m.impl("planck_taper_window_backward", torchscience::meta::window_function::planck_taper_window_backward);
+  m.impl("periodic_planck_taper_window_backward", torchscience::meta::window_function::periodic_planck_taper_window_backward);
+
+  m.impl("planck_bessel_window", torchscience::meta::window_function::planck_bessel_window);
+  m.impl("periodic_planck_bessel_window", torchscience::meta::window_function::periodic_planck_bessel_window);
+  m.impl("planck_bessel_window_backward", torchscience::meta::window_function::planck_bessel_window_backward);
+  m.impl("periodic_planck_bessel_window_backward", torchscience::meta::window_function::periodic_planck_bessel_window_backward);
 }

@@ -3,6 +3,8 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
+
 
 def periodic_approximate_confined_gaussian_window(
     n: int,
@@ -96,32 +98,8 @@ def periodic_approximate_confined_gaussian_window(
         target_dtype = dtype or torch.float32
         sigma = torch.tensor(sigma, dtype=target_dtype, device=device)
 
-    # For periodic window, denominator is n
-    denom = float(n)
-    center = denom / 2.0
-
-    # Compute normalized positions t in [-0.5, 0.5)
-    # t_k = (k - n/2) / n
-    k = torch.arange(n, dtype=sigma.dtype, device=sigma.device)
-    t = (k - center) / denom
-
-    # Gaussian function: G(t) = exp(-0.5 * (t / sigma)^2)
-    def gaussian(x: Tensor) -> Tensor:
-        return torch.exp(-0.5 * (x / sigma) ** 2)
-
-    # Compute the approximate confined Gaussian window
-    # w[k] = G(t_k) - G(-0.5)
-    g_t = gaussian(t)
-    g_boundary = gaussian(
-        torch.tensor(-0.5, dtype=sigma.dtype, device=sigma.device)
+    return (
+        torch.ops.torchscience.periodic_approximate_confined_gaussian_window(
+            n, sigma, dtype, layout, device
+        )
     )
-
-    window = g_t - g_boundary
-
-    # Ensure non-negative values (numerical precision)
-    window = torch.clamp(window, min=0.0)
-
-    if dtype is not None and window.dtype != dtype:
-        window = window.to(dtype=dtype)
-
-    return window
