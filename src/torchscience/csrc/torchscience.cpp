@@ -1,5 +1,8 @@
 #include <torch/extension.h>
 
+// coding
+#include "cpu/coding/morton.h"
+
 // special_functions
 #include "cpu/special_functions.h"
 #include "meta/special_functions.h"
@@ -104,6 +107,7 @@
 #include "cpu/space_partitioning/k_nearest_neighbors.h"
 #include "cpu/space_partitioning/range_search.h"
 #include "cpu/space_partitioning/bvh.h"
+#include "cpu/space_partitioning/octree.h"
 #include "cpu/geometry/ray_intersect.h"
 #include "cpu/geometry/closest_point.h"
 #include "cpu/geometry/ray_occluded.h"
@@ -264,6 +268,7 @@
 #include "meta/geometry/convex_hull.h"
 #include "autograd/space_partitioning/k_nearest_neighbors.h"
 #include "autograd/space_partitioning/range_search.h"
+#include "autograd/space_partitioning/octree.h"
 
 #include "autocast/signal_processing/filter.h"
 #include "autocast/statistics/descriptive/kurtosis.h"
@@ -883,4 +888,52 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("poisson_cumulative_distribution_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
   module.def("poisson_probability_mass(Tensor k, Tensor rate) -> Tensor");
   module.def("poisson_probability_mass_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
+
+  // coding - Morton encoding (Z-order curve)
+  module.def("morton_encode(Tensor coordinates) -> Tensor");
+  module.def("morton_decode(Tensor codes, int dimensions) -> Tensor");
+
+  // space_partitioning - Octree
+  // Construction (returns: codes, data, structure, children_mask, weights, maximum_depth, count)
+  // aggregation: int (0=mean, 1=sum, 2=max)
+  module.def("octree_build(Tensor points, Tensor data, int maximum_depth, float capacity_factor, int aggregation) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // Point queries (with query_depth and found mask)
+  // interpolation: int (0=nearest, 1=trilinear)
+  module.def("octree_sample(Tensor data, Tensor codes, Tensor structure, Tensor children_mask, Tensor points, int maximum_depth, int interpolation, int? query_depth) -> (Tensor, Tensor)");
+
+  // Backward for octree_sample
+  // Returns: (grad_data, grad_points) - grad_points is zeros for nearest interpolation
+  module.def("octree_sample_backward(Tensor grad_output, Tensor data, Tensor codes, Tensor structure, Tensor children_mask, Tensor points, int maximum_depth, int interpolation, int? query_depth) -> (Tensor, Tensor)");
+
+  // Ray marching (hierarchical DDA traversal)
+  // Returns: (positions, data, mask) with fixed maximum_steps size
+  module.def("octree_ray_marching(Tensor data, Tensor codes, Tensor structure, Tensor children_mask, Tensor origins, Tensor directions, int maximum_depth, float? step_size, int maximum_steps) -> (Tensor, Tensor, Tensor)");
+
+  // Backward for octree_ray_marching
+  // Returns: (grad_data, grad_origins, grad_directions)
+  // grad_origins and grad_directions are zeros for adaptive stepping mode
+  module.def("octree_ray_marching_backward(Tensor grad_positions, Tensor grad_data_out, Tensor mask, Tensor data, Tensor codes, Tensor structure, Tensor children_mask, Tensor origins, Tensor directions, int maximum_depth, float? step_size, int maximum_steps) -> (Tensor, Tensor, Tensor)");
+
+  // Neighbor finding (LOD-aware)
+  // connectivity: 6 (face), 18 (face+edge), 26 (face+edge+corner)
+  // Returns: (neighbor_codes, neighbor_data) where neighbor_codes[i] is -1 if no neighbor exists
+  module.def("octree_neighbors(Tensor data, Tensor codes, Tensor structure, Tensor children_mask, Tensor query_codes, int connectivity) -> (Tensor, Tensor)");
+
+  // Dynamic Updates (Phase 5)
+  // All dynamic update operations rebuild the hash table and return the same 7-tuple as octree_build:
+  // (codes, data, structure, children_mask, weights, hash_table, hash_table_offsets)
+  // aggregation: 0=mean, 1=sum, 2=max
+
+  // Insert new voxels at specified depth, auto-creates ancestors with aggregated data
+  module.def("octree_insert(Tensor codes, Tensor data, Tensor structure, Tensor children_mask, Tensor weights, Tensor new_points, Tensor new_data, int depth, int maximum_depth, int aggregation) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // Remove voxels by code, prunes empty ancestors
+  module.def("octree_remove(Tensor codes, Tensor data, Tensor structure, Tensor children_mask, Tensor weights, Tensor remove_codes, int maximum_depth, int aggregation) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // Subdivide leaf voxel into 8 children, distributes parent data to children
+  module.def("octree_subdivide(Tensor codes, Tensor data, Tensor structure, Tensor children_mask, Tensor weights, Tensor subdivide_codes, int maximum_depth, int aggregation) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // Merge 8 sibling leaves into parent, aggregates child data
+  module.def("octree_merge(Tensor codes, Tensor data, Tensor structure, Tensor children_mask, Tensor weights, Tensor merge_codes, int maximum_depth, int aggregation) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
 }
