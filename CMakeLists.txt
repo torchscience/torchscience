@@ -7,13 +7,6 @@ endif()
 project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
 
 # Build options
-option(TORCHSCIENCE_BUILD_BENCHMARKS "Build benchmarks" OFF)
-option(TORCHSCIENCE_BUILD_TESTS "Build tests" OFF)
-
-if((TORCHSCIENCE_BUILD_BENCHMARKS OR TORCHSCIENCE_BUILD_TESTS) AND NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
-endif()
-
 # Core dependencies
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
@@ -82,33 +75,4 @@ endif()
 # Install
 if(SKBUILD)
   install(TARGETS _csrc DESTINATION ${SKBUILD_PROJECT_NAME})
-endif()
-
-# Benchmarks and tests
-if(TORCHSCIENCE_BUILD_BENCHMARKS OR TORCHSCIENCE_BUILD_TESTS)
-  include(FetchContent)
-endif()
-
-if(TORCHSCIENCE_BUILD_BENCHMARKS)
-  FetchContent_Declare(benchmark
-    GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG v1.9.1
-  )
-  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-  set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
-  set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
-  FetchContent_MakeAvailable(benchmark)
-  add_subdirectory(benchmark)
-endif()
-
-if(TORCHSCIENCE_BUILD_TESTS)
-  FetchContent_Declare(googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.15.2
-  )
-  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-  set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-  FetchContent_MakeAvailable(googletest)
-  enable_testing()
-  add_subdirectory(test)
 endif()
