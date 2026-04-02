@@ -60,7 +60,6 @@ target_link_libraries(_csrc PRIVATE ${TORCH_LIBRARIES} Python::Module)
 set_target_properties(_csrc PROPERTIES
   BUILD_WITH_INSTALL_RPATH TRUE
   CXX_STANDARD 17
-  # Don't add link-time library paths to rpath (avoids temp build env paths)
   INSTALL_RPATH_USE_LINK_PATH FALSE
   PREFIX ""
 )
@@ -69,6 +68,20 @@ if(APPLE)
   set_target_properties(_csrc PROPERTIES
     INSTALL_RPATH "@loader_path;@loader_path/../torch/lib"
     SUFFIX ".so"
+  )
+elseif(UNIX)
+  set_target_properties(_csrc PROPERTIES
+    INSTALL_RPATH "$ORIGIN;$ORIGIN/../torch/lib"
+  )
+elseif(WIN32)
+  set_target_properties(_csrc PROPERTIES
+    SUFFIX ".pyd"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+  )
+  # On Windows, DLLs are found via PATH, not rpath. Copy torch DLLs
+  # to the build directory so tests can find them.
+  add_custom_command(TARGET _csrc POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E echo "Windows build: torch DLLs resolved via PATH"
   )
 endif()
 
