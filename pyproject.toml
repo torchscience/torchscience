@@ -35,7 +35,7 @@ dependencies = [
 description = "PyTorch operators for mathematics, science, and engineering."
 name = "torchscience"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 version = "0.1.0"
 
 [project.optional-dependencies]
