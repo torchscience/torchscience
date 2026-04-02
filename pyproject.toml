@@ -59,6 +59,7 @@ select = ["F401", "I"]
 fixable = ["F401", "I"]
 
 [tool.uv]
+index-url = "https://pypi.org/simple"
 cache-keys = [
     { file = "CMakeLists.txt" },
     { file = "pyproject.toml" },
