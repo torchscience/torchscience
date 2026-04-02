@@ -1,9 +1,15 @@
 name: Tests
+
 on:
   push:
     branches: [main]
+    tags: ["v*.*.*"]
   pull_request:
     branches: [main]
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint:
@@ -11,32 +17,171 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
       - run: uv sync --group dev
       - run: uv run pre-commit run --all-files
 
   test-cpu:
+    needs: [lint]
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ["3.13"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.12", "3.13"]
+        torch-version: [latest]
+        include:
+          - os: ubuntu-latest
+            python-version: "3.13"
+            torch-version: "2.9.1"
+          - os: ubuntu-latest
+            python-version: "3.13"
+            torch-version: "2.10"
+          - os: macos-latest
+            python-version: "3.13"
+            torch-version: "2.9.1"
+          - os: macos-latest
+            python-version: "3.13"
+            torch-version: "2.10"
+          - os: windows-latest
+            python-version: "3.13"
+            torch-version: "2.9.1"
+          - os: windows-latest
+            python-version: "3.13"
+            torch-version: "2.10"
+        exclude:
+          - torch-version: ${{ github.event_name == 'pull_request' && '2.9.1' || 'NONE' }}
+          - torch-version: ${{ github.event_name == 'pull_request' && '2.10' || 'NONE' }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: astral-sh/setup-uv@v4
-      - run: uv sync --group dev
-      - run: uv run pytest tests/ -v --tb=short
+        with:
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Set up sccache
+        uses: mozilla-actions/sccache-action@v0.0.7
+        with:
+          version: "v0.9.1"
+
+      - name: Configure sccache for CMake
+        shell: bash
+        run: |
+          echo "CMAKE_C_COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
+          echo "CMAKE_CXX_COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: uv sync --group dev --python ${{ matrix.python-version }}
+
+      - name: Override PyTorch version
+        if: matrix.torch-version != 'latest'
+        run: uv pip install torch==${{ matrix.torch-version }}
+
+      - name: Rebuild extension after torch override
+        if: matrix.torch-version != 'latest'
+        run: uv sync --group dev --reinstall-package torchscience
+
+      - name: Run tests
+        run: uv run pytest tests/ -v --tb=short
 
   test-cuda:
-    runs-on: torchscience-linux-cuda
+    needs: [lint]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [torchscience-linux-cuda]
+        python-version: ["3.12", "3.13"]
+        torch-version: [latest]
+        include:
+          - runner: torchscience-windows-cuda
+            python-version: "3.12"
+            torch-version: latest
+          - runner: torchscience-windows-cuda
+            python-version: "3.13"
+            torch-version: latest
+          - runner: torchscience-linux-cuda
+            python-version: "3.13"
+            torch-version: "2.9.1"
+          - runner: torchscience-linux-cuda
+            python-version: "3.13"
+            torch-version: "2.10"
+          - runner: torchscience-windows-cuda
+            python-version: "3.13"
+            torch-version: "2.9.1"
+          - runner: torchscience-windows-cuda
+            python-version: "3.13"
+            torch-version: "2.10"
+        exclude:
+          - torch-version: ${{ github.event_name == 'pull_request' && '2.9.1' || 'NONE' }}
+          - torch-version: ${{ github.event_name == 'pull_request' && '2.10' || 'NONE' }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: astral-sh/setup-uv@v4
-      - run: uv sync --group dev
-      - name: Run CUDA tests
+        with:
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Set up sccache
+        uses: mozilla-actions/sccache-action@v0.0.7
+        with:
+          version: "v0.9.1"
+
+      - name: Configure sccache for CMake
+        shell: bash
         run: |
-          uv run pytest tests/ -v --tb=short -k "cuda or gpu" || exit_code=$?
-          if [ "${exit_code:-0}" -eq 5 ]; then
-            echo "No CUDA tests found yet"
-            exit 0
-          fi
-          exit ${exit_code:-0}
+          echo "CMAKE_C_COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
+          echo "CMAKE_CXX_COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: uv sync --group dev --python ${{ matrix.python-version }}
+
+      - name: Override PyTorch version
+        if: matrix.torch-version != 'latest'
+        run: uv pip install torch==${{ matrix.torch-version }}
+
+      - name: Rebuild extension after torch override
+        if: matrix.torch-version != 'latest'
+        run: uv sync --group dev --reinstall-package torchscience
+
+      - name: Run CUDA tests
+        run: uv run pytest tests/ -v --tb=short -k "cuda or gpu"
+
+  build-check:
+    needs: [lint]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up sccache
+        uses: mozilla-actions/sccache-action@v0.0.7
+        with:
+          version: "v0.9.1"
+
+      - name: Configure sccache for CMake
+        shell: bash
+        run: |
+          echo "CMAKE_C_COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
+          echo "CMAKE_CXX_COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
+
+      - name: Build wheel
+        run: uv build --wheel
+
+      - name: Verify wheel exists
+        shell: bash
+        run: ls dist/*.whl
