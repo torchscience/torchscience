@@ -83,6 +83,12 @@ T hahn_factorial(int k) {
 
 template <typename T>
 T hahn_polynomial_q(T n, T x, T alpha, T beta, T N) {
+  // Guard against non-finite inputs to avoid infinite loops
+  if (!std::isfinite(n) || !std::isfinite(x) || !std::isfinite(alpha) ||
+      !std::isfinite(beta) || !std::isfinite(N)) {
+    return std::numeric_limits<T>::quiet_NaN();
+  }
+
   int n_int = static_cast<int>(std::floor(n + T(0.5)));
 
   // Q_0(x; alpha, beta, N) = 1
@@ -130,6 +136,11 @@ c10::complex<T> hahn_polynomial_q(
     c10::complex<T> alpha,
     c10::complex<T> beta,
     c10::complex<T> N) {
+
+  // Guard against non-finite n.real() to avoid infinite loops
+  if (!std::isfinite(n.real())) {
+    return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(), T(0));
+  }
 
   int n_int = static_cast<int>(std::floor(n.real() + T(0.5)));
 
