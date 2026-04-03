@@ -15,11 +15,8 @@ inline at::Tensor name(                                                        \
   );                                                                           \
                                                                                \
   auto device_type = arg1.device().type();                                     \
-  auto target_type = at::autocast::promote_type(                               \
-    at::kFloat,                                                                \
-    device_type,                                                               \
-    arg1                                                                       \
-  );                                                                           \
+  auto target_type =                                                           \
+    at::autocast::get_lower_precision_fp_from_device_type(device_type);        \
                                                                                \
   return c10::Dispatcher::singleton()                                          \
     .findSchemaOrThrow(                                                        \
@@ -28,7 +25,7 @@ inline at::Tensor name(                                                        \
     ).typed<at::Tensor(                                                        \
       const at::Tensor &                                                       \
     )>().call(                                                                 \
-      at::autocast::cached_cast(target_type, arg1)                             \
+      at::autocast::cached_cast(target_type, arg1, device_type)                \
     );                                                                         \
 }                                                                              \
                                                                                \
@@ -60,13 +57,9 @@ inline at::Tensor name(                                                        \
                         c10::DispatchKey::AutocastCUDA}                        \
   );                                                                           \
                                                                                \
-  auto device_type = arg1.device().type();                                      \
-  auto target_type = at::autocast::promote_type(                               \
-    at::kFloat,                                                                \
-    device_type,                                                               \
-    arg1,                                                                      \
-    arg2                                                                       \
-  );                                                                           \
+  auto device_type = arg1.device().type();                                     \
+  auto target_type =                                                           \
+    at::autocast::get_lower_precision_fp_from_device_type(device_type);        \
                                                                                \
   return c10::Dispatcher::singleton()                                          \
     .findSchemaOrThrow(                                                        \
@@ -76,8 +69,8 @@ inline at::Tensor name(                                                        \
       const at::Tensor &,                                                      \
       const at::Tensor &                                                       \
     )>().call(                                                                 \
-      at::autocast::cached_cast(target_type, arg1),                            \
-      at::autocast::cached_cast(target_type, arg2)                             \
+      at::autocast::cached_cast(target_type, arg1, device_type),               \
+      at::autocast::cached_cast(target_type, arg2, device_type)                \
     );                                                                         \
 }                                                                              \
                                                                                \
@@ -110,14 +103,9 @@ inline at::Tensor name(                                                        \
                         c10::DispatchKey::AutocastCUDA}                        \
   );                                                                           \
                                                                                \
-  auto device_type = arg1.device().type();                                      \
-  auto target_type = at::autocast::promote_type(                               \
-    at::kFloat,                                                                \
-    device_type,                                                               \
-    arg1,                                                                      \
-    arg2,                                                                      \
-    arg3                                                                       \
-  );                                                                           \
+  auto device_type = arg1.device().type();                                     \
+  auto target_type =                                                           \
+    at::autocast::get_lower_precision_fp_from_device_type(device_type);        \
                                                                                \
   return c10::Dispatcher::singleton()                                          \
     .findSchemaOrThrow(                                                        \
@@ -128,9 +116,9 @@ inline at::Tensor name(                                                        \
       const at::Tensor &,                                                      \
       const at::Tensor &                                                       \
     )>().call(                                                                 \
-      at::autocast::cached_cast(target_type, arg1),                            \
-      at::autocast::cached_cast(target_type, arg2),                            \
-      at::autocast::cached_cast(target_type, arg3)                             \
+      at::autocast::cached_cast(target_type, arg1, device_type),               \
+      at::autocast::cached_cast(target_type, arg2, device_type),               \
+      at::autocast::cached_cast(target_type, arg3, device_type)                \
     );                                                                         \
 }                                                                              \
                                                                                \
@@ -164,15 +152,9 @@ inline at::Tensor name(                                                        \
                         c10::DispatchKey::AutocastCUDA}                        \
   );                                                                           \
                                                                                \
-  auto device_type = arg1.device().type();                                      \
-  auto target_type = at::autocast::promote_type(                               \
-    at::kFloat,                                                                \
-    device_type,                                                               \
-    arg1,                                                                      \
-    arg2,                                                                      \
-    arg3,                                                                      \
-    arg4                                                                       \
-  );                                                                           \
+  auto device_type = arg1.device().type();                                     \
+  auto target_type =                                                           \
+    at::autocast::get_lower_precision_fp_from_device_type(device_type);        \
                                                                                \
   return c10::Dispatcher::singleton()                                          \
     .findSchemaOrThrow(                                                        \
@@ -184,10 +166,10 @@ inline at::Tensor name(                                                        \
       const at::Tensor &,                                                      \
       const at::Tensor &                                                       \
     )>().call(                                                                 \
-      at::autocast::cached_cast(target_type, arg1),                            \
-      at::autocast::cached_cast(target_type, arg2),                            \
-      at::autocast::cached_cast(target_type, arg3),                            \
-      at::autocast::cached_cast(target_type, arg4)                             \
+      at::autocast::cached_cast(target_type, arg1, device_type),               \
+      at::autocast::cached_cast(target_type, arg2, device_type),               \
+      at::autocast::cached_cast(target_type, arg3, device_type),               \
+      at::autocast::cached_cast(target_type, arg4, device_type)                \
     );                                                                         \
 }                                                                              \
                                                                                \
@@ -222,16 +204,9 @@ inline at::Tensor name(                                                        \
                         c10::DispatchKey::AutocastCUDA}                        \
   );                                                                           \
                                                                                \
-  auto device_type = arg1.device().type();                                      \
-  auto target_type = at::autocast::promote_type(                               \
-    at::kFloat,                                                                \
-    device_type,                                                               \
-    arg1,                                                                      \
-    arg2,                                                                      \
-    arg3,                                                                      \
-    arg4,                                                                      \
-    arg5                                                                       \
-  );                                                                           \
+  auto device_type = arg1.device().type();                                     \
+  auto target_type =                                                           \
+    at::autocast::get_lower_precision_fp_from_device_type(device_type);        \
                                                                                \
   return c10::Dispatcher::singleton()                                          \
     .findSchemaOrThrow(                                                        \
@@ -244,11 +219,11 @@ inline at::Tensor name(                                                        \
       const at::Tensor &,                                                      \
       const at::Tensor &                                                       \
     )>().call(                                                                 \
-      at::autocast::cached_cast(target_type, arg1),                            \
-      at::autocast::cached_cast(target_type, arg2),                            \
-      at::autocast::cached_cast(target_type, arg3),                            \
-      at::autocast::cached_cast(target_type, arg4),                            \
-      at::autocast::cached_cast(target_type, arg5)                             \
+      at::autocast::cached_cast(target_type, arg1, device_type),               \
+      at::autocast::cached_cast(target_type, arg2, device_type),               \
+      at::autocast::cached_cast(target_type, arg3, device_type),               \
+      at::autocast::cached_cast(target_type, arg4, device_type),               \
+      at::autocast::cached_cast(target_type, arg5, device_type)                \
     );                                                                         \
 }                                                                              \
                                                                                \
