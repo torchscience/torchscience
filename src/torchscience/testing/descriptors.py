@@ -155,11 +155,11 @@ class OperatorDescriptor:
     singularities: list[SingularitySpec] = field(default_factory=list)
 
     # Sparse tensor support
-    supports_sparse_coo: bool = True
-    supports_sparse_csr: bool = True
+    supports_sparse_coo: bool = False
+    supports_sparse_csr: bool = False
 
     # Quantized tensor support
-    supports_quantized: bool = True
+    supports_quantized: bool = False
 
     # Meta tensor support
     supports_meta: bool = True

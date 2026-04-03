@@ -10,7 +10,15 @@ inline at::Tensor name(                                                        \
   const at::Tensor &(arg1)                                                     \
 ) {                                                                            \
   c10::impl::ExcludeDispatchKeyGuard no_autocast(                              \
-    c10::DispatchKey::Autocast                                                 \
+    c10::DispatchKeySet{c10::DispatchKey::AutocastCPU,                         \
+                        c10::DispatchKey::AutocastCUDA}                        \
+  );                                                                           \
+                                                                               \
+  auto device_type = arg1.device().type();                                     \
+  auto target_type = at::autocast::promote_type(                               \
+    at::kFloat,                                                                \
+    device_type,                                                               \
+    arg1                                                                       \
   );                                                                           \
                                                                                \
   return c10::Dispatcher::singleton()                                          \
@@ -20,16 +28,20 @@ inline at::Tensor name(                                                        \
     ).typed<at::Tensor(                                                        \
       const at::Tensor &                                                       \
     )>().call(                                                                 \
-      at::autocast::cached_cast(                                               \
-        at::kFloat,                                                            \
-        arg1                                                                   \
-      )                                                                        \
+      at::autocast::cached_cast(target_type, arg1)                             \
     );                                                                         \
 }                                                                              \
                                                                                \
 } /* namespace torchscience::autocast::special_functions */                    \
                                                                                \
-TORCH_LIBRARY_IMPL(torchscience, Autocast, module) {                           \
+TORCH_LIBRARY_IMPL(torchscience, AutocastCUDA, module) {                       \
+  module.impl(                                                                 \
+    #name,                                                                     \
+    torchscience::autocast::special_functions::name                            \
+  );                                                                           \
+}                                                                              \
+                                                                               \
+TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {                        \
   module.impl(                                                                 \
     #name,                                                                     \
     torchscience::autocast::special_functions::name                            \
@@ -44,7 +56,8 @@ inline at::Tensor name(                                                        \
   const at::Tensor &(arg2)                                                     \
 ) {                                                                            \
   c10::impl::ExcludeDispatchKeyGuard no_autocast(                              \
-    c10::DispatchKey::Autocast                                                 \
+    c10::DispatchKeySet{c10::DispatchKey::AutocastCPU,                         \
+                        c10::DispatchKey::AutocastCUDA}                        \
   );                                                                           \
                                                                                \
   auto device_type = arg1.device().type();                                      \
@@ -70,7 +83,14 @@ inline at::Tensor name(                                                        \
                                                                                \
 } /* namespace torchscience::autocast::special_functions */                    \
                                                                                \
-TORCH_LIBRARY_IMPL(torchscience, Autocast, module) {                           \
+TORCH_LIBRARY_IMPL(torchscience, AutocastCUDA, module) {                       \
+  module.impl(                                                                 \
+    #name,                                                                     \
+    torchscience::autocast::special_functions::name                            \
+  );                                                                           \
+}                                                                              \
+                                                                               \
+TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {                        \
   module.impl(                                                                 \
     #name,                                                                     \
     torchscience::autocast::special_functions::name                            \
@@ -86,7 +106,8 @@ inline at::Tensor name(                                                        \
   const at::Tensor &(arg3)                                                     \
 ) {                                                                            \
   c10::impl::ExcludeDispatchKeyGuard no_autocast(                              \
-    c10::DispatchKey::Autocast                                                 \
+    c10::DispatchKeySet{c10::DispatchKey::AutocastCPU,                         \
+                        c10::DispatchKey::AutocastCUDA}                        \
   );                                                                           \
                                                                                \
   auto device_type = arg1.device().type();                                      \
@@ -115,7 +136,14 @@ inline at::Tensor name(                                                        \
                                                                                \
 } /* namespace torchscience::autocast::special_functions */                    \
                                                                                \
-TORCH_LIBRARY_IMPL(torchscience, Autocast, module) {                           \
+TORCH_LIBRARY_IMPL(torchscience, AutocastCUDA, module) {                       \
+  module.impl(                                                                 \
+    #name,                                                                     \
+    torchscience::autocast::special_functions::name                            \
+  );                                                                           \
+}                                                                              \
+                                                                               \
+TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {                        \
   module.impl(                                                                 \
     #name,                                                                     \
     torchscience::autocast::special_functions::name                            \
@@ -132,7 +160,8 @@ inline at::Tensor name(                                                        \
   const at::Tensor &(arg4)                                                     \
 ) {                                                                            \
   c10::impl::ExcludeDispatchKeyGuard no_autocast(                              \
-    c10::DispatchKey::Autocast                                                 \
+    c10::DispatchKeySet{c10::DispatchKey::AutocastCPU,                         \
+                        c10::DispatchKey::AutocastCUDA}                        \
   );                                                                           \
                                                                                \
   auto device_type = arg1.device().type();                                      \
@@ -164,7 +193,14 @@ inline at::Tensor name(                                                        \
                                                                                \
 } /* namespace torchscience::autocast::special_functions */                    \
                                                                                \
-TORCH_LIBRARY_IMPL(torchscience, Autocast, module) {                           \
+TORCH_LIBRARY_IMPL(torchscience, AutocastCUDA, module) {                       \
+  module.impl(                                                                 \
+    #name,                                                                     \
+    torchscience::autocast::special_functions::name                            \
+  );                                                                           \
+}                                                                              \
+                                                                               \
+TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {                        \
   module.impl(                                                                 \
     #name,                                                                     \
     torchscience::autocast::special_functions::name                            \
@@ -182,7 +218,8 @@ inline at::Tensor name(                                                        \
   const at::Tensor &(arg5)                                                     \
 ) {                                                                            \
   c10::impl::ExcludeDispatchKeyGuard no_autocast(                              \
-    c10::DispatchKey::Autocast                                                 \
+    c10::DispatchKeySet{c10::DispatchKey::AutocastCPU,                         \
+                        c10::DispatchKey::AutocastCUDA}                        \
   );                                                                           \
                                                                                \
   auto device_type = arg1.device().type();                                      \
@@ -217,7 +254,14 @@ inline at::Tensor name(                                                        \
                                                                                \
 } /* namespace torchscience::autocast::special_functions */                    \
                                                                                \
-TORCH_LIBRARY_IMPL(torchscience, Autocast, module) {                           \
+TORCH_LIBRARY_IMPL(torchscience, AutocastCUDA, module) {                       \
+  module.impl(                                                                 \
+    #name,                                                                     \
+    torchscience::autocast::special_functions::name                            \
+  );                                                                           \
+}                                                                              \
+                                                                               \
+TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {                        \
   module.impl(                                                                 \
     #name,                                                                     \
     torchscience::autocast::special_functions::name                            \

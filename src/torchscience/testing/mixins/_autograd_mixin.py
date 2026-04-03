@@ -21,10 +21,8 @@ class AutogradMixin:
         inputs = []
         for spec in self.descriptor.input_specs:
             tensor = self._make_input_for_spec(spec, dtype, "cpu", shape)
-            if (
-                spec.supports_grad
-                and dtype.is_floating_point
-                or dtype.is_complex
+            if spec.supports_grad and (
+                dtype.is_floating_point or dtype.is_complex
             ):
                 tensor = tensor.requires_grad_(True)
             inputs.append(tensor)
