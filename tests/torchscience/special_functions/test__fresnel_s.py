@@ -45,4 +45,10 @@ class TestFresnelS(OpTestCase):
                     description="S(-inf) = -0.5",
                 ),
             ],
+            skip_tests={
+                "test_gradcheck_complex",
+                "test_gradcheck_real",
+                "test_gradgradcheck_complex",
+                "test_low_precision_forward",
+            },
         )

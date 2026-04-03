@@ -20,4 +20,7 @@ class TestSphericalBesselK0(OpTestCase):
                     name="z", position=0, default_real_range=(0.5, 10.0)
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+            },
         )

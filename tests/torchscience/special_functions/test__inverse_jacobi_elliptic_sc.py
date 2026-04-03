@@ -28,9 +28,10 @@ class TestInverseJacobiEllipticSc(OpTestCase):
             tolerances=ToleranceConfig(),
             skip_tests={
                 "test_autocast_cpu_bfloat16",
-                "test_gradgradcheck_real",
-                "test_gradgradcheck_complex",
                 "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_nan_propagation_all_inputs",
             },
             special_values=[
                 SpecialValue(

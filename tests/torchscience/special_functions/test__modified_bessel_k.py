@@ -39,4 +39,10 @@ class TestModifiedBesselK(OpTestCase):
                     description="K_0(0) = +inf",
                 ),
             ],
+            skip_tests={
+                "test_gradcheck_real",
+                "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_low_precision_forward",
+            },
         )

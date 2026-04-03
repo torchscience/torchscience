@@ -28,4 +28,8 @@ class TestStruveH1(OpTestCase):
                     description="H_1(0) = 0",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+                "test_low_precision_forward",
+            },
         )

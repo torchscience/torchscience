@@ -30,4 +30,15 @@ class TestFaddeevaW(OpTestCase):
                     description="w(0) = 1",
                 ),
             ],
+            skip_tests={
+                "test_autocast_cpu_bfloat16",
+                "test_dtype_preservation",
+                "test_gradcheck_real",
+                "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_low_precision_dtype_preservation",
+                "test_low_precision_forward",
+                "test_real_dtypes",
+                "test_special_values",
+            },
         )

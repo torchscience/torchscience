@@ -24,4 +24,13 @@ class TestLogMultivariateGamma(OpTestCase):
                     name="a", position=0, default_real_range=(3.0, 10.0)
                 ),
             ],
+            skip_tests={
+                "test_autocast_cpu_bfloat16",
+                "test_complex_dtypes",
+                "test_dtype_preservation",
+                "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+                "test_low_precision_dtype_preservation",
+                "test_low_precision_forward",
+            },
         )

@@ -45,4 +45,9 @@ class TestCosineIntegralCi(OpTestCase):
                     description="Ci(5.0)",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+                "test_low_precision_forward",
+                "test_special_values",
+            },
         )

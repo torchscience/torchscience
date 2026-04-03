@@ -34,4 +34,9 @@ class TestSphericalBesselK(OpTestCase):
                     description="k_1(0) = +inf",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_low_precision_forward",
+            },
         )

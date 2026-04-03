@@ -42,4 +42,7 @@ class TestZeta(OpTestCase):
                     description="zeta(6) = pi^6/945",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+            },
         )

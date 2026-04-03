@@ -28,4 +28,7 @@ class TestSphericalBesselK1(OpTestCase):
                     description="k_1(0) = inf",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+            },
         )

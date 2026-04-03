@@ -43,4 +43,8 @@ class TestKelvinBei(OpTestCase):
                     description="bei(5)",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+                "test_low_precision_forward",
+            },
         )

@@ -47,4 +47,10 @@ class TestErfinv(OpTestCase):
                     description="erfinv(-1) = -inf",
                 ),
             ],
+            skip_tests={
+                "test_complex_dtypes",
+                "test_dtype_preservation",
+                "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+            },
         )

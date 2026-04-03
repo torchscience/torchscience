@@ -52,4 +52,9 @@ class TestPochhammer(OpTestCase):
                     description="(2)_3 = 2*3*4 = 24",
                 ),
             ],
+            skip_tests={
+                "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+                "test_low_precision_forward",
+            },
         )

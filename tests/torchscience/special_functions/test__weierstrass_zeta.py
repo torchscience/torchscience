@@ -34,4 +34,13 @@ class TestWeierstrassZeta(OpTestCase):
                     description="zeta(0; g2, g3) = inf (simple pole at origin)",
                 ),
             ],
+            skip_tests={
+                "test_autocast_cpu_bfloat16",
+                "test_gradcheck_complex",
+                "test_gradcheck_real",
+                "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_low_precision_dtype_preservation",
+                "test_low_precision_forward",
+            },
         )

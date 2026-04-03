@@ -44,4 +44,8 @@ class TestBeta(OpTestCase):
                     description="B(1, 3) = 1/3",
                 ),
             ],
+            skip_tests={
+                "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+            },
         )

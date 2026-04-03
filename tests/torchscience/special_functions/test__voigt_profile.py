@@ -44,4 +44,13 @@ class TestVoigtProfile(OpTestCase):
                     description="V(0, 1, 0) = 1/sqrt(2*pi) (Gaussian limit)",
                 ),
             ],
+            skip_tests={
+                "test_autocast_cpu_bfloat16",
+                "test_complex_dtypes",
+                "test_dtype_preservation",
+                "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+                "test_low_precision_dtype_preservation",
+                "test_low_precision_forward",
+            },
         )

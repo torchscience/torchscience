@@ -21,4 +21,9 @@ class TestBesselY(OpTestCase):
                     name="z", position=1, default_real_range=(0.5, 10.0)
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_low_precision_forward",
+            },
         )

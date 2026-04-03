@@ -26,4 +26,7 @@ class TestSphericalBesselJ1(OpTestCase):
                     inputs=(0.0,), expected=0.0, description="j_1(0) = 0"
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+            },
         )

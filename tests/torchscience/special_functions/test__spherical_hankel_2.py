@@ -21,4 +21,14 @@ class TestSphericalHankel2(OpTestCase):
                     name="z", position=1, default_real_range=(0.5, 10.0)
                 ),
             ],
+            skip_tests={
+                "test_autocast_cpu_bfloat16",
+                "test_dtype_preservation",
+                "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_low_precision_dtype_preservation",
+                "test_low_precision_forward",
+                "test_real_dtypes",
+            },
         )

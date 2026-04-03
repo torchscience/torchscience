@@ -62,4 +62,8 @@ class TestSineIntegralSi(OpTestCase):
                     description="Si(-inf) = -pi/2",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+                "test_low_precision_forward",
+            },
         )

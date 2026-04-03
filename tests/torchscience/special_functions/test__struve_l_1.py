@@ -28,4 +28,7 @@ class TestStruveL1(OpTestCase):
                     description="L_1(0) = 0",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+            },
         )

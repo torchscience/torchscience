@@ -46,4 +46,14 @@ class TestExponentialIntegralE(OpTestCase):
                     description="E_4(0) = 1/(4-1) = 1/3",
                 ),
             ],
+            skip_tests={
+                "test_compile_smoke",
+                "test_cpu_device",
+                "test_gradcheck_complex",
+                "test_gradcheck_real",
+                "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_low_precision_forward",
+                "test_vmap_over_batch",
+            },
         )

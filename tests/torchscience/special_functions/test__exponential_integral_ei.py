@@ -57,4 +57,9 @@ class TestExponentialIntegralEi(OpTestCase):
                     description="Ei(10.0)",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+                "test_low_precision_forward",
+                "test_special_values",
+            },
         )

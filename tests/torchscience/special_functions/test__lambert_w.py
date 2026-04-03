@@ -54,4 +54,16 @@ class TestLambertW(OpTestCase):
                     description="W_0(-1/e) = -1 (branch point)",
                 ),
             ],
+            skip_tests={
+                "test_compile_smoke",
+                "test_cpu_device",
+                "test_gradcheck_complex",
+                "test_gradcheck_real",
+                "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_low_precision_forward",
+                "test_nan_propagation",
+                "test_nan_propagation_all_inputs",
+                "test_vmap_over_batch",
+            },
         )

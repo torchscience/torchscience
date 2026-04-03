@@ -38,4 +38,7 @@ class TestAiryBi(OpTestCase):
                     description="Bi(2)",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+            },
         )

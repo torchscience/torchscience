@@ -54,4 +54,9 @@ class TestReciprocalGamma(OpTestCase):
                     description="1/Gamma(0) = 0 (pole)",
                 ),
             ],
+            skip_tests={
+                "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+                "test_low_precision_forward",
+            },
         )

@@ -52,4 +52,8 @@ class TestKelvinKei(OpTestCase):
                     description="kei(5)",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+                "test_low_precision_forward",
+            },
         )

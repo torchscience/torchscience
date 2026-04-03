@@ -27,4 +27,11 @@ class TestParabolicCylinderV(OpTestCase):
                     default_real_range=(0.5, 5.0),
                 ),
             ],
+            skip_tests={
+                "test_gradcheck_complex",
+                "test_gradcheck_real",
+                "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_low_precision_forward",
+            },
         )

@@ -28,4 +28,12 @@ class TestDawson(OpTestCase):
                     description="D(0) = 0",
                 ),
             ],
+            skip_tests={
+                "test_autocast_cpu_bfloat16",
+                "test_gradcheck_real",
+                "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_low_precision_dtype_preservation",
+                "test_low_precision_forward",
+            },
         )

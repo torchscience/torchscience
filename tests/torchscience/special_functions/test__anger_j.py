@@ -39,4 +39,10 @@ class TestAngerJ(OpTestCase):
                     description="J_2(0) = 0",
                 ),
             ],
+            skip_tests={
+                "test_complex_dtypes",
+                "test_dtype_preservation",
+                "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+            },
         )

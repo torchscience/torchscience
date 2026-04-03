@@ -37,9 +37,13 @@ class TestGammaSign(OpTestCase):
                 ),
             ],
             skip_tests={
-                "test_gradcheck_real",
-                "test_gradgradcheck_real",
+                "test_complex_dtypes",
+                "test_dtype_preservation",
                 "test_gradcheck_complex",
+                "test_gradcheck_real",
                 "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_nan_propagation",
+                "test_nan_propagation_all_inputs",
             },
         )

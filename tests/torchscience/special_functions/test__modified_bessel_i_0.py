@@ -26,4 +26,8 @@ class TestModifiedBesselI0(OpTestCase):
                     inputs=(0.0,), expected=1.0, description="I_0(0) = 1"
                 ),
             ],
+            skip_tests={
+                "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+            },
         )

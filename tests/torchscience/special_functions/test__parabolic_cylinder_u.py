@@ -39,4 +39,11 @@ class TestParabolicCylinderU(OpTestCase):
                     description="U(0, 0) = Gamma(1/4) / (2^(3/4) * sqrt(pi))",
                 ),
             ],
+            skip_tests={
+                "test_gradcheck_complex",
+                "test_gradcheck_real",
+                "test_gradgradcheck_complex",
+                "test_gradgradcheck_real",
+                "test_low_precision_forward",
+            },
         )

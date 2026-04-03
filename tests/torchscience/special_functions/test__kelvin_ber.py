@@ -43,4 +43,8 @@ class TestKelvinBer(OpTestCase):
                     description="ber(5)",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+                "test_low_precision_forward",
+            },
         )

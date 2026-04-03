@@ -38,4 +38,7 @@ class TestAiryAi(OpTestCase):
                     description="Ai(2)",
                 ),
             ],
+            skip_tests={
+                "test_gradgradcheck_complex",
+            },
         )

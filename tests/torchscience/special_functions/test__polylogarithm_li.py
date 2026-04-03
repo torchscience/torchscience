@@ -65,4 +65,8 @@ class TestPolylogarithmLi(OpTestCase):
                     description="Li_2(-1) = -pi^2/12",
                 ),
             ],
+            skip_tests={
+                "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+            },
         )

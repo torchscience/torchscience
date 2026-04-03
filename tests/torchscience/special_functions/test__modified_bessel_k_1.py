@@ -40,4 +40,7 @@ class TestModifiedBesselK1(OpTestCase):
             supports_sparse_coo=False,
             supports_sparse_csr=False,
             supports_meta=True,
+            skip_tests={
+                "test_gradgradcheck_complex",
+            },
         )

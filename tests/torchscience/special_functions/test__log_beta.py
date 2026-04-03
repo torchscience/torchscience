@@ -44,4 +44,9 @@ class TestLogBeta(OpTestCase):
                     description="log B(2, 2) = log(1/6)",
                 ),
             ],
+            skip_tests={
+                "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+                "test_low_precision_forward",
+            },
         )

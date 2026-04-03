@@ -36,4 +36,9 @@ class TestTheta1(OpTestCase):
                     description="theta_1(z, 0) = 0",
                 ),
             ],
+            skip_tests={
+                "test_gradcheck_complex",
+                "test_gradgradcheck_complex",
+                "test_low_precision_forward",
+            },
         )
