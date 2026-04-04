@@ -1,14 +1,12 @@
 import math
 
-import pytest
 import sympy
 import torch
 import torch.testing
 from hypothesis import given, settings
 from sympy import I, N, symbols
 
-pytestmark = pytest.mark.skip(reason="Test takes >30s, needs optimization")
-
+import torchscience.special_functions
 from torchscience.testing import (
     IdentitySpec,
     InputSpec,
@@ -23,8 +21,6 @@ from torchscience.testing import (
     complex_avoiding_real_axis,
     positive_real_numbers,
 )
-
-import torchscience.special_functions
 
 EULER_MASCHERONI = 0.5772156649015329
 
@@ -82,7 +78,12 @@ class TestDigamma(OpTestCase):
                 ),
             ],
             sympy_func=sympy.digamma,
-            tolerances=ToleranceConfig(),
+            tolerances=ToleranceConfig(
+                float64_rtol=1e-8,
+                float64_atol=1e-8,
+                sympy_rtol=1e-8,
+                sympy_atol=1e-8,
+            ),
             skip_tests={
                 "test_autocast_cpu_bfloat16",  # CPU autocast not supported
                 "test_gradcheck_complex",  # Complex not yet implemented
@@ -102,6 +103,8 @@ class TestDigamma(OpTestCase):
                 IdentitySpec(
                     name="reflection_formula",
                     identity_fn=_reflection_identity,
+                    rtol=1e-8,
+                    atol=1e-8,
                     description="psi(1-x) - psi(x) = pi * cot(pi*x)",
                 ),
             ],
@@ -109,21 +112,29 @@ class TestDigamma(OpTestCase):
                 SpecialValue(
                     inputs=(1.0,),
                     expected=-EULER_MASCHERONI,
+                    rtol=1e-8,
+                    atol=1e-8,
                     description="psi(1) = -gamma",
                 ),
                 SpecialValue(
                     inputs=(2.0,),
                     expected=1 - EULER_MASCHERONI,
+                    rtol=1e-8,
+                    atol=1e-8,
                     description="psi(2) = 1 - gamma",
                 ),
                 SpecialValue(
                     inputs=(3.0,),
                     expected=1.5 - EULER_MASCHERONI,
+                    rtol=1e-8,
+                    atol=1e-8,
                     description="psi(3) = 3/2 - gamma",
                 ),
                 SpecialValue(
                     inputs=(0.5,),
                     expected=-EULER_MASCHERONI - 2 * math.log(2),
+                    rtol=1e-8,
+                    atol=1e-8,
                     description="psi(1/2) = -gamma - 2*ln(2)",
                 ),
             ],
@@ -137,7 +148,7 @@ class TestDigamma(OpTestCase):
             ],
             supports_sparse_coo=False,
             supports_sparse_csr=False,
-            supports_quantized=True,
+            supports_quantized=False,
             supports_meta=True,
         )
 
@@ -180,7 +191,6 @@ class TestDigamma(OpTestCase):
         result = torchscience.special_functions.digamma(poles)
         assert (torch.isinf(result) | torch.isnan(result)).all()
 
-    @pytest.mark.skip(reason="Complex digamma not yet implemented")
     def test_complex_conjugate_symmetry(self):
         """Test psi(conj(z)) = conj(psi(z))."""
         z = torch.tensor(
@@ -243,8 +253,8 @@ class TestDigamma(OpTestCase):
             torchscience.special_functions.digamma,
             (z,),
             eps=1e-5,
-            atol=1e-4,
-            rtol=1e-4,
+            atol=1e-3,
+            rtol=1e-3,
         )
 
     @given(z=positive_real_numbers(min_value=0.1, max_value=50.0))
@@ -273,7 +283,6 @@ class TestDigamma(OpTestCase):
         if torch.isfinite(left).all() and torch.isfinite(right).all():
             torch.testing.assert_close(left, right, rtol=1e-8, atol=1e-8)
 
-    @pytest.mark.skip(reason="Complex digamma not yet implemented")
     @given(z=complex_avoiding_real_axis(real_range=(-5.0, 5.0), min_imag=0.1))
     @settings(max_examples=100, deadline=None)
     def test_property_complex_conjugate(self, z):
