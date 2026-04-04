@@ -106,6 +106,26 @@ int hypu_get_integer(T x) {
   }
 }
 
+// Returns the sign of Gamma(x) for real x.
+// For x > 0: Gamma(x) > 0, sign = +1.
+// For x < 0 (non-integer): sign depends on floor(x).
+//   Gamma(x) > 0 when floor(x) is even, < 0 when floor(x) is odd.
+template <typename T>
+int hypu_gamma_sign(T x) {
+  if constexpr (hypu_is_complex_v<T>) {
+    // For complex arguments, sign tracking via log_gamma phase is correct;
+    // this helper is only meaningful for real arguments.
+    return 1;
+  } else {
+    if (x > T(0)) {
+      return 1;
+    }
+    // x < 0 and not a non-positive integer (caller should have checked)
+    int fl = static_cast<int>(std::floor(static_cast<double>(x)));
+    return (fl % 2 == 0) ? 1 : -1;
+  }
+}
+
 // Asymptotic expansion for large |z|:
 // U(a, b, z) ~ z^(-a) * sum_{n=0}^{inf} (a)_n * (a - b + 1)_n / n! * (-z)^(-n)
 template <typename T>
@@ -179,13 +199,15 @@ T hypu_integer_b_positive(T a, int n, T z, int max_iter = 200) {
     }
 
     T coeff2 = std::exp(log_gamma_b_minus_1 - log_gamma_a);
+    T sign2 = T(hypu_gamma_sign(b_minus_1) * hypu_gamma_sign(a));
     T z_power = std::exp((T(1) - b) * std::log(z));
     T M2 = confluent_hypergeometric_m(a - b + T(1), T(2) - b, z);
 
-    return coeff2 * z_power * M2;
+    return sign2 * coeff2 * z_power * M2;
   }
 
   T coeff1 = std::exp(log_gamma_1_minus_b - log_gamma_a_minus_b_plus_1);
+  T sign1 = T(hypu_gamma_sign(one_minus_b) * hypu_gamma_sign(a_minus_b_plus_1));
   T M1 = confluent_hypergeometric_m(a, b_perturbed, z);
 
   // Second term: Gamma(b-1) / Gamma(a) * z^(1-b) * M(a-b+1, 2-b, z)
@@ -195,14 +217,15 @@ T hypu_integer_b_positive(T a, int n, T z, int max_iter = 200) {
 
   if (std::isinf(log_gamma_a)) {
     // Second term vanishes
-    return coeff1 * M1;
+    return sign1 * coeff1 * M1;
   }
 
   T coeff2 = std::exp(log_gamma_b_minus_1 - log_gamma_a);
+  T sign2 = T(hypu_gamma_sign(b_minus_1) * hypu_gamma_sign(a));
   T z_power = std::exp((T(1) - b) * std::log(z));
   T M2 = confluent_hypergeometric_m(a - b + T(1), T(2) - b, z);
 
-  return coeff1 * M1 + coeff2 * z_power * M2;
+  return sign1 * coeff1 * M1 + sign2 * coeff2 * z_power * M2;
 }
 
 // U for integer b <= 0 using limiting form
@@ -229,13 +252,15 @@ T hypu_integer_b_nonpositive(T a, int n, T z) {
     }
 
     T coeff2 = std::exp(log_gamma_b_minus_1 - log_gamma_a);
+    T sign2 = T(hypu_gamma_sign(b_minus_1) * hypu_gamma_sign(a));
     T z_power = std::exp((T(1) - b) * std::log(z));
     T M2 = confluent_hypergeometric_m(a - b + T(1), T(2) - b, z);
 
-    return coeff2 * z_power * M2;
+    return sign2 * coeff2 * z_power * M2;
   }
 
   T coeff1 = std::exp(log_gamma_1_minus_b - log_gamma_a_minus_b_plus_1);
+  T sign1 = T(hypu_gamma_sign(one_minus_b) * hypu_gamma_sign(a_minus_b_plus_1));
   T M1 = confluent_hypergeometric_m(a, b, z);
 
   // Second term
@@ -245,24 +270,29 @@ T hypu_integer_b_nonpositive(T a, int n, T z) {
 
   if (std::isinf(log_gamma_b_minus_1)) {
     // b - 1 is a non-positive integer, second term vanishes
-    return coeff1 * M1;
+    return sign1 * coeff1 * M1;
   }
 
   if (std::isinf(log_gamma_a)) {
     // a is a non-positive integer, second term vanishes
-    return coeff1 * M1;
+    return sign1 * coeff1 * M1;
   }
 
   T coeff2 = std::exp(log_gamma_b_minus_1 - log_gamma_a);
+  T sign2 = T(hypu_gamma_sign(b_minus_1) * hypu_gamma_sign(a));
   T z_power = std::exp((T(1) - b) * std::log(z));
   T M2 = confluent_hypergeometric_m(a - b + T(1), T(2) - b, z);
 
-  return coeff1 * M1 + coeff2 * z_power * M2;
+  return sign1 * coeff1 * M1 + sign2 * coeff2 * z_power * M2;
 }
 
 // General U computation using M-based definition for non-integer b
 // U(a, b, z) = Gamma(1-b)/Gamma(a-b+1) * M(a, b, z)
 //            + Gamma(b-1)/Gamma(a) * z^(1-b) * M(a-b+1, 2-b, z)
+//
+// Key improvement: compute both terms in log-space and combine using
+// log-sum-exp style arithmetic to avoid catastrophic cancellation when
+// the two terms have similar magnitude but opposite sign.
 template <typename T>
 T hypu_via_m(T a, T b, T z) {
   T one_minus_b = T(1) - b;
@@ -272,19 +302,19 @@ T hypu_via_m(T a, T b, T z) {
   T log_gamma_1_minus_b = log_gamma(one_minus_b);
   T log_gamma_a_minus_b_plus_1 = log_gamma(a_minus_b_plus_1);
 
-  T term1 = T(0);
+  T log_abs_term1 = T(0);
+  T sign1 = T(0);
   bool term1_valid = true;
 
-  if (std::isinf(log_gamma_1_minus_b)) {
-    // 1 - b is a non-positive integer (b is a positive integer >= 1)
-    term1_valid = false;
-  } else if (std::isinf(log_gamma_a_minus_b_plus_1)) {
-    // a - b + 1 is a non-positive integer, first term vanishes
+  if (std::isinf(log_gamma_1_minus_b) || std::isinf(log_gamma_a_minus_b_plus_1)) {
     term1_valid = false;
   } else {
-    T coeff1 = std::exp(log_gamma_1_minus_b - log_gamma_a_minus_b_plus_1);
     T M1 = confluent_hypergeometric_m(a, b, z);
-    term1 = coeff1 * M1;
+    T coeff1 = std::exp(log_gamma_1_minus_b - log_gamma_a_minus_b_plus_1);
+    T gamma_ratio_sign1 = T(hypu_gamma_sign(one_minus_b) * hypu_gamma_sign(a_minus_b_plus_1));
+    T val1 = gamma_ratio_sign1 * coeff1 * M1;
+    log_abs_term1 = std::log(std::abs(val1));
+    sign1 = val1 >= T(0) ? T(1) : T(-1);
   }
 
   // Second term: Gamma(b-1) / Gamma(a) * z^(1-b) * M(a-b+1, 2-b, z)
@@ -292,28 +322,47 @@ T hypu_via_m(T a, T b, T z) {
   T log_gamma_b_minus_1 = log_gamma(b_minus_1);
   T log_gamma_a = log_gamma(a);
 
-  T term2 = T(0);
+  T log_abs_term2 = T(0);
+  T sign2 = T(0);
   bool term2_valid = true;
 
-  if (std::isinf(log_gamma_b_minus_1)) {
-    // b - 1 is a non-positive integer (b is an integer <= 1)
-    term2_valid = false;
-  } else if (std::isinf(log_gamma_a)) {
-    // a is a non-positive integer, second term vanishes
+  if (std::isinf(log_gamma_b_minus_1) || std::isinf(log_gamma_a)) {
     term2_valid = false;
   } else {
     T coeff2 = std::exp(log_gamma_b_minus_1 - log_gamma_a);
+    T gamma_ratio_sign2 = T(hypu_gamma_sign(b_minus_1) * hypu_gamma_sign(a));
     T z_power = std::exp(one_minus_b * std::log(z));
     T M2 = confluent_hypergeometric_m(a_minus_b_plus_1, T(2) - b, z);
-    term2 = coeff2 * z_power * M2;
+    T val2 = gamma_ratio_sign2 * coeff2 * z_power * M2;
+    log_abs_term2 = std::log(std::abs(val2));
+    sign2 = val2 >= T(0) ? T(1) : T(-1);
   }
 
   if (!term1_valid && !term2_valid) {
-    // Both terms are invalid, need special handling
     return std::numeric_limits<T>::quiet_NaN();
   }
+  if (!term1_valid) {
+    return sign2 * std::exp(log_abs_term2);
+  }
+  if (!term2_valid) {
+    return sign1 * std::exp(log_abs_term1);
+  }
 
-  return (term1_valid ? term1 : T(0)) + (term2_valid ? term2 : T(0));
+  // Log-sum-exp style combination to avoid catastrophic cancellation.
+  // We have: result = sign1 * exp(log1) + sign2 * exp(log2)
+  // Let M = max(log1, log2):
+  //   result = exp(M) * (sign1 * exp(log1 - M) + sign2 * exp(log2 - M))
+  // The subtraction (log_i - M) is <= 0, so exp() is in [0, 1] and well-conditioned.
+  T log_max = std::max(log_abs_term1, log_abs_term2);
+
+  // Guard: if both terms are zero, log_max is -inf and subtraction produces NaN.
+  if (std::isinf(log_max) && log_max < T(0)) {
+    return T(0);
+  }
+
+  T combined = sign1 * std::exp(log_abs_term1 - log_max)
+             + sign2 * std::exp(log_abs_term2 - log_max);
+  return combined * std::exp(log_max);
 }
 
 } // namespace detail

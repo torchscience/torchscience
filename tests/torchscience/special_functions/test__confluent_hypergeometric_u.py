@@ -1,32 +1,17 @@
 """Tests for confluent_hypergeometric_u (Tricomi U function)."""
 
-import pytest
+import mpmath
+import scipy.special
 import torch
 import torch.testing
+
+import torchscience.special_functions
 from torchscience.testing import (
     InputSpec,
     OperatorDescriptor,
     OpTestCase,
     ToleranceConfig,
 )
-
-import torchscience.special_functions
-
-# Optional mpmath import for reference tests
-try:
-    import mpmath
-
-    HAS_MPMATH = True
-except ImportError:
-    HAS_MPMATH = False
-
-# Optional scipy import for reference tests
-try:
-    import scipy.special
-
-    HAS_SCIPY = True
-except ImportError:
-    HAS_SCIPY = False
 
 
 class TestConfluentHypergeometricU(OpTestCase):
@@ -86,9 +71,6 @@ class TestConfluentHypergeometricU(OpTestCase):
                 "test_low_precision_forward",
                 "test_special_values",
                 "test_functional_identities",
-                # TODO: Fix numerical accuracy for reference tests
-                "test_scipy_reference",
-                "test_mpmath_reference",
             },
             functional_identities=[],
             special_values=[],
@@ -137,8 +119,6 @@ class TestConfluentHypergeometricU(OpTestCase):
                 atol=1e-10,
             )
 
-    @pytest.mark.skip(reason="TODO: Fix numerical accuracy for small z")
-    @pytest.mark.skipif(not HAS_SCIPY, reason="scipy not available")
     def test_scipy_reference(self):
         """Test against scipy reference implementation with non-integer b."""
         # Use non-integer b values to avoid numerical issues
@@ -164,8 +144,6 @@ class TestConfluentHypergeometricU(OpTestCase):
                 atol=1e-8,
             )
 
-    @pytest.mark.skip(reason="TODO: Fix numerical accuracy for small z")
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_mpmath_reference(self):
         """Test against mpmath reference implementation with non-integer b."""
         # Use non-integer b values
