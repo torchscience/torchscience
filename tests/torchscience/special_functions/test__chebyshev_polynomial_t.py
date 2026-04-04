@@ -5,6 +5,8 @@ import sympy
 import torch
 import torch.testing
 from sympy import I, N, symbols
+
+import torchscience.special_functions
 from torchscience.testing import (
     InputSpec,
     OperatorDescriptor,
@@ -14,8 +16,6 @@ from torchscience.testing import (
     SymbolicDerivativeVerifier,
     ToleranceConfig,
 )
-
-import torchscience.special_functions
 
 
 def sympy_chebyshev_t(
@@ -198,26 +198,6 @@ class TestChebyshevPolynomialT(OpTestCase):
         expected = reference_chebyshev_t(v, z)
         torch.testing.assert_close(result, expected, rtol=1e-10, atol=1e-10)
 
-    @pytest.mark.skip(reason="No complex kernel implementation")
-    def test_complex_z_real_v(self):
-        """Test complex z with real v."""
-        z = torch.tensor(
-            [1.0 + 0.1j, 0.5 + 0.5j, -0.5 - 0.5j], dtype=torch.complex128
-        )
-        v = torch.tensor([2.0], dtype=torch.float64)
-        result = torchscience.special_functions.chebyshev_polynomial_t(v, z)
-        expected = reference_chebyshev_t(v, z)
-        torch.testing.assert_close(result, expected, rtol=1e-10, atol=1e-10)
-
-    @pytest.mark.skip(reason="No complex kernel implementation")
-    def test_complex_z_complex_v(self):
-        """Test complex z with complex v."""
-        z = torch.tensor([0.5 + 0.2j], dtype=torch.complex128)
-        v = torch.tensor([2.0 + 0.5j], dtype=torch.complex128)
-        result = torchscience.special_functions.chebyshev_polynomial_t(v, z)
-        expected = reference_chebyshev_t(v, z)
-        torch.testing.assert_close(result, expected, rtol=1e-10, atol=1e-10)
-
     def test_hyperbolic_continuation_z_greater_than_1(self):
         """Test T_v(z) = cosh(v * acosh(z)) for z > 1."""
         z = torch.tensor([1.5, 2.0, 3.0, 5.0], dtype=torch.float64)
@@ -265,25 +245,6 @@ class TestChebyshevPolynomialT(OpTestCase):
         )
         torch.testing.assert_close(
             result_outside, expected, rtol=1e-6, atol=1e-6
-        )
-
-    @pytest.mark.skip(reason="Complex dtype not implemented")
-    def test_branch_cut_near_plus_one(self):
-        """Test behavior near z = 1 with small imaginary parts."""
-        z_above = torch.tensor([1.0 + 0.01j], dtype=torch.complex128)
-        z_below = torch.tensor([1.0 - 0.01j], dtype=torch.complex128)
-        v = torch.tensor([2.5], dtype=torch.float64)
-
-        result_above = torchscience.special_functions.chebyshev_polynomial_t(
-            v, z_above
-        )
-        result_below = torchscience.special_functions.chebyshev_polynomial_t(
-            v, z_below
-        )
-
-        # Results should be conjugates
-        torch.testing.assert_close(
-            result_above, result_below.conj(), rtol=1e-6, atol=1e-6
         )
 
     def test_gradcheck_z_greater_than_1(self):
@@ -978,49 +939,6 @@ class TestChebyshevPolynomialT(OpTestCase):
             torch.testing.assert_close(
                 result, expected, rtol=1e-10, atol=1e-10
             )
-
-    # =========================================================================
-    # Complex gradgradcheck tests
-    # =========================================================================
-
-    @pytest.mark.skip(reason="Complex dtype not implemented")
-    def test_gradgradcheck_complex_relaxed_tolerance(self):
-        """Test complex second-order derivatives with relaxed tolerances."""
-        z = torch.tensor(
-            [0.3 + 0.1j, 0.5 + 0.2j],
-            dtype=torch.complex128,
-            requires_grad=True,
-        )
-        v = torch.tensor([2.0], dtype=torch.float64)
-
-        def func(z):
-            return torchscience.special_functions.chebyshev_polynomial_t(v, z)
-
-        # First-order should pass with tight tolerances
-        assert torch.autograd.gradcheck(func, (z,), eps=1e-6)
-
-        # Second-order also passes with tight tolerances
-        assert torch.autograd.gradgradcheck(
-            func, (z,), eps=1e-5, atol=1e-3, rtol=1e-3
-        )
-
-    @pytest.mark.skip(reason="Complex dtype not implemented")
-    def test_gradgradcheck_complex_away_from_branch_cuts(self):
-        """Test complex gradgradcheck away from branch cuts (z=±1)."""
-        # Points well away from branch cuts at z=±1
-        z = torch.tensor(
-            [0.0 + 0.5j, 0.0 - 0.5j, 0.3 + 0.3j],
-            dtype=torch.complex128,
-            requires_grad=True,
-        )
-        v = torch.tensor([2.0], dtype=torch.float64)
-
-        def func(z):
-            return torchscience.special_functions.chebyshev_polynomial_t(v, z)
-
-        assert torch.autograd.gradgradcheck(
-            func, (z,), eps=1e-6, atol=1e-4, rtol=1e-4
-        )
 
     @pytest.mark.skip(
         reason="backward_backward kernel needs update for degree gradient"
