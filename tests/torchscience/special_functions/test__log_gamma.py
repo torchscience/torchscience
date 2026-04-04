@@ -1,11 +1,12 @@
 import math
 
-import pytest
 import sympy
 import torch
 import torch.testing
 from hypothesis import given, settings
 from sympy import I, N, symbols
+
+import torchscience.special_functions
 from torchscience.testing import (
     IdentitySpec,
     InputSpec,
@@ -20,8 +21,6 @@ from torchscience.testing import (
     complex_avoiding_real_axis,
     positive_real_numbers,
 )
-
-import torchscience.special_functions
 
 
 def sympy_log_gamma(z: float | complex) -> float | complex:
@@ -201,9 +200,6 @@ class TestLogGamma(OpTestCase):
         # Should be close for large z
         torch.testing.assert_close(result, stirling, rtol=1e-3, atol=1e-3)
 
-    @pytest.mark.skip(
-        reason="Complex log_gamma branch cuts need investigation"
-    )
     def test_complex_conjugate_symmetry(self):
         """Test ln(Gamma(conj(z))) = conj(ln(Gamma(z)))."""
         z = torch.tensor(
@@ -307,9 +303,6 @@ class TestLogGamma(OpTestCase):
         expected = torch.special.gammaln(z_tensor)
         torch.testing.assert_close(result, expected, rtol=1e-6, atol=1e-6)
 
-    @pytest.mark.skip(
-        reason="Complex log_gamma branch cuts need investigation"
-    )
     @given(z=complex_avoiding_real_axis(real_range=(0.5, 5.0), min_imag=0.1))
     @settings(max_examples=100, deadline=None)
     def test_property_complex_conjugate(self, z):
