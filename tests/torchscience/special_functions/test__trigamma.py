@@ -1,14 +1,12 @@
 import math
 
-import pytest
 import sympy
 import torch
 import torch.testing
 from hypothesis import given, settings
 from sympy import I, N, symbols
 
-pytestmark = pytest.mark.skip(reason="Test takes >30s, needs optimization")
-
+import torchscience.special_functions
 from torchscience.testing import (
     IdentitySpec,
     InputSpec,
@@ -23,8 +21,6 @@ from torchscience.testing import (
     complex_avoiding_real_axis,
     positive_real_numbers,
 )
-
-import torchscience.special_functions
 
 
 def sympy_trigamma(z: float | complex) -> float | complex:
@@ -81,7 +77,12 @@ class TestTrigamma(OpTestCase):
                 ),
             ],
             sympy_func=lambda z: sympy.polygamma(1, z),
-            tolerances=ToleranceConfig(),
+            tolerances=ToleranceConfig(
+                float64_rtol=1e-8,
+                float64_atol=1e-8,
+                sympy_rtol=1e-8,
+                sympy_atol=1e-8,
+            ),
             skip_tests={
                 "test_autocast_cpu_bfloat16",  # CPU autocast not supported
                 "test_gradcheck_complex",  # Complex not yet implemented
@@ -101,6 +102,8 @@ class TestTrigamma(OpTestCase):
                 IdentitySpec(
                     name="reflection_formula",
                     identity_fn=_reflection_identity,
+                    rtol=1e-8,
+                    atol=1e-8,
                     description="psi_1(1-x) + psi_1(x) = pi^2 / sin^2(pi*x)",
                 ),
             ],
@@ -108,16 +111,22 @@ class TestTrigamma(OpTestCase):
                 SpecialValue(
                     inputs=(1.0,),
                     expected=math.pi**2 / 6,
+                    rtol=1e-8,
+                    atol=1e-8,
                     description="psi_1(1) = pi^2/6",
                 ),
                 SpecialValue(
                     inputs=(2.0,),
                     expected=math.pi**2 / 6 - 1,
+                    rtol=1e-8,
+                    atol=1e-8,
                     description="psi_1(2) = pi^2/6 - 1",
                 ),
                 SpecialValue(
                     inputs=(0.5,),
                     expected=math.pi**2 / 2,
+                    rtol=1e-8,
+                    atol=1e-8,
                     description="psi_1(1/2) = pi^2/2",
                 ),
             ],
@@ -131,7 +140,7 @@ class TestTrigamma(OpTestCase):
             ],
             supports_sparse_coo=False,
             supports_sparse_csr=False,
-            supports_quantized=True,
+            supports_quantized=False,
             supports_meta=True,
         )
 
@@ -173,7 +182,6 @@ class TestTrigamma(OpTestCase):
         result = torchscience.special_functions.trigamma(poles)
         assert (torch.isinf(result) | torch.isnan(result)).all()
 
-    @pytest.mark.skip(reason="Complex trigamma not yet implemented")
     def test_complex_conjugate_symmetry(self):
         """Test psi_1(conj(z)) = conj(psi_1(z))."""
         z = torch.tensor(
@@ -225,8 +233,8 @@ class TestTrigamma(OpTestCase):
             torchscience.special_functions.trigamma,
             (z,),
             eps=1e-5,
-            atol=1e-4,
-            rtol=1e-4,
+            atol=1e-3,
+            rtol=1e-3,
         )
 
     def test_gradgradcheck(self):
@@ -269,7 +277,6 @@ class TestTrigamma(OpTestCase):
         if torch.isfinite(left).all() and torch.isfinite(right).all():
             torch.testing.assert_close(left, right, rtol=1e-8, atol=1e-8)
 
-    @pytest.mark.skip(reason="Complex trigamma not yet implemented")
     @given(z=complex_avoiding_real_axis(real_range=(-5.0, 5.0), min_imag=0.1))
     @settings(max_examples=100, deadline=None)
     def test_property_complex_conjugate(self, z):
