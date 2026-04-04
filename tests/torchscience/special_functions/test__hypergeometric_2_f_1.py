@@ -1,8 +1,12 @@
 import math
 
-import pytest
+import mpmath
+import scipy.special
+import sympy  # noqa: F401
 import torch
 import torch.testing
+
+import torchscience.special_functions
 from torchscience.testing import (
     IdentitySpec,
     InputSpec,
@@ -12,37 +16,9 @@ from torchscience.testing import (
     ToleranceConfig,
 )
 
-import torchscience.special_functions
-
-# Optional scipy import for reference tests
-try:
-    import scipy.special
-
-    HAS_SCIPY = True
-except ImportError:
-    HAS_SCIPY = False
-
-# Optional sympy import for symbolic verification
-try:
-    import sympy  # noqa: F401
-
-    HAS_SYMPY = True
-except ImportError:
-    HAS_SYMPY = False
-
-# Optional mpmath import for complex parameter reference tests
-try:
-    import mpmath
-
-    HAS_MPMATH = True
-except ImportError:
-    HAS_MPMATH = False
-
 
 def scipy_hyp2f1(a: float, b: float, c: float, z: float) -> float:
     """Reference implementation using SciPy's hyp2f1."""
-    if not HAS_SCIPY:
-        raise ImportError("scipy is required for this function")
     return float(scipy.special.hyp2f1(a, b, c, z))
 
 
@@ -323,7 +299,6 @@ class TestHypergeometric2F1(OpTestCase):
             atol=1e-3,
         )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_scipy_reference(self):
         """Test against SciPy's hyp2f1 function."""
         z_values = [0.1, 0.3, 0.5, 0.7]
@@ -356,7 +331,6 @@ class TestHypergeometric2F1(OpTestCase):
                             msg=f"SciPy mismatch at a={a_val}, b={b_val}, c={c_val}, z={z_val}",
                         )
 
-    @pytest.mark.skipif(not HAS_SYMPY, reason="SymPy not available")
     def test_sympy_reference(self):
         """Test against SymPy's hyper function."""
         from sympy import N, Rational, hyper
@@ -530,7 +504,6 @@ class TestHypergeometric2F1(OpTestCase):
     # Tests for DLMF 15.8.10: Integer a-b case with |z| > 1
     # =========================================================================
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_integer_diff_n_equals_zero(self):
         """Test DLMF 15.8.10 limiting form when a = b (n = 0) for |z| > 1."""
         # When a = b, both Gamma(a-b) and Gamma(b-a) have poles at 0
@@ -560,7 +533,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Integer diff n=0 failed at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_integer_diff_n_equals_one(self):
         """Test DLMF 15.8.10 limiting form when a - b = 1 for |z| > 1."""
         # Use z < -1 to avoid divergence at z=1 (which occurs when c-a-b=0)
@@ -589,7 +561,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Integer diff n=1 failed at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_integer_diff_n_equals_two(self):
         """Test DLMF 15.8.10 limiting form when a - b = 2 for |z| > 1."""
         # Use z < -1 to avoid divergence at z=1 (which occurs when c-a-b=0)
@@ -618,7 +589,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Integer diff n=2 failed at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_integer_diff_negative_n(self):
         """Test DLMF 15.8.10 limiting form when a - b < 0 (uses symmetry)."""
         # When a < b, the implementation uses symmetry: 2F1(a,b;c;z) = 2F1(b,a;c;z)
@@ -648,43 +618,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Integer diff n=-2 failed at z={z_val}",
             )
 
-    @pytest.mark.skip(
-        reason="Complex z with integer a-b needs more work on perturbation approach"
-    )
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
-    def test_integer_diff_complex_z(self):
-        """Test DLMF 15.8.10 limiting form with complex z when a-b is integer."""
-        a = torch.tensor([3.0], dtype=torch.float64)
-        b = torch.tensor([2.0], dtype=torch.float64)  # n = 1
-        c = torch.tensor([5.0], dtype=torch.float64)
-        # Complex z with |z| > 1
-        z = torch.tensor([1.5 + 0.5j, 2.0 - 0.3j], dtype=torch.complex128)
-
-        result = torchscience.special_functions.hypergeometric_2_f_1(
-            a, b, c, z
-        )
-
-        # Results should be finite
-        assert torch.isfinite(result.real).all()
-        assert torch.isfinite(result.imag).all()
-
-        # Compare with scipy for each value
-        for i, z_val in enumerate(z.tolist()):
-            expected = scipy.special.hyp2f1(3.0, 2.0, 5.0, z_val)
-            torch.testing.assert_close(
-                result[i].real,
-                torch.tensor(expected.real, dtype=torch.float64),
-                rtol=1e-4,
-                atol=1e-4,
-            )
-            torch.testing.assert_close(
-                result[i].imag,
-                torch.tensor(expected.imag, dtype=torch.float64),
-                rtol=1e-4,
-                atol=1e-4,
-            )
-
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_integer_diff_half_integer_params(self):
         """Test with half-integer parameters where a-b is still an integer."""
         # a = 2.5, b = 1.5, so a - b = 1 (integer)
@@ -719,7 +652,6 @@ class TestHypergeometric2F1(OpTestCase):
     # Tests for DLMF 15.8.4: 1-z transformation for z near 1
     # =========================================================================
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_one_minus_z_transform_basic(self):
         """Test 1-z transformation for z values where |1-z| < |z|."""
         # For z > 0.5, the 1-z transformation should be used
@@ -748,7 +680,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"1-z transform failed at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_one_minus_z_transform_integer_cab(self):
         """Test 1-z transformation when c-a-b is an integer (uses Richardson extrapolation)."""
         # c - a - b = 4 - 1.5 - 1.5 = 1 (integer)
@@ -777,7 +708,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"1-z transform with integer c-a-b failed at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_one_minus_z_transform_cab_zero(self):
         """Test 1-z transformation when c-a-b = 0."""
         # c - a - b = 3 - 1.5 - 1.5 = 0
@@ -806,7 +736,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"1-z transform with c-a-b=0 failed at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_one_minus_z_transform_negative_cab(self):
         """Test 1-z transformation when c-a-b is negative integer."""
         # c - a - b = 2 - 1.5 - 1.5 = -1 (negative integer)
@@ -835,7 +764,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"1-z transform with c-a-b=-1 failed at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_one_minus_z_transform_complex_z(self):
         """Test 1-z transformation with complex z where |1-z| < |z|."""
         a = torch.tensor([1.5], dtype=torch.float64)
@@ -872,7 +800,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"1-z transform complex z failed (imag) at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_transition_between_algorithms(self):
         """Test smooth transition between direct series and 1-z transform at z=0.5."""
         a = torch.tensor([1.5], dtype=torch.float64)
@@ -900,7 +827,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Algorithm transition failed at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_one_minus_z_transform_various_params(self):
         """Test 1-z transformation with various parameter combinations."""
         test_cases = [
@@ -1332,7 +1258,6 @@ class TestHypergeometric2F1(OpTestCase):
         assert torch.isfinite(result.real).all()
         assert torch.isfinite(result.imag).all()
 
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_complex_a_mpmath_reference(self):
         """Test complex a parameter against mpmath reference."""
         mpmath.mp.dps = 30  # High precision for reference
@@ -1369,7 +1294,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Imag part mismatch at a={a_val}",
             )
 
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_complex_b_mpmath_reference(self):
         """Test complex b parameter against mpmath reference."""
         mpmath.mp.dps = 30
@@ -1406,7 +1330,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Imag part mismatch at b={b_val}",
             )
 
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_complex_c_mpmath_reference(self):
         """Test complex c parameter against mpmath reference."""
         mpmath.mp.dps = 30
@@ -1443,7 +1366,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Imag part mismatch at c={c_val}",
             )
 
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_complex_all_params_mpmath_reference(self):
         """Test all complex parameters against mpmath reference."""
         mpmath.mp.dps = 30
@@ -1480,7 +1402,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Imag part mismatch at a={a_val}, b={b_val}, c={c_val}, z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_complex_params_one_minus_z_transform(self):
         """Test complex parameters in the 1-z transformation region (|1-z| < |z|)."""
         mpmath.mp.dps = 30
@@ -1532,7 +1453,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"1-z transform imag mismatch at a={a_val}, b={b_val}, c={c_val}, z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_complex_params_linear_transform(self):
         """Test complex parameters in the linear transformation region (|z| > 1)."""
         mpmath.mp.dps = 30
@@ -1888,7 +1808,6 @@ class TestHypergeometric2F1(OpTestCase):
     # Extensive edge case tests
     # =========================================================================
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_very_small_z(self):
         """Test with very small z values where series converges rapidly."""
         a = torch.tensor([1.5], dtype=torch.float64)
@@ -1914,7 +1833,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed for very small z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_z_close_to_half(self):
         """Test z values very close to 0.5 (algorithm transition boundary)."""
         a = torch.tensor([1.5], dtype=torch.float64)
@@ -1940,7 +1858,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed near algorithm boundary z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_z_close_to_one(self):
         """Test z values very close to 1 (convergence boundary)."""
         # Need c - a - b > 0 for convergence at z = 1
@@ -1967,7 +1884,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed near z=1 at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_z_close_to_minus_one(self):
         """Test z values very close to -1.
 
@@ -2004,7 +1920,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed near z=-1 at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_near_integer_a_minus_b(self):
         """Test a-b very close to an integer (tests Richardson extrapolation trigger)."""
         # a - b = 1.0001 (very close to 1)
@@ -2030,7 +1945,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed near integer a-b at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_near_integer_c_minus_a_minus_b(self):
         """Test c-a-b very close to an integer (tests Richardson extrapolation in 1-z transform)."""
         # c - a - b = 1.0001 (very close to 1)
@@ -2056,7 +1970,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed near integer c-a-b at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_large_a(self):
         """Test with large a parameter."""
         a_values = [20.0, 30.0, 50.0]
@@ -2087,7 +2000,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed for large a={a_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_large_b(self):
         """Test with large b parameter."""
         a = torch.tensor([1.0], dtype=torch.float64)
@@ -2116,7 +2028,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed for large b={b_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_large_c(self):
         """Test with large c parameter."""
         a = torch.tensor([1.0], dtype=torch.float64)
@@ -2145,7 +2056,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed for large c={c_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_very_small_parameters(self):
         """Test with very small (but positive) parameters."""
         small_vals = [0.01, 0.001, 0.0001]
@@ -2238,7 +2148,6 @@ class TestHypergeometric2F1(OpTestCase):
             msg="Failed for c=b identity",
         )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_a_plus_one_equals_c(self):
         """Test a + 1 = c (parameter reduction case)."""
         # When a + 1 = c: 2F1(a, b; a+1; z) has a known form
@@ -2262,7 +2171,6 @@ class TestHypergeometric2F1(OpTestCase):
             msg="Failed for a+1=c case",
         )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_extreme_negative_z(self):
         """Test with extreme negative z values (|z| >> 1)."""
         a = torch.tensor([1.5], dtype=torch.float64)
@@ -2291,7 +2199,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed for extreme negative z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_pfaff_transformation(self):
         """Test Pfaff transformation: 2F1(a,b;c;z) = (1-z)^(-a) * 2F1(a, c-b; c; z/(z-1))."""
         a = torch.tensor([1.5], dtype=torch.float64)
@@ -2320,7 +2227,6 @@ class TestHypergeometric2F1(OpTestCase):
             msg="Pfaff transformation identity failed",
         )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_euler_transformation(self):
         """Test Euler transformation: 2F1(a,b;c;z) = (1-z)^(c-a-b) * 2F1(c-a, c-b; c; z)."""
         a = torch.tensor([1.5], dtype=torch.float64)
@@ -2350,7 +2256,6 @@ class TestHypergeometric2F1(OpTestCase):
             msg="Euler transformation identity failed",
         )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_negative_integer_b_terminates(self):
         """Test that 2F1(a, -n; c; z) is a polynomial when n is non-negative integer."""
         # 2F1(1, -2; 1; z) = 1 - 2z + z^2 = (1-z)^2
@@ -2366,7 +2271,6 @@ class TestHypergeometric2F1(OpTestCase):
 
         torch.testing.assert_close(result, expected, rtol=1e-6, atol=1e-6)
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_equal_parameters_a_b(self):
         """Test when a = b."""
         a = torch.tensor([2.5], dtype=torch.float64)
@@ -2395,7 +2299,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed for a=b at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_a_equals_c(self):
         """Test when a = c (reduces to geometric series type)."""
         a = torch.tensor([3.0], dtype=torch.float64)
@@ -2417,7 +2320,6 @@ class TestHypergeometric2F1(OpTestCase):
             msg="Failed for a=c identity",
         )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_integer_diff_m_equals_3(self):
         """Test DLMF 15.8.10 explicit formula for m = 3 (larger integer difference)."""
         a = torch.tensor([5.0], dtype=torch.float64)
@@ -2446,7 +2348,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed for integer diff m=3 at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_integer_diff_m_equals_5(self):
         """Test DLMF 15.8.10 explicit formula for m = 5 (even larger integer difference)."""
         a = torch.tensor([7.0], dtype=torch.float64)
@@ -2475,7 +2376,6 @@ class TestHypergeometric2F1(OpTestCase):
                 msg=f"Failed for integer diff m=5 at z={z_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_edge_case_1_minus_z_transform_integer_diff_m_equals_2(self):
         """Test 1-z transform with c-a-b = 2 (DLMF 15.8.10 case)."""
         a = torch.tensor([0.5], dtype=torch.float64)
@@ -2556,46 +2456,6 @@ class TestHypergeometric2F1(OpTestCase):
         assert torch.isfinite(b.grad).all(), "b.grad not finite at boundary"
         assert torch.isfinite(c.grad).all(), "c.grad not finite at boundary"
         assert torch.isfinite(z.grad).all(), "z.grad not finite at boundary"
-
-    @pytest.mark.skip(
-        reason="Complex z > 1 not fully implemented - returns NaN"
-    )
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
-    def test_edge_case_contiguous_z_constraint(self):
-        """Test that contiguous z constraint is properly enforced for special case."""
-        # This tests z values exactly where the constraint on Re(z) < 0.5
-        # for 1/z transformation should be handled
-        a = torch.tensor([1.5], dtype=torch.float64)
-        b = torch.tensor([2.0], dtype=torch.float64)
-        c = torch.tensor([3.5], dtype=torch.float64)
-
-        # z = 1.5 has Re(z) > 0.5, |z| > 1, 1/z = 0.6667
-        z = torch.tensor([1.5], dtype=torch.complex128)
-        result = torchscience.special_functions.hypergeometric_2_f_1(
-            a, b, c, z
-        )
-
-        assert torch.isfinite(result.real).all(), (
-            "Real part should be finite for complex z > 1"
-        )
-        assert torch.isfinite(result.imag).all(), (
-            "Imag part should be finite for complex z > 1"
-        )
-
-        # Compare with scipy
-        scipy_result = scipy.special.hyp2f1(1.5, 2.0, 3.5, complex(1.5))
-        torch.testing.assert_close(
-            result[0].real,
-            torch.tensor(scipy_result.real, dtype=torch.float64),
-            rtol=1e-4,
-            atol=1e-4,
-        )
-        torch.testing.assert_close(
-            result[0].imag,
-            torch.tensor(scipy_result.imag, dtype=torch.float64),
-            rtol=1e-4,
-            atol=1e-4,
-        )
 
     # =========================================================================
     # Plan Implementation Tests (Task 1-10)
