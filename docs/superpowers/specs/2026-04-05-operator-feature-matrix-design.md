@@ -84,12 +84,18 @@ A Python script at `scripts/generate_operator_feature_matrix.py` that:
 
 ### Detection Patterns
 
+Some operators use the project's convenience macros (e.g., `TORCHSCIENCE_CPU_POINTWISE_*_OPERATOR`), while others use direct PyTorch registration (`module.impl("op_name", ...)`) inside `TORCH_LIBRARY_IMPL` blocks. The script must detect both patterns.
+
+Examples of operators using direct registration:
+- `hypergeometric_p_f_q` — custom signature, not pointwise
+- `log_multivariate_gamma` — has an `int64_t` parameter
+
 ```python
 # Schema: extract operator name from m.def("op_name(...)")
 SCHEMA_RE = r'm\.def\("(\w+)\('
 
 # Backend macros: extract operator name as first argument
-BACKEND_RE = {
+MACRO_RE = {
     "cpu":      r'TORCHSCIENCE_CPU_POINTWISE_\w+_OPERATOR(?:_WITH_COMPLEX)?\((\w+),',
     "cuda":     r'TORCHSCIENCE_CUDA_POINTWISE_\w+_OPERATOR(?:_WITH_COMPLEX)?\((\w+),',
     "meta":     r'TORCHSCIENCE_META_POINTWISE_\w+_OPERATOR\((\w+),',
@@ -97,10 +103,18 @@ BACKEND_RE = {
     "autocast": r'TORCHSCIENCE_AUTOCAST_POINTWISE_\w+_OPERATOR\((\w+),',
 }
 
+# Direct PyTorch registration: module.impl("op_name", ...) or m.impl("op_name", ...)
+# Only match forward operators (exclude _backward variants)
+IMPL_RE = r'(?:module|m)\.impl\("(\w+)"'
+
+# For each backend file, the script finds operators via BOTH the macro pattern
+# and the direct impl pattern, then unions the results. Operators matching
+# _backward are excluded.
+
 # Complex: operator uses _WITH_COMPLEX suffix in CPU file
 COMPLEX_RE = r'TORCHSCIENCE_CPU_POINTWISE_\w+_OPERATOR_WITH_COMPLEX\((\w+),'
 
-# Sparse/Quantized: operator name from registration macro
+# Sparse/Quantized: project macros OR direct impl
 SPARSE_COO_CPU_RE  = r'REGISTER_SPARSE_COO_CPU_\w+\(m,\s*(\w+)\)'
 SPARSE_COO_CUDA_RE = r'REGISTER_SPARSE_COO_CUDA_\w+\(m,\s*(\w+)\)'
 SPARSE_CSR_CPU_RE  = r'REGISTER_SPARSE_CSR_CPU_\w+\(m,\s*(\w+)\)'
