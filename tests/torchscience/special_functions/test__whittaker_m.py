@@ -1,6 +1,8 @@
-import pytest
+import mpmath
 import torch
 import torch.testing
+
+import torchscience.special_functions
 from torchscience.testing import (
     IdentitySpec,
     InputSpec,
@@ -8,16 +10,6 @@ from torchscience.testing import (
     OpTestCase,
     ToleranceConfig,
 )
-
-import torchscience.special_functions
-
-# Optional mpmath import for reference tests
-try:
-    import mpmath
-
-    HAS_MPMATH = True
-except ImportError:
-    HAS_MPMATH = False
 
 
 def _transformation_identity(func):
@@ -94,7 +86,6 @@ class TestWhittakerM(OpTestCase):
                 "test_nan_propagation_all_inputs",
                 "test_low_precision_forward",
                 "test_autocast_cpu_bfloat16",
-                "test_symmetric_mu",  # Symmetry doesn't hold for all mu values
             },
             functional_identities=[
                 IdentitySpec(
@@ -161,7 +152,6 @@ class TestWhittakerM(OpTestCase):
                 f"M(z={z_values[i].item()}) = {results[i]}"
             )
 
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_mpmath_reference(self):
         """Test against mpmath reference implementation."""
         test_cases = [
@@ -192,19 +182,3 @@ class TestWhittakerM(OpTestCase):
         result = self.descriptor.func(kappa, mu, z)
 
         assert torch.isfinite(result).all()
-
-    @pytest.mark.skip(
-        reason="Symmetry M_kappa,mu = M_kappa,-mu doesn't hold for all mu values"
-    )
-    def test_symmetric_mu(self):
-        """Test M_kappa,mu(z) = M_kappa,-mu(z) symmetry property."""
-        kappa = torch.tensor([0.5], dtype=torch.float64)
-        mu = torch.tensor([1.0], dtype=torch.float64)
-        z = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
-
-        result_positive = self.descriptor.func(kappa, mu, z)
-        result_negative = self.descriptor.func(kappa, -mu, z)
-
-        torch.testing.assert_close(
-            result_positive, result_negative, rtol=1e-6, atol=1e-6
-        )
