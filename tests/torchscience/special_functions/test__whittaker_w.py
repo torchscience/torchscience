@@ -1,6 +1,9 @@
+import mpmath
 import pytest
 import torch
 import torch.testing
+
+import torchscience.special_functions
 from torchscience.testing import (
     IdentitySpec,
     InputSpec,
@@ -8,16 +11,6 @@ from torchscience.testing import (
     OpTestCase,
     ToleranceConfig,
 )
-
-import torchscience.special_functions
-
-# Optional mpmath import for reference tests
-try:
-    import mpmath
-
-    HAS_MPMATH = True
-except ImportError:
-    HAS_MPMATH = False
 
 
 def _transformation_identity(func):
@@ -94,14 +87,7 @@ class TestWhittakerW(OpTestCase):
                 "test_nan_propagation_all_inputs",
                 "test_low_precision_forward",
                 "test_autocast_cpu_bfloat16",
-                # Skip tests that depend on confluent_hypergeometric_u which has bugs
-                # for integer b values. Since b = 2*mu + 1, integer mu values cause issues.
-                "test_decay_at_infinity",
-                "test_mpmath_reference",
-                "test_positive_z_required",
-                "test_w_vs_m_relation",
                 "test_symmetric_mu",
-                "test_transformation_identity",
             },
             functional_identities=[
                 IdentitySpec(
@@ -144,9 +130,6 @@ class TestWhittakerW(OpTestCase):
 
         torch.testing.assert_close(result, expected, rtol=1e-5, atol=1e-5)
 
-    @pytest.mark.skip(
-        reason="confluent_hypergeometric_u has bugs for integer b values"
-    )
     def test_decay_at_infinity(self):
         """Test that W decays for large z.
 
@@ -170,10 +153,6 @@ class TestWhittakerW(OpTestCase):
                 f"|W(z={z_values[i].item()})| = {results[i]}"
             )
 
-    @pytest.mark.skip(
-        reason="confluent_hypergeometric_u has bugs for integer b values"
-    )
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_mpmath_reference(self):
         """Test against mpmath reference implementation."""
         test_cases = [
@@ -195,9 +174,6 @@ class TestWhittakerW(OpTestCase):
                 atol=1e-8,
             )
 
-    @pytest.mark.skip(
-        reason="confluent_hypergeometric_u has bugs for integer b values"
-    )
     def test_positive_z_required(self):
         """Test that the function works correctly for z > 0."""
         kappa = torch.tensor([0.5], dtype=torch.float64)
@@ -209,7 +185,7 @@ class TestWhittakerW(OpTestCase):
         assert torch.isfinite(result).all()
 
     @pytest.mark.skip(
-        reason="confluent_hypergeometric_u has bugs for integer b values"
+        reason="W_kappa,-mu(z) with negative mu causes b<0 in confluent_hypergeometric_u, producing NaN"
     )
     def test_symmetric_mu(self):
         """Test W_kappa,mu(z) = W_kappa,-mu(z) symmetry property."""
@@ -224,9 +200,6 @@ class TestWhittakerW(OpTestCase):
             result_positive, result_negative, rtol=1e-6, atol=1e-6
         )
 
-    @pytest.mark.skip(
-        reason="confluent_hypergeometric_u has bugs for integer b values"
-    )
     def test_w_vs_m_relation(self):
         """Test the relationship between W and M functions at special values.
 
