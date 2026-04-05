@@ -8,6 +8,7 @@
 #include <c10/util/complex.h>
 
 #include "confluent_hypergeometric_m.h"
+#include "digamma.h"
 #include "log_gamma.h"
 #include "gamma.h"
 
@@ -157,75 +158,109 @@ T hypu_asymptotic(T a, T b, T z, int max_iter = 100) {
   return result;
 }
 
-// U for integer b >= 2 using the limiting form with logarithm
-// When b is a positive integer >= 2, we need a different approach
-// U(a, n, z) involves logarithmic terms
+// U for integer b >= 1 using DLMF 13.2.10 logarithmic limiting form.
+//
+// U(a, n, z) = ((-1)^n / (Gamma(a-n+1) * (n-1)!)) *
+//              [ M(a, n, z) * ln(z)
+//                + sum_{k=0}^{inf} (a)_k / ((n)_k * k!) * z^k *
+//                  (psi(a+k) - psi(1+k) - psi(n+k)) ]
+//            + ((n-2)! / Gamma(a)) *
+//              sum_{k=0}^{n-2} (a-n+1)_k / ((2-n)_k * k!) * z^(k+1-n)
 template <typename T>
 T hypu_integer_b_positive(T a, int n, T z, int max_iter = 200) {
-  // For b = n (positive integer >= 2), use recurrence or series
-  // U(a, 1, z) = z^(1-1) * Psi(a, 1, z) where Psi is a series
-  // For simplicity, we use the asymptotic expansion for large z
-  // and M-based formula for small z with regularization
+  // --- First part: logarithmic series ---
+  // Coefficient: (-1)^n / (Gamma(a - n + 1) * (n-1)!)
+  T a_minus_n_plus_1 = a - T(n) + T(1);
+  T log_gamma_a_n1 = log_gamma(a_minus_n_plus_1);
 
-  T b = T(n);
+  T first_part = T(0);
 
-  // For integer b, the standard formula has removable singularities
-  // Use L'Hopital's rule or Taylor expansion around integer b
-
-  // Compute using the formula:
-  // U(a, n, z) = ((-1)^n / ((n-1)! * Gamma(a-n+1))) *
-  //              [M(a, n, z) * (psi(a) - psi(n) - log(z)) + series...]
-
-  // For now, use a simpler approach: slightly perturb b and use the general formula
-  // This is numerically stable for most cases
-  T b_perturbed = b + T(1e-8);
-  T one_minus_b = T(1) - b_perturbed;
-  T a_minus_b_plus_1 = a - b_perturbed + T(1);
-
-  // Compute gamma ratio: Gamma(1-b) / Gamma(a-b+1)
-  T log_gamma_1_minus_b = log_gamma(one_minus_b);
-  T log_gamma_a_minus_b_plus_1 = log_gamma(a_minus_b_plus_1);
-
-  if (std::isinf(log_gamma_a_minus_b_plus_1)) {
-    // a - b + 1 is a non-positive integer, first term vanishes
-    // Second term: Gamma(b-1) / Gamma(a) * z^(1-b) * M(a-b+1, 2-b, z)
-    T b_minus_1 = b - T(1);
-    T log_gamma_b_minus_1 = log_gamma(b_minus_1);
-    T log_gamma_a = log_gamma(a);
-
-    if (std::isinf(log_gamma_a)) {
-      // Both terms vanish or are undefined
-      return std::numeric_limits<T>::quiet_NaN();
+  if (!std::isinf(log_gamma_a_n1)) {
+    // (n-1)! as T
+    T factorial_n_minus_1 = T(1);
+    for (int i = 2; i < n; ++i) {
+      factorial_n_minus_1 *= T(i);
     }
 
-    T coeff2 = std::exp(log_gamma_b_minus_1 - log_gamma_a);
-    T sign2 = T(hypu_gamma_sign(b_minus_1) * hypu_gamma_sign(a));
-    T z_power = std::exp((T(1) - b) * std::log(z));
-    T M2 = confluent_hypergeometric_m(a - b + T(1), T(2) - b, z);
+    T sign_n = (n % 2 == 0) ? T(1) : T(-1);
+    int gamma_sign = hypu_gamma_sign(a_minus_n_plus_1);
+    T coeff = sign_n * T(gamma_sign) * std::exp(-log_gamma_a_n1) / factorial_n_minus_1;
 
-    return sign2 * coeff2 * z_power * M2;
+    // M(a, n, z) * ln(z)
+    T M_val = confluent_hypergeometric_m(a, T(n), z);
+    T log_z = std::log(z);
+    T log_term = M_val * log_z;
+
+    // Infinite series: sum_{k=0}^{inf} (a)_k / ((n)_k * k!) * z^k *
+    //                  (psi(a+k) - psi(1+k) - psi(n+k))
+    T series_sum = T(0);
+    T pochhammer_a = T(1);   // (a)_k, starts at 1 for k=0
+    T pochhammer_n = T(1);   // (n)_k, starts at 1 for k=0
+    T k_factorial = T(1);    // k!, starts at 1 for k=0
+    T z_power = T(1);        // z^k, starts at 1 for k=0
+
+    for (int k = 0; k < max_iter; ++k) {
+      T psi_a_k = digamma(a + T(k));
+      T psi_1_k = digamma(T(1 + k));
+      T psi_n_k = digamma(T(n + k));
+
+      T term_coeff = pochhammer_a / (pochhammer_n * k_factorial);
+      T term = term_coeff * z_power * (psi_a_k - psi_1_k - psi_n_k);
+      series_sum += term;
+
+      // Check convergence
+      if (k > 0 && std::abs(term) < hypu_epsilon<T>() * std::abs(series_sum)) {
+        break;
+      }
+
+      // Update Pochhammer symbols and factorials for next iteration
+      pochhammer_a *= (a + T(k));
+      pochhammer_n *= T(n + k);
+      k_factorial *= T(k + 1);
+      z_power *= z;
+    }
+
+    first_part = coeff * (log_term + series_sum);
   }
 
-  T coeff1 = std::exp(log_gamma_1_minus_b - log_gamma_a_minus_b_plus_1);
-  T sign1 = T(hypu_gamma_sign(one_minus_b) * hypu_gamma_sign(a_minus_b_plus_1));
-  T M1 = confluent_hypergeometric_m(a, b_perturbed, z);
+  // --- Second part: finite sum (only exists for n >= 2) ---
+  // ((n-2)! / Gamma(a)) * sum_{k=0}^{n-2} (a-n+1)_k / ((2-n)_k * k!) * z^(k+1-n)
+  T second_part = T(0);
 
-  // Second term: Gamma(b-1) / Gamma(a) * z^(1-b) * M(a-b+1, 2-b, z)
-  T b_minus_1 = b - T(1);
-  T log_gamma_b_minus_1 = log_gamma(b_minus_1);
-  T log_gamma_a = log_gamma(a);
+  if (n >= 2) {
+    T log_gamma_a = log_gamma(a);
 
-  if (std::isinf(log_gamma_a)) {
-    // Second term vanishes
-    return sign1 * coeff1 * M1;
+    if (!std::isinf(log_gamma_a)) {
+      T factorial_n_minus_2 = T(1);
+      for (int i = 2; i <= n - 2; ++i) {
+        factorial_n_minus_2 *= T(i);
+      }
+
+      int gamma_sign_a = hypu_gamma_sign(a);
+      T outer_coeff = T(gamma_sign_a) * factorial_n_minus_2 * std::exp(-log_gamma_a);
+
+      T finite_sum = T(0);
+      T poch_a_n1 = T(1);   // (a-n+1)_k
+      T poch_2_n = T(1);    // (2-n)_k
+      T k_fact = T(1);      // k!
+      T z_pow = std::exp(T(1 - n) * std::log(z));  // z^(1-n) for k=0
+
+      for (int k = 0; k <= n - 2; ++k) {
+        T term = poch_a_n1 / (poch_2_n * k_fact) * z_pow;
+        finite_sum += term;
+
+        // Update for next k
+        poch_a_n1 *= (a - T(n) + T(1) + T(k));
+        poch_2_n *= (T(2 - n) + T(k));
+        k_fact *= T(k + 1);
+        z_pow *= z;
+      }
+
+      second_part = outer_coeff * finite_sum;
+    }
   }
 
-  T coeff2 = std::exp(log_gamma_b_minus_1 - log_gamma_a);
-  T sign2 = T(hypu_gamma_sign(b_minus_1) * hypu_gamma_sign(a));
-  T z_power = std::exp((T(1) - b) * std::log(z));
-  T M2 = confluent_hypergeometric_m(a - b + T(1), T(2) - b, z);
-
-  return sign1 * coeff1 * M1 + sign2 * coeff2 * z_power * M2;
+  return first_part + second_part;
 }
 
 // U for integer b <= 0 using limiting form
@@ -444,11 +479,8 @@ T confluent_hypergeometric_u(T a, T b, T z) {
       // b is a positive integer >= 2, need special handling
       return hypu_integer_b_positive(a, b_int, z);
     } else if (b_int == 1) {
-      // b = 1: U(a, 1, z) has a simpler form
-      // U(a, 1, z) = -1/Gamma(a) * [M(a, 1, z) * (psi(a) + log(z) + 2*gamma) - sum...]
-      // Use general method with perturbation for stability
-      T b_perturbed = b + T(1e-8);
-      return hypu_via_m(a, b_perturbed, z);
+      // b = 1: route through DLMF 13.2.10 (finite sum vanishes for n=1)
+      return hypu_integer_b_positive(a, 1, z);
     }
     // b <= 0: standard formula works
   }
