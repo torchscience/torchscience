@@ -46,12 +46,6 @@ All forward operators extracted from schema definitions in `src/torchscience/csr
 | complex64 | `AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES`. Operator uses `_WITH_COMPLEX` macro suffix. |
 | complex128 | `AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES`. Operator uses `_WITH_COMPLEX` macro suffix. |
 
-#### Higher-Order Differentiation (1)
-
-| Column | Detection |
-|--------|-----------|
-| Hessian | Kernel file `<op>_backward_backward.h` exists in `csrc/kernel/special_functions/` |
-
 #### Sparse (4)
 
 | Column | Detection |
@@ -61,10 +55,11 @@ All forward operators extracted from schema definitions in `src/torchscience/csr
 | Sparse CSR CPU | `REGISTER_SPARSE_CSR_CPU_*` macro in `csrc/sparse/csr/cpu/special_functions.h` |
 | Sparse CSR CUDA | `REGISTER_SPARSE_CSR_CUDA_*` macro in `csrc/sparse/csr/cuda/special_functions.h` |
 
-#### Other Tensor Types (3)
+#### Other (4)
 
 | Column | Detection |
 |--------|-----------|
+| Hessian | Kernel file `<op>_backward_backward.h` exists in `csrc/kernel/special_functions/` |
 | Masked | Masked dispatch key registration. Not implemented today. |
 | Nested | NestedTensor dispatch key registration. Not implemented today. |
 | Named | Named dispatch key registration. Not implemented today. |
@@ -135,19 +130,55 @@ QUANTIZED_CUDA_RE  = r'REGISTER_QUANTIZED_CUDA_\w+\(m,\s*(\w+)\)'
 | Quantized CUDA | `src/torchscience/csrc/quantized/cuda/special_functions.h` |
 | Hessian kernels | `src/torchscience/csrc/kernel/special_functions/*_backward_backward.h` |
 
-### Table Format
+### Table Layout
+
+The output is split into five separate tables, each with its own summary row. Every table shares the same Operator column (rows sorted alphabetically).
+
+#### Table 1: Backends
 
 ```markdown
-| Operator | CPU | CUDA | Meta | Autograd | Autocast | bool | int8 | int16 | int32 | int64 | float16 | bfloat16 | float32 | float64 | complex32 | complex64 | complex128 | Hessian | Sparse COO CPU | Sparse COO CUDA | Sparse CSR CPU | Sparse CSR CUDA | Masked | Nested | Named | Quantized CPU | Quantized CUDA |
-|----------|-----|------|------|----------|----------|------|------|-------|-------|-------|---------|----------|---------|---------|-----------|-----------|------------|---------|----------------|-----------------|----------------|-----------------|--------|--------|-------|---------------|----------------|
-| gamma    | x   | x    | x    | x        | x        |      |      |       |       |       | x       | x        | x       | x       |           | x         | x          | x       |                |                 |                |                 |        |        |       |               |                |
+| Operator | CPU | CUDA | Meta | Autograd | Autocast |
+|----------|-----|------|------|----------|----------|
+| gamma    | x   | x    | x    | x        | x        |
+```
+
+#### Table 2: Dtypes
+
+```markdown
+| Operator | bool | int8 | int16 | int32 | int64 | float16 | bfloat16 | float32 | float64 | complex32 | complex64 | complex128 |
+|----------|------|------|-------|-------|-------|---------|----------|---------|---------|-----------|-----------|------------|
+| gamma    |      |      |       |       |       | x       | x        | x       | x       |           | x         | x          |
+```
+
+#### Table 3: Sparse
+
+```markdown
+| Operator | Sparse COO CPU | Sparse COO CUDA | Sparse CSR CPU | Sparse CSR CUDA |
+|----------|----------------|-----------------|----------------|-----------------|
+| gamma    |                |                 |                |                 |
+```
+
+#### Table 4: Other
+
+```markdown
+| Operator | Hessian | Masked | Nested | Named |
+|----------|---------|--------|--------|-------|
+| gamma    | x       |        |        |       |
+```
+
+#### Table 5: Quantized
+
+```markdown
+| Operator | Quantized CPU | Quantized CUDA |
+|----------|---------------|----------------|
+| gamma    |               |                |
 ```
 
 Cells use `x` for implemented, empty for not implemented.
 
 ### Summary Row
 
-The last row of the table shows `N/M (P%)` where N is the count of operators with the feature, M is total operators, and P is the percentage.
+Each table includes a summary row at the bottom showing `N/M (P%)` where N is the count of operators with the feature, M is total operators, and P is the percentage.
 
 ## Usage
 
