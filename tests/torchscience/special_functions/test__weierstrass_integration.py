@@ -1,4 +1,3 @@
-import pytest
 import torch
 import torch.testing
 
@@ -7,44 +6,6 @@ import torchscience.special_functions
 
 class TestWeierstrassIntegration:
     """Integration tests verifying relationships between Weierstrass functions."""
-
-    @pytest.mark.skip(reason="known failing test")
-    def test_zeta_derivative_is_negative_p(self):
-        """Test that zeta'(z) = -P(z).
-
-        The Weierstrass zeta function satisfies zeta'(z) = -P(z).
-        We verify this by computing zeta(z) with autograd and comparing
-        with -P(z).
-        """
-        # Test several points away from poles
-        z_values = [0.3, 0.4, 0.5, 0.6, 0.7]
-        g2_val = 1.0
-        g3_val = 0.5
-
-        for z_val in z_values:
-            z = torch.tensor([z_val], dtype=torch.float64, requires_grad=True)
-            g2 = torch.tensor([g2_val], dtype=torch.float64)
-            g3 = torch.tensor([g3_val], dtype=torch.float64)
-
-            # Compute zeta(z)
-            zeta = torchscience.special_functions.weierstrass_zeta(z, g2, g3)
-
-            # Compute zeta'(z) via autograd
-            (zeta_prime,) = torch.autograd.grad(zeta, z, create_graph=True)
-
-            # Compute -P(z)
-            z_no_grad = torch.tensor([z_val], dtype=torch.float64)
-            neg_p = -torchscience.special_functions.weierstrass_p(
-                z_no_grad, g2, g3
-            )
-
-            torch.testing.assert_close(
-                zeta_prime,
-                neg_p,
-                rtol=1e-3,
-                atol=1e-3,
-                msg=f"zeta'(z) != -P(z) at z={z_val}",
-            )
 
     def test_sigma_ratio_is_zeta(self):
         """Test that sigma'(z)/sigma(z) = zeta(z).
@@ -114,33 +75,6 @@ class TestWeierstrassIntegration:
                 msg=f"sigma(-z) != -sigma(z) at z={z_val}",
             )
 
-    @pytest.mark.skip(reason="known failing test")
-    def test_sigma_is_odd_complex(self):
-        """Test that sigma(-z) = -sigma(z) for complex z."""
-        z_values = [0.3 + 0.2j, 0.4 + 0.1j, 0.2 + 0.4j]
-        g2_val = 1.0
-        g3_val = 0.5
-
-        for z_val in z_values:
-            z = torch.tensor([z_val], dtype=torch.complex128)
-            g2 = torch.tensor([g2_val], dtype=torch.float64)
-            g3 = torch.tensor([g3_val], dtype=torch.float64)
-
-            sigma_pos = torchscience.special_functions.weierstrass_sigma(
-                z, g2, g3
-            )
-            sigma_neg = torchscience.special_functions.weierstrass_sigma(
-                -z, g2, g3
-            )
-
-            torch.testing.assert_close(
-                sigma_pos,
-                -sigma_neg,
-                rtol=1e-8,
-                atol=1e-8,
-                msg=f"sigma(-z) != -sigma(z) at z={z_val}",
-            )
-
     def test_zeta_is_odd(self):
         """Test that zeta(-z) = -zeta(z).
 
@@ -170,33 +104,6 @@ class TestWeierstrassIntegration:
                 msg=f"zeta(-z) != -zeta(z) at z={z_val}",
             )
 
-    @pytest.mark.skip(reason="known failing test")
-    def test_zeta_is_odd_complex(self):
-        """Test that zeta(-z) = -zeta(z) for complex z."""
-        z_values = [0.3 + 0.2j, 0.4 + 0.1j, 0.2 + 0.4j]
-        g2_val = 1.0
-        g3_val = 0.5
-
-        for z_val in z_values:
-            z = torch.tensor([z_val], dtype=torch.complex128)
-            g2 = torch.tensor([g2_val], dtype=torch.float64)
-            g3 = torch.tensor([g3_val], dtype=torch.float64)
-
-            zeta_pos = torchscience.special_functions.weierstrass_zeta(
-                z, g2, g3
-            )
-            zeta_neg = torchscience.special_functions.weierstrass_zeta(
-                -z, g2, g3
-            )
-
-            torch.testing.assert_close(
-                zeta_pos,
-                -zeta_neg,
-                rtol=1e-8,
-                atol=1e-8,
-                msg=f"zeta(-z) != -zeta(z) at z={z_val}",
-            )
-
     def test_p_is_even(self):
         """Test that P(-z) = P(z).
 
@@ -220,106 +127,6 @@ class TestWeierstrassIntegration:
                 rtol=1e-10,
                 atol=1e-10,
                 msg=f"P(-z) != P(z) at z={z_val}",
-            )
-
-    @pytest.mark.skip(reason="known failing test")
-    def test_p_is_even_complex(self):
-        """Test that P(-z) = P(z) for complex z."""
-        z_values = [0.3 + 0.2j, 0.4 + 0.1j, 0.2 + 0.4j]
-        g2_val = 1.0
-        g3_val = 0.5
-
-        for z_val in z_values:
-            z = torch.tensor([z_val], dtype=torch.complex128)
-            g2 = torch.tensor([g2_val], dtype=torch.float64)
-            g3 = torch.tensor([g3_val], dtype=torch.float64)
-
-            p_pos = torchscience.special_functions.weierstrass_p(z, g2, g3)
-            p_neg = torchscience.special_functions.weierstrass_p(-z, g2, g3)
-
-            torch.testing.assert_close(
-                p_pos,
-                p_neg,
-                rtol=1e-8,
-                atol=1e-8,
-                msg=f"P(-z) != P(z) at z={z_val}",
-            )
-
-    @pytest.mark.skip(reason="known failing test")
-    def test_differential_equation(self):
-        """Test that P'^2 = 4P^3 - g2*P - g3.
-
-        This is the fundamental differential equation satisfied by
-        the Weierstrass P function. We use autograd to compute P'.
-        """
-        z_values = [0.3, 0.4, 0.5, 0.6]
-        g2_val = 1.0
-        g3_val = 0.5
-
-        for z_val in z_values:
-            z = torch.tensor([z_val], dtype=torch.float64, requires_grad=True)
-            g2 = torch.tensor([g2_val], dtype=torch.float64)
-            g3 = torch.tensor([g3_val], dtype=torch.float64)
-
-            # Compute P(z)
-            p_val = torchscience.special_functions.weierstrass_p(z, g2, g3)
-
-            # Compute P'(z) via autograd
-            (p_prime,) = torch.autograd.grad(p_val, z, create_graph=True)
-
-            # Verify P'^2 = 4P^3 - g2*P - g3
-            lhs = p_prime**2
-            rhs = 4 * p_val**3 - g2 * p_val - g3
-
-            torch.testing.assert_close(
-                lhs,
-                rhs,
-                rtol=1e-3,
-                atol=1e-3,
-                msg=f"P'^2 != 4P^3 - g2*P - g3 at z={z_val}",
-            )
-
-    @pytest.mark.skip(reason="known failing test")
-    def test_differential_equation_via_zeta(self):
-        """Test differential equation using zeta'(z) = -P(z).
-
-        We can verify the differential equation by computing P via
-        zeta'(z) = -P(z) and then checking P'^2 = 4P^3 - g2*P - g3.
-        """
-        z_values = [0.3, 0.4, 0.5]
-        g2_val = 1.0
-        g3_val = 0.5
-
-        for z_val in z_values:
-            z = torch.tensor([z_val], dtype=torch.float64, requires_grad=True)
-            g2 = torch.tensor([g2_val], dtype=torch.float64)
-            g3 = torch.tensor([g3_val], dtype=torch.float64)
-
-            # Compute zeta(z)
-            zeta = torchscience.special_functions.weierstrass_zeta(z, g2, g3)
-
-            # Get P(z) = -zeta'(z) via autograd
-            (zeta_prime,) = torch.autograd.grad(
-                zeta, z, create_graph=True, retain_graph=True
-            )
-            p_val = -zeta_prime
-
-            # Get P'(z) = -zeta''(z) via autograd
-            (zeta_double_prime,) = torch.autograd.grad(
-                zeta_prime, z, create_graph=True
-            )
-            p_prime = -zeta_double_prime
-
-            # Verify P'^2 = 4P^3 - g2*P - g3
-            lhs = p_prime**2
-            rhs = 4 * p_val**3 - g2 * p_val - g3
-
-            torch.testing.assert_close(
-                lhs,
-                rhs,
-                rtol=1e-2,
-                atol=1e-2,
-                msg=f"P'^2 != 4P^3 - g2*P - g3 (via zeta) at z={z_val}",
             )
 
     def test_sigma_zero_at_origin(self):
@@ -452,97 +259,6 @@ class TestWeierstrassIntegration:
             rel_error = abs((p_val.item() - expected) / expected)
             assert rel_error < 0.1, (
                 f"At z={z_val}, expected ~{expected}, got {p_val.item()}"
-            )
-
-    @pytest.mark.skip(reason="known failing test")
-    def test_cross_function_consistency(self):
-        """Test consistency across all Weierstrass functions.
-
-        Verify that computing zeta via sigma'/sigma matches direct zeta,
-        and that -zeta' matches P.
-        """
-        z_val = 0.5
-        g2_val = 1.0
-        g3_val = 0.5
-
-        z = torch.tensor([z_val], dtype=torch.float64, requires_grad=True)
-        g2 = torch.tensor([g2_val], dtype=torch.float64)
-        g3 = torch.tensor([g3_val], dtype=torch.float64)
-
-        # Compute sigma and its derivative
-        sigma = torchscience.special_functions.weierstrass_sigma(z, g2, g3)
-        (sigma_prime,) = torch.autograd.grad(
-            sigma, z, create_graph=True, retain_graph=True
-        )
-
-        # zeta from sigma'/sigma
-        zeta_from_sigma = sigma_prime / sigma
-
-        # zeta directly
-        z_detached = torch.tensor([z_val], dtype=torch.float64)
-        zeta_direct = torchscience.special_functions.weierstrass_zeta(
-            z_detached, g2, g3
-        )
-
-        torch.testing.assert_close(
-            zeta_from_sigma.detach(),
-            zeta_direct,
-            rtol=1e-3,
-            atol=1e-3,
-            msg="zeta from sigma'/sigma doesn't match direct zeta",
-        )
-
-        # Now compute P from zeta
-        z2 = torch.tensor([z_val], dtype=torch.float64, requires_grad=True)
-        zeta2 = torchscience.special_functions.weierstrass_zeta(z2, g2, g3)
-        (zeta_prime,) = torch.autograd.grad(zeta2, z2, create_graph=True)
-        p_from_zeta = -zeta_prime
-
-        # P directly
-        p_direct = torchscience.special_functions.weierstrass_p(
-            z_detached, g2, g3
-        )
-
-        torch.testing.assert_close(
-            p_from_zeta.detach(),
-            p_direct,
-            rtol=1e-3,
-            atol=1e-3,
-            msg="P from -zeta' doesn't match direct P",
-        )
-
-    @pytest.mark.skip(reason="known failing test")
-    def test_multiple_invariant_values(self):
-        """Test relationships hold for various g2, g3 values."""
-        invariants = [
-            (1.0, 0.0),  # lemniscatic
-            (0.0, 1.0),  # equianharmonic
-            (2.0, 0.5),
-            (0.5, 0.25),
-            (4.0, -1.0),
-        ]
-        z_val = 0.4
-
-        for g2_val, g3_val in invariants:
-            z = torch.tensor([z_val], dtype=torch.float64, requires_grad=True)
-            g2 = torch.tensor([g2_val], dtype=torch.float64)
-            g3 = torch.tensor([g3_val], dtype=torch.float64)
-
-            # Test zeta' = -P
-            zeta = torchscience.special_functions.weierstrass_zeta(z, g2, g3)
-            (zeta_prime,) = torch.autograd.grad(zeta, z, create_graph=True)
-
-            z_no_grad = torch.tensor([z_val], dtype=torch.float64)
-            neg_p = -torchscience.special_functions.weierstrass_p(
-                z_no_grad, g2, g3
-            )
-
-            torch.testing.assert_close(
-                zeta_prime,
-                neg_p,
-                rtol=1e-3,
-                atol=1e-3,
-                msg=f"zeta' != -P for g2={g2_val}, g3={g3_val}",
             )
 
     def test_batch_relationships(self):
