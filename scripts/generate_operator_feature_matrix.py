@@ -8,6 +8,21 @@ import torch
 
 import torchscience.special_functions  # noqa: F401  – triggers dispatcher registration
 
+DTYPES = [
+    ("bool", torch.bool),
+    ("int8", torch.int8),
+    ("int16", torch.int16),
+    ("int32", torch.int32),
+    ("int64", torch.int64),
+    ("float16", torch.float16),
+    ("bfloat16", torch.bfloat16),
+    ("float32", torch.float32),
+    ("float64", torch.float64),
+    ("complex32", torch.complex32),
+    ("complex64", torch.complex64),
+    ("complex128", torch.complex128),
+]
+
 
 def discover_forward_ops() -> list[str]:
     """Return sorted list of forward operator names in the torchscience namespace."""
@@ -46,6 +61,52 @@ def detect_backends(ops: list[str]) -> dict[str, dict[str, bool]]:
                 or has_dispatch_key(op, "AutocastCUDA")
             ),
         }
+    return results
+
+
+def get_op_schema_args(op: str) -> list[tuple[str, str]]:
+    """Return [(name, type_str), ...] for all schema arguments of an operator."""
+    op_func = getattr(torch.ops.torchscience, op)
+    schema = op_func.default._schema
+    return [(a.name, str(a.type)) for a in schema.arguments]
+
+
+def build_test_inputs(args: list[tuple[str, str]], dtype: torch.dtype) -> list:
+    """Build test arguments matching the schema.
+
+    Tensor args get a ones(1) tensor of the target dtype.
+    int args get 1. float args get 1.0.
+    """
+    inputs = []
+    for name, type_str in args:
+        if type_str == "Tensor":
+            inputs.append(torch.ones(1, dtype=dtype))
+        elif type_str == "int":
+            inputs.append(1)
+        elif type_str == "float":
+            inputs.append(1.0)
+        else:
+            inputs.append(torch.ones(1, dtype=dtype))
+    return inputs
+
+
+def detect_dtypes(ops: list[str]) -> dict[str, dict[str, bool]]:
+    """For each op, probe which dtypes are supported by calling with test tensors.
+
+    Returns {op_name: {dtype_name: bool}}.
+    """
+    results: dict[str, dict[str, bool]] = {}
+    for op in ops:
+        args = get_op_schema_args(op)
+        op_func = getattr(torch.ops.torchscience, op)
+        results[op] = {}
+        for dtype_name, dtype in DTYPES:
+            inputs = build_test_inputs(args, dtype)
+            try:
+                op_func(*inputs)
+                results[op][dtype_name] = True
+            except (RuntimeError, NotImplementedError):
+                results[op][dtype_name] = False
     return results
 
 
@@ -115,6 +176,11 @@ def main() -> None:
             "Backends",
         )
     )
+
+    dtype_names = [name for name, _ in DTYPES]
+    dtypes = detect_dtypes(ops)
+
+    sections.append(format_table(ops, dtype_names, dtypes, "Dtypes"))
 
     output_path.write_text("\n".join(sections))
     print(f"Wrote {output_path} ({len(ops)} operators)")
