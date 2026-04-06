@@ -110,6 +110,51 @@ def detect_dtypes(ops: list[str]) -> dict[str, dict[str, bool]]:
     return results
 
 
+def detect_sparse(ops: list[str]) -> dict[str, dict[str, bool]]:
+    """Detect sparse backend support."""
+    results: dict[str, dict[str, bool]] = {}
+    for op in ops:
+        results[op] = {
+            "Sparse COO CPU": has_dispatch_key(op, "SparseCPU"),
+            "Sparse COO CUDA": has_dispatch_key(op, "SparseCUDA"),
+            "Sparse CSR CPU": has_dispatch_key(op, "SparseCsrCPU"),
+            "Sparse CSR CUDA": has_dispatch_key(op, "SparseCsrCUDA"),
+        }
+    return results
+
+
+def detect_other(ops: list[str]) -> dict[str, dict[str, bool]]:
+    """Detect Hessian, Masked, Nested, Named support."""
+    all_cpu = set(
+        r.replace("torchscience::", "")
+        for r in torch._C._dispatch_get_registrations_for_dispatch_key("CPU")
+        if r.startswith("torchscience::")
+    )
+    results: dict[str, dict[str, bool]] = {}
+    for op in ops:
+        results[op] = {
+            "Hessian": f"{op}_backward_backward" in all_cpu,
+            "Masked": False,
+            "Nested": (
+                has_dispatch_key(op, "NestedTensorCPU")
+                or has_dispatch_key(op, "NestedTensorCUDA")
+            ),
+            "Named": False,
+        }
+    return results
+
+
+def detect_quantized(ops: list[str]) -> dict[str, dict[str, bool]]:
+    """Detect quantized backend support."""
+    results: dict[str, dict[str, bool]] = {}
+    for op in ops:
+        results[op] = {
+            "Quantized CPU": has_dispatch_key(op, "QuantizedCPU"),
+            "Quantized CUDA": has_dispatch_key(op, "QuantizedCUDA"),
+        }
+    return results
+
+
 def format_table(
     ops: list[str],
     columns: list[str],
@@ -181,6 +226,38 @@ def main() -> None:
     dtypes = detect_dtypes(ops)
 
     sections.append(format_table(ops, dtype_names, dtypes, "Dtypes"))
+
+    sparse = detect_sparse(ops)
+    sections.append(
+        format_table(
+            ops,
+            [
+                "Sparse COO CPU",
+                "Sparse COO CUDA",
+                "Sparse CSR CPU",
+                "Sparse CSR CUDA",
+            ],
+            sparse,
+            "Sparse",
+        )
+    )
+
+    other = detect_other(ops)
+    sections.append(
+        format_table(
+            ops, ["Hessian", "Masked", "Nested", "Named"], other, "Other"
+        )
+    )
+
+    quantized = detect_quantized(ops)
+    sections.append(
+        format_table(
+            ops,
+            ["Quantized CPU", "Quantized CUDA"],
+            quantized,
+            "Quantized",
+        )
+    )
 
     output_path.write_text("\n".join(sections))
     print(f"Wrote {output_path} ({len(ops)} operators)")
