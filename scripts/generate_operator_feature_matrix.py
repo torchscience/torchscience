@@ -6,6 +6,8 @@ from pathlib import Path
 
 import torch
 
+import torchscience.special_functions  # noqa: F401  – triggers dispatcher registration
+
 
 def discover_forward_ops() -> list[str]:
     """Return sorted list of forward operator names in the torchscience namespace."""
