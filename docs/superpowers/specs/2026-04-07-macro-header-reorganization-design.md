@@ -36,62 +36,51 @@ csrc/macros/
 │   ├── pointwise.h
 │   ├── reduction.h
 │   ├── reduction_helpers.h
-│   ├── creation.h
 │   └── identity.h
 ├── autocast/
 │   ├── pointwise.h
 │   ├── reduction.h
-│   ├── creation.h
 │   └── identity.h
 ├── batched/
 │   ├── pointwise.h
 │   ├── reduction.h
-│   ├── creation.h
 │   └── identity.h
 ├── sparse/
 │   ├── coo/
 │   │   ├── cpu/
 │   │   │   ├── pointwise.h
 │   │   │   ├── reduction.h
-│   │   │   ├── creation.h
 │   │   │   └── identity.h
 │   │   └── cuda/
 │   │       ├── pointwise.cuh
 │   │       ├── reduction.cuh
-│   │       ├── creation.cuh
 │   │       └── identity.cuh
 │   └── csr/
 │       ├── cpu/
 │       │   ├── pointwise.h
 │       │   ├── reduction.h
-│       │   ├── creation.h
 │       │   └── identity.h
 │       └── cuda/
 │           ├── pointwise.cuh
 │           ├── reduction.cuh
-│           ├── creation.cuh
 │           └── identity.cuh
 ├── nested/
 │   ├── cpu/
 │   │   ├── pointwise.h
 │   │   ├── reduction.h
-│   │   ├── creation.h
 │   │   └── identity.h
 │   └── cuda/
 │       ├── pointwise.cuh
 │       ├── reduction.cuh
-│       ├── creation.cuh
 │       └── identity.cuh
 └── quantized/
     ├── cpu/
     │   ├── pointwise.h
     │   ├── reduction.h
-    │   ├── creation.h
     │   └── identity.h
     └── cuda/
         ├── pointwise.cuh
         ├── reduction.cuh
-        ├── creation.cuh
         └── identity.cuh
 ```
 
@@ -101,9 +90,18 @@ The old files (`cpu/macros.h`, `cpu/reduction_macros.h`, `autograd/macros.h`, et
 
 #### Naming Convention
 
+General pattern for preprocessor macros:
+
 ```
 TORCHSCIENCE_{BACKEND}_{OPERATOR_TYPE}_{ARITY}(category, complex, name, args...)
 ```
+
+Each operator type adapts this pattern to its needs:
+
+- **Pointwise**: follows the pattern exactly — `(category, complex, name, args...)`
+- **Reduction**: drops `complex`, adds `dim`/`keepdim` or `mode` — `(category, name, x, dim, keepdim)`
+- **Identity**: adds `dim` — `(category, complex, name, x, dim)`
+- **Creation**: uses templates instead of preprocessor macros — `(name, Traits, ...)`
 
 Changes from the current convention:
 
@@ -126,22 +124,159 @@ Where `{BACKEND}` is one of: `CPU`, `CUDA`, `META`, `AUTOGRAD`, `AUTOCAST`, `BAT
 #### Reduction Macros
 
 ```cpp
+// Dim-based: reduces over user-specified dimensions
 TORCHSCIENCE_{BACKEND}_DIM_REDUCTION_UNARY(category, name, x, dim, keepdim)
 TORCHSCIENCE_{BACKEND}_DIM_REDUCTION_UNARY_EX(category, name, x, dim, keepdim, ...)
-TORCHSCIENCE_{BACKEND}_FIXED_REDUCTION_UNARY(category, name, x, ...)
-TORCHSCIENCE_{BACKEND}_FIXED_REDUCTION_UNARY_EX(category, name, x, ...)
+
+// Fixed: reduces over predetermined dimensions
+TORCHSCIENCE_{BACKEND}_FIXED_REDUCTION_UNARY(category, name, mode, x)
+TORCHSCIENCE_{BACKEND}_FIXED_REDUCTION_UNARY_EX(category, name, mode, x, ...)
 ```
 
-`_EX` variants are retained — they handle genuinely different parameter shapes (extra bool/int arguments) that a boolean flag cannot collapse.
+Changes from the current reduction macros:
+
+- `NS` parameter renamed to `category` (consistency with pointwise)
+- `_OPERATOR` suffix dropped
+- `MODE` parameter stays for FIXED variants (`ReductionMode::LAST_DIM` or `ReductionMode::ALL_DIMS`)
+
+`_EX` variants are retained — they handle genuinely different parameter shapes (extra bool/int/double arguments) that a boolean flag cannot collapse.
 
 Reduction macros do not take a `complex` parameter. Reductions collapse tensor dimensions — the dispatch type is determined by the input tensor's dtype at the CPU/CUDA kernel level, not by a macro-level flag. The current reduction macros already handle all floating types uniformly.
 
-#### Creation and Identity Macros
+**TSCI_\* helpers** (`TSCI_EXTRA`, `TSCI_SAVE`, `TSCI_LOAD`, `TSCI_EXTRA_2BOOL`, etc.) move to `macros/autograd/reduction_helpers.h`. They are only consumed by autograd reduction macros. The helpers themselves are unchanged.
 
-Exact parameter lists are deferred to implementation — no operators currently use these macro types, so the signatures will be designed when the first operators are added. The design constraints are established:
+**Backend-specific behavior:**
 
-- Creation macros will follow `(category, name, ...)` with additional dtype, device, and layout parameters as needed by factory operators.
-- Identity macros will follow `(category, complex, name, args...)` matching the pointwise signature pattern but without broadcasting in the generated `TensorIteratorConfig`.
+| Backend | What it generates |
+|---------|------------------|
+| **CPU** | Forward with `at::parallel_for` over batch dims, `AT_DISPATCH_FLOATING_TYPES_AND2` type dispatch, calls `kernel::category::name<scalar_t>()`. Backward and backward_backward follow the same parallel pattern. |
+| **CUDA** | Same structure as CPU but with `CUDAGuard`, `gpu_kernel`, `AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2`. |
+| **Meta** | Shape inference only — computes output shape via `compute_reduction_shape()`, returns empty tensors. Extra params marked `[[maybe_unused]]`. |
+| **Autograd** | Generates two `torch::autograd::Function` subclasses (`Name` + `Name##Backward`) with context save/load for extra params. Dispatches to CPU/CUDA backward via `c10::Dispatcher`. |
+| **Autocast** | Casts input to float32 with `ExcludeDispatchKeyGuard`, redispatches. |
+| **Batched** | vmap support — reshapes batch dims, delegates to underlying dispatch. |
+
+**Autograd _EX call site** (the most complex case):
+
+```cpp
+TORCHSCIENCE_AUTOGRAD_DIM_REDUCTION_UNARY_EX(
+    statistics::descriptive, kurtosis, Kurtosis, input,
+    TSCI_EXTRA_2BOOL(fisher, bias)
+)
+```
+
+`TSCI_EXTRA_2BOOL` expands to all six extra-parameter macro arguments (EXTRA_PARAMS, EXTRA_ARGS, EXTRA_TYPES, EXTRA_SAVE, EXTRA_LOAD, EXTRA_GRAD_PLACEHOLDERS).
+
+#### Creation Macros
+
+Creation operators use a template-based approach rather than preprocessor macros. The templates and their registration macros live in `macros/` but the heavy lifting is in C++ templates parameterized by a `Traits` struct.
+
+**Template classes:**
+
+| Class | Location | Role |
+|-------|----------|------|
+| `CPUCreationOperator<Traits>` | `macros/cpu/creation.h` | Deterministic CPU creation |
+| `CPUStochasticCreationOperator<Traits>` | `macros/cpu/creation.h` | RNG-based CPU creation |
+| `CUDACreationOperator<Traits>` | `macros/cuda/creation.cuh` | Deterministic CUDA creation |
+| `CUDAStochasticCreationOperator<Traits>` | `macros/cuda/creation.cuh` | RNG-based CUDA creation |
+| `MetaCreationOperator<Traits>` | `macros/meta/creation.h` | Shape inference only |
+
+The `Traits` contract:
+
+```cpp
+struct MyTraits {
+    static std::vector<int64_t> output_shape(params...);
+    template<typename scalar_t>
+    static void kernel(scalar_t* out, int64_t numel, params...);
+};
+```
+
+Stochastic traits add an RNG parameter to `kernel`.
+
+**Registration macros:**
+
+```cpp
+// macros/cpu/creation.h
+#define TORCHSCIENCE_CPU_CREATION(name, Traits, ...) \
+    TORCH_LIBRARY_IMPL(torchscience, CPU, _m_cpu_##name) { \
+        _m_cpu_##name.impl(#name, \
+            &::torchscience::cpu::CPUCreationOperator<Traits>::forward<__VA_ARGS__>); \
+    }
+
+#define TORCHSCIENCE_CPU_STOCHASTIC_CREATION(name, Traits, ...) \
+    TORCH_LIBRARY_IMPL(torchscience, CPU, _m_cpu_##name) { \
+        _m_cpu_##name.impl(#name, \
+            &::torchscience::cpu::CPUStochasticCreationOperator<Traits>::forward<__VA_ARGS__>); \
+    }
+```
+
+Same pattern for CUDA and Meta. Each invocation self-registers (generates its own `TORCH_LIBRARY_IMPL` block).
+
+**No `category` parameter:** Unlike pointwise/reduction, the template approach doesn't generate `kernel::category::name()` calls — the `Traits` struct already encapsulates which kernel to call.
+
+**Backends that don't apply:** Creation operators create tensors from scalar parameters — no input tensors. Autograd, Autocast, Batched, Sparse, Nested, and Quantized backends do not apply. Only CPU, CUDA, and Meta backends exist. The corresponding files from the directory structure are removed.
+
+#### Identity Macros
+
+Identity operators are unary, shape-preserving, and operate on slices of a specified dimension. They use pointer-based kernels rather than scalar lambdas.
+
+```cpp
+TORCHSCIENCE_{BACKEND}_IDENTITY_UNARY(category, complex, name, x, dim)
+```
+
+- `category`: kernel namespace (e.g., `graphics`)
+- `complex`: type dispatch selector (token-pasted, same mechanism as pointwise)
+- `name`: operator name (e.g., `srgb_to_hsv`)
+- `x`: input tensor argument name
+- `dim`: operating dimension argument name (`int64_t` in the generated function)
+
+**Kernel interface:**
+
+Kernels receive pointers to one contiguous slice of the operating dimension. The macro handles permutation — kernels always see a contiguous slice:
+
+```cpp
+namespace torchscience::kernel::graphics {
+
+// Forward: reads in[0..D-1], writes out[0..D-1]
+template<typename T>
+void srgb_to_hsv(const T* in, T* out, int64_t dim_size);
+
+// Backward: reads grad_out and in, writes grad_in
+template<typename T>
+void srgb_to_hsv_backward(
+    const T* grad_out, const T* in, T* grad_in, int64_t dim_size);
+
+// Backward²: reads grad_grad_in, grad_out, in; writes grad_grad_out, new_grad_in
+template<typename T>
+void srgb_to_hsv_backward_backward(
+    const T* grad_grad_in, const T* grad_out, const T* in,
+    T* grad_grad_out, T* new_grad_in, int64_t dim_size);
+}
+```
+
+**CPU generated code (forward):**
+
+1. Normalize `dim` via `at::maybe_wrap_dim`
+2. Make input contiguous
+3. If `dim != last`: permute input to move `dim` to the last position
+4. Compute `batch_size` (product of all dims except last) and `dim_size`
+5. Allocate output with permuted shape
+6. `AT_DISPATCH_FLOATING_TYPES_AND2` (or `_AND_COMPLEX_` if `complex=true`)
+7. `at::parallel_for(0, batch_size, ...)` — for each batch index `i`, call `kernel::category::name<scalar_t>(in + i*D, out + i*D, D)`
+8. If `dim != last`: permute output back to original dimension ordering
+
+Backward and backward_backward apply the same permute-in / kernel / permute-out pattern.
+
+**Backend-specific behavior:**
+
+| Backend | Behavior |
+|---------|----------|
+| **CPU** | Contiguous + parallel_for over batch dims, scalar type dispatch, pointer-based kernel calls |
+| **CUDA** | CUDAGuard + GPU kernel launch, each thread block processes one or more dim slices |
+| **Meta** | Returns `at::empty_like(x)` — no permutation needed since shape is preserved |
+| **Autograd** | Two Function classes (`Name` + `Name##Backward`), saves `x` and `dim` in context, dispatches to backward/backward_backward via `c10::Dispatcher` |
+| **Autocast** | Casts input to lower precision, excludes autocast key, redispatches, passes `dim` through |
+| **Batched** | vmap support — batch dims are additional leading dimensions, same iteration applies |
 
 ### Parameter Design
 
@@ -226,13 +361,43 @@ New categories add a new registration file per backend:
 ```cpp
 // cpu/graphics.h
 #include "../macros/cpu/pointwise.h"
+#include "../macros/cpu/identity.h"
 #include "../kernel/graphics/srgb_to_linear.h"
+#include "../kernel/graphics/srgb_to_hsv.h"
 // ...
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY(graphics, false, srgb_to_linear, x)
+TORCHSCIENCE_CPU_IDENTITY_UNARY(graphics, false, srgb_to_hsv, input, dim)
 ```
 
-The same `macros/cpu/pointwise.h` is reused. No new macro definitions needed.
+Reduction operators follow the same pattern:
+
+```cpp
+// cpu/statistics.h
+#include "../macros/cpu/reduction.h"
+#include "../kernel/statistics/descriptive/kurtosis.h"
+// ...
+
+TORCHSCIENCE_CPU_DIM_REDUCTION_UNARY_EX(
+    statistics::descriptive, kurtosis, input,
+    TSCI_EXTRA(bool fisher, bool bias),
+    TSCI_EXTRA(fisher, bias)
+)
+```
+
+Creation operators use templates with thin registration macros:
+
+```cpp
+// cpu/signal_processing.h
+#include "../macros/cpu/creation.h"
+#include "../kernel/signal_processing/rectangular_window.h"
+// ...
+
+TORCHSCIENCE_CPU_CREATION(rectangular_window, RectangularWindowTraits, int64_t)
+TORCHSCIENCE_CPU_STOCHASTIC_CREATION(pink_noise, PinkNoiseTraits, int64_t)
+```
+
+The same macro headers are reused across categories. No new macro definitions needed.
 
 ### Backends
 
@@ -251,12 +416,12 @@ The same `macros/cpu/pointwise.h` is reused. No new macro definitions needed.
 
 ### Operator Types
 
-| Type | File | Shape Behavior | Examples |
-|------|------|---------------|----------|
-| Pointwise | `pointwise.h` | Element-wise with broadcasting | `gamma`, `beta`, `binomial_coefficient` |
-| Reduction | `reduction.h` | Reduces dimensions | `kurtosis`, `kullback_leibler_divergence` |
-| Creation | `creation.h` | Creates tensors from parameters | `rectangular_window`, `pink_noise` |
-| Identity | `identity.h` | Preserves shape exactly | `srgb_to_hsv` |
+| Type | File | Shape Behavior | Applicable Backends | Examples |
+|------|------|---------------|---------------------|----------|
+| Pointwise | `pointwise.h` | Element-wise with broadcasting | All | `gamma`, `beta`, `binomial_coefficient` |
+| Reduction | `reduction.h` | Reduces dimensions | All | `kurtosis`, `kullback_leibler_divergence` |
+| Creation | `creation.h` | Creates tensors from parameters | CPU, CUDA, Meta only | `rectangular_window`, `pink_noise` |
+| Identity | `identity.h` | Preserves shape exactly | All | `srgb_to_hsv` |
 
 Fixed, batched, and dynamic operator types are deferred until enough operators exist to establish a stable pattern.
 
