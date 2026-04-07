@@ -62,7 +62,7 @@ Returns three gradient tensors:
 
 The backward kernel recomputes P_n^m and P_{n-1}^m via the same recursion as the forward kernel.
 
-Special case at x = +/-1: the denominator x^2 - 1 = 0 causes division by zero. Handle via clamping or L'Hopital to avoid the singularity at the endpoints.
+Special case at x = +/-1: the denominator x^2 - 1 = 0 causes division by zero. Handle by clamping x to avoid the singularity (e.g., clamp to +/-(1 - eps)), matching the approach used for pole handling elsewhere in the codebase.
 
 **Second-order backward** (`associated_legendre_polynomial_p_backward_backward.h`):
 
