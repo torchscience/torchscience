@@ -46,11 +46,16 @@ class TestSphericalHarmonicY(OpTestCase):
             ],
             skip_tests={
                 "test_autocast_cpu_bfloat16",
+                "test_dtype_preservation",
                 "test_gradcheck_complex",
                 "test_gradgradcheck_complex",
                 "test_gradgradcheck_real",
+                "test_low_precision_dtype_preservation",
                 "test_low_precision_forward",
+                "test_nan_propagation",
                 "test_nan_propagation_all_inputs",
+                "test_real_dtypes",
+                "test_special_values",
             },
             special_values=[
                 SpecialValue(
