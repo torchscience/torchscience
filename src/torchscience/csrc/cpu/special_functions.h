@@ -1590,6 +1590,13 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
     module.impl("spherical_hankel_2_backward_backward", torchscience::cpu::special_functions::spherical_hankel_2_backward_backward);
 }
 
+// Spherical harmonic Y_l^m(theta, phi)
+#include "../kernel/special_functions/spherical_harmonic_y.h"
+#include "../kernel/special_functions/spherical_harmonic_y_backward.h"
+#include "../kernel/special_functions/spherical_harmonic_y_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(spherical_harmonic_y, l, m, theta, phi)
+
 // Airy function of the first kind
 #include "../kernel/special_functions/airy_ai.h"
 #include "../kernel/special_functions/airy_ai_backward.h"

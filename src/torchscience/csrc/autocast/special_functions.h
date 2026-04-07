@@ -118,6 +118,9 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(spherical_hankel_1, n, z)
 // Spherical Hankel functions of the second kind
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(spherical_hankel_2, n, z)
 
+// Spherical harmonic Y_l^m(theta, phi)
+TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_OPERATOR(spherical_harmonic_y, l, m, theta, phi)
+
 // Airy function of the first kind
 TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(airy_ai, x)
 

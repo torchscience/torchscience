@@ -448,6 +448,11 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("spherical_hankel_2_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
   m.def("spherical_hankel_2_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
 
+  // Spherical harmonic Y_l^m(theta, phi)
+  m.def("spherical_harmonic_y(Tensor l, Tensor m, Tensor theta, Tensor phi) -> Tensor");
+  m.def("spherical_harmonic_y_backward(Tensor grad_output, Tensor l, Tensor m, Tensor theta, Tensor phi) -> (Tensor, Tensor, Tensor, Tensor)");
+  m.def("spherical_harmonic_y_backward_backward(Tensor gg_l, Tensor gg_m, Tensor gg_theta, Tensor gg_phi, Tensor grad_output, Tensor l, Tensor m, Tensor theta, Tensor phi) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+
   // Airy function of the first kind
   m.def("airy_ai(Tensor x) -> Tensor");
   m.def("airy_ai_backward(Tensor grad_output, Tensor x) -> Tensor");
