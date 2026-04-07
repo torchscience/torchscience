@@ -1,5 +1,7 @@
 import math
 
+import torch
+
 import torchscience.special_functions
 from torchscience.testing import (
     InputSpec,
@@ -78,3 +80,19 @@ class TestSphericalHarmonicY(OpTestCase):
             supports_sparse_csr=False,
             supports_quantized=False,
         )
+
+    def test_complex_special_values(self):
+        """Test special values with complex output handling."""
+        for spec in self.descriptor.special_values:
+            inputs = tuple(
+                torch.tensor([v], dtype=torch.float64) for v in spec.inputs
+            )
+            result = self.descriptor.func(*inputs)
+            expected = torch.tensor([spec.expected], dtype=torch.complex128)
+            torch.testing.assert_close(
+                result,
+                expected,
+                rtol=spec.rtol,
+                atol=spec.atol,
+                msg=spec.description,
+            )

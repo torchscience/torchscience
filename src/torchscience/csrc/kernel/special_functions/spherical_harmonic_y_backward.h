@@ -11,15 +11,11 @@ namespace torchscience::kernel::special_functions {
 
 // Backward pass for spherical harmonic Y_l^m(theta, phi)
 //
-// Derivatives:
+// Gradients:
 //   grad_l = 0 (discrete parameter)
 //   grad_m = 0 (discrete parameter)
-//   grad_phi = grad_output * i*m * Y_l^m(theta, phi)
-//   grad_theta = grad_output * N_l^m * dP_l^m(cos(theta))/d(theta) * exp(i*m*phi)
-//
-// Legendre derivative recurrence:
-//   dP_l^m(cos(theta))/d(theta) =
-//     [l*cos(theta)*P_l^m(cos(theta)) - (l+m)*P_{l-1}^m(cos(theta))] / sin(theta)
+//   grad_theta = dY/d(theta) via central finite differences
+//   grad_phi = dY/d(phi) via central finite differences
 
 template <typename T>
 std::tuple<T, T, T, T> spherical_harmonic_y_backward(
