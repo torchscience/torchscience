@@ -45,10 +45,10 @@ std::tuple<T, T, T, T> voigt_profile_backward_backward(
   c10::complex<T> two_i_sqrt_pi(T(0), T(2) / sqrt_pi);
   c10::complex<T> dw_dz = -T(2) * z * w_z + two_i_sqrt_pi;
 
-  // d2w/dz2 = (4z^2 - 2)*w(z) - 4iz/sqrt(pi)
-  c10::complex<T> four_iz_sqrt_pi(T(0), T(4) / sqrt_pi);
-  c10::complex<T> d2w_dz2 = (T(4) * z * z - c10::complex<T>(T(2), T(0))) * w_z
-                          - four_iz_sqrt_pi * z;
+  // d2w/dz2 = -2*(z*dw/dz + w(z))
+  // This is equivalent to (4z^2 - 2)*w(z) - 4iz/sqrt(pi) but avoids
+  // catastrophic cancellation for large |z| where 4z^2*w(z) ≈ 4iz/sqrt(pi).
+  c10::complex<T> d2w_dz2 = T(-2) * (z * dw_dz + w_z);
 
   // V and first derivatives (same as in backward)
   T V = w_z.real() * one_over_sqrt_2pi / sigma;

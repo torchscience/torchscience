@@ -217,13 +217,12 @@ c10::complex<T> faddeeva_w_impl(c10::complex<T> z) {
     result = c10::complex<T>(erfcx_impl(y), T(0));
   }
   // Small y with non-zero x: use Taylor expansion around real axis
-  // The continued fraction converges poorly for small y
-  else if (y < T(0.1) * (T(1) + std::abs(x))) {
+  // The 8-term Taylor has error ~ (2|x|y)^9/9!, so we need 2|x|y small.
+  else if (y < T(0.05) / (T(1) + std::abs(x))) {
     result = faddeeva_w_small_y(x, y);
   }
   // General case: use region-based algorithm
   else {
-    T ax = std::abs(x);
     T rho = std::sqrt(x * x + y * y);
 
     if (rho > T(6.0)) {
@@ -247,16 +246,36 @@ c10::complex<T> faddeeva_w_impl(c10::complex<T> z) {
       }
       result = c10::complex<T>(T(0), faddeeva_constants<T>::sqrt_pi_inv) * inv_z * sum;
     }
+    else if (rho < T(3.0)) {
+      // Small |z| (|z| < 3): direct series via complex Dawson function
+      // w(z) = exp(-z^2) + (2i/sqrt(pi)) * D(z)
+      // where D(z) = z * sum_{n=0}^inf (-2*z^2)^n / (2n+1)!!
+      // This series converges for all z and avoids the continued fraction
+      // instability for small |z|. For larger |z|, the series terms grow
+      // before cancelling, losing precision.
+      c10::complex<T> z2 = z * z;
+      c10::complex<T> neg_2z2 = c10::complex<T>(T(-2), T(0)) * z2;
+
+      c10::complex<T> sum(T(1), T(0));
+      c10::complex<T> term(T(1), T(0));
+      for (int n = 1; n <= 100; ++n) {
+        term = term * neg_2z2 / c10::complex<T>(T(2 * n + 1), T(0));
+        c10::complex<T> new_sum = sum + term;
+        T term_mag = std::sqrt(term.real() * term.real() + term.imag() * term.imag());
+        if (term_mag < std::numeric_limits<T>::epsilon() * T(10)) break;
+        sum = new_sum;
+      }
+
+      c10::complex<T> dawson_z = z * sum;
+      c10::complex<T> exp_neg_z2 = std::exp(-z2);
+      c10::complex<T> two_i_over_sqrt_pi(T(0), faddeeva_constants<T>::two_sqrt_pi_inv);
+      result = exp_neg_z2 + two_i_over_sqrt_pi * dawson_z;
+    }
     else {
-      // Moderate |z| with sufficient y: use continued fraction
-      // The continued fraction is:
-      // w(z) = i/sqrt(pi) * 1/(z - (1/2)/(z - 1/(z - (3/2)/(z - 2/(z - ...)))))
-
+      // Moderate |z| (4 <= |z| <= 6): continued fraction
+      // w(z) = i/sqrt(pi) * 1/(z - (1/2)/(z - 1/(z - (3/2)/(z - ...))))
       const int max_iter = 200;
-      const T tiny = std::numeric_limits<T>::min() * T(1e10);
-      const T eps = std::numeric_limits<T>::epsilon() * T(10);
 
-      // Use backward recurrence for stability
       c10::complex<T> cf(T(0), T(0));
       for (int n = max_iter; n >= 1; --n) {
         T a_n = T(n) / T(2);
