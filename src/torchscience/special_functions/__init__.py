@@ -136,11 +136,7 @@ from ._spherical_bessel_y_0 import spherical_bessel_y_0
 from ._spherical_bessel_y_1 import spherical_bessel_y_1
 from ._spherical_hankel_1 import spherical_hankel_1
 from ._spherical_hankel_2 import spherical_hankel_2
-from ._spherical_harmonic_y import (
-    spherical_harmonic_y,
-    spherical_harmonic_y_all,
-    spherical_harmonic_y_cartesian,
-)
+from ._spherical_harmonic_y import spherical_harmonic_y
 from ._struve_h import struve_h
 from ._struve_h_0 import struve_h_0
 from ._struve_h_1 import struve_h_1
@@ -295,8 +291,6 @@ __all__ = [
     "spherical_hankel_1",
     "spherical_hankel_2",
     "spherical_harmonic_y",
-    "spherical_harmonic_y_all",
-    "spherical_harmonic_y_cartesian",
     "struve_h",
     "struve_h_0",
     "struve_h_1",
