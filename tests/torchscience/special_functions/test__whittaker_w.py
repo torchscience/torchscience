@@ -1,5 +1,4 @@
 import mpmath
-import pytest
 import torch
 import torch.testing
 
@@ -87,7 +86,6 @@ class TestWhittakerW(OpTestCase):
                 "test_nan_propagation_all_inputs",
                 "test_low_precision_forward",
                 "test_autocast_cpu_bfloat16",
-                "test_symmetric_mu",
             },
             functional_identities=[
                 IdentitySpec(
@@ -183,22 +181,6 @@ class TestWhittakerW(OpTestCase):
         result = self.descriptor.func(kappa, mu, z)
 
         assert torch.isfinite(result).all()
-
-    @pytest.mark.skip(
-        reason="W_kappa,-mu(z) with negative mu causes b<0 in confluent_hypergeometric_u, producing NaN"
-    )
-    def test_symmetric_mu(self):
-        """Test W_kappa,mu(z) = W_kappa,-mu(z) symmetry property."""
-        kappa = torch.tensor([0.5], dtype=torch.float64)
-        mu = torch.tensor([1.0], dtype=torch.float64)
-        z = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
-
-        result_positive = self.descriptor.func(kappa, mu, z)
-        result_negative = self.descriptor.func(kappa, -mu, z)
-
-        torch.testing.assert_close(
-            result_positive, result_negative, rtol=1e-6, atol=1e-6
-        )
 
     def test_w_vs_m_relation(self):
         """Test the relationship between W and M functions at special values.

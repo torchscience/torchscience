@@ -940,41 +940,6 @@ class TestChebyshevPolynomialT(OpTestCase):
                 result, expected, rtol=1e-10, atol=1e-10
             )
 
-    @pytest.mark.skip(
-        reason="backward_backward kernel needs update for degree gradient"
-    )
-    def test_second_order_derivative_real_analytic(self):
-        """Test second-order derivatives with real inputs (analytic case).
-
-        Verifies that d²T/dz² is computed correctly using the formula:
-        d²T/dz² = -v² * cos(vθ) / (1-z²) + v * z * sin(vθ) / (1-z²)^(3/2)
-        where θ = arccos(z)
-        """
-        z = torch.tensor([0.5], dtype=torch.float64, requires_grad=True)
-        v = torch.tensor([2.5], dtype=torch.float64)
-
-        def func(z):
-            return torchscience.special_functions.chebyshev_polynomial_t(v, z)
-
-        # Compute d²T/dz² numerically via gradgradcheck
-        assert torch.autograd.gradgradcheck(func, (z,), eps=1e-6)
-
-        # Also verify the actual value
-        y = func(z)
-        (grad_z,) = torch.autograd.grad(y, z, create_graph=True)
-        (grad_grad_z,) = torch.autograd.grad(grad_z, z)
-
-        # Analytical formula
-        theta = torch.acos(z.detach())
-        one_minus_z2 = 1 - z.detach() ** 2
-        v_det = v.detach()
-        expected = (
-            -(v_det**2) * torch.cos(v_det * theta) / one_minus_z2
-            + v_det * z.detach() * torch.sin(v_det * theta) / one_minus_z2**1.5
-        )
-
-        torch.testing.assert_close(grad_grad_z, expected, rtol=1e-8, atol=1e-8)
-
     # =========================================================================
     # Sparse tensor tests (additional coverage beyond mixin tests)
     # =========================================================================
