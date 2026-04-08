@@ -630,3 +630,33 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(anger_j, AngerJ, n, z)
 
 // Weber function E_nu(z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(weber_e, WeberE, n, z)
+
+// Chebyshev polynomial of the third kind V_n(x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(chebyshev_polynomial_v, ChebyshevPolynomialV, x, n)
+
+// Chebyshev polynomial of the fourth kind W_n(x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(chebyshev_polynomial_w, ChebyshevPolynomialW, x, n)
+
+// Tetragamma function psi''(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(tetragamma, Tetragamma, z)
+
+// Pentagamma function psi'''(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(pentagamma, Pentagamma, z)
+
+// cos(pi * x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(cos_pi, CosPi, x)
+
+// cosh(pi * x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(cosh_pi, CoshPi, x)
+
+// sin(pi * x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(sin_pi, SinPi, x)
+
+// sinh(pi * x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(sinh_pi, SinhPi, x)
+
+// tan(pi * x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(tan_pi, TanPi, x)
+
+// tanh(pi * x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(tanh_pi, TanhPi, x)

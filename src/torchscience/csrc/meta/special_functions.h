@@ -367,3 +367,33 @@ TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(anger_j, n, z)
 
 // Weber function E_nu(z)
 TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(weber_e, n, z)
+
+// Chebyshev polynomial of the third kind V_n(x)
+TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(chebyshev_polynomial_v, x, n)
+
+// Chebyshev polynomial of the fourth kind W_n(x)
+TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(chebyshev_polynomial_w, x, n)
+
+// Tetragamma function psi''(z)
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(tetragamma, z)
+
+// Pentagamma function psi'''(z)
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(pentagamma, z)
+
+// cos(pi * x)
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(cos_pi, x)
+
+// cosh(pi * x)
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(cosh_pi, x)
+
+// sin(pi * x)
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(sin_pi, x)
+
+// sinh(pi * x)
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(sinh_pi, x)
+
+// tan(pi * x)
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(tan_pi, x)
+
+// tanh(pi * x)
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(tanh_pi, x)
