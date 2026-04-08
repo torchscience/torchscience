@@ -249,11 +249,14 @@ T hypu_integer_b_positive(T a, int n, T z, int max_iter = 200) {
         T term = poch_a_n1 / (poch_2_n * k_fact) * z_pow;
         finite_sum += term;
 
-        // Update for next k
-        poch_a_n1 *= (a - T(n) + T(1) + T(k));
-        poch_2_n *= (T(2 - n) + T(k));
-        k_fact *= T(k + 1);
-        z_pow *= z;
+        // Update for next iteration (guard prevents computing the
+        // zero Pochhammer factor (2-n)_{n-1} on the final iteration)
+        if (k < n - 2) {
+          poch_a_n1 *= (a - T(n) + T(1) + T(k));
+          poch_2_n *= (T(2 - n) + T(k));
+          k_fact *= T(k + 1);
+          z_pow *= z;
+        }
       }
 
       second_part = outer_coeff * finite_sum;
@@ -398,6 +401,106 @@ T hypu_via_m(T a, T b, T z) {
   T combined = sign1 * std::exp(log_abs_term1 - log_max)
              + sign2 * std::exp(log_abs_term2 - log_max);
   return combined * std::exp(log_max);
+}
+
+// Complex U for integer b >= 1 using DLMF 13.2.10 logarithmic limiting form.
+// Same formula as hypu_integer_b_positive but adapted for complex arithmetic
+// where log_gamma gives the full complex value (no sign tracking needed).
+template <typename T>
+c10::complex<T> hypu_integer_b_positive_complex(c10::complex<T> a, int n, c10::complex<T> z, int max_iter = 200) {
+  using C = c10::complex<T>;
+  C one(T(1), T(0));
+  C zero(T(0), T(0));
+
+  // --- First part: logarithmic series ---
+  // Coefficient: (-1)^n / (Gamma(a - n + 1) * (n-1)!)
+  C a_minus_n_plus_1 = a - C(T(n), T(0)) + one;
+  C log_gamma_a_n1 = log_gamma(a_minus_n_plus_1);
+
+  C first_part = zero;
+
+  if (!std::isinf(log_gamma_a_n1.real())) {
+    // (n-1)!
+    T factorial_n_minus_1 = T(1);
+    for (int i = 2; i < n; ++i) {
+      factorial_n_minus_1 *= T(i);
+    }
+
+    C sign_n = (n % 2 == 0) ? one : C(T(-1), T(0));
+    C coeff = sign_n / (std::exp(log_gamma_a_n1) * C(factorial_n_minus_1, T(0)));
+
+    // M(a, n, z) * ln(z)
+    C M_val = confluent_hypergeometric_m(a, C(T(n), T(0)), z);
+    C log_z = std::log(z);
+    C log_term = M_val * log_z;
+
+    // Infinite series: sum_{k=0}^{inf} (a)_k / ((n)_k * k!) * z^k *
+    //                  (psi(a+k) - psi(1+k) - psi(n+k))
+    C series_sum = zero;
+    C pochhammer_a = one;
+    C pochhammer_n = one;
+    T k_factorial = T(1);
+    C z_power = one;
+
+    for (int k = 0; k < max_iter; ++k) {
+      C psi_a_k = digamma(a + C(T(k), T(0)));
+      C psi_1_k = digamma(C(T(1 + k), T(0)));
+      C psi_n_k = digamma(C(T(n + k), T(0)));
+
+      C term_coeff = pochhammer_a / (pochhammer_n * C(k_factorial, T(0)));
+      C term = term_coeff * z_power * (psi_a_k - psi_1_k - psi_n_k);
+      series_sum = series_sum + term;
+
+      if (k > 0 && std::abs(term) < hypu_epsilon<C>() * std::abs(series_sum)) {
+        break;
+      }
+
+      pochhammer_a = pochhammer_a * (a + C(T(k), T(0)));
+      pochhammer_n = pochhammer_n * C(T(n + k), T(0));
+      k_factorial *= T(k + 1);
+      z_power = z_power * z;
+    }
+
+    first_part = coeff * (log_term + series_sum);
+  }
+
+  // --- Second part: finite sum (only exists for n >= 2) ---
+  C second_part = zero;
+
+  if (n >= 2) {
+    C log_gamma_a = log_gamma(a);
+
+    if (!std::isinf(log_gamma_a.real())) {
+      T factorial_n_minus_2 = T(1);
+      for (int i = 2; i <= n - 2; ++i) {
+        factorial_n_minus_2 *= T(i);
+      }
+
+      C outer_coeff = C(factorial_n_minus_2, T(0)) / std::exp(log_gamma_a);
+
+      C finite_sum = zero;
+      C poch_a_n1 = one;
+      C poch_2_n = one;
+      T k_fact = T(1);
+      C z_pow = std::exp(C(T(1 - n), T(0)) * std::log(z));
+
+      for (int k = 0; k <= n - 2; ++k) {
+        C term = poch_a_n1 / (poch_2_n * C(k_fact, T(0))) * z_pow;
+        finite_sum = finite_sum + term;
+
+        if (k < n - 2) {
+          poch_a_n1 = poch_a_n1 * (a - C(T(n), T(0)) + one + C(T(k), T(0)));
+          poch_2_n = poch_2_n * C(T(2 - n + k), T(0));
+          k_fact *= T(k + 1);
+          z_pow = z_pow * z;
+        }
+      }
+
+      second_part = outer_coeff * finite_sum;
+    }
+  }
+
+  return first_part + second_part;
 }
 
 } // namespace detail
@@ -552,6 +655,16 @@ c10::complex<T> confluent_hypergeometric_u(c10::complex<T> a, c10::complex<T> b,
 
     // z^(-a) * sum
     return std::exp(-a * std::log(z)) * sum;
+  }
+
+  // Check if b is an integer (real part integer, imaginary part ~ 0)
+  if (hypu_is_integer(b)) {
+    int b_int = hypu_get_integer(b);
+
+    if (b_int >= 1) {
+      return detail::hypu_integer_b_positive_complex(a, b_int, z);
+    }
+    // b <= 0: general formula works
   }
 
   // General case: use M-based formula

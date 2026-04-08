@@ -3,12 +3,32 @@
 #include <c10/util/complex.h>
 #include <cmath>
 
+#include "cos_pi.h"
 #include "sin_pi.h"
 
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
 T digamma(T z) {
+  if (std::isnan(z)) {
+    return std::numeric_limits<T>::quiet_NaN();
+  }
+
+  if (std::isinf(z)) {
+    return z > T(0) ? std::numeric_limits<T>::infinity()
+                     : std::numeric_limits<T>::quiet_NaN();
+  }
+
+  // Reflection formula for negative args: psi(z) = psi(1-z) - pi*cot(pi*z)
+  if (z < T(0)) {
+    // Non-positive integers are poles
+    if (z == std::floor(z)) {
+      return std::numeric_limits<T>::quiet_NaN();
+    }
+
+    return digamma(T(1) - z) - static_cast<T>(M_PI) * cos_pi(z) / sin_pi(z);
+  }
+
   T psi = T(0);
 
   T x = z;
@@ -26,6 +46,10 @@ T digamma(T z) {
 
 template <typename T>
 c10::complex<T> digamma(c10::complex<T> z) {
+  if (!std::isfinite(z.real()) || !std::isfinite(z.imag())) {
+    return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(), std::numeric_limits<T>::quiet_NaN());
+  }
+
   c10::complex<T> psi(T(0), T(0));
 
   c10::complex<T> x = z;

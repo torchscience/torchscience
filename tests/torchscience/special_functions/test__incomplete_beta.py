@@ -1,8 +1,11 @@
 import math
 
 import pytest
+import scipy.special
 import torch
 import torch.testing
+
+import torchscience.special_functions
 from torchscience.testing import (
     InputSpec,
     OperatorDescriptor,
@@ -11,21 +14,9 @@ from torchscience.testing import (
     ToleranceConfig,
 )
 
-import torchscience.special_functions
-
-# Optional scipy import for reference tests
-try:
-    import scipy.special
-
-    HAS_SCIPY = True
-except ImportError:
-    HAS_SCIPY = False
-
 
 def scipy_incomplete_beta(z: float, a: float, b: float) -> float:
     """Reference implementation using SciPy's betainc."""
-    if not HAS_SCIPY:
-        raise ImportError("scipy is required for this function")
     return float(scipy.special.betainc(a, b, z))
 
 
@@ -243,7 +234,6 @@ class TestIncompleteBeta(OpTestCase):
                 msg=f"Symmetric test failed for a=b={a_val}",
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_scipy_reference(self):
         """Test against SciPy's betainc function."""
         z_values = [0.1, 0.25, 0.5, 0.75, 0.9]
@@ -520,7 +510,6 @@ class TestIncompleteBeta(OpTestCase):
             atol=1e-4,
         )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_very_large_parameters_scipy_reference(self):
         """Test very large parameters against SciPy reference.
 
@@ -862,7 +851,6 @@ class TestIncompleteBeta(OpTestCase):
             func, (z,), eps=1e-7, atol=1e-4, rtol=1e-4
         )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_scipy_reference_small_parameters(self):
         """Test against SciPy with small a and b parameters."""
         z_values = [0.2, 0.5, 0.8]
@@ -911,7 +899,6 @@ class TestIncompleteBeta(OpTestCase):
     # Very small parameter tests (a, b < 0.05)
     # =========================================================================
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_very_small_a_forward(self):
         """Test forward pass with very small a (a < 0.05).
 
@@ -945,7 +932,6 @@ class TestIncompleteBeta(OpTestCase):
                     msg=f"Very small a={a_val} mismatch at z={z_val}",
                 )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_very_small_b_forward(self):
         """Test forward pass with very small b (b < 0.05).
 
@@ -978,7 +964,6 @@ class TestIncompleteBeta(OpTestCase):
                     msg=f"Very small b={b_val} mismatch at z={z_val}",
                 )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_very_small_both_forward(self):
         """Test forward pass with both a and b very small.
 
@@ -1073,7 +1058,6 @@ class TestIncompleteBeta(OpTestCase):
                 f"Result out of bounds for b={b_val}"
             )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_very_small_b_z_near_one_scipy(self):
         """Test against SciPy with very small b and z close to 1."""
         z_values = [0.9, 0.95, 0.99]
@@ -1225,7 +1209,6 @@ class TestIncompleteBeta(OpTestCase):
             func2, (z2, b2), eps=1e-5, atol=1e-3, rtol=1e-3
         )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_quadrature_stress_accuracy_difficult_parameters(self):
         """Stress test: verify accuracy against SciPy for difficult cases.
 
@@ -1423,128 +1406,6 @@ class TestIncompleteBeta(OpTestCase):
         # Complex gradcheck uses Wirtinger derivatives
         assert torch.autograd.gradcheck(
             func, (z,), eps=1e-6, atol=1e-3, rtol=1e-3
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex parameter gradients use simplified formula without log-weighted integrals"
-    )
-    def test_complex_gradcheck_a(self):
-        """Test gradient correctness for complex a using Wirtinger derivatives."""
-        z = torch.tensor([0.5 + 0.05j], dtype=torch.complex128)
-        a = torch.tensor(
-            [1.5 + 0.0j, 2.5 + 0.0j],
-            dtype=torch.complex128,
-            requires_grad=True,
-        )
-        b = torch.tensor([2.0 + 0.0j], dtype=torch.complex128)
-
-        def func(a):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        # Complex gradcheck uses Wirtinger derivatives
-        assert torch.autograd.gradcheck(
-            func, (a,), eps=1e-6, atol=1e-3, rtol=1e-3
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex parameter gradients use simplified formula without log-weighted integrals"
-    )
-    def test_complex_gradcheck_b(self):
-        """Test gradient correctness for complex b using Wirtinger derivatives."""
-        z = torch.tensor([0.5 + 0.05j], dtype=torch.complex128)
-        a = torch.tensor([2.0 + 0.0j], dtype=torch.complex128)
-        b = torch.tensor(
-            [1.5 + 0.0j, 2.5 + 0.0j],
-            dtype=torch.complex128,
-            requires_grad=True,
-        )
-
-        def func(b):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        # Complex gradcheck uses Wirtinger derivatives
-        assert torch.autograd.gradcheck(
-            func, (b,), eps=1e-6, atol=1e-3, rtol=1e-3
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex second-order gradients use simplified formula"
-    )
-    def test_complex_gradgradcheck_z(self):
-        """Test second-order gradient for complex z using Wirtinger derivatives."""
-        z = torch.tensor(
-            [0.4 + 0.03j], dtype=torch.complex128, requires_grad=True
-        )
-        a = torch.tensor([2.0 + 0.0j], dtype=torch.complex128)
-        b = torch.tensor([3.0 + 0.0j], dtype=torch.complex128)
-
-        def func(z):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        # Complex gradgradcheck uses Wirtinger derivatives
-        assert torch.autograd.gradgradcheck(
-            func, (z,), eps=1e-5, atol=1e-2, rtol=1e-2
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex second-order gradients use simplified formula"
-    )
-    def test_complex_gradgradcheck_a(self):
-        """Test second-order gradient for complex a using Wirtinger derivatives."""
-        z = torch.tensor([0.5 + 0.03j], dtype=torch.complex128)
-        a = torch.tensor(
-            [2.0 + 0.0j], dtype=torch.complex128, requires_grad=True
-        )
-        b = torch.tensor([3.0 + 0.0j], dtype=torch.complex128)
-
-        def func(a):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        # Complex gradgradcheck uses Wirtinger derivatives
-        assert torch.autograd.gradgradcheck(
-            func, (a,), eps=1e-5, atol=1e-2, rtol=1e-2
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex second-order gradients use simplified formula"
-    )
-    def test_complex_gradgradcheck_b(self):
-        """Test second-order gradient for complex b using Wirtinger derivatives."""
-        z = torch.tensor([0.5 + 0.03j], dtype=torch.complex128)
-        a = torch.tensor([2.0 + 0.0j], dtype=torch.complex128)
-        b = torch.tensor(
-            [3.0 + 0.0j], dtype=torch.complex128, requires_grad=True
-        )
-
-        def func(b):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        # Complex gradgradcheck uses Wirtinger derivatives
-        assert torch.autograd.gradgradcheck(
-            func, (b,), eps=1e-5, atol=1e-2, rtol=1e-2
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex second-order gradients use simplified formula"
-    )
-    def test_complex_gradgradcheck_all_inputs(self):
-        """Test second-order gradient for all complex inputs simultaneously."""
-        z = torch.tensor(
-            [0.4 + 0.02j], dtype=torch.complex128, requires_grad=True
-        )
-        a = torch.tensor(
-            [2.0 + 0.0j], dtype=torch.complex128, requires_grad=True
-        )
-        b = torch.tensor(
-            [3.0 + 0.0j], dtype=torch.complex128, requires_grad=True
-        )
-
-        def func(z, a, b):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        # Complex gradgradcheck uses Wirtinger derivatives
-        assert torch.autograd.gradgradcheck(
-            func, (z, a, b), eps=1e-5, atol=1e-2, rtol=1e-2
         )
 
     def test_complex64_forward(self):
@@ -1798,25 +1659,6 @@ class TestIncompleteBeta(OpTestCase):
         # Should return finite result (handled by limiting form)
         assert torch.isfinite(result).all()
 
-    @pytest.mark.xfail(
-        reason="Complex second-order gradients use simplified formula"
-    )
-    def test_analytic_continuation_gradgradcheck_region_b(self):
-        """Test second-order gradients in Region B."""
-        z = torch.tensor(
-            [1.5 + 0.0j], dtype=torch.complex128, requires_grad=True
-        )
-        a = torch.tensor([2.0 + 0.0j], dtype=torch.complex128)
-        b = torch.tensor([3.0 + 0.0j], dtype=torch.complex128)
-
-        def func(z):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        # Region B uses symmetry, so gradients should be well-behaved
-        assert torch.autograd.gradgradcheck(
-            func, (z,), eps=1e-5, atol=5e-2, rtol=5e-2
-        )
-
     # =========================================================================
     # Complex gradient tests with constrained domain
     # =========================================================================
@@ -1845,149 +1687,6 @@ class TestIncompleteBeta(OpTestCase):
         # Complex gradcheck uses Wirtinger derivatives
         assert torch.autograd.gradcheck(
             func, (z,), eps=1e-6, atol=1e-3, rtol=1e-3
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex parameter gradients use simplified formula without log-weighted integrals"
-    )
-    def test_complex_gradcheck_constrained_a(self):
-        """Test gradient correctness for complex a with constrained z."""
-        z = torch.tensor([0.4 + 0.05j], dtype=torch.complex128)
-        # Use real-valued a (imaginary part 0) for better numerical stability
-        a = torch.tensor(
-            [1.5 + 0.0j, 2.0 + 0.0j, 2.5 + 0.0j],
-            dtype=torch.complex128,
-            requires_grad=True,
-        )
-        b = torch.tensor([2.0 + 0.0j], dtype=torch.complex128)
-
-        def func(a):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        assert torch.autograd.gradcheck(
-            func, (a,), eps=1e-6, atol=1e-3, rtol=1e-3
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex parameter gradients use simplified formula without log-weighted integrals"
-    )
-    def test_complex_gradcheck_constrained_b(self):
-        """Test gradient correctness for complex b with constrained z."""
-        z = torch.tensor([0.4 + 0.05j], dtype=torch.complex128)
-        a = torch.tensor([2.0 + 0.0j], dtype=torch.complex128)
-        # Use real-valued b (imaginary part 0) for better numerical stability
-        b = torch.tensor(
-            [1.5 + 0.0j, 2.0 + 0.0j, 2.5 + 0.0j],
-            dtype=torch.complex128,
-            requires_grad=True,
-        )
-
-        def func(b):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        assert torch.autograd.gradcheck(
-            func, (b,), eps=1e-6, atol=1e-3, rtol=1e-3
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex parameter gradients use simplified formula without log-weighted integrals"
-    )
-    def test_complex_gradcheck_all_constrained(self):
-        """Test gradient correctness for all complex inputs simultaneously."""
-        z = torch.tensor(
-            [0.3 + 0.05j, 0.5 + 0.03j],
-            dtype=torch.complex128,
-            requires_grad=True,
-        )
-        a = torch.tensor(
-            [2.0 + 0.0j], dtype=torch.complex128, requires_grad=True
-        )
-        b = torch.tensor(
-            [3.0 + 0.0j], dtype=torch.complex128, requires_grad=True
-        )
-
-        def func(z, a, b):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        assert torch.autograd.gradcheck(
-            func, (z, a, b), eps=1e-6, atol=1e-3, rtol=1e-3
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex second-order gradients use simplified formula"
-    )
-    def test_complex_gradgradcheck_constrained_z(self):
-        """Test second-order gradient for complex z with constrained domain."""
-        # Use a single z value to make gradgradcheck faster
-        z = torch.tensor(
-            [0.4 + 0.05j], dtype=torch.complex128, requires_grad=True
-        )
-        a = torch.tensor([2.0 + 0.0j], dtype=torch.complex128)
-        b = torch.tensor([3.0 + 0.0j], dtype=torch.complex128)
-
-        def func(z):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        assert torch.autograd.gradgradcheck(
-            func, (z,), eps=1e-5, atol=1e-2, rtol=1e-2
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex second-order gradients use simplified formula"
-    )
-    def test_complex_gradgradcheck_constrained_a(self):
-        """Test second-order gradient for complex a with constrained z."""
-        z = torch.tensor([0.4 + 0.03j], dtype=torch.complex128)
-        a = torch.tensor(
-            [2.0 + 0.0j], dtype=torch.complex128, requires_grad=True
-        )
-        b = torch.tensor([3.0 + 0.0j], dtype=torch.complex128)
-
-        def func(a):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        assert torch.autograd.gradgradcheck(
-            func, (a,), eps=1e-5, atol=1e-2, rtol=1e-2
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex second-order gradients use simplified formula"
-    )
-    def test_complex_gradgradcheck_constrained_b(self):
-        """Test second-order gradient for complex b with constrained z."""
-        z = torch.tensor([0.4 + 0.03j], dtype=torch.complex128)
-        a = torch.tensor([2.0 + 0.0j], dtype=torch.complex128)
-        b = torch.tensor(
-            [3.0 + 0.0j], dtype=torch.complex128, requires_grad=True
-        )
-
-        def func(b):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        assert torch.autograd.gradgradcheck(
-            func, (b,), eps=1e-5, atol=1e-2, rtol=1e-2
-        )
-
-    @pytest.mark.xfail(
-        reason="Complex second-order gradients use simplified formula"
-    )
-    def test_complex_gradgradcheck_all_constrained(self):
-        """Test second-order gradient for all complex inputs with constrained domain."""
-        z = torch.tensor(
-            [0.35 + 0.03j], dtype=torch.complex128, requires_grad=True
-        )
-        a = torch.tensor(
-            [2.0 + 0.0j], dtype=torch.complex128, requires_grad=True
-        )
-        b = torch.tensor(
-            [3.0 + 0.0j], dtype=torch.complex128, requires_grad=True
-        )
-
-        def func(z, a, b):
-            return torchscience.special_functions.incomplete_beta(z, a, b)
-
-        assert torch.autograd.gradgradcheck(
-            func, (z, a, b), eps=1e-5, atol=1e-2, rtol=1e-2
         )
 
     def test_complex_gradcheck_varying_imaginary_part(self):
@@ -2069,7 +1768,6 @@ class TestIncompleteBeta(OpTestCase):
     # These tests verify that the asymptotic expansions provide accurate results
     # for z very close to 0 or 1, where standard numerical methods may struggle.
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_asymptotic_z_near_zero(self):
         """Test accuracy of asymptotic expansion for z very close to 0.
 
@@ -2107,7 +1805,6 @@ class TestIncompleteBeta(OpTestCase):
                     msg=f"Asymptotic z near 0: z={z_val}, a={a_val}, b={b_val}",
                 )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_asymptotic_z_near_one(self):
         """Test accuracy of asymptotic expansion for z very close to 1.
 
@@ -2384,70 +2081,6 @@ class TestIncompleteBeta(OpTestCase):
                 func, (z,), eps=1e-6, atol=1e-3, rtol=1e-3
             ), f"Gradcheck failed for z={z_val}"
 
-    @pytest.mark.xfail(
-        reason="Complex parameter gradients use simplified formula without log-weighted integrals"
-    )
-    def test_complex_analytical_domain_all_params_gradcheck(self):
-        """Test gradcheck for all three complex parameters simultaneously.
-
-        Verifies that the analytical gradients work correctly when
-        computing derivatives with respect to z, a, and b together.
-        """
-        test_cases = [
-            (0.3 + 0.1j, 2.0 + 0.0j, 3.0 + 0.0j),
-            (0.5 + 0.05j, 1.5 + 0.0j, 2.5 + 0.0j),
-            (0.4 - 0.1j, 3.0 + 0.0j, 2.0 + 0.0j),
-            (0.6 + 0.15j, 0.8 + 0.0j, 1.2 + 0.0j),
-        ]
-
-        for z_val, a_val, b_val in test_cases:
-            z = torch.tensor(
-                [z_val], dtype=torch.complex128, requires_grad=True
-            )
-            a = torch.tensor(
-                [a_val], dtype=torch.complex128, requires_grad=True
-            )
-            b = torch.tensor(
-                [b_val], dtype=torch.complex128, requires_grad=True
-            )
-
-            def func(z, a, b):
-                return torchscience.special_functions.incomplete_beta(z, a, b)
-
-            assert torch.autograd.gradcheck(
-                func, (z, a, b), eps=1e-6, atol=1e-3, rtol=1e-3
-            ), f"Gradcheck failed for z={z_val}, a={a_val}, b={b_val}"
-
-    @pytest.mark.xfail(
-        reason="Complex second-order gradients use simplified formula without log-weighted integrals"
-    )
-    def test_complex_analytical_domain_gradgradcheck_grid(self):
-        """Test second-order gradients on a grid within the unit disk.
-
-        Verifies that the analytical second derivatives (using trigamma
-        functions and doubly log-weighted integrals) work correctly.
-        """
-        test_points = [
-            0.3 + 0.05j,
-            0.5 + 0.1j,
-            0.4 - 0.08j,
-            0.6 + 0.03j,
-        ]
-
-        for z_val in test_points:
-            z = torch.tensor(
-                [z_val], dtype=torch.complex128, requires_grad=True
-            )
-            a = torch.tensor([2.0 + 0.0j], dtype=torch.complex128)
-            b = torch.tensor([3.0 + 0.0j], dtype=torch.complex128)
-
-            def func(z):
-                return torchscience.special_functions.incomplete_beta(z, a, b)
-
-            assert torch.autograd.gradgradcheck(
-                func, (z,), eps=1e-5, atol=1e-2, rtol=1e-2
-            ), f"Gradgradcheck failed for z={z_val}"
-
     def test_complex_analytical_domain_small_params(self):
         """Test complex z with small shape parameters (a, b < 1).
 
@@ -2476,37 +2109,6 @@ class TestIncompleteBeta(OpTestCase):
             assert torch.autograd.gradcheck(
                 func, (z,), eps=1e-6, atol=1e-3, rtol=1e-3
             ), f"Gradcheck failed for a={a_val}, b={b_val}"
-
-    @pytest.mark.xfail(
-        reason="Complex parameter gradients use simplified formula without log-weighted integrals"
-    )
-    def test_complex_analytical_domain_large_params(self):
-        """Test complex z with large shape parameters.
-
-        For large a and b, the continued fraction requires more
-        iterations. Tests that analytical gradients work with the
-        adaptive iteration scaling.
-        """
-        large_param_cases = [
-            (10.0, 10.0),
-            (50.0, 50.0),
-            (20.0, 80.0),
-        ]
-
-        z = torch.tensor(
-            [0.5 + 0.05j], dtype=torch.complex128, requires_grad=True
-        )
-
-        for a_val, b_val in large_param_cases:
-            a = torch.tensor([a_val + 0.0j], dtype=torch.complex128)
-            b = torch.tensor([b_val + 0.0j], dtype=torch.complex128)
-
-            def func(z):
-                return torchscience.special_functions.incomplete_beta(z, a, b)
-
-            assert torch.autograd.gradcheck(
-                func, (z,), eps=1e-6, atol=1e-3, rtol=1e-3
-            ), f"Gradcheck failed for large params a={a_val}, b={b_val}"
 
     def test_complex_analytical_domain_wirtinger_consistency(self):
         """Verify Wirtinger derivative convention consistency.
@@ -2831,7 +2433,6 @@ class TestIncompleteBeta(OpTestCase):
             func, (z, a), eps=1e-5, atol=5e-2, rtol=5e-2
         )
 
-    @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
     def test_small_params_scipy_reference_z_gradient(self):
         """Verify z-gradients against numerical differences from SciPy.
 

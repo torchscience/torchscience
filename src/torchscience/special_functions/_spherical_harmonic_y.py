@@ -93,14 +93,4 @@ def spherical_harmonic_y(
     --------
     associated_legendre_polynomial_p : Associated Legendre polynomials
     """
-    # Promote all inputs to complex dtype (spherical harmonics are complex-valued)
-    dtype = torch.promote_types(
-        torch.result_type(l, m), torch.result_type(theta, phi)
-    )
-
-    if not dtype.is_complex:
-        dtype = torch.complex128 if dtype == torch.float64 else torch.complex64
-
-    return torch.ops.torchscience.spherical_harmonic_y(
-        l.to(dtype), m.to(dtype), theta.to(dtype), phi.to(dtype)
-    )
+    return torch.ops.torchscience.spherical_harmonic_y(l, m, theta, phi)

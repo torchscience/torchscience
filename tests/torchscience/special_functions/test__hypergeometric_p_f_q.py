@@ -1,16 +1,8 @@
-import pytest
+import mpmath
 import torch
 import torch.testing
 
 import torchscience.special_functions
-
-# Optional mpmath import for reference tests
-try:
-    import mpmath
-
-    HAS_MPMATH = True
-except ImportError:
-    HAS_MPMATH = False
 
 
 class TestHypergeometricPFQ:
@@ -42,7 +34,6 @@ class TestHypergeometricPFQ:
             atol=1e-10,
         )
 
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_0f1_mpmath_reference(self):
         """Test 0F1 case against mpmath."""
         a = torch.tensor([], dtype=torch.float64)  # p=0
@@ -59,7 +50,6 @@ class TestHypergeometricPFQ:
             atol=1e-10,
         )
 
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_1f1_mpmath_reference(self):
         """Test 1F1 case against mpmath."""
         a = torch.tensor([1.0], dtype=torch.float64)  # p=1
@@ -76,7 +66,6 @@ class TestHypergeometricPFQ:
             atol=1e-10,
         )
 
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_2f1_mpmath_reference(self):
         """Test 2F1 case against mpmath."""
         a = torch.tensor([1.0, 2.0], dtype=torch.float64)  # p=2
@@ -93,7 +82,6 @@ class TestHypergeometricPFQ:
             atol=1e-8,
         )
 
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_1f2_mpmath_reference(self):
         """Test 1F2 case against mpmath."""
         a = torch.tensor([1.0], dtype=torch.float64)  # p=1

@@ -14,6 +14,18 @@ namespace torchscience::kernel::special_functions {
 
 template <typename T>
 T polygamma_general(int n, T z) {
+  if (!std::isfinite(z)) {
+    if (std::isnan(z)) {
+      return std::numeric_limits<T>::quiet_NaN();
+    }
+    return z > T(0) ? T(0) : std::numeric_limits<T>::quiet_NaN();
+  }
+
+  // Non-positive integers are poles
+  if (z <= T(0) && z == std::floor(z)) {
+    return std::numeric_limits<T>::quiet_NaN();
+  }
+
   // For n >= 4, use recurrence relation and asymptotic expansion
   // psi^(n)(z) = (-1)^(n+1) * n! * sum_{k=0}^{inf} 1/(z+k)^(n+1)
 
@@ -77,6 +89,10 @@ T polygamma(T n, T z) {
 
 template <typename T>
 c10::complex<T> polygamma_general(int n, c10::complex<T> z) {
+  if (!std::isfinite(z.real()) || !std::isfinite(z.imag())) {
+    return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(), std::numeric_limits<T>::quiet_NaN());
+  }
+
   // Complex polygamma for n >= 4
   c10::complex<T> result(T(0), T(0));
   c10::complex<T> y = z;

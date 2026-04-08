@@ -1,6 +1,8 @@
-import pytest
+import mpmath
 import torch
 import torch.testing
+
+import torchscience.special_functions
 from torchscience.testing import (
     IdentitySpec,
     InputSpec,
@@ -9,16 +11,6 @@ from torchscience.testing import (
     SpecialValue,
     ToleranceConfig,
 )
-
-import torchscience.special_functions
-
-# Optional mpmath import for reference tests
-try:
-    import mpmath
-
-    HAS_MPMATH = True
-except ImportError:
-    HAS_MPMATH = False
 
 
 def _zero_identity(func):
@@ -126,7 +118,6 @@ class TestHypergeometric1F2(OpTestCase):
         expected = torch.ones_like(result)
         torch.testing.assert_close(result, expected, rtol=1e-10, atol=1e-10)
 
-    @pytest.mark.skipif(not HAS_MPMATH, reason="mpmath not available")
     def test_mpmath_reference(self):
         """Test against mpmath reference implementation."""
         test_cases = [

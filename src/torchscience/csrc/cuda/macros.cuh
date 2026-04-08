@@ -12,7 +12,7 @@
 
 #define TORCHSCIENCE_CUDA_POINTWISE_UNARY_OPERATOR(name, arg1)                             \
 namespace torchscience::cuda::special_functions {                               \
-                                                                               \
+                                                          \
 inline at::Tensor name(                                                        \
   const at::Tensor &arg1##_input                                                \
 ) {                                                                            \

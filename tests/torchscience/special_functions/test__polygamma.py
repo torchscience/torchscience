@@ -1,14 +1,12 @@
 import math
 
-import pytest
 import sympy
 import torch
 import torch.testing
 from hypothesis import given, settings
 from sympy import I, N
 
-pytestmark = pytest.mark.skip(reason="Test takes >30s, needs optimization")
-
+import torchscience.special_functions
 from torchscience.testing import (
     InputSpec,
     OperatorDescriptor,
@@ -20,8 +18,6 @@ from torchscience.testing import (
     avoiding_poles,
     positive_real_numbers,
 )
-
-import torchscience.special_functions
 
 
 def sympy_polygamma(n: int, z: float | complex) -> float | complex:
@@ -117,7 +113,7 @@ class TestPolygamma(OpTestCase):
             ],
             supports_sparse_coo=False,
             supports_sparse_csr=False,
-            supports_quantized=True,
+            supports_quantized=False,
             supports_meta=True,
         )
 

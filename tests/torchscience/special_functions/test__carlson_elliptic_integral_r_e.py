@@ -1,3 +1,4 @@
+import mpmath
 import torch
 import torch.testing
 
@@ -9,14 +10,6 @@ from torchscience.testing import (
     SpecialValue,
     ToleranceConfig,
 )
-
-# Optional mpmath import for reference tests
-try:
-    import mpmath
-
-    HAS_MPMATH = True
-except ImportError:
-    HAS_MPMATH = False
 
 
 def mpmath_re(x, y, z):
@@ -102,8 +95,6 @@ class TestCarlsonEllipticIntegralRE(OpTestCase):
 
     def test_forward_against_mpmath(self):
         """Compare against mpmath reference."""
-        if not HAS_MPMATH:
-            return
         test_cases = [
             (1.0, 1.0, 1.0),
             (1.0, 2.0, 3.0),
