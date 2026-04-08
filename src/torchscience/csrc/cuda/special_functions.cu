@@ -812,3 +812,80 @@ TORCHSCIENCE_CUDA_POINTWISE_BINARY_OPERATOR(anger_j, n, z)
 #include "../kernel/special_functions/weber_e_backward_backward.h"
 
 TORCHSCIENCE_CUDA_POINTWISE_BINARY_OPERATOR(weber_e, n, z)
+
+// Chebyshev polynomial of the third kind V_n(x)
+#include "../kernel/special_functions/chebyshev_polynomial_v.h"
+#include "../kernel/special_functions/chebyshev_polynomial_v_backward.h"
+#include "../kernel/special_functions/chebyshev_polynomial_v_backward_backward.h"
+
+TORCHSCIENCE_CUDA_POINTWISE_BINARY_OPERATOR(chebyshev_polynomial_v, x, n)
+
+// Chebyshev polynomial of the fourth kind W_n(x)
+#include "../kernel/special_functions/chebyshev_polynomial_w.h"
+#include "../kernel/special_functions/chebyshev_polynomial_w_backward.h"
+#include "../kernel/special_functions/chebyshev_polynomial_w_backward_backward.h"
+
+TORCHSCIENCE_CUDA_POINTWISE_BINARY_OPERATOR(chebyshev_polynomial_w, x, n)
+
+// Tetragamma function psi''(z)
+#include "../kernel/special_functions/tetragamma.h"
+#include "../kernel/special_functions/tetragamma_backward.h"
+#include "../kernel/special_functions/tetragamma_backward_backward.h"
+
+TORCHSCIENCE_CUDA_POINTWISE_UNARY_OPERATOR(tetragamma, z)
+
+// Pentagamma function psi'''(z)
+#include "../kernel/special_functions/pentagamma.h"
+#include "../kernel/special_functions/pentagamma_backward.h"
+#include "../kernel/special_functions/pentagamma_backward_backward.h"
+
+TORCHSCIENCE_CUDA_POINTWISE_UNARY_OPERATOR(pentagamma, z)
+
+// cos(pi * x)
+#include "../kernel/special_functions/cos_pi.h"
+#include "../kernel/special_functions/cos_pi_backward.h"
+#include "../kernel/special_functions/cos_pi_backward_backward.h"
+
+TORCHSCIENCE_CUDA_POINTWISE_UNARY_OPERATOR(cos_pi, x)
+
+// cosh(pi * x)
+#include "../kernel/special_functions/cosh_pi.h"
+#include "../kernel/special_functions/cosh_pi_backward.h"
+#include "../kernel/special_functions/cosh_pi_backward_backward.h"
+
+TORCHSCIENCE_CUDA_POINTWISE_UNARY_OPERATOR(cosh_pi, x)
+
+// sin(pi * x)
+#include "../kernel/special_functions/sin_pi.h"
+#include "../kernel/special_functions/sin_pi_backward.h"
+#include "../kernel/special_functions/sin_pi_backward_backward.h"
+
+TORCHSCIENCE_CUDA_POINTWISE_UNARY_OPERATOR(sin_pi, x)
+
+// sinh(pi * x)
+#include "../kernel/special_functions/sinh_pi.h"
+#include "../kernel/special_functions/sinh_pi_backward.h"
+#include "../kernel/special_functions/sinh_pi_backward_backward.h"
+
+TORCHSCIENCE_CUDA_POINTWISE_UNARY_OPERATOR(sinh_pi, x)
+
+// tan(pi * x)
+#include "../kernel/special_functions/tan_pi.h"
+#include "../kernel/special_functions/tan_pi_backward.h"
+#include "../kernel/special_functions/tan_pi_backward_backward.h"
+
+TORCHSCIENCE_CUDA_POINTWISE_UNARY_OPERATOR(tan_pi, x)
+
+// tanh(pi * x)
+#include "../kernel/special_functions/tanh_pi.h"
+#include "../kernel/special_functions/tanh_pi_backward.h"
+#include "../kernel/special_functions/tanh_pi_backward_backward.h"
+
+TORCHSCIENCE_CUDA_POINTWISE_UNARY_OPERATOR(tanh_pi, x)
+
+// Hahn polynomial Q_n(x; alpha, beta, N)
+#include "../kernel/special_functions/hahn_polynomial_q.h"
+#include "../kernel/special_functions/hahn_polynomial_q_backward.h"
+#include "../kernel/special_functions/hahn_polynomial_q_backward_backward.h"
+
+TORCHSCIENCE_CUDA_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, beta, N)
