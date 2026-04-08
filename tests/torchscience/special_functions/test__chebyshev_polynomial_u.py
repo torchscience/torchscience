@@ -2,6 +2,8 @@ import pytest
 import scipy.special
 import torch
 import torch.testing
+
+import torchscience.special_functions
 from torchscience.testing import (
     InputSpec,
     OperatorDescriptor,
@@ -10,8 +12,6 @@ from torchscience.testing import (
     SpecialValue,
     ToleranceConfig,
 )
-
-import torchscience.special_functions
 
 
 def scipy_chebyshev_u(n: float, x: float) -> float:

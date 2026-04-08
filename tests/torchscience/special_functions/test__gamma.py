@@ -6,6 +6,8 @@ import torch
 import torch.testing
 from hypothesis import given, settings
 from sympy import I, N, symbols
+
+import torchscience.special_functions
 from torchscience.testing import (
     IdentitySpec,
     InputSpec,
@@ -21,8 +23,6 @@ from torchscience.testing import (
     non_integer_real_numbers,
     positive_real_numbers,
 )
-
-import torchscience.special_functions
 
 
 def sympy_gamma(z: float | complex) -> float | complex:
