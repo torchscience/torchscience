@@ -3,8 +3,11 @@
 #include <ATen/autocast_mode.h>
 #include <torch/library.h>
 
-#define TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(name, arg1)                       \
-namespace torchscience::autocast::special_functions {                          \
+// Autocast Pointwise Macros - Modular
+// complex parameter is accepted but ignored
+
+#define TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_DISPATCH(category, name, arg1)                       \
+namespace torchscience::autocast::category {                          \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &(arg1)                                                     \
@@ -29,24 +32,24 @@ inline at::Tensor name(                                                        \
     );                                                                         \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::autocast::special_functions */                    \
+} /* namespace torchscience::autocast::category */                    \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, AutocastCUDA, module) {                       \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autocast::special_functions::name                            \
+    torchscience::autocast::category::name                            \
   );                                                                           \
 }                                                                              \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {                        \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autocast::special_functions::name                            \
+    torchscience::autocast::category::name                            \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(name, arg1, arg2)                \
-namespace torchscience::autocast::special_functions {                          \
+#define TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_DISPATCH(category, name, arg1, arg2)                \
+namespace torchscience::autocast::category {                          \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &(arg1),                                                    \
@@ -74,24 +77,24 @@ inline at::Tensor name(                                                        \
     );                                                                         \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::autocast::special_functions */                    \
+} /* namespace torchscience::autocast::category */                    \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, AutocastCUDA, module) {                       \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autocast::special_functions::name                            \
+    torchscience::autocast::category::name                            \
   );                                                                           \
 }                                                                              \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {                        \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autocast::special_functions::name                            \
+    torchscience::autocast::category::name                            \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY_OPERATOR(name, arg1, arg2, arg3)         \
-namespace torchscience::autocast::special_functions {                          \
+#define TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY_DISPATCH(category, name, arg1, arg2, arg3)         \
+namespace torchscience::autocast::category {                          \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &(arg1),                                                    \
@@ -122,24 +125,24 @@ inline at::Tensor name(                                                        \
     );                                                                         \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::autocast::special_functions */                    \
+} /* namespace torchscience::autocast::category */                    \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, AutocastCUDA, module) {                       \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autocast::special_functions::name                            \
+    torchscience::autocast::category::name                            \
   );                                                                           \
 }                                                                              \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {                        \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autocast::special_functions::name                            \
+    torchscience::autocast::category::name                            \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_OPERATOR(name, arg1, arg2, arg3, arg4) \
-namespace torchscience::autocast::special_functions {                          \
+#define TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_DISPATCH(category, name, arg1, arg2, arg3, arg4) \
+namespace torchscience::autocast::category {                          \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &(arg1),                                                    \
@@ -173,24 +176,24 @@ inline at::Tensor name(                                                        \
     );                                                                         \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::autocast::special_functions */                    \
+} /* namespace torchscience::autocast::category */                    \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, AutocastCUDA, module) {                       \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autocast::special_functions::name                            \
+    torchscience::autocast::category::name                            \
   );                                                                           \
 }                                                                              \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {                        \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autocast::special_functions::name                            \
+    torchscience::autocast::category::name                            \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_AUTOCAST_POINTWISE_QUINARY_OPERATOR(name, arg1, arg2, arg3, arg4, arg5) \
-namespace torchscience::autocast::special_functions {                          \
+#define TORCHSCIENCE_AUTOCAST_POINTWISE_QUINARY_DISPATCH(category, name, arg1, arg2, arg3, arg4, arg5) \
+namespace torchscience::autocast::category {                          \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &(arg1),                                                    \
@@ -227,18 +230,33 @@ inline at::Tensor name(                                                        \
     );                                                                         \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::autocast::special_functions */                    \
+} /* namespace torchscience::autocast::category */                    \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, AutocastCUDA, module) {                       \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autocast::special_functions::name                            \
+    torchscience::autocast::category::name                            \
   );                                                                           \
 }                                                                              \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {                        \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autocast::special_functions::name                            \
+    torchscience::autocast::category::name                            \
   );                                                                           \
 }
+
+#define TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY(category, complex, name, arg1) \
+    TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_DISPATCH(category, name, arg1)
+
+#define TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY(category, complex, name, arg1, arg2) \
+    TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_DISPATCH(category, name, arg1, arg2)
+
+#define TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY(category, complex, name, arg1, arg2, arg3) \
+    TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY_DISPATCH(category, name, arg1, arg2, arg3)
+
+#define TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY(category, complex, name, arg1, arg2, arg3, arg4) \
+    TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_DISPATCH(category, name, arg1, arg2, arg3, arg4)
+
+#define TORCHSCIENCE_AUTOCAST_POINTWISE_QUINARY(category, complex, name, arg1, arg2, arg3, arg4, arg5) \
+    TORCHSCIENCE_AUTOCAST_POINTWISE_QUINARY_DISPATCH(category, name, arg1, arg2, arg3, arg4, arg5)

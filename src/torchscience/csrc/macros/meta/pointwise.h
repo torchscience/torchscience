@@ -6,8 +6,11 @@
 #include <ATen/TensorIterator.h>
 #include <torch/library.h>
 
-#define TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(name, arg1)                           \
-namespace torchscience::meta::special_functions {                              \
+// Meta Pointwise Macros - Modular
+// complex parameter is accepted but ignored (Meta does shape inference only)
+
+#define TORCHSCIENCE_META_POINTWISE_UNARY_DISPATCH(category, name, arg1)                           \
+namespace torchscience::meta::category {                              \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &arg1##_input                                               \
@@ -67,27 +70,27 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(            \
   };                                                                           \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::meta::special_functions */                        \
+} /* namespace torchscience::meta::category */                        \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, Meta, module) {                               \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::meta::special_functions::name                                \
+    torchscience::meta::category::name                                \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward",                                                         \
-    torchscience::meta::special_functions::name##_backward                     \
+    torchscience::meta::category::name##_backward                     \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward_backward",                                                \
-    torchscience::meta::special_functions::name##_backward_backward            \
+    torchscience::meta::category::name##_backward_backward            \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(name, arg1, arg2)                    \
-namespace torchscience::meta::special_functions {                              \
+#define TORCHSCIENCE_META_POINTWISE_BINARY_DISPATCH(category, name, arg1, arg2)                    \
+namespace torchscience::meta::category {                              \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &arg1##_input,                                              \
@@ -160,27 +163,27 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> name##_backward_backward(\
   };                                                                           \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::meta::special_functions */                        \
+} /* namespace torchscience::meta::category */                        \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, Meta, module) {                               \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::meta::special_functions::name                                \
+    torchscience::meta::category::name                                \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward",                                                         \
-    torchscience::meta::special_functions::name##_backward                     \
+    torchscience::meta::category::name##_backward                     \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward_backward",                                                \
-    torchscience::meta::special_functions::name##_backward_backward            \
+    torchscience::meta::category::name##_backward_backward            \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(name, arg1, arg2, arg3)             \
-namespace torchscience::meta::special_functions {                              \
+#define TORCHSCIENCE_META_POINTWISE_TERNARY_DISPATCH(category, name, arg1, arg2, arg3)             \
+namespace torchscience::meta::category {                              \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &arg1##_input,                                              \
@@ -268,27 +271,27 @@ name##_backward_backward(                                                      \
   };                                                                           \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::meta::special_functions */                        \
+} /* namespace torchscience::meta::category */                        \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, Meta, module) {                               \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::meta::special_functions::name                                \
+    torchscience::meta::category::name                                \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward",                                                         \
-    torchscience::meta::special_functions::name##_backward                     \
+    torchscience::meta::category::name##_backward                     \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward_backward",                                                \
-    torchscience::meta::special_functions::name##_backward_backward            \
+    torchscience::meta::category::name##_backward_backward            \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_META_POINTWISE_QUATERNARY_OPERATOR(name, arg1, arg2, arg3, arg4)    \
-namespace torchscience::meta::special_functions {                              \
+#define TORCHSCIENCE_META_POINTWISE_QUATERNARY_DISPATCH(category, name, arg1, arg2, arg3, arg4)    \
+namespace torchscience::meta::category {                              \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &arg1##_input,                                              \
@@ -391,27 +394,27 @@ name##_backward_backward(                                                      \
   };                                                                           \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::meta::special_functions */                        \
+} /* namespace torchscience::meta::category */                        \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, Meta, module) {                               \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::meta::special_functions::name                                \
+    torchscience::meta::category::name                                \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward",                                                         \
-    torchscience::meta::special_functions::name##_backward                     \
+    torchscience::meta::category::name##_backward                     \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward_backward",                                                \
-    torchscience::meta::special_functions::name##_backward_backward            \
+    torchscience::meta::category::name##_backward_backward            \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_META_POINTWISE_QUINARY_OPERATOR(name, arg1, arg2, arg3, arg4, arg5) \
-namespace torchscience::meta::special_functions {                              \
+#define TORCHSCIENCE_META_POINTWISE_QUINARY_DISPATCH(category, name, arg1, arg2, arg3, arg4, arg5) \
+namespace torchscience::meta::category {                              \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &arg1##_input,                                              \
@@ -528,21 +531,36 @@ name##_backward_backward(                                                      \
   };                                                                           \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::meta::special_functions */                        \
+} /* namespace torchscience::meta::category */                        \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, Meta, module) {                               \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::meta::special_functions::name                                \
+    torchscience::meta::category::name                                \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward",                                                         \
-    torchscience::meta::special_functions::name##_backward                     \
+    torchscience::meta::category::name##_backward                     \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward_backward",                                                \
-    torchscience::meta::special_functions::name##_backward_backward            \
+    torchscience::meta::category::name##_backward_backward            \
   );                                                                           \
 }
+
+#define TORCHSCIENCE_META_POINTWISE_UNARY(category, complex, name, arg1) \
+    TORCHSCIENCE_META_POINTWISE_UNARY_DISPATCH(category, name, arg1)
+
+#define TORCHSCIENCE_META_POINTWISE_BINARY(category, complex, name, arg1, arg2) \
+    TORCHSCIENCE_META_POINTWISE_BINARY_DISPATCH(category, name, arg1, arg2)
+
+#define TORCHSCIENCE_META_POINTWISE_TERNARY(category, complex, name, arg1, arg2, arg3) \
+    TORCHSCIENCE_META_POINTWISE_TERNARY_DISPATCH(category, name, arg1, arg2, arg3)
+
+#define TORCHSCIENCE_META_POINTWISE_QUATERNARY(category, complex, name, arg1, arg2, arg3, arg4) \
+    TORCHSCIENCE_META_POINTWISE_QUATERNARY_DISPATCH(category, name, arg1, arg2, arg3, arg4)
+
+#define TORCHSCIENCE_META_POINTWISE_QUINARY(category, complex, name, arg1, arg2, arg3, arg4, arg5) \
+    TORCHSCIENCE_META_POINTWISE_QUINARY_DISPATCH(category, name, arg1, arg2, arg3, arg4, arg5)

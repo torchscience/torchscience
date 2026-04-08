@@ -1,4 +1,3 @@
-// src/torchscience/csrc/cpu/reduction_macros.h
 #pragma once
 
 #include <numeric>

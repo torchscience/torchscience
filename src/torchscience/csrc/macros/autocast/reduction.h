@@ -1,4 +1,3 @@
-// src/torchscience/csrc/autocast/reduction_macros.h
 #pragma once
 
 #include <tuple>

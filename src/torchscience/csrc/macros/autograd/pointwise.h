@@ -2,8 +2,11 @@
 
 #include <torch/extension.h>
 
-#define TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(name, Name, arg)                  \
-namespace torchscience::autograd::special_functions {                          \
+// Autograd Pointwise Macros - Modular
+// complex parameter is accepted but ignored (autograd delegates to underlying dispatch)
+
+#define TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_DISPATCH(category, name, Name, arg)                  \
+namespace torchscience::autograd::category {                          \
                                                                                \
 class Name##Backward : public torch::autograd::Function<Name##Backward> {      \
 public:                                                                        \
@@ -154,17 +157,17 @@ inline at::Tensor name(                                                        \
   return Name::apply(arg);                                                     \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::autograd::special_functions */                    \
+} /* namespace torchscience::autograd::category */                    \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {                           \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autograd::special_functions::name                            \
+    torchscience::autograd::category::name                            \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(name, Name, arg1, arg2)          \
-namespace torchscience::autograd::special_functions {                          \
+#define TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_DISPATCH(category, name, Name, arg1, arg2)          \
+namespace torchscience::autograd::category {                          \
                                                                                \
 class Name##Backward : public torch::autograd::Function<Name##Backward> {      \
 public:                                                                        \
@@ -344,17 +347,17 @@ inline at::Tensor name(                                                        \
   return Name::apply(arg1, arg2);                                              \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::autograd::special_functions */                    \
+} /* namespace torchscience::autograd::category */                    \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {                           \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autograd::special_functions::name                            \
+    torchscience::autograd::category::name                            \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(name, Name, arg1, arg2, arg3)   \
-namespace torchscience::autograd::special_functions {                          \
+#define TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_DISPATCH(category, name, Name, arg1, arg2, arg3)   \
+namespace torchscience::autograd::category {                          \
                                                                                \
 class Name##Backward : public torch::autograd::Function<Name##Backward> {      \
 public:                                                                        \
@@ -569,17 +572,17 @@ inline at::Tensor name(                                                        \
   return Name::apply(arg1, arg2, arg3);                                        \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::autograd::special_functions */                    \
+} /* namespace torchscience::autograd::category */                    \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {                           \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autograd::special_functions::name                            \
+    torchscience::autograd::category::name                            \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY_OPERATOR(name, Name, arg1, arg2, arg3, arg4) \
-namespace torchscience::autograd::special_functions {                          \
+#define TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY_DISPATCH(category, name, Name, arg1, arg2, arg3, arg4) \
+namespace torchscience::autograd::category {                          \
                                                                                \
 class Name##Backward : public torch::autograd::Function<Name##Backward> {      \
 public:                                                                        \
@@ -827,17 +830,17 @@ inline at::Tensor name(                                                        \
   return Name::apply(arg1, arg2, arg3, arg4);                                  \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::autograd::special_functions */                    \
+} /* namespace torchscience::autograd::category */                    \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {                           \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autograd::special_functions::name                            \
+    torchscience::autograd::category::name                            \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_AUTOGRAD_POINTWISE_QUINARY_OPERATOR(name, Name, arg1, arg2, arg3, arg4, arg5) \
-namespace torchscience::autograd::special_functions {                          \
+#define TORCHSCIENCE_AUTOGRAD_POINTWISE_QUINARY_DISPATCH(category, name, Name, arg1, arg2, arg3, arg4, arg5) \
+namespace torchscience::autograd::category {                          \
                                                                                \
 class Name##Backward : public torch::autograd::Function<Name##Backward> {      \
 public:                                                                        \
@@ -1118,11 +1121,26 @@ inline at::Tensor name(                                                        \
   return Name::apply(arg1, arg2, arg3, arg4, arg5);                            \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::autograd::special_functions */                    \
+} /* namespace torchscience::autograd::category */                    \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {                           \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::autograd::special_functions::name                            \
+    torchscience::autograd::category::name                            \
   );                                                                           \
 }
+
+#define TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY(category, complex, name, Name, arg) \
+    TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_DISPATCH(category, name, Name, arg)
+
+#define TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY(category, complex, name, Name, arg1, arg2) \
+    TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_DISPATCH(category, name, Name, arg1, arg2)
+
+#define TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY(category, complex, name, Name, arg1, arg2, arg3) \
+    TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_DISPATCH(category, name, Name, arg1, arg2, arg3)
+
+#define TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY(category, complex, name, Name, arg1, arg2, arg3, arg4) \
+    TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY_DISPATCH(category, name, Name, arg1, arg2, arg3, arg4)
+
+#define TORCHSCIENCE_AUTOGRAD_POINTWISE_QUINARY(category, complex, name, Name, arg1, arg2, arg3, arg4, arg5) \
+    TORCHSCIENCE_AUTOGRAD_POINTWISE_QUINARY_DISPATCH(category, name, Name, arg1, arg2, arg3, arg4, arg5)

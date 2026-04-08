@@ -1,186 +1,186 @@
 #pragma once
 
-#include "macros.h"
+#include "../macros/meta/pointwise.h"
 
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(gamma, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(digamma, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(trigamma, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(beta, a, b)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(chebyshev_polynomial_t, x, n)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(chebyshev_polynomial_u, x, n)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(incomplete_beta, x, a, b)
-TORCHSCIENCE_META_POINTWISE_QUATERNARY_OPERATOR(hypergeometric_2_f_1, a, b, c, z)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(confluent_hypergeometric_m, a, b, z)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(confluent_hypergeometric_u, a, b, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(polygamma, n, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(log_beta, a, b)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(log_gamma, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(reciprocal_gamma, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(gamma_sign, x)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(regularized_gamma_p, a, x)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(regularized_gamma_q, a, x)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(modified_bessel_i_0, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(modified_bessel_i_1, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(bessel_j_0, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(bessel_j_1, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(bessel_y_0, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(bessel_y_1, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(modified_bessel_k_0, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(modified_bessel_k_1, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(bessel_j, n, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(bessel_y, n, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(modified_bessel_k, n, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(modified_bessel_i, n, z)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(carlson_elliptic_integral_r_f, x, y, z)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(carlson_elliptic_integral_r_d, x, y, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(carlson_elliptic_integral_r_c, x, y)
-TORCHSCIENCE_META_POINTWISE_QUATERNARY_OPERATOR(carlson_elliptic_integral_r_j, x, y, z, p)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(carlson_elliptic_integral_r_g, x, y, z)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(carlson_elliptic_integral_r_e, x, y, z)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(carlson_elliptic_integral_r_m, x, y, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(carlson_elliptic_integral_r_k, x, y)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(complete_legendre_elliptic_integral_k, m)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(complete_legendre_elliptic_integral_e, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(incomplete_legendre_elliptic_integral_e, phi, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(incomplete_legendre_elliptic_integral_f, phi, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(complete_legendre_elliptic_integral_pi, n, m)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(incomplete_legendre_elliptic_integral_pi, n, phi, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_amplitude_am, u, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_elliptic_dn, u, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_elliptic_cn, u, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_elliptic_sn, u, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_elliptic_sd, u, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_elliptic_cd, u, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_elliptic_sc, u, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_elliptic_nd, u, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_elliptic_nc, u, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_elliptic_ns, u, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_elliptic_dc, u, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_elliptic_ds, u, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(jacobi_elliptic_cs, u, m)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, gamma, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, digamma, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, trigamma, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, beta, a, b)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, chebyshev_polynomial_t, x, n)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, chebyshev_polynomial_u, x, n)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, incomplete_beta, x, a, b)
+TORCHSCIENCE_META_POINTWISE_QUATERNARY(special_functions, false, hypergeometric_2_f_1, a, b, c, z)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, confluent_hypergeometric_m, a, b, z)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, confluent_hypergeometric_u, a, b, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, polygamma, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, log_beta, a, b)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, log_gamma, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, reciprocal_gamma, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, gamma_sign, x)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, regularized_gamma_p, a, x)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, regularized_gamma_q, a, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, modified_bessel_i_0, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, modified_bessel_i_1, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, bessel_j_0, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, bessel_j_1, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, bessel_y_0, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, bessel_y_1, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, modified_bessel_k_0, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, modified_bessel_k_1, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, bessel_j, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, bessel_y, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, modified_bessel_k, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, modified_bessel_i, n, z)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, carlson_elliptic_integral_r_f, x, y, z)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, carlson_elliptic_integral_r_d, x, y, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, carlson_elliptic_integral_r_c, x, y)
+TORCHSCIENCE_META_POINTWISE_QUATERNARY(special_functions, false, carlson_elliptic_integral_r_j, x, y, z, p)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, carlson_elliptic_integral_r_g, x, y, z)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, carlson_elliptic_integral_r_e, x, y, z)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, carlson_elliptic_integral_r_m, x, y, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, carlson_elliptic_integral_r_k, x, y)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, complete_legendre_elliptic_integral_k, m)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, complete_legendre_elliptic_integral_e, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, incomplete_legendre_elliptic_integral_e, phi, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, incomplete_legendre_elliptic_integral_f, phi, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, complete_legendre_elliptic_integral_pi, n, m)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, incomplete_legendre_elliptic_integral_pi, n, phi, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_amplitude_am, u, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_dn, u, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_cn, u, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_sn, u, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_sd, u, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_cd, u, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_sc, u, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_nd, u, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_nc, u, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_ns, u, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_dc, u, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_ds, u, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_cs, u, m)
 
 // Inverse Jacobi elliptic functions (primary)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(inverse_jacobi_elliptic_sn, x, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(inverse_jacobi_elliptic_cn, x, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(inverse_jacobi_elliptic_dn, x, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, inverse_jacobi_elliptic_sn, x, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, inverse_jacobi_elliptic_cn, x, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, inverse_jacobi_elliptic_dn, x, m)
 
 // Inverse Jacobi elliptic functions (derived)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(inverse_jacobi_elliptic_sd, x, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(inverse_jacobi_elliptic_cd, x, m)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(inverse_jacobi_elliptic_sc, x, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, inverse_jacobi_elliptic_sd, x, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, inverse_jacobi_elliptic_cd, x, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, inverse_jacobi_elliptic_sc, x, m)
 
 // Jacobi theta functions
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(theta_1, z, q)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(theta_2, z, q)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(theta_3, z, q)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(theta_4, z, q)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, theta_1, z, q)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, theta_2, z, q)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, theta_3, z, q)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, theta_4, z, q)
 
 // Weierstrass elliptic function P
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(weierstrass_p, z, g2, g3)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, weierstrass_p, z, g2, g3)
 
 // Weierstrass sigma function
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(weierstrass_sigma, z, g2, g3)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, weierstrass_sigma, z, g2, g3)
 
 // Weierstrass zeta function
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(weierstrass_zeta, z, g2, g3)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, weierstrass_zeta, z, g2, g3)
 
 // Weierstrass eta quasi-period
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(weierstrass_eta, g2, g3)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, weierstrass_eta, g2, g3)
 
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(spherical_bessel_j_0, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(spherical_bessel_j_1, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(spherical_bessel_j, n, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(spherical_bessel_y_0, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(spherical_bessel_y_1, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(spherical_bessel_y, n, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(spherical_bessel_i_0, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(spherical_bessel_i_1, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(spherical_bessel_i, n, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(spherical_bessel_k_0, z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(spherical_bessel_k_1, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(spherical_bessel_k, n, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, spherical_bessel_j_0, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, spherical_bessel_j_1, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, spherical_bessel_j, n, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, spherical_bessel_y_0, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, spherical_bessel_y_1, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, spherical_bessel_y, n, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, spherical_bessel_i_0, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, spherical_bessel_i_1, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, spherical_bessel_i, n, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, spherical_bessel_k_0, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, spherical_bessel_k_1, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, spherical_bessel_k, n, z)
 
 // Exponential integrals
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(exponential_integral_ei, x)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(exponential_integral_e_1, x)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(exponential_integral_ein, x)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(exponential_integral_e, n, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, exponential_integral_ei, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, exponential_integral_e_1, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, exponential_integral_ein, x)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, exponential_integral_e, n, x)
 
 // Sine integral
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(sine_integral_si, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, sine_integral_si, x)
 
 // Cosine integral
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(cosine_integral_ci, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, cosine_integral_ci, x)
 
 // Spherical Hankel functions of the first kind
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(spherical_hankel_1, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, spherical_hankel_1, n, z)
 
 // Spherical Hankel functions of the second kind
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(spherical_hankel_2, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, spherical_hankel_2, n, z)
 
 // Spherical harmonic Y_l^m(theta, phi)
-TORCHSCIENCE_META_POINTWISE_QUATERNARY_OPERATOR(spherical_harmonic_y, l, m, theta, phi)
+TORCHSCIENCE_META_POINTWISE_QUATERNARY(special_functions, false, spherical_harmonic_y, l, m, theta, phi)
 
 // Airy function of the first kind
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(airy_ai, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, airy_ai, x)
 
 // Airy function of the second kind
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(airy_bi, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, airy_bi, x)
 
 // Lambert W function (product logarithm)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(lambert_w, k, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, lambert_w, k, z)
 
 // Kelvin function ber (real part of J_0 at rotated argument)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(kelvin_ber, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, kelvin_ber, x)
 
 // Kelvin function bei (imaginary part of J_0 at rotated argument)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(kelvin_bei, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, kelvin_bei, x)
 
 // Kelvin function ker (real part of K_0 at rotated argument)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(kelvin_ker, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, kelvin_ker, x)
 
 // Kelvin function kei (imaginary part of K_0 at rotated argument)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(kelvin_kei, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, kelvin_kei, x)
 
 // Riemann zeta function (s > 1 only)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(zeta, s)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, zeta, s)
 
 // Polylogarithm function Li_s(z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(polylogarithm_li, s, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, polylogarithm_li, s, z)
 
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(parabolic_cylinder_u, a, z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(parabolic_cylinder_v, a, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, parabolic_cylinder_u, a, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, parabolic_cylinder_v, a, z)
 
 // Whittaker functions
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(whittaker_m, kappa, mu, z)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(whittaker_w, kappa, mu, z)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, whittaker_m, kappa, mu, z)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, whittaker_w, kappa, mu, z)
 
 // Hypergeometric 0F1 (confluent hypergeometric limit function)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(hypergeometric_0_f_1, b, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, hypergeometric_0_f_1, b, z)
 
 // Hypergeometric 1F2
-TORCHSCIENCE_META_POINTWISE_QUATERNARY_OPERATOR(hypergeometric_1_f_2, a, b1, b2, z)
+TORCHSCIENCE_META_POINTWISE_QUATERNARY(special_functions, false, hypergeometric_1_f_2, a, b1, b2, z)
 
 // Faddeeva function w(z) = exp(-z^2) * erfc(-iz)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(faddeeva_w, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, faddeeva_w, z)
 
 // Inverse error function
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(erfinv, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, erfinv, x)
 
 // Inverse complementary error function
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(erfcinv, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, erfcinv, x)
 
 // Fresnel sine integral
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(fresnel_s, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, fresnel_s, z)
 
 // Fresnel cosine integral
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(fresnel_c, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, fresnel_c, z)
 
 // Dawson's integral
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(dawson, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, dawson, z)
 
 // Voigt profile
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(voigt_profile, x, sigma, gamma)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, voigt_profile, x, sigma, gamma)
 
 // Generalized hypergeometric pFq - custom meta implementation
 // Output shape is batch dimensions only (removes parameter dimension from a and b)
@@ -257,49 +257,49 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, module) {
 }
 
 // Legendre polynomial P_n(z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(legendre_polynomial_p, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, legendre_polynomial_p, n, z)
 
 // Legendre function of the second kind Q_n(x)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(legendre_polynomial_q, x, n)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, legendre_polynomial_q, x, n)
 
 // Associated Legendre polynomial P_n^m(x)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(associated_legendre_polynomial_p, n, m, x)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, associated_legendre_polynomial_p, n, m, x)
 
 // Hermite polynomial (physicists') H_n(z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(hermite_polynomial_h, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, hermite_polynomial_h, n, z)
 
 // Hermite polynomial (probabilists') He_n(z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(hermite_polynomial_he, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, hermite_polynomial_he, n, z)
 
 // Generalized Laguerre polynomial L_n^alpha(z)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(laguerre_polynomial_l, n, alpha, z)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, laguerre_polynomial_l, n, alpha, z)
 
 // Gegenbauer (ultraspherical) polynomial C_n^lambda(z)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(gegenbauer_polynomial_c, n, lambda, z)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, gegenbauer_polynomial_c, n, lambda, z)
 
 // Jacobi polynomial P_n^(alpha,beta)(z)
-TORCHSCIENCE_META_POINTWISE_QUATERNARY_OPERATOR(jacobi_polynomial_p, n, alpha, beta, z)
+TORCHSCIENCE_META_POINTWISE_QUATERNARY(special_functions, false, jacobi_polynomial_p, n, alpha, beta, z)
 
 // Radial Zernike polynomial R_n^m(rho)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(zernike_polynomial_r, n, m, rho)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, zernike_polynomial_r, n, m, rho)
 
 // Full Zernike polynomial Z_n^m(rho, theta)
-TORCHSCIENCE_META_POINTWISE_QUATERNARY_OPERATOR(zernike_polynomial_z, n, m, rho, theta)
+TORCHSCIENCE_META_POINTWISE_QUATERNARY(special_functions, false, zernike_polynomial_z, n, m, rho, theta)
 
 // Krawtchouk polynomial K_n(x; p, N)
-TORCHSCIENCE_META_POINTWISE_QUATERNARY_OPERATOR(krawtchouk_polynomial_k, n, x, p, N)
+TORCHSCIENCE_META_POINTWISE_QUATERNARY(special_functions, false, krawtchouk_polynomial_k, n, x, p, N)
 
 // Meixner polynomial M_n(x; beta, c)
-TORCHSCIENCE_META_POINTWISE_QUATERNARY_OPERATOR(meixner_polynomial_m, n, x, beta, c)
+TORCHSCIENCE_META_POINTWISE_QUATERNARY(special_functions, false, meixner_polynomial_m, n, x, beta, c)
 
 // Hahn polynomial Q_n(x; alpha, beta, N)
-TORCHSCIENCE_META_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, beta, N)
+TORCHSCIENCE_META_POINTWISE_QUINARY(special_functions, false, hahn_polynomial_q, n, x, alpha, beta, N)
 
 // Charlier polynomial C_n(x; a)
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(charlier_polynomial_c, n, x, a)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, charlier_polynomial_c, n, x, a)
 
 // Pochhammer symbol (rising factorial)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(pochhammer, z, m)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, pochhammer, z, m)
 
 // Log multivariate gamma - custom because d is int parameter
 namespace torchscience::meta::special_functions {
@@ -334,66 +334,66 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, module) {
 }
 
 // Inverse regularized gamma P function
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(inverse_regularized_gamma_p, a, y)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, inverse_regularized_gamma_p, a, y)
 
 // Inverse regularized gamma Q function
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(inverse_regularized_gamma_q, a, y)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, inverse_regularized_gamma_q, a, y)
 
 // Inverse regularized incomplete beta function
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(inverse_regularized_incomplete_beta, a, b, y)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, inverse_regularized_incomplete_beta, a, b, y)
 
 // Inverse complementary regularized incomplete beta function
-TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(inverse_complementary_regularized_incomplete_beta, a, b, y)
+TORCHSCIENCE_META_POINTWISE_TERNARY(special_functions, false, inverse_complementary_regularized_incomplete_beta, a, b, y)
 // Struve function H_0
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(struve_h_0, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, struve_h_0, z)
 
 // Struve function H_1
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(struve_h_1, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, struve_h_1, z)
 
 // Modified Struve function L_0
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(struve_l_0, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, struve_l_0, z)
 
 // Modified Struve function L_1
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(struve_l_1, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, struve_l_1, z)
 
 // General order Struve function H_n(z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(struve_h, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, struve_h, n, z)
 
 // General order modified Struve function L_n(z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(struve_l, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, struve_l, n, z)
 
 // Anger function J_nu(z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(anger_j, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, anger_j, n, z)
 
 // Weber function E_nu(z)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(weber_e, n, z)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, weber_e, n, z)
 
 // Chebyshev polynomial of the third kind V_n(x)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(chebyshev_polynomial_v, x, n)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, chebyshev_polynomial_v, x, n)
 
 // Chebyshev polynomial of the fourth kind W_n(x)
-TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(chebyshev_polynomial_w, x, n)
+TORCHSCIENCE_META_POINTWISE_BINARY(special_functions, false, chebyshev_polynomial_w, x, n)
 
 // Tetragamma function psi''(z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(tetragamma, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, tetragamma, z)
 
 // Pentagamma function psi'''(z)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(pentagamma, z)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, pentagamma, z)
 
 // cos(pi * x)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(cos_pi, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, cos_pi, x)
 
 // cosh(pi * x)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(cosh_pi, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, cosh_pi, x)
 
 // sin(pi * x)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(sin_pi, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, sin_pi, x)
 
 // sinh(pi * x)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(sinh_pi, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, sinh_pi, x)
 
 // tan(pi * x)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(tan_pi, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, tan_pi, x)
 
 // tanh(pi * x)
-TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(tanh_pi, x)
+TORCHSCIENCE_META_POINTWISE_UNARY(special_functions, false, tanh_pi, x)

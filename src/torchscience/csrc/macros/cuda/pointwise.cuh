@@ -10,8 +10,8 @@
 #include <c10/cuda/CUDAGuard.h>
 #include <torch/library.h>
 
-#define TORCHSCIENCE_CUDA_POINTWISE_UNARY_OPERATOR(name, arg1)                             \
-namespace torchscience::cuda::special_functions {                               \
+#define TORCHSCIENCE_CUDA_POINTWISE_UNARY_DISPATCH(category, name, arg1)                             \
+namespace torchscience::cuda::category {                               \
                                                           \
 inline at::Tensor name(                                                        \
   const at::Tensor &arg1##_input                                                \
@@ -38,7 +38,7 @@ inline at::Tensor name(                                                        \
         [] GPU_LAMBDA (                                                        \
           scalar_t arg1                                                         \
         ) -> scalar_t {                                                        \
-          return kernel::special_functions::name(                              \
+          return kernel::category::name(                              \
             arg1                                                               \
           );                                                                   \
         }                                                                      \
@@ -77,7 +77,7 @@ inline at::Tensor name##_backward(                                             \
           scalar_t gradient,                                                   \
           scalar_t arg1                                                         \
         ) -> scalar_t {                                                        \
-          return kernel::special_functions::name##_backward(                   \
+          return kernel::category::name##_backward(                   \
             gradient,                                                          \
             arg1                                                               \
           );                                                                   \
@@ -132,7 +132,7 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(            \
           scalar_t,                                                            \
           scalar_t                                                             \
         > {                                                                    \
-          auto result = kernel::special_functions::name##_backward_backward(   \
+          auto result = kernel::category::name##_backward_backward(   \
             gradient_gradient,                                                 \
             gradient,                                                          \
             arg1                                                               \
@@ -152,27 +152,27 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(            \
   };                                                                           \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::cuda::special_functions */                         \
+} /* namespace torchscience::cuda::category */                         \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {                                \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::cuda::special_functions::name                                 \
+    torchscience::cuda::category::name                                 \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward",                                                         \
-    torchscience::cuda::special_functions::name##_backward                      \
+    torchscience::cuda::category::name##_backward                      \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward_backward",                                                \
-    torchscience::cuda::special_functions::name##_backward_backward             \
+    torchscience::cuda::category::name##_backward_backward             \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_CUDA_POINTWISE_BINARY_OPERATOR(name, arg1, arg2)                     \
-namespace torchscience::cuda::special_functions {                               \
+#define TORCHSCIENCE_CUDA_POINTWISE_BINARY_DISPATCH(category, name, arg1, arg2)                     \
+namespace torchscience::cuda::category {                               \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &arg1##_input,                                              \
@@ -202,7 +202,7 @@ inline at::Tensor name(                                                        \
           scalar_t arg1,                                                       \
           scalar_t arg2                                                        \
         ) -> scalar_t {                                                        \
-          return kernel::special_functions::name(                              \
+          return kernel::category::name(                              \
             arg1,                                                              \
             arg2                                                               \
           );                                                                   \
@@ -247,7 +247,7 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward(                     \
           scalar_t arg1,                                                       \
           scalar_t arg2                                                        \
         ) -> std::tuple<scalar_t, scalar_t> {                               \
-          auto result = kernel::special_functions::name##_backward(            \
+          auto result = kernel::category::name##_backward(            \
             gradient,                                                          \
             arg1,                                                              \
             arg2                                                               \
@@ -324,7 +324,7 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> name##_backward_backward(\
           scalar_t arg1,                                                       \
           scalar_t arg2                                                        \
         ) -> std::tuple<scalar_t, scalar_t, scalar_t> {                     \
-          auto result = kernel::special_functions::name##_backward_backward(   \
+          auto result = kernel::category::name##_backward_backward(   \
             arg1##_gradient_gradient,                                          \
             arg2##_gradient_gradient,                                          \
             gradient,                                                          \
@@ -348,27 +348,27 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> name##_backward_backward(\
   };                                                                           \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::cuda::special_functions */                         \
+} /* namespace torchscience::cuda::category */                         \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {                                \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::cuda::special_functions::name                                 \
+    torchscience::cuda::category::name                                 \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward",                                                         \
-    torchscience::cuda::special_functions::name##_backward                      \
+    torchscience::cuda::category::name##_backward                      \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward_backward",                                                \
-    torchscience::cuda::special_functions::name##_backward_backward             \
+    torchscience::cuda::category::name##_backward_backward             \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_CUDA_POINTWISE_TERNARY_OPERATOR(name, arg1, arg2, arg3)              \
-namespace torchscience::cuda::special_functions {                               \
+#define TORCHSCIENCE_CUDA_POINTWISE_TERNARY_DISPATCH(category, name, arg1, arg2, arg3)              \
+namespace torchscience::cuda::category {                               \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &arg1##_input,                                              \
@@ -401,7 +401,7 @@ inline at::Tensor name(                                                        \
           scalar_t arg2,                                                       \
           scalar_t arg3                                                        \
         ) -> scalar_t {                                                        \
-          return kernel::special_functions::name(                              \
+          return kernel::category::name(                              \
             arg1,                                                              \
             arg2,                                                              \
             arg3                                                               \
@@ -452,7 +452,7 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> name##_backward(         \
           scalar_t arg2,                                                       \
           scalar_t arg3                                                        \
         ) -> std::tuple<scalar_t, scalar_t, scalar_t> {                     \
-          auto result = kernel::special_functions::name##_backward(            \
+          auto result = kernel::category::name##_backward(            \
             gradient,                                                          \
             arg1,                                                              \
             arg2,                                                              \
@@ -547,7 +547,7 @@ inline std::tuple<                                                             \
           scalar_t arg2,                                                       \
           scalar_t arg3                                                        \
         ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {           \
-          auto result = kernel::special_functions::name##_backward_backward(   \
+          auto result = kernel::category::name##_backward_backward(   \
             arg1##_gradient_gradient,                                          \
             arg2##_gradient_gradient,                                          \
             arg3##_gradient_gradient,                                          \
@@ -575,27 +575,27 @@ inline std::tuple<                                                             \
   };                                                                           \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::cuda::special_functions */                         \
+} /* namespace torchscience::cuda::category */                         \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {                                \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::cuda::special_functions::name                                 \
+    torchscience::cuda::category::name                                 \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward",                                                         \
-    torchscience::cuda::special_functions::name##_backward                      \
+    torchscience::cuda::category::name##_backward                      \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward_backward",                                                \
-    torchscience::cuda::special_functions::name##_backward_backward             \
+    torchscience::cuda::category::name##_backward_backward             \
   );                                                                           \
 }
 
-#define TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY_OPERATOR(name, arg1, arg2, arg3, arg4)     \
-namespace torchscience::cuda::special_functions {                               \
+#define TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY_DISPATCH(category, name, arg1, arg2, arg3, arg4)     \
+namespace torchscience::cuda::category {                               \
                                                                                \
 inline at::Tensor name(                                                        \
   const at::Tensor &arg1##_input,                                              \
@@ -631,7 +631,7 @@ inline at::Tensor name(                                                        \
           scalar_t arg3,                                                       \
           scalar_t arg4                                                        \
         ) -> scalar_t {                                                        \
-          return kernel::special_functions::name(                              \
+          return kernel::category::name(                              \
             arg1,                                                              \
             arg2,                                                              \
             arg3,                                                              \
@@ -689,7 +689,7 @@ name##_backward(                                                               \
           scalar_t arg3,                                                       \
           scalar_t arg4                                                        \
         ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {           \
-          auto result = kernel::special_functions::name##_backward(            \
+          auto result = kernel::category::name##_backward(            \
             gradient,                                                          \
             arg1,                                                              \
             arg2,                                                              \
@@ -800,7 +800,7 @@ inline std::tuple<                                                             \
           scalar_t arg3,                                                       \
           scalar_t arg4                                                        \
         ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t, scalar_t> { \
-          auto result = kernel::special_functions::name##_backward_backward(   \
+          auto result = kernel::category::name##_backward_backward(   \
             arg1##_gradient_gradient,                                          \
             arg2##_gradient_gradient,                                          \
             arg3##_gradient_gradient,                                          \
@@ -832,21 +832,33 @@ inline std::tuple<                                                             \
   };                                                                           \
 }                                                                              \
                                                                                \
-} /* namespace torchscience::cuda::special_functions */                         \
+} /* namespace torchscience::cuda::category */                         \
                                                                                \
 TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {                                \
   module.impl(                                                                 \
     #name,                                                                     \
-    torchscience::cuda::special_functions::name                                 \
+    torchscience::cuda::category::name                                 \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward",                                                         \
-    torchscience::cuda::special_functions::name##_backward                      \
+    torchscience::cuda::category::name##_backward                      \
   );                                                                           \
                                                                                \
   module.impl(                                                                 \
     #name "_backward_backward",                                                \
-    torchscience::cuda::special_functions::name##_backward_backward             \
+    torchscience::cuda::category::name##_backward_backward             \
   );                                                                           \
 }
+
+#define TORCHSCIENCE_CUDA_POINTWISE_UNARY(category, complex, name, arg1) \
+    TORCHSCIENCE_CUDA_POINTWISE_UNARY_DISPATCH(category, name, arg1)
+
+#define TORCHSCIENCE_CUDA_POINTWISE_BINARY(category, complex, name, arg1, arg2) \
+    TORCHSCIENCE_CUDA_POINTWISE_BINARY_DISPATCH(category, name, arg1, arg2)
+
+#define TORCHSCIENCE_CUDA_POINTWISE_TERNARY(category, complex, name, arg1, arg2, arg3) \
+    TORCHSCIENCE_CUDA_POINTWISE_TERNARY_DISPATCH(category, name, arg1, arg2, arg3)
+
+#define TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(category, complex, name, arg1, arg2, arg3, arg4) \
+    TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY_DISPATCH(category, name, arg1, arg2, arg3, arg4)
