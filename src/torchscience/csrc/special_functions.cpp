@@ -43,6 +43,16 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("trigamma_backward(Tensor grad_output, Tensor z) -> Tensor");
   m.def("trigamma_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
 
+  // Tetragamma function psi''(z)
+  m.def("tetragamma(Tensor z) -> Tensor");
+  m.def("tetragamma_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("tetragamma_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // Pentagamma function psi'''(z)
+  m.def("pentagamma(Tensor z) -> Tensor");
+  m.def("pentagamma_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("pentagamma_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
   m.def("polygamma(Tensor n, Tensor z) -> Tensor");
   m.def("polygamma_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
   m.def("polygamma_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
@@ -133,6 +143,16 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("chebyshev_polynomial_u(Tensor x, Tensor n) -> Tensor");
   m.def("chebyshev_polynomial_u_backward(Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor)");
   m.def("chebyshev_polynomial_u_backward_backward(Tensor gg_x, Tensor gg_n, Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor, Tensor)");
+
+  // Chebyshev polynomial of the third kind V_n(x)
+  m.def("chebyshev_polynomial_v(Tensor x, Tensor n) -> Tensor");
+  m.def("chebyshev_polynomial_v_backward(Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor)");
+  m.def("chebyshev_polynomial_v_backward_backward(Tensor gg_x, Tensor gg_n, Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor, Tensor)");
+
+  // Chebyshev polynomial of the fourth kind W_n(x)
+  m.def("chebyshev_polynomial_w(Tensor x, Tensor n) -> Tensor");
+  m.def("chebyshev_polynomial_w_backward(Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor)");
+  m.def("chebyshev_polynomial_w_backward_backward(Tensor gg_x, Tensor gg_n, Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor, Tensor)");
 
   // Modified Bessel functions of the first kind
   m.def("modified_bessel_i_0(Tensor z) -> Tensor");
@@ -680,4 +700,34 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("weber_e(Tensor n, Tensor z) -> Tensor");
   m.def("weber_e_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
   m.def("weber_e_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // cos(pi * x)
+  m.def("cos_pi(Tensor x) -> Tensor");
+  m.def("cos_pi_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("cos_pi_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // cosh(pi * x)
+  m.def("cosh_pi(Tensor x) -> Tensor");
+  m.def("cosh_pi_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("cosh_pi_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // sin(pi * x)
+  m.def("sin_pi(Tensor x) -> Tensor");
+  m.def("sin_pi_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("sin_pi_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // sinh(pi * x)
+  m.def("sinh_pi(Tensor x) -> Tensor");
+  m.def("sinh_pi_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("sinh_pi_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // tan(pi * x)
+  m.def("tan_pi(Tensor x) -> Tensor");
+  m.def("tan_pi_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("tan_pi_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // tanh(pi * x)
+  m.def("tanh_pi(Tensor x) -> Tensor");
+  m.def("tanh_pi_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("tanh_pi_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
 }
