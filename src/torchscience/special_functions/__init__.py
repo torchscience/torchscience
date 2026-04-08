@@ -22,6 +22,8 @@ from ._carlson_elliptic_integral_r_m import carlson_elliptic_integral_r_m
 from ._charlier_polynomial_c import charlier_polynomial_c
 from ._chebyshev_polynomial_t import chebyshev_polynomial_t
 from ._chebyshev_polynomial_u import chebyshev_polynomial_u
+from ._chebyshev_polynomial_v import chebyshev_polynomial_v
+from ._chebyshev_polynomial_w import chebyshev_polynomial_w
 from ._complete_legendre_elliptic_integral_e import (
     complete_legendre_elliptic_integral_e,
 )
@@ -33,6 +35,8 @@ from ._complete_legendre_elliptic_integral_pi import (
 )
 from ._confluent_hypergeometric_m import confluent_hypergeometric_m
 from ._confluent_hypergeometric_u import confluent_hypergeometric_u
+from ._cos_pi import cos_pi
+from ._cosh_pi import cosh_pi
 from ._cosine_integral_ci import cosine_integral_ci
 from ._dawson import dawson
 from ._digamma import digamma
@@ -114,13 +118,16 @@ from ._modified_bessel_k_0 import modified_bessel_k_0
 from ._modified_bessel_k_1 import modified_bessel_k_1
 from ._parabolic_cylinder_u import parabolic_cylinder_u
 from ._parabolic_cylinder_v import parabolic_cylinder_v
+from ._pentagamma import pentagamma
 from ._pochhammer import pochhammer
 from ._polygamma import polygamma
 from ._polylogarithm_li import polylogarithm_li
 from ._reciprocal_gamma import reciprocal_gamma
 from ._regularized_gamma_p import regularized_gamma_p
 from ._regularized_gamma_q import regularized_gamma_q
+from ._sin_pi import sin_pi
 from ._sine_integral_si import sine_integral_si
+from ._sinh_pi import sinh_pi
 from ._spherical_bessel_i import spherical_bessel_i
 from ._spherical_bessel_i_0 import spherical_bessel_i_0
 from ._spherical_bessel_i_1 import spherical_bessel_i_1
@@ -142,6 +149,9 @@ from ._struve_h_1 import struve_h_1
 from ._struve_l import struve_l
 from ._struve_l_0 import struve_l_0
 from ._struve_l_1 import struve_l_1
+from ._tan_pi import tan_pi
+from ._tanh_pi import tanh_pi
+from ._tetragamma import tetragamma
 from ._theta_1 import theta_1
 from ._theta_2 import theta_2
 from ._theta_3 import theta_3
@@ -182,12 +192,16 @@ __all__ = [
     "carlson_elliptic_integral_r_m",
     "chebyshev_polynomial_t",
     "chebyshev_polynomial_u",
+    "chebyshev_polynomial_v",
+    "chebyshev_polynomial_w",
     "complete_legendre_elliptic_integral_e",
     "complete_legendre_elliptic_integral_k",
     "complete_legendre_elliptic_integral_pi",
     "confluent_hypergeometric_m",
     "confluent_hypergeometric_u",
+    "cos_pi",
     "cosine_integral_ci",
+    "cosh_pi",
     "dawson",
     "digamma",
     "erfcinv",
@@ -267,13 +281,16 @@ __all__ = [
     "modified_bessel_k_1",
     "parabolic_cylinder_u",
     "parabolic_cylinder_v",
+    "pentagamma",
     "pochhammer",
     "polygamma",
     "polylogarithm_li",
     "reciprocal_gamma",
     "regularized_gamma_p",
     "regularized_gamma_q",
+    "sin_pi",
     "sine_integral_si",
+    "sinh_pi",
     "spherical_bessel_i",
     "spherical_bessel_i_0",
     "spherical_bessel_i_1",
@@ -295,6 +312,9 @@ __all__ = [
     "struve_l",
     "struve_l_0",
     "struve_l_1",
+    "tan_pi",
+    "tanh_pi",
+    "tetragamma",
     "theta_1",
     "theta_2",
     "theta_3",
