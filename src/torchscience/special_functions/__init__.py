@@ -3,7 +3,6 @@ from ._airy_bi import airy_bi
 from ._anger_j import anger_j
 from ._associated_legendre_polynomial_p import (
     associated_legendre_polynomial_p,
-    associated_legendre_polynomial_p_all,
 )
 from ._bessel_j import bessel_j
 from ._bessel_j_0 import bessel_j_0
@@ -165,7 +164,6 @@ __all__ = [
     "airy_bi",
     "anger_j",
     "associated_legendre_polynomial_p",
-    "associated_legendre_polynomial_p_all",
     "bessel_j",
     "bessel_j_0",
     "bessel_j_1",
