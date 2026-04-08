@@ -119,7 +119,214 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_hankel_1, SphericalHan
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_hankel_2, SphericalHankel2, n, z)
 
 // Spherical harmonic Y_l^m(theta, phi)
-TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY_OPERATOR(spherical_harmonic_y, SphericalHarmonicY, l, m, theta, phi)
+// Custom autograd implementation: promotes real inputs to complex before saving,
+// since the forward always produces complex output.
+namespace torchscience::autograd::special_functions {
+
+inline at::ScalarType spherical_harmonic_y_complex_dtype(
+    const at::Tensor &l, const at::Tensor &m,
+    const at::Tensor &theta, const at::Tensor &phi
+) {
+    auto dtype = at::promote_types(
+        at::result_type(l, m),
+        at::result_type(theta, phi)
+    );
+    if (!c10::isComplexType(dtype)) {
+        dtype = c10::toComplexType(dtype);
+    }
+    return dtype;
+}
+
+class SphericalHarmonicYBackward : public torch::autograd::Function<SphericalHarmonicYBackward> {
+public:
+  static std::vector<at::Tensor> forward(
+    torch::autograd::AutogradContext *context,
+    const at::Tensor &gradient_output,
+    const at::Tensor &l_input,
+    const at::Tensor &m_input,
+    const at::Tensor &theta_input,
+    const at::Tensor &phi_input,
+    bool l_requires_gradient,
+    bool m_requires_gradient,
+    bool theta_requires_gradient,
+    bool phi_requires_gradient
+  ) {
+    context->save_for_backward(
+      {gradient_output, l_input, m_input, theta_input, phi_input}
+    );
+
+    context->saved_data["l_requires_grad"] = l_requires_gradient;
+    context->saved_data["m_requires_grad"] = m_requires_gradient;
+    context->saved_data["theta_requires_grad"] = theta_requires_gradient;
+    context->saved_data["phi_requires_grad"] = phi_requires_gradient;
+
+    at::AutoDispatchBelowAutograd guard;
+
+    static auto op = c10::Dispatcher::singleton()
+      .findSchemaOrThrow("torchscience::spherical_harmonic_y_backward", "")
+      .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor>(
+        const at::Tensor &, const at::Tensor &, const at::Tensor &,
+        const at::Tensor &, const at::Tensor &
+      )>();
+
+    auto [l_gradient, m_gradient, theta_gradient, phi_gradient] = op.call(
+      gradient_output, l_input, m_input, theta_input, phi_input
+    );
+
+    return {l_gradient, m_gradient, theta_gradient, phi_gradient};
+  }
+
+  static std::vector<at::Tensor> backward(
+    torch::autograd::AutogradContext *context,
+    const std::vector<at::Tensor> &gradient_outputs
+  ) {
+    torch::autograd::variable_list saved_variables = context->get_saved_variables();
+
+    bool l_requires_grad = context->saved_data["l_requires_grad"].toBool();
+    bool m_requires_grad = context->saved_data["m_requires_grad"].toBool();
+    bool theta_requires_grad = context->saved_data["theta_requires_grad"].toBool();
+    bool phi_requires_grad = context->saved_data["phi_requires_grad"].toBool();
+
+    if ((!gradient_outputs[0].defined() &&
+         !gradient_outputs[1].defined() &&
+         !gradient_outputs[2].defined() &&
+         !gradient_outputs[3].defined()) ||
+        (!l_requires_grad && !m_requires_grad &&
+         !theta_requires_grad && !phi_requires_grad)) {
+      return {
+        at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(),
+        at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()
+      };
+    }
+
+    at::AutoDispatchBelowAutograd guard;
+
+    auto l_gg = gradient_outputs[0].defined()
+      ? gradient_outputs[0] : at::zeros_like(saved_variables[1]);
+    auto m_gg = gradient_outputs[1].defined()
+      ? gradient_outputs[1] : at::zeros_like(saved_variables[2]);
+    auto theta_gg = gradient_outputs[2].defined()
+      ? gradient_outputs[2] : at::zeros_like(saved_variables[3]);
+    auto phi_gg = gradient_outputs[3].defined()
+      ? gradient_outputs[3] : at::zeros_like(saved_variables[4]);
+
+    auto [
+      gradient_gradient_output,
+      l_gradient_output,
+      m_gradient_output,
+      theta_gradient_output,
+      phi_gradient_output
+    ] = c10::Dispatcher::singleton()
+      .findSchemaOrThrow("torchscience::spherical_harmonic_y_backward_backward", "")
+      .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor>(
+        const at::Tensor &, const at::Tensor &, const at::Tensor &, const at::Tensor &,
+        const at::Tensor &, const at::Tensor &, const at::Tensor &, const at::Tensor &,
+        const at::Tensor &
+      )>()
+      .call(
+        l_gg, m_gg, theta_gg, phi_gg,
+        saved_variables[0], saved_variables[1], saved_variables[2],
+        saved_variables[3], saved_variables[4]
+      );
+
+    return {
+      gradient_gradient_output,
+      l_gradient_output, m_gradient_output,
+      theta_gradient_output, phi_gradient_output,
+      at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()
+    };
+  }
+};
+
+class SphericalHarmonicY : public torch::autograd::Function<SphericalHarmonicY> {
+public:
+  static at::Tensor forward(
+    torch::autograd::AutogradContext *context,
+    const at::Tensor &l_input,
+    const at::Tensor &m_input,
+    const at::Tensor &theta_input,
+    const at::Tensor &phi_input
+  ) {
+    // Promote to complex before saving for backward
+    auto dtype = spherical_harmonic_y_complex_dtype(l_input, m_input, theta_input, phi_input);
+    auto l = l_input.to(dtype);
+    auto m = m_input.to(dtype);
+    auto theta = theta_input.to(dtype);
+    auto phi = phi_input.to(dtype);
+
+    context->save_for_backward({l, m, theta, phi});
+
+    context->saved_data["l_requires_grad"] = l_input.requires_grad() && (at::isFloatingType(l_input.scalar_type()) || at::isComplexType(l_input.scalar_type()));
+    context->saved_data["m_requires_grad"] = m_input.requires_grad() && (at::isFloatingType(m_input.scalar_type()) || at::isComplexType(m_input.scalar_type()));
+    context->saved_data["theta_requires_grad"] = theta_input.requires_grad() && (at::isFloatingType(theta_input.scalar_type()) || at::isComplexType(theta_input.scalar_type()));
+    context->saved_data["phi_requires_grad"] = phi_input.requires_grad() && (at::isFloatingType(phi_input.scalar_type()) || at::isComplexType(phi_input.scalar_type()));
+
+    // Save original input dtypes so backward can convert gradients appropriately
+    context->saved_data["l_is_complex"] = at::isComplexType(l_input.scalar_type());
+    context->saved_data["m_is_complex"] = at::isComplexType(m_input.scalar_type());
+    context->saved_data["theta_is_complex"] = at::isComplexType(theta_input.scalar_type());
+    context->saved_data["phi_is_complex"] = at::isComplexType(phi_input.scalar_type());
+
+    at::AutoDispatchBelowAutograd guard;
+
+    return c10::Dispatcher::singleton()
+      .findSchemaOrThrow("torchscience::spherical_harmonic_y", "")
+      .typed<at::Tensor(
+        const at::Tensor &, const at::Tensor &,
+        const at::Tensor &, const at::Tensor &
+      )>()
+      .call(l_input, m_input, theta_input, phi_input);
+  }
+
+  static torch::autograd::variable_list backward(
+    torch::autograd::AutogradContext *context,
+    const torch::autograd::variable_list &gradient_outputs
+  ) {
+    torch::autograd::variable_list variables = context->get_saved_variables();
+
+    bool l_requires_grad = context->saved_data["l_requires_grad"].toBool();
+    bool m_requires_grad = context->saved_data["m_requires_grad"].toBool();
+    bool theta_requires_grad = context->saved_data["theta_requires_grad"].toBool();
+    bool phi_requires_grad = context->saved_data["phi_requires_grad"].toBool();
+
+    bool l_is_complex = context->saved_data["l_is_complex"].toBool();
+    bool m_is_complex = context->saved_data["m_is_complex"].toBool();
+    bool theta_is_complex = context->saved_data["theta_is_complex"].toBool();
+    bool phi_is_complex = context->saved_data["phi_is_complex"].toBool();
+
+    auto gradients = SphericalHarmonicYBackward::apply(
+      gradient_outputs[0],
+      variables[0], variables[1], variables[2], variables[3],
+      l_requires_grad, m_requires_grad, theta_requires_grad, phi_requires_grad
+    );
+
+    // Project complex gradients back to real for originally-real inputs
+    auto project = [](const at::Tensor &grad, bool was_complex) -> at::Tensor {
+      if (was_complex || !grad.is_complex()) return grad;
+      return at::real(grad);
+    };
+
+    return {
+      l_requires_grad ? project(gradients[0], l_is_complex) : at::Tensor(),
+      m_requires_grad ? project(gradients[1], m_is_complex) : at::Tensor(),
+      theta_requires_grad ? project(gradients[2], theta_is_complex) : at::Tensor(),
+      phi_requires_grad ? project(gradients[3], phi_is_complex) : at::Tensor()
+    };
+  }
+};
+
+inline at::Tensor spherical_harmonic_y(
+  const at::Tensor &l, const at::Tensor &m,
+  const at::Tensor &theta, const at::Tensor &phi
+) {
+  return SphericalHarmonicY::apply(l, m, theta, phi);
+}
+
+} // namespace torchscience::autograd::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {
+  module.impl("spherical_harmonic_y", torchscience::autograd::special_functions::spherical_harmonic_y);
+}
 
 // Airy function of the first kind
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(airy_ai, AiryAi, x)
@@ -240,6 +447,9 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(legendre_polynomial_p, LegendreP
 
 // Legendre function of the second kind Q_n(x)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(legendre_polynomial_q, LegendrePolynomialQ, x, n)
+
+// Associated Legendre polynomial P_n^m(x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(associated_legendre_polynomial_p, AssociatedLegendrePolynomialP, n, m, x)
 
 // Hermite polynomial (physicists') H_n(z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(hermite_polynomial_h, HermitePolynomialH, n, z)

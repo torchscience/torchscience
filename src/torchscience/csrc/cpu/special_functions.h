@@ -1591,11 +1591,234 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
 }
 
 // Spherical harmonic Y_l^m(theta, phi)
+// Custom implementation since it always produces complex output.
+// Real inputs are promoted to complex before dispatch.
 #include "../kernel/special_functions/spherical_harmonic_y.h"
 #include "../kernel/special_functions/spherical_harmonic_y_backward.h"
 #include "../kernel/special_functions/spherical_harmonic_y_backward_backward.h"
 
-TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(spherical_harmonic_y, l, m, theta, phi)
+namespace torchscience::cpu::special_functions {
+
+inline at::Tensor spherical_harmonic_y(
+    const at::Tensor &l_input,
+    const at::Tensor &m_input,
+    const at::Tensor &theta_input,
+    const at::Tensor &phi_input
+) {
+    auto dtype = at::promote_types(
+        at::result_type(l_input, m_input),
+        at::result_type(theta_input, phi_input)
+    );
+    if (!c10::isComplexType(dtype)) {
+        dtype = c10::toComplexType(dtype);
+    }
+
+    auto l = l_input.to(dtype);
+    auto m = m_input.to(dtype);
+    auto theta = theta_input.to(dtype);
+    auto phi = phi_input.to(dtype);
+
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(l)
+        .add_const_input(m)
+        .add_const_input(theta)
+        .add_const_input(phi)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_harmonic_y",
+        [&] {
+            at::native::cpu_kernel(
+                iterator,
+                [] (scalar_t l, scalar_t m, scalar_t theta, scalar_t phi) -> scalar_t {
+                    return kernel::special_functions::spherical_harmonic_y(l, m, theta, phi);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor>
+spherical_harmonic_y_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &l_input,
+    const at::Tensor &m_input,
+    const at::Tensor &theta_input,
+    const at::Tensor &phi_input
+) {
+    auto dtype = at::promote_types(
+        at::promote_types(
+            at::result_type(l_input, m_input),
+            at::result_type(theta_input, phi_input)
+        ),
+        gradient_input.scalar_type()
+    );
+    if (!c10::isComplexType(dtype)) {
+        dtype = c10::toComplexType(dtype);
+    }
+
+    auto gradient = gradient_input.to(dtype);
+    auto l = l_input.to(dtype);
+    auto m = m_input.to(dtype);
+    auto theta = theta_input.to(dtype);
+    auto phi = phi_input.to(dtype);
+
+    at::Tensor l_gradient_output;
+    at::Tensor m_gradient_output;
+    at::Tensor theta_gradient_output;
+    at::Tensor phi_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(l_gradient_output)
+        .add_output(m_gradient_output)
+        .add_output(theta_gradient_output)
+        .add_output(phi_gradient_output)
+        .add_const_input(gradient)
+        .add_const_input(l)
+        .add_const_input(m)
+        .add_const_input(theta)
+        .add_const_input(phi)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_harmonic_y_backward",
+        [&] {
+            at::native::cpu_kernel_multiple_outputs(
+                iterator,
+                [] (scalar_t gradient, scalar_t l, scalar_t m, scalar_t theta, scalar_t phi)
+                    -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    return kernel::special_functions::spherical_harmonic_y_backward(
+                        gradient, l, m, theta, phi);
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2), iterator.output(3)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor>
+spherical_harmonic_y_backward_backward(
+    const at::Tensor &l_gradient_gradient_input,
+    const at::Tensor &m_gradient_gradient_input,
+    const at::Tensor &theta_gradient_gradient_input,
+    const at::Tensor &phi_gradient_gradient_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &l_input,
+    const at::Tensor &m_input,
+    const at::Tensor &theta_input,
+    const at::Tensor &phi_input
+) {
+    if (!l_gradient_gradient_input.defined() &&
+        !m_gradient_gradient_input.defined() &&
+        !theta_gradient_gradient_input.defined() &&
+        !phi_gradient_gradient_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    auto dtype = at::promote_types(
+        at::promote_types(
+            at::result_type(l_input, m_input),
+            at::result_type(theta_input, phi_input)
+        ),
+        gradient_input.scalar_type()
+    );
+    if (!c10::isComplexType(dtype)) {
+        dtype = c10::toComplexType(dtype);
+    }
+
+    auto l_gg = l_gradient_gradient_input.defined()
+        ? l_gradient_gradient_input.to(dtype)
+        : at::zeros_like(l_input, at::TensorOptions().dtype(dtype));
+    auto m_gg = m_gradient_gradient_input.defined()
+        ? m_gradient_gradient_input.to(dtype)
+        : at::zeros_like(m_input, at::TensorOptions().dtype(dtype));
+    auto theta_gg = theta_gradient_gradient_input.defined()
+        ? theta_gradient_gradient_input.to(dtype)
+        : at::zeros_like(theta_input, at::TensorOptions().dtype(dtype));
+    auto phi_gg = phi_gradient_gradient_input.defined()
+        ? phi_gradient_gradient_input.to(dtype)
+        : at::zeros_like(phi_input, at::TensorOptions().dtype(dtype));
+
+    auto gradient = gradient_input.to(dtype);
+    auto l = l_input.to(dtype);
+    auto m = m_input.to(dtype);
+    auto theta = theta_input.to(dtype);
+    auto phi = phi_input.to(dtype);
+
+    at::Tensor gradient_gradient_output;
+    at::Tensor l_gradient_output;
+    at::Tensor m_gradient_output;
+    at::Tensor theta_gradient_output;
+    at::Tensor phi_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_gradient_output)
+        .add_output(l_gradient_output)
+        .add_output(m_gradient_output)
+        .add_output(theta_gradient_output)
+        .add_output(phi_gradient_output)
+        .add_const_input(l_gg)
+        .add_const_input(m_gg)
+        .add_const_input(theta_gg)
+        .add_const_input(phi_gg)
+        .add_const_input(gradient)
+        .add_const_input(l)
+        .add_const_input(m)
+        .add_const_input(theta)
+        .add_const_input(phi)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_harmonic_y_backward_backward",
+        [&] {
+            at::native::cpu_kernel_multiple_outputs(
+                iterator,
+                [] (
+                    scalar_t l_gradient_gradient,
+                    scalar_t m_gradient_gradient,
+                    scalar_t theta_gradient_gradient,
+                    scalar_t phi_gradient_gradient,
+                    scalar_t gradient,
+                    scalar_t l,
+                    scalar_t m,
+                    scalar_t theta,
+                    scalar_t phi
+                ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t, scalar_t> {
+                    return kernel::special_functions::spherical_harmonic_y_backward_backward(
+                        l_gradient_gradient, m_gradient_gradient,
+                        theta_gradient_gradient, phi_gradient_gradient,
+                        gradient, l, m, theta, phi);
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2),
+            iterator.output(3), iterator.output(4)};
+}
+
+} // namespace torchscience::cpu::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
+    module.impl("spherical_harmonic_y", torchscience::cpu::special_functions::spherical_harmonic_y);
+    module.impl("spherical_harmonic_y_backward", torchscience::cpu::special_functions::spherical_harmonic_y_backward);
+    module.impl("spherical_harmonic_y_backward_backward", torchscience::cpu::special_functions::spherical_harmonic_y_backward_backward);
+}
 
 // Airy function of the first kind
 #include "../kernel/special_functions/airy_ai.h"
@@ -2459,6 +2682,13 @@ TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(legendre_polynomial_p, n
 #include "../kernel/special_functions/legendre_polynomial_q_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(legendre_polynomial_q, x, n)
+
+// Associated Legendre polynomial P_n^m(x)
+#include "../kernel/special_functions/associated_legendre_polynomial_p.h"
+#include "../kernel/special_functions/associated_legendre_polynomial_p_backward.h"
+#include "../kernel/special_functions/associated_legendre_polynomial_p_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(associated_legendre_polynomial_p, n, m, x)
 
 // Hermite polynomial (physicists') H_n(z)
 #include "../kernel/special_functions/hermite_polynomial_h.h"

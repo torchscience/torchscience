@@ -689,6 +689,13 @@ TORCHSCIENCE_CUDA_POINTWISE_BINARY_OPERATOR(legendre_polynomial_p, n, z)
 
 TORCHSCIENCE_CUDA_POINTWISE_BINARY_OPERATOR(legendre_polynomial_q, x, n)
 
+// Associated Legendre polynomial P_n^m(x)
+#include "../kernel/special_functions/associated_legendre_polynomial_p.h"
+#include "../kernel/special_functions/associated_legendre_polynomial_p_backward.h"
+#include "../kernel/special_functions/associated_legendre_polynomial_p_backward_backward.h"
+
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY_OPERATOR(associated_legendre_polynomial_p, n, m, x)
+
 #include "../kernel/special_functions/hermite_polynomial_h.h"
 #include "../kernel/special_functions/hermite_polynomial_h_backward.h"
 #include "../kernel/special_functions/hermite_polynomial_h_backward_backward.h"

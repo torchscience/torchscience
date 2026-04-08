@@ -216,6 +216,9 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(legendre_polynomial_p, n, z)
 // Legendre function of the second kind Q_n(x)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(legendre_polynomial_q, x, n)
 
+// Associated Legendre polynomial P_n^m(x)
+TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY_OPERATOR(associated_legendre_polynomial_p, n, m, x)
+
 // Hermite polynomial (physicists') H_n(z)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(hermite_polynomial_h, n, z)
 
