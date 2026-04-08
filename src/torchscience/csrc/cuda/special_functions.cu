@@ -889,3 +889,1840 @@ TORCHSCIENCE_CUDA_POINTWISE_UNARY_OPERATOR(tanh_pi, x)
 #include "../kernel/special_functions/hahn_polynomial_q_backward_backward.h"
 
 TORCHSCIENCE_CUDA_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, beta, N)
+
+// ============================================================================
+// Group D: Weierstrass P, Sigma, Zeta (ternary, float+complex)
+// ============================================================================
+#include "../kernel/special_functions/weierstrass_p.h"
+#include "../kernel/special_functions/weierstrass_p_backward.h"
+#include "../kernel/special_functions/weierstrass_p_backward_backward.h"
+
+namespace torchscience::cuda::special_functions {
+
+inline at::Tensor weierstrass_p(
+    const at::Tensor &z_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    c10::cuda::CUDAGuard device_guard(z_input.device());
+
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(z_input)
+        .add_const_input(g2_input)
+        .add_const_input(g3_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "weierstrass_p",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [] GPU_LAMBDA (scalar_t z, scalar_t g2, scalar_t g3) -> scalar_t {
+                    return kernel::special_functions::weierstrass_p(z, g2, g3);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> weierstrass_p_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor gradient_z;
+    at::Tensor gradient_g2;
+    at::Tensor gradient_g3;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_z)
+        .add_output(gradient_g2)
+        .add_output(gradient_g3)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .add_const_input(g2_input)
+        .add_const_input(g3_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "weierstrass_p_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (scalar_t gradient, scalar_t z, scalar_t g2, scalar_t g3)
+                    -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::weierstrass_p_backward(
+                        gradient, z, g2, g3
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> weierstrass_p_backward_backward(
+    const at::Tensor &gg_z_input,
+    const at::Tensor &gg_g2_input,
+    const at::Tensor &gg_g3_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    if (!gg_z_input.defined() && !gg_g2_input.defined() && !gg_g3_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor grad_grad;
+    at::Tensor grad_z;
+    at::Tensor grad_g2;
+    at::Tensor grad_g3;
+
+    auto z_gg = gg_z_input.defined() ? gg_z_input : at::zeros_like(z_input);
+    auto g2_gg = gg_g2_input.defined() ? gg_g2_input : at::zeros_like(g2_input);
+    auto g3_gg = gg_g3_input.defined() ? gg_g3_input : at::zeros_like(g3_input);
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(grad_grad)
+        .add_output(grad_z)
+        .add_output(grad_g2)
+        .add_output(grad_g3)
+        .add_const_input(z_gg)
+        .add_const_input(g2_gg)
+        .add_const_input(g3_gg)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .add_const_input(g2_input)
+        .add_const_input(g3_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "weierstrass_p_backward_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (
+                    scalar_t gg_z,
+                    scalar_t gg_g2,
+                    scalar_t gg_g3,
+                    scalar_t gradient,
+                    scalar_t z,
+                    scalar_t g2,
+                    scalar_t g3
+                ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::weierstrass_p_backward_backward(
+                        gg_z, gg_g2, gg_g3, gradient, z, g2, g3
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result),
+                        std::get<3>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2), iterator.output(3)};
+}
+
+} // namespace torchscience::cuda::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+    module.impl("weierstrass_p", torchscience::cuda::special_functions::weierstrass_p);
+    module.impl("weierstrass_p_backward", torchscience::cuda::special_functions::weierstrass_p_backward);
+    module.impl("weierstrass_p_backward_backward", torchscience::cuda::special_functions::weierstrass_p_backward_backward);
+}
+
+#include "../kernel/special_functions/weierstrass_sigma.h"
+#include "../kernel/special_functions/weierstrass_sigma_backward.h"
+#include "../kernel/special_functions/weierstrass_sigma_backward_backward.h"
+
+namespace torchscience::cuda::special_functions {
+
+inline at::Tensor weierstrass_sigma(
+    const at::Tensor &z_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    c10::cuda::CUDAGuard device_guard(z_input.device());
+
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(z_input)
+        .add_const_input(g2_input)
+        .add_const_input(g3_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "weierstrass_sigma",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [] GPU_LAMBDA (scalar_t z, scalar_t g2, scalar_t g3) -> scalar_t {
+                    return kernel::special_functions::weierstrass_sigma(z, g2, g3);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> weierstrass_sigma_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor gradient_z;
+    at::Tensor gradient_g2;
+    at::Tensor gradient_g3;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_z)
+        .add_output(gradient_g2)
+        .add_output(gradient_g3)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .add_const_input(g2_input)
+        .add_const_input(g3_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "weierstrass_sigma_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (scalar_t gradient, scalar_t z, scalar_t g2, scalar_t g3)
+                    -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::weierstrass_sigma_backward(
+                        gradient, z, g2, g3
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> weierstrass_sigma_backward_backward(
+    const at::Tensor &gg_z_input,
+    const at::Tensor &gg_g2_input,
+    const at::Tensor &gg_g3_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    if (!gg_z_input.defined() && !gg_g2_input.defined() && !gg_g3_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor grad_grad;
+    at::Tensor grad_z;
+    at::Tensor grad_g2;
+    at::Tensor grad_g3;
+
+    auto z_gg = gg_z_input.defined() ? gg_z_input : at::zeros_like(z_input);
+    auto g2_gg = gg_g2_input.defined() ? gg_g2_input : at::zeros_like(g2_input);
+    auto g3_gg = gg_g3_input.defined() ? gg_g3_input : at::zeros_like(g3_input);
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(grad_grad)
+        .add_output(grad_z)
+        .add_output(grad_g2)
+        .add_output(grad_g3)
+        .add_const_input(z_gg)
+        .add_const_input(g2_gg)
+        .add_const_input(g3_gg)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .add_const_input(g2_input)
+        .add_const_input(g3_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "weierstrass_sigma_backward_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (
+                    scalar_t gg_z,
+                    scalar_t gg_g2,
+                    scalar_t gg_g3,
+                    scalar_t gradient,
+                    scalar_t z,
+                    scalar_t g2,
+                    scalar_t g3
+                ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::weierstrass_sigma_backward_backward(
+                        gg_z, gg_g2, gg_g3, gradient, z, g2, g3
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result),
+                        std::get<3>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2), iterator.output(3)};
+}
+
+} // namespace torchscience::cuda::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+    module.impl("weierstrass_sigma", torchscience::cuda::special_functions::weierstrass_sigma);
+    module.impl("weierstrass_sigma_backward", torchscience::cuda::special_functions::weierstrass_sigma_backward);
+    module.impl("weierstrass_sigma_backward_backward", torchscience::cuda::special_functions::weierstrass_sigma_backward_backward);
+}
+
+#include "../kernel/special_functions/weierstrass_zeta.h"
+#include "../kernel/special_functions/weierstrass_zeta_backward.h"
+#include "../kernel/special_functions/weierstrass_zeta_backward_backward.h"
+
+namespace torchscience::cuda::special_functions {
+
+inline at::Tensor weierstrass_zeta(
+    const at::Tensor &z_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    c10::cuda::CUDAGuard device_guard(z_input.device());
+
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(z_input)
+        .add_const_input(g2_input)
+        .add_const_input(g3_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "weierstrass_zeta",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [] GPU_LAMBDA (scalar_t z, scalar_t g2, scalar_t g3) -> scalar_t {
+                    return kernel::special_functions::weierstrass_zeta(z, g2, g3);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> weierstrass_zeta_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor gradient_z;
+    at::Tensor gradient_g2;
+    at::Tensor gradient_g3;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_z)
+        .add_output(gradient_g2)
+        .add_output(gradient_g3)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .add_const_input(g2_input)
+        .add_const_input(g3_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "weierstrass_zeta_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (scalar_t gradient, scalar_t z, scalar_t g2, scalar_t g3)
+                    -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::weierstrass_zeta_backward(
+                        gradient, z, g2, g3
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> weierstrass_zeta_backward_backward(
+    const at::Tensor &gg_z_input,
+    const at::Tensor &gg_g2_input,
+    const at::Tensor &gg_g3_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    if (!gg_z_input.defined() && !gg_g2_input.defined() && !gg_g3_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor grad_grad;
+    at::Tensor grad_z;
+    at::Tensor grad_g2;
+    at::Tensor grad_g3;
+
+    auto z_gg = gg_z_input.defined() ? gg_z_input : at::zeros_like(z_input);
+    auto g2_gg = gg_g2_input.defined() ? gg_g2_input : at::zeros_like(g2_input);
+    auto g3_gg = gg_g3_input.defined() ? gg_g3_input : at::zeros_like(g3_input);
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(grad_grad)
+        .add_output(grad_z)
+        .add_output(grad_g2)
+        .add_output(grad_g3)
+        .add_const_input(z_gg)
+        .add_const_input(g2_gg)
+        .add_const_input(g3_gg)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .add_const_input(g2_input)
+        .add_const_input(g3_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "weierstrass_zeta_backward_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (
+                    scalar_t gg_z,
+                    scalar_t gg_g2,
+                    scalar_t gg_g3,
+                    scalar_t gradient,
+                    scalar_t z,
+                    scalar_t g2,
+                    scalar_t g3
+                ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::weierstrass_zeta_backward_backward(
+                        gg_z, gg_g2, gg_g3, gradient, z, g2, g3
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result),
+                        std::get<3>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2), iterator.output(3)};
+}
+
+} // namespace torchscience::cuda::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+    module.impl("weierstrass_zeta", torchscience::cuda::special_functions::weierstrass_zeta);
+    module.impl("weierstrass_zeta_backward", torchscience::cuda::special_functions::weierstrass_zeta_backward);
+    module.impl("weierstrass_zeta_backward_backward", torchscience::cuda::special_functions::weierstrass_zeta_backward_backward);
+}
+
+// ============================================================================
+// Group C: Weierstrass Eta (binary, float+complex)
+// ============================================================================
+#include "../kernel/special_functions/weierstrass_eta.h"
+#include "../kernel/special_functions/weierstrass_eta_backward.h"
+#include "../kernel/special_functions/weierstrass_eta_backward_backward.h"
+
+namespace torchscience::cuda::special_functions {
+
+inline at::Tensor weierstrass_eta(
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    c10::cuda::CUDAGuard device_guard(g2_input.device());
+
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(g2_input)
+        .add_const_input(g3_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "weierstrass_eta",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [] GPU_LAMBDA (scalar_t g2, scalar_t g3) -> scalar_t {
+                    return kernel::special_functions::weierstrass_eta(g2, g3);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor> weierstrass_eta_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor gradient_g2;
+    at::Tensor gradient_g3;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_g2)
+        .add_output(gradient_g3)
+        .add_const_input(gradient_input)
+        .add_const_input(g2_input)
+        .add_const_input(g3_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "weierstrass_eta_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (scalar_t gradient, scalar_t g2, scalar_t g3)
+                    -> std::tuple<scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::weierstrass_eta_backward(
+                        gradient, g2, g3
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> weierstrass_eta_backward_backward(
+    const at::Tensor &gg_g2_input,
+    const at::Tensor &gg_g3_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    if (!gg_g2_input.defined() && !gg_g3_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor grad_grad;
+    at::Tensor grad_g2;
+    at::Tensor grad_g3;
+
+    auto g2_gg = gg_g2_input.defined() ? gg_g2_input : at::zeros_like(g2_input);
+    auto g3_gg = gg_g3_input.defined() ? gg_g3_input : at::zeros_like(g3_input);
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(grad_grad)
+        .add_output(grad_g2)
+        .add_output(grad_g3)
+        .add_const_input(g2_gg)
+        .add_const_input(g3_gg)
+        .add_const_input(gradient_input)
+        .add_const_input(g2_input)
+        .add_const_input(g3_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "weierstrass_eta_backward_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (
+                    scalar_t gg_g2,
+                    scalar_t gg_g3,
+                    scalar_t gradient,
+                    scalar_t g2,
+                    scalar_t g3
+                ) -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::weierstrass_eta_backward_backward(
+                        gg_g2, gg_g3, gradient, g2, g3
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2)};
+}
+
+} // namespace torchscience::cuda::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+    module.impl("weierstrass_eta", torchscience::cuda::special_functions::weierstrass_eta);
+    module.impl("weierstrass_eta_backward", torchscience::cuda::special_functions::weierstrass_eta_backward);
+    module.impl("weierstrass_eta_backward_backward", torchscience::cuda::special_functions::weierstrass_eta_backward_backward);
+}
+
+// ============================================================================
+// Group B: Spherical Hankel functions (binary, complex-only)
+// ============================================================================
+#include "../kernel/special_functions/spherical_hankel_1.h"
+#include "../kernel/special_functions/spherical_hankel_1_backward.h"
+#include "../kernel/special_functions/spherical_hankel_1_backward_backward.h"
+
+namespace torchscience::cuda::special_functions {
+
+inline at::Tensor spherical_hankel_1(
+    const at::Tensor &n_input,
+    const at::Tensor &z_input
+) {
+    c10::cuda::CUDAGuard device_guard(n_input.device());
+
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(n_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_hankel_1",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [] GPU_LAMBDA (scalar_t n, scalar_t z) -> scalar_t {
+                    return kernel::special_functions::spherical_hankel_1(n, z);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor> spherical_hankel_1_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &n_input,
+    const at::Tensor &z_input
+) {
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor n_gradient_output;
+    at::Tensor z_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(n_gradient_output)
+        .add_output(z_gradient_output)
+        .add_const_input(gradient_input)
+        .add_const_input(n_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_hankel_1_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (scalar_t gradient, scalar_t n, scalar_t z)
+                    -> std::tuple<scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::spherical_hankel_1_backward(
+                        gradient, n, z
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> spherical_hankel_1_backward_backward(
+    const at::Tensor &n_gradient_gradient_input,
+    const at::Tensor &z_gradient_gradient_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &n_input,
+    const at::Tensor &z_input
+) {
+    if (!n_gradient_gradient_input.defined() && !z_gradient_gradient_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor gradient_gradient_output;
+    at::Tensor n_gradient_output;
+    at::Tensor z_gradient_output;
+
+    auto n_gg = n_gradient_gradient_input.defined()
+        ? n_gradient_gradient_input
+        : at::zeros_like(n_input);
+    auto z_gg = z_gradient_gradient_input.defined()
+        ? z_gradient_gradient_input
+        : at::zeros_like(z_input);
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_gradient_output)
+        .add_output(n_gradient_output)
+        .add_output(z_gradient_output)
+        .add_const_input(n_gg)
+        .add_const_input(z_gg)
+        .add_const_input(gradient_input)
+        .add_const_input(n_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_hankel_1_backward_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (
+                    scalar_t n_gradient_gradient,
+                    scalar_t z_gradient_gradient,
+                    scalar_t gradient,
+                    scalar_t n,
+                    scalar_t z
+                ) -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::spherical_hankel_1_backward_backward(
+                        n_gradient_gradient, z_gradient_gradient, gradient, n, z
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2)};
+}
+
+} // namespace torchscience::cuda::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+    module.impl("spherical_hankel_1", torchscience::cuda::special_functions::spherical_hankel_1);
+    module.impl("spherical_hankel_1_backward", torchscience::cuda::special_functions::spherical_hankel_1_backward);
+    module.impl("spherical_hankel_1_backward_backward", torchscience::cuda::special_functions::spherical_hankel_1_backward_backward);
+}
+
+#include "../kernel/special_functions/spherical_hankel_2.h"
+#include "../kernel/special_functions/spherical_hankel_2_backward.h"
+#include "../kernel/special_functions/spherical_hankel_2_backward_backward.h"
+
+namespace torchscience::cuda::special_functions {
+
+inline at::Tensor spherical_hankel_2(
+    const at::Tensor &n_input,
+    const at::Tensor &z_input
+) {
+    c10::cuda::CUDAGuard device_guard(n_input.device());
+
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(n_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_hankel_2",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [] GPU_LAMBDA (scalar_t n, scalar_t z) -> scalar_t {
+                    return kernel::special_functions::spherical_hankel_2(n, z);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor> spherical_hankel_2_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &n_input,
+    const at::Tensor &z_input
+) {
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor n_gradient_output;
+    at::Tensor z_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(n_gradient_output)
+        .add_output(z_gradient_output)
+        .add_const_input(gradient_input)
+        .add_const_input(n_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_hankel_2_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (scalar_t gradient, scalar_t n, scalar_t z)
+                    -> std::tuple<scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::spherical_hankel_2_backward(
+                        gradient, n, z
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> spherical_hankel_2_backward_backward(
+    const at::Tensor &n_gradient_gradient_input,
+    const at::Tensor &z_gradient_gradient_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &n_input,
+    const at::Tensor &z_input
+) {
+    if (!n_gradient_gradient_input.defined() && !z_gradient_gradient_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor gradient_gradient_output;
+    at::Tensor n_gradient_output;
+    at::Tensor z_gradient_output;
+
+    auto n_gg = n_gradient_gradient_input.defined()
+        ? n_gradient_gradient_input
+        : at::zeros_like(n_input);
+    auto z_gg = z_gradient_gradient_input.defined()
+        ? z_gradient_gradient_input
+        : at::zeros_like(z_input);
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_gradient_output)
+        .add_output(n_gradient_output)
+        .add_output(z_gradient_output)
+        .add_const_input(n_gg)
+        .add_const_input(z_gg)
+        .add_const_input(gradient_input)
+        .add_const_input(n_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_hankel_2_backward_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (
+                    scalar_t n_gradient_gradient,
+                    scalar_t z_gradient_gradient,
+                    scalar_t gradient,
+                    scalar_t n,
+                    scalar_t z
+                ) -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::spherical_hankel_2_backward_backward(
+                        n_gradient_gradient, z_gradient_gradient, gradient, n, z
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2)};
+}
+
+} // namespace torchscience::cuda::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+    module.impl("spherical_hankel_2", torchscience::cuda::special_functions::spherical_hankel_2);
+    module.impl("spherical_hankel_2_backward", torchscience::cuda::special_functions::spherical_hankel_2_backward);
+    module.impl("spherical_hankel_2_backward_backward", torchscience::cuda::special_functions::spherical_hankel_2_backward_backward);
+}
+
+// ============================================================================
+// Group F: Spherical Harmonic Y (quaternary, complex with type promotion)
+// ============================================================================
+#include "../kernel/special_functions/spherical_harmonic_y.h"
+#include "../kernel/special_functions/spherical_harmonic_y_backward.h"
+#include "../kernel/special_functions/spherical_harmonic_y_backward_backward.h"
+
+namespace torchscience::cuda::special_functions {
+
+inline at::Tensor spherical_harmonic_y(
+    const at::Tensor &l_input,
+    const at::Tensor &m_input,
+    const at::Tensor &theta_input,
+    const at::Tensor &phi_input
+) {
+    c10::cuda::CUDAGuard device_guard(l_input.device());
+
+    auto dtype = at::promote_types(
+        at::result_type(l_input, m_input),
+        at::result_type(theta_input, phi_input)
+    );
+    if (!c10::isComplexType(dtype)) {
+        dtype = c10::toComplexType(dtype);
+    }
+
+    auto l = l_input.to(dtype);
+    auto m = m_input.to(dtype);
+    auto theta = theta_input.to(dtype);
+    auto phi = phi_input.to(dtype);
+
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(l)
+        .add_const_input(m)
+        .add_const_input(theta)
+        .add_const_input(phi)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_harmonic_y",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [] GPU_LAMBDA (scalar_t l, scalar_t m, scalar_t theta, scalar_t phi) -> scalar_t {
+                    return kernel::special_functions::spherical_harmonic_y(l, m, theta, phi);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor>
+spherical_harmonic_y_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &l_input,
+    const at::Tensor &m_input,
+    const at::Tensor &theta_input,
+    const at::Tensor &phi_input
+) {
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    auto dtype = at::promote_types(
+        at::promote_types(
+            at::result_type(l_input, m_input),
+            at::result_type(theta_input, phi_input)
+        ),
+        gradient_input.scalar_type()
+    );
+    if (!c10::isComplexType(dtype)) {
+        dtype = c10::toComplexType(dtype);
+    }
+
+    auto gradient = gradient_input.to(dtype);
+    auto l = l_input.to(dtype);
+    auto m = m_input.to(dtype);
+    auto theta = theta_input.to(dtype);
+    auto phi = phi_input.to(dtype);
+
+    at::Tensor l_gradient_output;
+    at::Tensor m_gradient_output;
+    at::Tensor theta_gradient_output;
+    at::Tensor phi_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(l_gradient_output)
+        .add_output(m_gradient_output)
+        .add_output(theta_gradient_output)
+        .add_output(phi_gradient_output)
+        .add_const_input(gradient)
+        .add_const_input(l)
+        .add_const_input(m)
+        .add_const_input(theta)
+        .add_const_input(phi)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_harmonic_y_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (scalar_t gradient, scalar_t l, scalar_t m, scalar_t theta, scalar_t phi)
+                    -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::spherical_harmonic_y_backward(
+                        gradient, l, m, theta, phi
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result),
+                        std::get<3>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2), iterator.output(3)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor>
+spherical_harmonic_y_backward_backward(
+    const at::Tensor &l_gradient_gradient_input,
+    const at::Tensor &m_gradient_gradient_input,
+    const at::Tensor &theta_gradient_gradient_input,
+    const at::Tensor &phi_gradient_gradient_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &l_input,
+    const at::Tensor &m_input,
+    const at::Tensor &theta_input,
+    const at::Tensor &phi_input
+) {
+    if (!l_gradient_gradient_input.defined() &&
+        !m_gradient_gradient_input.defined() &&
+        !theta_gradient_gradient_input.defined() &&
+        !phi_gradient_gradient_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    auto dtype = at::promote_types(
+        at::promote_types(
+            at::result_type(l_input, m_input),
+            at::result_type(theta_input, phi_input)
+        ),
+        gradient_input.scalar_type()
+    );
+    if (!c10::isComplexType(dtype)) {
+        dtype = c10::toComplexType(dtype);
+    }
+
+    auto l_gg = l_gradient_gradient_input.defined()
+        ? l_gradient_gradient_input.to(dtype)
+        : at::zeros_like(l_input, at::TensorOptions().dtype(dtype));
+    auto m_gg = m_gradient_gradient_input.defined()
+        ? m_gradient_gradient_input.to(dtype)
+        : at::zeros_like(m_input, at::TensorOptions().dtype(dtype));
+    auto theta_gg = theta_gradient_gradient_input.defined()
+        ? theta_gradient_gradient_input.to(dtype)
+        : at::zeros_like(theta_input, at::TensorOptions().dtype(dtype));
+    auto phi_gg = phi_gradient_gradient_input.defined()
+        ? phi_gradient_gradient_input.to(dtype)
+        : at::zeros_like(phi_input, at::TensorOptions().dtype(dtype));
+
+    auto gradient = gradient_input.to(dtype);
+    auto l = l_input.to(dtype);
+    auto m = m_input.to(dtype);
+    auto theta = theta_input.to(dtype);
+    auto phi = phi_input.to(dtype);
+
+    at::Tensor gradient_gradient_output;
+    at::Tensor l_gradient_output;
+    at::Tensor m_gradient_output;
+    at::Tensor theta_gradient_output;
+    at::Tensor phi_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_gradient_output)
+        .add_output(l_gradient_output)
+        .add_output(m_gradient_output)
+        .add_output(theta_gradient_output)
+        .add_output(phi_gradient_output)
+        .add_const_input(l_gg)
+        .add_const_input(m_gg)
+        .add_const_input(theta_gg)
+        .add_const_input(phi_gg)
+        .add_const_input(gradient)
+        .add_const_input(l)
+        .add_const_input(m)
+        .add_const_input(theta)
+        .add_const_input(phi)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_harmonic_y_backward_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (
+                    scalar_t l_gradient_gradient,
+                    scalar_t m_gradient_gradient,
+                    scalar_t theta_gradient_gradient,
+                    scalar_t phi_gradient_gradient,
+                    scalar_t gradient,
+                    scalar_t l,
+                    scalar_t m,
+                    scalar_t theta,
+                    scalar_t phi
+                ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::spherical_harmonic_y_backward_backward(
+                        l_gradient_gradient, m_gradient_gradient,
+                        theta_gradient_gradient, phi_gradient_gradient,
+                        gradient, l, m, theta, phi
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result),
+                        std::get<3>(result),
+                        std::get<4>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2),
+            iterator.output(3), iterator.output(4)};
+}
+
+} // namespace torchscience::cuda::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+    module.impl("spherical_harmonic_y", torchscience::cuda::special_functions::spherical_harmonic_y);
+    module.impl("spherical_harmonic_y_backward", torchscience::cuda::special_functions::spherical_harmonic_y_backward);
+    module.impl("spherical_harmonic_y_backward_backward", torchscience::cuda::special_functions::spherical_harmonic_y_backward_backward);
+}
+
+// ============================================================================
+// Group A: Dawson and Faddeeva W (unary, float+complex)
+// ============================================================================
+#include "../kernel/special_functions/dawson.h"
+#include "../kernel/special_functions/dawson_backward.h"
+#include "../kernel/special_functions/dawson_backward_backward.h"
+
+namespace torchscience::cuda::special_functions {
+
+inline at::Tensor dawson(const at::Tensor &z_input) {
+    c10::cuda::CUDAGuard device_guard(z_input.device());
+
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "dawson",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [] GPU_LAMBDA (scalar_t z) -> scalar_t {
+                    return kernel::special_functions::dawson(z);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline at::Tensor dawson_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input
+) {
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_output)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "dawson_backward",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [] GPU_LAMBDA (scalar_t gradient, scalar_t z) -> scalar_t {
+                    return kernel::special_functions::dawson_backward(gradient, z);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor> dawson_backward_backward(
+    const at::Tensor &z_gradient_gradient_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input
+) {
+    if (!z_gradient_gradient_input.defined()) {
+        return {at::Tensor(), at::Tensor()};
+    }
+
+    c10::cuda::CUDAGuard device_guard(z_gradient_gradient_input.device());
+
+    at::Tensor gradient_gradient_output;
+    at::Tensor z_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_gradient_output)
+        .add_output(z_gradient_output)
+        .add_const_input(z_gradient_gradient_input)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "dawson_backward_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (
+                    scalar_t z_gradient_gradient,
+                    scalar_t gradient,
+                    scalar_t z
+                ) -> std::tuple<scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::dawson_backward_backward(
+                        z_gradient_gradient, gradient, z
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1)};
+}
+
+} // namespace torchscience::cuda::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+    module.impl("dawson", torchscience::cuda::special_functions::dawson);
+    module.impl("dawson_backward", torchscience::cuda::special_functions::dawson_backward);
+    module.impl("dawson_backward_backward", torchscience::cuda::special_functions::dawson_backward_backward);
+}
+
+#include "../kernel/special_functions/faddeeva_w.h"
+#include "../kernel/special_functions/faddeeva_w_backward.h"
+#include "../kernel/special_functions/faddeeva_w_backward_backward.h"
+
+namespace torchscience::cuda::special_functions {
+
+inline at::Tensor faddeeva_w(const at::Tensor &z_input) {
+    c10::cuda::CUDAGuard device_guard(z_input.device());
+
+    // Promote real inputs to complex
+    at::Tensor z_complex;
+    if (!z_input.is_complex()) {
+        if (z_input.scalar_type() == at::kFloat ||
+            z_input.scalar_type() == at::kHalf ||
+            z_input.scalar_type() == at::kBFloat16) {
+            z_complex = z_input.to(at::kFloat).to(at::kComplexFloat);
+        } else {
+            z_complex = z_input.to(at::kDouble).to(at::kComplexDouble);
+        }
+    } else {
+        z_complex = z_input;
+    }
+
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(z_complex)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "faddeeva_w",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [] GPU_LAMBDA (scalar_t z) -> scalar_t {
+                    return kernel::special_functions::faddeeva_w(z);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline at::Tensor faddeeva_w_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input
+) {
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_output)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "faddeeva_w_backward",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [] GPU_LAMBDA (scalar_t gradient, scalar_t z) -> scalar_t {
+                    return kernel::special_functions::faddeeva_w_backward(gradient, z);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor> faddeeva_w_backward_backward(
+    const at::Tensor &z_gradient_gradient_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input
+) {
+    if (!z_gradient_gradient_input.defined()) {
+        return {at::Tensor(), at::Tensor()};
+    }
+
+    c10::cuda::CUDAGuard device_guard(z_gradient_gradient_input.device());
+
+    at::Tensor gradient_gradient_output;
+    at::Tensor z_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_gradient_output)
+        .add_output(z_gradient_output)
+        .add_const_input(z_gradient_gradient_input)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "faddeeva_w_backward_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (
+                    scalar_t z_gradient_gradient,
+                    scalar_t gradient,
+                    scalar_t z
+                ) -> std::tuple<scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::faddeeva_w_backward_backward(
+                        z_gradient_gradient, gradient, z
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1)};
+}
+
+} // namespace torchscience::cuda::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+    module.impl("faddeeva_w", torchscience::cuda::special_functions::faddeeva_w);
+    module.impl("faddeeva_w_backward", torchscience::cuda::special_functions::faddeeva_w_backward);
+    module.impl("faddeeva_w_backward_backward", torchscience::cuda::special_functions::faddeeva_w_backward_backward);
+}
+
+// ============================================================================
+// Group E: Voigt Profile (ternary, float-only)
+// ============================================================================
+#include "../kernel/special_functions/voigt_profile.h"
+#include "../kernel/special_functions/voigt_profile_backward.h"
+#include "../kernel/special_functions/voigt_profile_backward_backward.h"
+
+namespace torchscience::cuda::special_functions {
+
+inline at::Tensor voigt_profile(
+    const at::Tensor &x_input,
+    const at::Tensor &sigma_input,
+    const at::Tensor &gamma_input
+) {
+    c10::cuda::CUDAGuard device_guard(x_input.device());
+
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(x_input)
+        .add_const_input(sigma_input)
+        .add_const_input(gamma_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "voigt_profile",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [] GPU_LAMBDA (scalar_t x, scalar_t sigma, scalar_t gamma) -> scalar_t {
+                    return kernel::special_functions::voigt_profile(x, sigma, gamma);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> voigt_profile_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &x_input,
+    const at::Tensor &sigma_input,
+    const at::Tensor &gamma_input
+) {
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor x_gradient_output;
+    at::Tensor sigma_gradient_output;
+    at::Tensor gamma_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(x_gradient_output)
+        .add_output(sigma_gradient_output)
+        .add_output(gamma_gradient_output)
+        .add_const_input(gradient_input)
+        .add_const_input(x_input)
+        .add_const_input(sigma_input)
+        .add_const_input(gamma_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "voigt_profile_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (scalar_t gradient, scalar_t x, scalar_t sigma, scalar_t gamma)
+                    -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::voigt_profile_backward(
+                        gradient, x, sigma, gamma
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> voigt_profile_backward_backward(
+    const at::Tensor &x_gradient_gradient_input,
+    const at::Tensor &sigma_gradient_gradient_input,
+    const at::Tensor &gamma_gradient_gradient_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &x_input,
+    const at::Tensor &sigma_input,
+    const at::Tensor &gamma_input
+) {
+    if (!x_gradient_gradient_input.defined() &&
+        !sigma_gradient_gradient_input.defined() &&
+        !gamma_gradient_gradient_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor gradient_gradient_output;
+    at::Tensor x_gradient_output;
+    at::Tensor sigma_gradient_output;
+    at::Tensor gamma_gradient_output;
+
+    auto x_gg = x_gradient_gradient_input.defined()
+        ? x_gradient_gradient_input
+        : at::zeros_like(x_input);
+    auto sigma_gg = sigma_gradient_gradient_input.defined()
+        ? sigma_gradient_gradient_input
+        : at::zeros_like(sigma_input);
+    auto gamma_gg = gamma_gradient_gradient_input.defined()
+        ? gamma_gradient_gradient_input
+        : at::zeros_like(gamma_input);
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_gradient_output)
+        .add_output(x_gradient_output)
+        .add_output(sigma_gradient_output)
+        .add_output(gamma_gradient_output)
+        .add_const_input(x_gg)
+        .add_const_input(sigma_gg)
+        .add_const_input(gamma_gg)
+        .add_const_input(gradient_input)
+        .add_const_input(x_input)
+        .add_const_input(sigma_input)
+        .add_const_input(gamma_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "voigt_profile_backward_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [] GPU_LAMBDA (
+                    scalar_t gg_x,
+                    scalar_t gg_sigma,
+                    scalar_t gg_gamma,
+                    scalar_t gradient,
+                    scalar_t x,
+                    scalar_t sigma,
+                    scalar_t gamma
+                ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::voigt_profile_backward_backward(
+                        gg_x, gg_sigma, gg_gamma, gradient, x, sigma, gamma
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result),
+                        std::get<2>(result),
+                        std::get<3>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2), iterator.output(3)};
+}
+
+} // namespace torchscience::cuda::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+    module.impl("voigt_profile", torchscience::cuda::special_functions::voigt_profile);
+    module.impl("voigt_profile_backward", torchscience::cuda::special_functions::voigt_profile_backward);
+    module.impl("voigt_profile_backward_backward", torchscience::cuda::special_functions::voigt_profile_backward_backward);
+}
+
+// ============================================================================
+// Group G: Log Multivariate Gamma (unary with int64_t param)
+// ============================================================================
+#include "../kernel/special_functions/log_multivariate_gamma.h"
+#include "../kernel/special_functions/log_multivariate_gamma_backward.h"
+#include "../kernel/special_functions/log_multivariate_gamma_backward_backward.h"
+
+namespace torchscience::cuda::special_functions {
+
+inline at::Tensor log_multivariate_gamma(const at::Tensor &a_input, int64_t d) {
+    c10::cuda::CUDAGuard device_guard(a_input.device());
+
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(a_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "log_multivariate_gamma",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [d] GPU_LAMBDA (scalar_t a) -> scalar_t {
+                    return kernel::special_functions::log_multivariate_gamma(a, d);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline at::Tensor log_multivariate_gamma_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &a_input,
+    int64_t d
+) {
+    c10::cuda::CUDAGuard device_guard(gradient_input.device());
+
+    at::Tensor grad_a;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(grad_a)
+        .add_const_input(gradient_input)
+        .add_const_input(a_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "log_multivariate_gamma_backward",
+        [&] {
+            at::native::gpu_kernel(
+                iterator,
+                [d] GPU_LAMBDA (scalar_t gradient, scalar_t a) -> scalar_t {
+                    return kernel::special_functions::log_multivariate_gamma_backward(gradient, a, d);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor> log_multivariate_gamma_backward_backward(
+    const at::Tensor &gg_a_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &a_input,
+    int64_t d
+) {
+    if (!gg_a_input.defined()) {
+        return {at::Tensor(), at::Tensor()};
+    }
+
+    c10::cuda::CUDAGuard device_guard(gg_a_input.device());
+
+    at::Tensor grad_grad_output;
+    at::Tensor grad_a;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(grad_grad_output)
+        .add_output(grad_a)
+        .add_const_input(gg_a_input)
+        .add_const_input(gradient_input)
+        .add_const_input(a_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_TYPES_AND2(
+        at::kBFloat16,
+        at::kHalf,
+        iterator.common_dtype(),
+        "log_multivariate_gamma_backward_backward",
+        [&] {
+            at::native::gpu_kernel_multiple_outputs(
+                iterator,
+                [d] GPU_LAMBDA (scalar_t gg_a, scalar_t gradient, scalar_t a)
+                    -> std::tuple<scalar_t, scalar_t> {
+                    auto result = kernel::special_functions::log_multivariate_gamma_backward_backward(
+                        gg_a, gradient, a, d
+                    );
+                    return std::make_tuple(
+                        std::get<0>(result),
+                        std::get<1>(result)
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1)};
+}
+
+} // namespace torchscience::cuda::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+    module.impl("log_multivariate_gamma", torchscience::cuda::special_functions::log_multivariate_gamma);
+    module.impl("log_multivariate_gamma_backward", torchscience::cuda::special_functions::log_multivariate_gamma_backward);
+    module.impl("log_multivariate_gamma_backward_backward", torchscience::cuda::special_functions::log_multivariate_gamma_backward_backward);
+}
