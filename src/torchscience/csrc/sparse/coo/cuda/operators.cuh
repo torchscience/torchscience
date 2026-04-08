@@ -519,4 +519,132 @@ struct SparseCooCudaQuaternaryOperator {
         "torchscience::" #name, \
         "torchscience::" #name "_backward")
 
+// ============================================================================
+// SparseCooCudaQuinaryOperator
+// ============================================================================
+
+struct SparseCooCudaQuinaryOperator {
+    static at::Tensor forward(
+        const at::Tensor& input1,
+        const at::Tensor& input2,
+        const at::Tensor& input3,
+        const at::Tensor& input4,
+        const at::Tensor& input5,
+        const char* schema_name
+    ) {
+        TORCH_CHECK(
+            input1.is_sparse() && input2.is_sparse() &&
+            input3.is_sparse() && input4.is_sparse() && input5.is_sparse(),
+            "expects sparse COO tensors"
+        );
+
+        at::Tensor new_values = c10::Dispatcher::singleton()
+            .findSchemaOrThrow(schema_name, "")
+            .typed<at::Tensor(
+                const at::Tensor&, const at::Tensor&, const at::Tensor&,
+                const at::Tensor&, const at::Tensor&
+            )>()
+            .call(input1._values(), input2._values(), input3._values(),
+                  input4._values(), input5._values());
+
+        return detail::make_sparse_coo(
+            input1._indices(), new_values, input1.sizes(),
+            input1.options(), input1.is_coalesced()
+        );
+    }
+
+    static std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> backward(
+        const at::Tensor& grad_output,
+        const at::Tensor& input1,
+        const at::Tensor& input2,
+        const at::Tensor& input3,
+        const at::Tensor& input4,
+        const at::Tensor& input5,
+        const char* schema_name
+    ) {
+        TORCH_CHECK(grad_output.is_sparse(), "expects sparse COO gradient");
+
+        auto [new_grad1, new_grad2, new_grad3, new_grad4, new_grad5] =
+            c10::Dispatcher::singleton()
+            .findSchemaOrThrow(schema_name, "")
+            .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor>(
+                const at::Tensor&, const at::Tensor&, const at::Tensor&,
+                const at::Tensor&, const at::Tensor&, const at::Tensor&
+            )>()
+            .call(grad_output._values(), input1._values(), input2._values(),
+                  input3._values(), input4._values(), input5._values());
+
+        at::Tensor grad1, grad2, grad3, grad4, grad5;
+
+        if (new_grad1.defined()) {
+            grad1 = detail::make_sparse_coo(
+                input1._indices(), new_grad1, input1.sizes(),
+                input1.options(), input1.is_coalesced()
+            );
+        }
+        if (new_grad2.defined()) {
+            grad2 = detail::make_sparse_coo(
+                input2._indices(), new_grad2, input2.sizes(),
+                input2.options(), input2.is_coalesced()
+            );
+        }
+        if (new_grad3.defined()) {
+            grad3 = detail::make_sparse_coo(
+                input3._indices(), new_grad3, input3.sizes(),
+                input3.options(), input3.is_coalesced()
+            );
+        }
+        if (new_grad4.defined()) {
+            grad4 = detail::make_sparse_coo(
+                input4._indices(), new_grad4, input4.sizes(),
+                input4.options(), input4.is_coalesced()
+            );
+        }
+        if (new_grad5.defined()) {
+            grad5 = detail::make_sparse_coo(
+                input5._indices(), new_grad5, input5.sizes(),
+                input5.options(), input5.is_coalesced()
+            );
+        }
+
+        return {grad1, grad2, grad3, grad4, grad5};
+    }
+
+    static void register_all(
+        torch::Library& module,
+        const char* name,
+        const char* backward_name,
+        const char* schema_name,
+        const char* schema_backward_name
+    ) {
+        module.impl(name, [schema_name](
+            const at::Tensor& input1,
+            const at::Tensor& input2,
+            const at::Tensor& input3,
+            const at::Tensor& input4,
+            const at::Tensor& input5
+        ) {
+            return forward(input1, input2, input3, input4, input5, schema_name);
+        });
+        module.impl(backward_name, [schema_backward_name](
+            const at::Tensor& grad_output,
+            const at::Tensor& input1,
+            const at::Tensor& input2,
+            const at::Tensor& input3,
+            const at::Tensor& input4,
+            const at::Tensor& input5
+        ) {
+            return backward(
+                grad_output, input1, input2, input3, input4, input5, schema_backward_name
+            );
+        });
+    }
+};
+
+#define REGISTER_SPARSE_COO_CUDA_QUINARY(module, name) \
+    ::torchscience::sparse::coo::cuda::SparseCooCudaQuinaryOperator::register_all( \
+        module, #name, #name "_backward", \
+        "torchscience::" #name, \
+        "torchscience::" #name "_backward")
+
 }  // namespace torchscience::sparse::coo::cuda

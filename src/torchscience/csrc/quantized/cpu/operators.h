@@ -513,4 +513,134 @@ struct QuantizedCpuQuaternaryOperator {
         "torchscience::" #name, \
         "torchscience::" #name "_backward")
 
+// ============================================================================
+// QuantizedCpuQuinaryOperator
+// ============================================================================
+
+struct QuantizedCpuQuinaryOperator {
+    static at::Tensor forward(
+        const at::Tensor& input1,
+        const at::Tensor& input2,
+        const at::Tensor& input3,
+        const at::Tensor& input4,
+        const at::Tensor& input5,
+        const char* schema_name
+    ) {
+        TORCH_CHECK(
+            input1.is_quantized() && input2.is_quantized() &&
+            input3.is_quantized() && input4.is_quantized() && input5.is_quantized(),
+            "expects quantized tensors"
+        );
+
+        at::Tensor result = c10::Dispatcher::singleton()
+            .findSchemaOrThrow(schema_name, "")
+            .typed<at::Tensor(
+                const at::Tensor&, const at::Tensor&, const at::Tensor&,
+                const at::Tensor&, const at::Tensor&
+            )>()
+            .call(input1.dequantize(), input2.dequantize(), input3.dequantize(),
+                  input4.dequantize(), input5.dequantize());
+
+        return detail::requantize(
+            result, input1.q_scale(), input1.q_zero_point(), input1.scalar_type()
+        );
+    }
+
+    static std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> backward(
+        const at::Tensor& grad_output,
+        const at::Tensor& input1,
+        const at::Tensor& input2,
+        const at::Tensor& input3,
+        const at::Tensor& input4,
+        const at::Tensor& input5,
+        const char* schema_name
+    ) {
+        TORCH_CHECK(grad_output.is_quantized(), "expects quantized gradient");
+        TORCH_CHECK(
+            input1.is_quantized() && input2.is_quantized() &&
+            input3.is_quantized() && input4.is_quantized() && input5.is_quantized(),
+            "expects quantized inputs"
+        );
+
+        auto [grad1, grad2, grad3, grad4, grad5] = c10::Dispatcher::singleton()
+            .findSchemaOrThrow(schema_name, "")
+            .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor>(
+                const at::Tensor&, const at::Tensor&, const at::Tensor&,
+                const at::Tensor&, const at::Tensor&, const at::Tensor&
+            )>()
+            .call(grad_output.dequantize(), input1.dequantize(), input2.dequantize(),
+                  input3.dequantize(), input4.dequantize(), input5.dequantize());
+
+        at::Tensor quant_grad1, quant_grad2, quant_grad3, quant_grad4, quant_grad5;
+
+        if (grad1.defined()) {
+            quant_grad1 = detail::requantize(
+                grad1, input1.q_scale(), input1.q_zero_point(), input1.scalar_type()
+            );
+        }
+
+        if (grad2.defined()) {
+            quant_grad2 = detail::requantize(
+                grad2, input2.q_scale(), input2.q_zero_point(), input2.scalar_type()
+            );
+        }
+
+        if (grad3.defined()) {
+            quant_grad3 = detail::requantize(
+                grad3, input3.q_scale(), input3.q_zero_point(), input3.scalar_type()
+            );
+        }
+
+        if (grad4.defined()) {
+            quant_grad4 = detail::requantize(
+                grad4, input4.q_scale(), input4.q_zero_point(), input4.scalar_type()
+            );
+        }
+
+        if (grad5.defined()) {
+            quant_grad5 = detail::requantize(
+                grad5, input5.q_scale(), input5.q_zero_point(), input5.scalar_type()
+            );
+        }
+
+        return {quant_grad1, quant_grad2, quant_grad3, quant_grad4, quant_grad5};
+    }
+
+    static void register_all(
+        torch::Library& module,
+        const char* name,
+        const char* backward_name,
+        const char* schema_name,
+        const char* schema_backward_name
+    ) {
+        module.impl(name, [schema_name](
+            const at::Tensor& input1,
+            const at::Tensor& input2,
+            const at::Tensor& input3,
+            const at::Tensor& input4,
+            const at::Tensor& input5
+        ) {
+            return forward(input1, input2, input3, input4, input5, schema_name);
+        });
+        module.impl(backward_name, [schema_backward_name](
+            const at::Tensor& grad_output,
+            const at::Tensor& input1,
+            const at::Tensor& input2,
+            const at::Tensor& input3,
+            const at::Tensor& input4,
+            const at::Tensor& input5
+        ) {
+            return backward(
+                grad_output, input1, input2, input3, input4, input5, schema_backward_name
+            );
+        });
+    }
+};
+
+#define REGISTER_QUANTIZED_CPU_QUINARY(module, name) \
+    ::torchscience::quantized::cpu::QuantizedCpuQuinaryOperator::register_all( \
+        module, #name, #name "_backward", \
+        "torchscience::" #name, \
+        "torchscience::" #name "_backward")
+
 }  // namespace torchscience::quantized::cpu
