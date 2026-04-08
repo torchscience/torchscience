@@ -31,6 +31,10 @@ std::tuple<T, T, T> associated_legendre_polynomial_p_backward(T gradient, T n, T
   } else {
     T eps = std::numeric_limits<T>::epsilon();
 
+    // Use integer-valued n and m to match the forward kernel's behavior
+    T n_eff = T(n_int);
+    T m_eff = T(m_int);
+
     // Clamp x away from +/-1 to avoid division by zero in x^2 - 1
     T x_c = x;
     T denom = x * x - T(1);
@@ -39,12 +43,12 @@ std::tuple<T, T, T> associated_legendre_polynomial_p_backward(T gradient, T n, T
       denom = x_c * x_c - T(1);
     }
 
-    T P_n_m = associated_legendre_polynomial_p(n, m, x_c);
+    T P_n_m = associated_legendre_polynomial_p(n_eff, m_eff, x_c);
 
     // P_{n-1}^m: when n-1 < |m|, the forward kernel returns 0
-    T P_nm1_m = associated_legendre_polynomial_p(n - T(1), m, x_c);
+    T P_nm1_m = associated_legendre_polynomial_p(n_eff - T(1), m_eff, x_c);
 
-    grad_x = (n * x_c * P_n_m - (n + m) * P_nm1_m) / denom;
+    grad_x = (n_eff * x_c * P_n_m - (n_eff + m_eff) * P_nm1_m) / denom;
   }
 
   return {T(0), T(0), gradient * grad_x};

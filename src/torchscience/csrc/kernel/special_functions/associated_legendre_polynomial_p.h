@@ -23,6 +23,11 @@ namespace torchscience::kernel::special_functions {
 
 template <typename T>
 T associated_legendre_polynomial_p(T n, T m, T x) {
+  // Propagate NaN
+  if (std::isnan(n) || std::isnan(m) || std::isnan(x)) {
+    return std::numeric_limits<T>::quiet_NaN();
+  }
+
   int n_int = static_cast<int>(n);
   int m_int = static_cast<int>(m);
   int abs_m = std::abs(m_int);
