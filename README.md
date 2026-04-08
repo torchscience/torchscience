@@ -1,5 +1,9 @@
 # torchscience
 
+[![PyPI version](https://img.shields.io/pypi/v/torchscience.svg)](https://pypi.org/project/torchscience/)
+[![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/pypi/pyversions/torchscience.svg)](https://pypi.org/project/torchscience/)
+
 A PyTorch standard library for scientists, mathematicians, and engineers.
 
 There should be one—and preferably only one—obvious way to do something. torchscience aims to be that obvious way for core scientific and mathematical operators in PyTorch.
@@ -77,12 +81,55 @@ Additional topics under exploration include numerical methods (FDM/FEM/DEM), PDE
 
 ## Status
 
-This project is an active work‑in‑progress. Feedback, issue reports, and proposals are welcome.
+torchscience provides PyTorch operators for mathematics, science, and engineering.
+The 0.1.0 release includes the `special_functions` module with 152 operators,
+all supporting autograd (1st and 2nd order), torch.compile, autocast, and vmap.
 
 ## Installation
 
 ```bash
-git clone https://github.com/torchscience/torchscience.git
-cd torchscience
-pip install -e ".[dev]"
+pip install torchscience
+```
+
+## Quick Start
+
+### Special Functions with Autograd
+
+```python
+import torch
+import torchscience.special_functions as sf
+
+# Gamma function with automatic differentiation
+x = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+y = sf.gamma(x)
+y.sum().backward()
+print(x.grad)  # digamma(x) * gamma(x)
+```
+
+### Bessel Functions with torch.compile
+
+```python
+import torch
+import torchscience.special_functions as sf
+
+@torch.compile
+def bessel_ratio(n, z):
+    return sf.bessel_j(n, z) / sf.bessel_y(n, z)
+
+n = torch.tensor([0.0, 1.0, 2.0])
+z = torch.tensor([1.0, 2.0, 3.0])
+print(bessel_ratio(n, z))
+```
+
+### Second-Order Gradients
+
+```python
+import torch
+import torchscience.special_functions as sf
+
+x = torch.tensor([1.0, 2.0], requires_grad=True)
+y = sf.digamma(x)
+grad = torch.autograd.grad(y.sum(), x, create_graph=True)[0]
+grad2 = torch.autograd.grad(grad.sum(), x)[0]
+print(grad2)  # tetragamma(x)
 ```
