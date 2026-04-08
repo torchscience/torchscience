@@ -37,6 +37,17 @@ name = "torchscience"
 readme = "README.md"
 requires-python = ">=3.12"
 version = "0.1.0"
+license = "BSD-3-Clause"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: C++",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Intended Audience :: Science/Research",
+]
 
 [project.optional-dependencies]
 test = [
@@ -45,6 +56,11 @@ test = [
     "hypothesis>=6.100",
     "sympy>=1.12",
 ]
+
+[project.urls]
+Homepage = "https://github.com/0x00b1/torchscience"
+Repository = "https://github.com/0x00b1/torchscience"
+"Bug Tracker" = "https://github.com/0x00b1/torchscience/issues"
 
 [tool.scikit-build]
 build-dir = "build/{wheel_tag}"
