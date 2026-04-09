@@ -95,7 +95,7 @@ jobs:
         run: uv pip install --no-build-isolation -e .
 
       - name: Run tests
-        run: uv run pytest tests/ -v --tb=short
+        run: uv run --no-sync pytest tests/ -v --tb=short
 
   test-cuda:
     needs: [lint]
