@@ -20,7 +20,7 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --group dev --no-install-project
-      - run: uv run pre-commit run --all-files
+      - run: uv run --no-project pre-commit run --all-files
 
   test-cpu:
     needs: [lint]
@@ -79,7 +79,7 @@ jobs:
 
       - name: Install CPU-only PyTorch (Linux)
         if: runner.os == 'Linux'
-        run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+        run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu --reinstall
 
       - name: Override PyTorch version
         if: matrix.torch-version != 'latest'
@@ -193,7 +193,7 @@ jobs:
 
       - name: Install CPU-only PyTorch (Linux)
         if: runner.os == 'Linux'
-        run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+        run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu --reinstall
 
       - name: Build wheel
         run: uv build --wheel --no-build-isolation
