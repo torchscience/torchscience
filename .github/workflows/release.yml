@@ -32,7 +32,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: uv build --wheel
+      - run: uv sync --group dev --no-install-project
+      - name: Install CPU-only PyTorch (Linux)
+        if: runner.os == 'Linux'
+        run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: uv build --wheel --no-build-isolation
       - uses: actions/upload-artifact@v4
         with:
           name: wheel-${{ matrix.os }}-py${{ matrix.python-version }}

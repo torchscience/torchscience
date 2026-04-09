@@ -19,7 +19,7 @@ jobs:
       - uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
-      - run: uv sync --group dev
+      - run: uv sync --group dev --no-install-project
       - run: uv run pre-commit run --all-files
 
   test-cpu:
@@ -75,15 +75,24 @@ jobs:
           echo "CMAKE_CXX_COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
 
       - name: Install dependencies
-        run: uv sync --group dev --python ${{ matrix.python-version }}
+        run: uv sync --group dev --python ${{ matrix.python-version }} --no-install-project
+
+      - name: Install CPU-only PyTorch (Linux)
+        if: runner.os == 'Linux'
+        run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
 
       - name: Override PyTorch version
         if: matrix.torch-version != 'latest'
-        run: uv pip install torch==${{ matrix.torch-version }}
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            uv pip install torch==${{ matrix.torch-version }} --index-url https://download.pytorch.org/whl/cpu
+          else
+            uv pip install torch==${{ matrix.torch-version }}
+          fi
 
-      - name: Rebuild extension after torch override
-        if: matrix.torch-version != 'latest'
-        run: uv sync --group dev --reinstall-package torchscience
+      - name: Install project
+        run: uv pip install --no-build-isolation -e .
 
       - name: Run tests
         run: uv run pytest tests/ -v --tb=short
@@ -179,8 +188,15 @@ jobs:
           echo "CMAKE_C_COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
           echo "CMAKE_CXX_COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
 
+      - name: Install dependencies
+        run: uv sync --group dev --no-install-project
+
+      - name: Install CPU-only PyTorch (Linux)
+        if: runner.os == 'Linux'
+        run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+
       - name: Build wheel
-        run: uv build --wheel
+        run: uv build --wheel --no-build-isolation
 
       - name: Verify wheel exists
         shell: bash
