@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tuple>
+#include <type_traits>
 
 #include <ATen/ATen.h>
 #include <ATen/Dispatch.h>
@@ -8,7 +9,18 @@
 #include <ATen/native/cuda/Loops.cuh>
 #include <ATen/cuda/CUDAContext.h>
 #include <c10/cuda/CUDAGuard.h>
+#include <thrust/tuple.h>
 #include <torch/library.h>
+
+// Promote c10::Half/BFloat16 to float for CUDA kernel computation.
+// NVCC has ambiguous comparison operators between c10::Half and
+// cuda_fp16.hpp's __half operators — promoting to float avoids this.
+namespace torchscience::cuda {
+template <typename T> struct promote { using type = T; };
+template <> struct promote<c10::Half> { using type = float; };
+template <> struct promote<c10::BFloat16> { using type = float; };
+template <typename T> using promote_t = typename promote<T>::type;
+} // namespace torchscience::cuda
 
 #define TORCHSCIENCE_CUDA_POINTWISE_UNARY_DISPATCH(category, name, arg1)                             \
 namespace torchscience::cuda::category {                               \
@@ -38,9 +50,10 @@ inline at::Tensor name(                                                        \
         [] GPU_LAMBDA (                                                        \
           scalar_t arg1                                                         \
         ) -> scalar_t {                                                        \
-          return kernel::category::name(                              \
-            arg1                                                               \
-          );                                                                   \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
+          return static_cast<scalar_t>(kernel::category::name(       \
+            static_cast<compute_t>(arg1)                                       \
+          ));                                                                   \
         }                                                                      \
       );                                                                       \
     }                                                                          \
@@ -77,10 +90,11 @@ inline at::Tensor name##_backward(                                             \
           scalar_t gradient,                                                   \
           scalar_t arg1                                                         \
         ) -> scalar_t {                                                        \
-          return kernel::category::name##_backward(                   \
-            gradient,                                                          \
-            arg1                                                               \
-          );                                                                   \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
+          return static_cast<scalar_t>(kernel::category::name##_backward( \
+            static_cast<compute_t>(gradient),                                  \
+            static_cast<compute_t>(arg1)                                       \
+          ));                                                                   \
         }                                                                      \
       );                                                                       \
     }                                                                          \
@@ -128,18 +142,19 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(            \
           scalar_t gradient_gradient,                                          \
           scalar_t gradient,                                                   \
           scalar_t arg1                                                         \
-        ) -> std::tuple<                                                    \
+        ) -> thrust::tuple<                                                    \
           scalar_t,                                                            \
           scalar_t                                                             \
         > {                                                                    \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
           auto result = kernel::category::name##_backward_backward(   \
-            gradient_gradient,                                                 \
-            gradient,                                                          \
-            arg1                                                               \
+            static_cast<compute_t>(gradient_gradient),                         \
+            static_cast<compute_t>(gradient),                                  \
+            static_cast<compute_t>(arg1)                                       \
           );                                                                   \
-          return std::make_tuple(                                           \
-            std::get<0>(result),                                               \
-            std::get<1>(result)                                                \
+          return thrust::make_tuple(                                           \
+            static_cast<scalar_t>(std::get<0>(result)),                        \
+            static_cast<scalar_t>(std::get<1>(result))                         \
           );                                                                   \
         }                                                                      \
       );                                                                       \
@@ -202,10 +217,11 @@ inline at::Tensor name(                                                        \
           scalar_t arg1,                                                       \
           scalar_t arg2                                                        \
         ) -> scalar_t {                                                        \
-          return kernel::category::name(                              \
-            arg1,                                                              \
-            arg2                                                               \
-          );                                                                   \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
+          return static_cast<scalar_t>(kernel::category::name(       \
+            static_cast<compute_t>(arg1),                                      \
+            static_cast<compute_t>(arg2)                                       \
+          ));                                                                   \
         }                                                                      \
       );                                                                       \
     }                                                                          \
@@ -246,15 +262,16 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward(                     \
           scalar_t gradient,                                                   \
           scalar_t arg1,                                                       \
           scalar_t arg2                                                        \
-        ) -> std::tuple<scalar_t, scalar_t> {                               \
+        ) -> thrust::tuple<scalar_t, scalar_t> {                               \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
           auto result = kernel::category::name##_backward(            \
-            gradient,                                                          \
-            arg1,                                                              \
-            arg2                                                               \
+            static_cast<compute_t>(gradient),                                  \
+            static_cast<compute_t>(arg1),                                      \
+            static_cast<compute_t>(arg2)                                       \
           );                                                                   \
-          return std::make_tuple(                                           \
-            std::get<0>(result),                                               \
-            std::get<1>(result)                                                \
+          return thrust::make_tuple(                                           \
+            static_cast<scalar_t>(std::get<0>(result)),                        \
+            static_cast<scalar_t>(std::get<1>(result))                         \
           );                                                                   \
         }                                                                      \
       );                                                                       \
@@ -323,18 +340,19 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> name##_backward_backward(\
           scalar_t gradient,                                                   \
           scalar_t arg1,                                                       \
           scalar_t arg2                                                        \
-        ) -> std::tuple<scalar_t, scalar_t, scalar_t> {                     \
+        ) -> thrust::tuple<scalar_t, scalar_t, scalar_t> {                     \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
           auto result = kernel::category::name##_backward_backward(   \
-            arg1##_gradient_gradient,                                          \
-            arg2##_gradient_gradient,                                          \
-            gradient,                                                          \
-            arg1,                                                              \
-            arg2                                                               \
+            static_cast<compute_t>(arg1##_gradient_gradient),                  \
+            static_cast<compute_t>(arg2##_gradient_gradient),                  \
+            static_cast<compute_t>(gradient),                                  \
+            static_cast<compute_t>(arg1),                                      \
+            static_cast<compute_t>(arg2)                                       \
           );                                                                   \
-          return std::make_tuple(                                           \
-            std::get<0>(result),                                               \
-            std::get<1>(result),                                               \
-            std::get<2>(result)                                                \
+          return thrust::make_tuple(                                           \
+            static_cast<scalar_t>(std::get<0>(result)),                        \
+            static_cast<scalar_t>(std::get<1>(result)),                        \
+            static_cast<scalar_t>(std::get<2>(result))                         \
           );                                                                   \
         }                                                                      \
       );                                                                       \
@@ -401,11 +419,12 @@ inline at::Tensor name(                                                        \
           scalar_t arg2,                                                       \
           scalar_t arg3                                                        \
         ) -> scalar_t {                                                        \
-          return kernel::category::name(                              \
-            arg1,                                                              \
-            arg2,                                                              \
-            arg3                                                               \
-          );                                                                   \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
+          return static_cast<scalar_t>(kernel::category::name(       \
+            static_cast<compute_t>(arg1),                                      \
+            static_cast<compute_t>(arg2),                                      \
+            static_cast<compute_t>(arg3)                                       \
+          ));                                                                   \
         }                                                                      \
       );                                                                       \
     }                                                                          \
@@ -451,17 +470,18 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> name##_backward(         \
           scalar_t arg1,                                                       \
           scalar_t arg2,                                                       \
           scalar_t arg3                                                        \
-        ) -> std::tuple<scalar_t, scalar_t, scalar_t> {                     \
+        ) -> thrust::tuple<scalar_t, scalar_t, scalar_t> {                     \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
           auto result = kernel::category::name##_backward(            \
-            gradient,                                                          \
-            arg1,                                                              \
-            arg2,                                                              \
-            arg3                                                               \
+            static_cast<compute_t>(gradient),                                  \
+            static_cast<compute_t>(arg1),                                      \
+            static_cast<compute_t>(arg2),                                      \
+            static_cast<compute_t>(arg3)                                       \
           );                                                                   \
-          return std::make_tuple(                                           \
-            std::get<0>(result),                                               \
-            std::get<1>(result),                                               \
-            std::get<2>(result)                                                \
+          return thrust::make_tuple(                                           \
+            static_cast<scalar_t>(std::get<0>(result)),                        \
+            static_cast<scalar_t>(std::get<1>(result)),                        \
+            static_cast<scalar_t>(std::get<2>(result))                         \
           );                                                                   \
         }                                                                      \
       );                                                                       \
@@ -546,21 +566,22 @@ inline std::tuple<                                                             \
           scalar_t arg1,                                                       \
           scalar_t arg2,                                                       \
           scalar_t arg3                                                        \
-        ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {           \
+        ) -> thrust::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {           \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
           auto result = kernel::category::name##_backward_backward(   \
-            arg1##_gradient_gradient,                                          \
-            arg2##_gradient_gradient,                                          \
-            arg3##_gradient_gradient,                                          \
-            gradient,                                                          \
-            arg1,                                                              \
-            arg2,                                                              \
-            arg3                                                               \
+            static_cast<compute_t>(arg1##_gradient_gradient),                  \
+            static_cast<compute_t>(arg2##_gradient_gradient),                  \
+            static_cast<compute_t>(arg3##_gradient_gradient),                  \
+            static_cast<compute_t>(gradient),                                  \
+            static_cast<compute_t>(arg1),                                      \
+            static_cast<compute_t>(arg2),                                      \
+            static_cast<compute_t>(arg3)                                       \
           );                                                                   \
-          return std::make_tuple(                                           \
-            std::get<0>(result),                                               \
-            std::get<1>(result),                                               \
-            std::get<2>(result),                                               \
-            std::get<3>(result)                                                \
+          return thrust::make_tuple(                                           \
+            static_cast<scalar_t>(std::get<0>(result)),                        \
+            static_cast<scalar_t>(std::get<1>(result)),                        \
+            static_cast<scalar_t>(std::get<2>(result)),                        \
+            static_cast<scalar_t>(std::get<3>(result))                         \
           );                                                                   \
         }                                                                      \
       );                                                                       \
@@ -631,12 +652,13 @@ inline at::Tensor name(                                                        \
           scalar_t arg3,                                                       \
           scalar_t arg4                                                        \
         ) -> scalar_t {                                                        \
-          return kernel::category::name(                              \
-            arg1,                                                              \
-            arg2,                                                              \
-            arg3,                                                              \
-            arg4                                                               \
-          );                                                                   \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
+          return static_cast<scalar_t>(kernel::category::name(       \
+            static_cast<compute_t>(arg1),                                      \
+            static_cast<compute_t>(arg2),                                      \
+            static_cast<compute_t>(arg3),                                      \
+            static_cast<compute_t>(arg4)                                       \
+          ));                                                                   \
         }                                                                      \
       );                                                                       \
     }                                                                          \
@@ -688,19 +710,20 @@ name##_backward(                                                               \
           scalar_t arg2,                                                       \
           scalar_t arg3,                                                       \
           scalar_t arg4                                                        \
-        ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {           \
+        ) -> thrust::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {           \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
           auto result = kernel::category::name##_backward(            \
-            gradient,                                                          \
-            arg1,                                                              \
-            arg2,                                                              \
-            arg3,                                                              \
-            arg4                                                               \
+            static_cast<compute_t>(gradient),                                  \
+            static_cast<compute_t>(arg1),                                      \
+            static_cast<compute_t>(arg2),                                      \
+            static_cast<compute_t>(arg3),                                      \
+            static_cast<compute_t>(arg4)                                       \
           );                                                                   \
-          return std::make_tuple(                                           \
-            std::get<0>(result),                                               \
-            std::get<1>(result),                                               \
-            std::get<2>(result),                                               \
-            std::get<3>(result)                                                \
+          return thrust::make_tuple(                                           \
+            static_cast<scalar_t>(std::get<0>(result)),                        \
+            static_cast<scalar_t>(std::get<1>(result)),                        \
+            static_cast<scalar_t>(std::get<2>(result)),                        \
+            static_cast<scalar_t>(std::get<3>(result))                         \
           );                                                                   \
         }                                                                      \
       );                                                                       \
@@ -799,24 +822,25 @@ inline std::tuple<                                                             \
           scalar_t arg2,                                                       \
           scalar_t arg3,                                                       \
           scalar_t arg4                                                        \
-        ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t, scalar_t> { \
+        ) -> thrust::tuple<scalar_t, scalar_t, scalar_t, scalar_t, scalar_t> { \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
           auto result = kernel::category::name##_backward_backward(   \
-            arg1##_gradient_gradient,                                          \
-            arg2##_gradient_gradient,                                          \
-            arg3##_gradient_gradient,                                          \
-            arg4##_gradient_gradient,                                          \
-            gradient,                                                          \
-            arg1,                                                              \
-            arg2,                                                              \
-            arg3,                                                              \
-            arg4                                                               \
+            static_cast<compute_t>(arg1##_gradient_gradient),                  \
+            static_cast<compute_t>(arg2##_gradient_gradient),                  \
+            static_cast<compute_t>(arg3##_gradient_gradient),                  \
+            static_cast<compute_t>(arg4##_gradient_gradient),                  \
+            static_cast<compute_t>(gradient),                                  \
+            static_cast<compute_t>(arg1),                                      \
+            static_cast<compute_t>(arg2),                                      \
+            static_cast<compute_t>(arg3),                                      \
+            static_cast<compute_t>(arg4)                                       \
           );                                                                   \
-          return std::make_tuple(                                           \
-            std::get<0>(result),                                               \
-            std::get<1>(result),                                               \
-            std::get<2>(result),                                               \
-            std::get<3>(result),                                               \
-            std::get<4>(result)                                                \
+          return thrust::make_tuple(                                           \
+            static_cast<scalar_t>(std::get<0>(result)),                        \
+            static_cast<scalar_t>(std::get<1>(result)),                        \
+            static_cast<scalar_t>(std::get<2>(result)),                        \
+            static_cast<scalar_t>(std::get<3>(result)),                        \
+            static_cast<scalar_t>(std::get<4>(result))                         \
           );                                                                   \
         }                                                                      \
       );                                                                       \
@@ -891,13 +915,14 @@ inline at::Tensor name(                                                        \
           scalar_t arg4,                                                       \
           scalar_t arg5                                                        \
         ) -> scalar_t {                                                        \
-          return kernel::category::name(                              \
-            arg1,                                                              \
-            arg2,                                                              \
-            arg3,                                                              \
-            arg4,                                                              \
-            arg5                                                               \
-          );                                                                   \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
+          return static_cast<scalar_t>(kernel::category::name(       \
+            static_cast<compute_t>(arg1),                                      \
+            static_cast<compute_t>(arg2),                                      \
+            static_cast<compute_t>(arg3),                                      \
+            static_cast<compute_t>(arg4),                                      \
+            static_cast<compute_t>(arg5)                                       \
+          ));                                                                   \
         }                                                                      \
       );                                                                       \
     }                                                                          \
@@ -954,21 +979,22 @@ name##_backward(                                                               \
           scalar_t arg3,                                                       \
           scalar_t arg4,                                                       \
           scalar_t arg5                                                        \
-        ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t, scalar_t> { \
+        ) -> thrust::tuple<scalar_t, scalar_t, scalar_t, scalar_t, scalar_t> { \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
           auto result = kernel::category::name##_backward(            \
-            gradient,                                                          \
-            arg1,                                                              \
-            arg2,                                                              \
-            arg3,                                                              \
-            arg4,                                                              \
-            arg5                                                               \
+            static_cast<compute_t>(gradient),                                  \
+            static_cast<compute_t>(arg1),                                      \
+            static_cast<compute_t>(arg2),                                      \
+            static_cast<compute_t>(arg3),                                      \
+            static_cast<compute_t>(arg4),                                      \
+            static_cast<compute_t>(arg5)                                       \
           );                                                                   \
-          return std::make_tuple(                                           \
-            std::get<0>(result),                                               \
-            std::get<1>(result),                                               \
-            std::get<2>(result),                                               \
-            std::get<3>(result),                                               \
-            std::get<4>(result)                                                \
+          return thrust::make_tuple(                                           \
+            static_cast<scalar_t>(std::get<0>(result)),                        \
+            static_cast<scalar_t>(std::get<1>(result)),                        \
+            static_cast<scalar_t>(std::get<2>(result)),                        \
+            static_cast<scalar_t>(std::get<3>(result)),                        \
+            static_cast<scalar_t>(std::get<4>(result))                         \
           );                                                                   \
         }                                                                      \
       );                                                                       \
@@ -1081,27 +1107,28 @@ inline std::tuple<                                                             \
           scalar_t arg3,                                                       \
           scalar_t arg4,                                                       \
           scalar_t arg5                                                        \
-        ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t, scalar_t, scalar_t> { \
+        ) -> thrust::tuple<scalar_t, scalar_t, scalar_t, scalar_t, scalar_t, scalar_t> { \
+          using compute_t = torchscience::cuda::promote_t<scalar_t>;           \
           auto result = kernel::category::name##_backward_backward(   \
-            arg1##_gradient_gradient,                                          \
-            arg2##_gradient_gradient,                                          \
-            arg3##_gradient_gradient,                                          \
-            arg4##_gradient_gradient,                                          \
-            arg5##_gradient_gradient,                                          \
-            gradient,                                                          \
-            arg1,                                                              \
-            arg2,                                                              \
-            arg3,                                                              \
-            arg4,                                                              \
-            arg5                                                               \
+            static_cast<compute_t>(arg1##_gradient_gradient),                  \
+            static_cast<compute_t>(arg2##_gradient_gradient),                  \
+            static_cast<compute_t>(arg3##_gradient_gradient),                  \
+            static_cast<compute_t>(arg4##_gradient_gradient),                  \
+            static_cast<compute_t>(arg5##_gradient_gradient),                  \
+            static_cast<compute_t>(gradient),                                  \
+            static_cast<compute_t>(arg1),                                      \
+            static_cast<compute_t>(arg2),                                      \
+            static_cast<compute_t>(arg3),                                      \
+            static_cast<compute_t>(arg4),                                      \
+            static_cast<compute_t>(arg5)                                       \
           );                                                                   \
-          return std::make_tuple(                                           \
-            std::get<0>(result),                                               \
-            std::get<1>(result),                                               \
-            std::get<2>(result),                                               \
-            std::get<3>(result),                                               \
-            std::get<4>(result),                                               \
-            std::get<5>(result)                                                \
+          return thrust::make_tuple(                                           \
+            static_cast<scalar_t>(std::get<0>(result)),                        \
+            static_cast<scalar_t>(std::get<1>(result)),                        \
+            static_cast<scalar_t>(std::get<2>(result)),                        \
+            static_cast<scalar_t>(std::get<3>(result)),                        \
+            static_cast<scalar_t>(std::get<4>(result)),                        \
+            static_cast<scalar_t>(std::get<5>(result))                         \
           );                                                                   \
         }                                                                      \
       );                                                                       \

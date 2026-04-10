@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "../macros/cuda/pointwise.cuh"
+#include <thrust/tuple.h>
 
 // Gamma function and derivatives
 #include "../kernel/special_functions/gamma.h"
@@ -926,7 +927,8 @@ inline at::Tensor weierstrass_p(
             at::native::gpu_kernel(
                 iterator,
                 [] GPU_LAMBDA (scalar_t z, scalar_t g2, scalar_t g3) -> scalar_t {
-                    return kernel::special_functions::weierstrass_p(z, g2, g3);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::weierstrass_p(static_cast<compute_t>(z), static_cast<compute_t>(g2), static_cast<compute_t>(g3)));
                 }
             );
         }
@@ -968,14 +970,15 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> weierstrass_p_backward(
             at::native::gpu_kernel_multiple_outputs(
                 iterator,
                 [] GPU_LAMBDA (scalar_t gradient, scalar_t z, scalar_t g2, scalar_t g3)
-                    -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    -> thrust::tuple<scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::weierstrass_p_backward(
-                        gradient, z, g2, g3
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result)
+                            static_cast<compute_t>(gradient), static_cast<compute_t>(z), static_cast<compute_t>(g2), static_cast<compute_t>(g3)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result))
                     );
                 }
             );
@@ -1041,15 +1044,16 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> weierstrass_p_
                     scalar_t z,
                     scalar_t g2,
                     scalar_t g3
-                ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                ) -> thrust::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::weierstrass_p_backward_backward(
-                        gg_z, gg_g2, gg_g3, gradient, z, g2, g3
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result),
-                        std::get<3>(result)
+                            static_cast<compute_t>(gg_z), static_cast<compute_t>(gg_g2), static_cast<compute_t>(gg_g3), static_cast<compute_t>(gradient), static_cast<compute_t>(z), static_cast<compute_t>(g2), static_cast<compute_t>(g3)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result)),
+                        static_cast<scalar_t>(std::get<3>(result))
                     );
                 }
             );
@@ -1100,7 +1104,8 @@ inline at::Tensor weierstrass_sigma(
             at::native::gpu_kernel(
                 iterator,
                 [] GPU_LAMBDA (scalar_t z, scalar_t g2, scalar_t g3) -> scalar_t {
-                    return kernel::special_functions::weierstrass_sigma(z, g2, g3);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::weierstrass_sigma(static_cast<compute_t>(z), static_cast<compute_t>(g2), static_cast<compute_t>(g3)));
                 }
             );
         }
@@ -1142,14 +1147,15 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> weierstrass_sigma_backward
             at::native::gpu_kernel_multiple_outputs(
                 iterator,
                 [] GPU_LAMBDA (scalar_t gradient, scalar_t z, scalar_t g2, scalar_t g3)
-                    -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    -> thrust::tuple<scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::weierstrass_sigma_backward(
-                        gradient, z, g2, g3
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result)
+                            static_cast<compute_t>(gradient), static_cast<compute_t>(z), static_cast<compute_t>(g2), static_cast<compute_t>(g3)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result))
                     );
                 }
             );
@@ -1215,15 +1221,16 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> weierstrass_si
                     scalar_t z,
                     scalar_t g2,
                     scalar_t g3
-                ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                ) -> thrust::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::weierstrass_sigma_backward_backward(
-                        gg_z, gg_g2, gg_g3, gradient, z, g2, g3
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result),
-                        std::get<3>(result)
+                            static_cast<compute_t>(gg_z), static_cast<compute_t>(gg_g2), static_cast<compute_t>(gg_g3), static_cast<compute_t>(gradient), static_cast<compute_t>(z), static_cast<compute_t>(g2), static_cast<compute_t>(g3)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result)),
+                        static_cast<scalar_t>(std::get<3>(result))
                     );
                 }
             );
@@ -1274,7 +1281,8 @@ inline at::Tensor weierstrass_zeta(
             at::native::gpu_kernel(
                 iterator,
                 [] GPU_LAMBDA (scalar_t z, scalar_t g2, scalar_t g3) -> scalar_t {
-                    return kernel::special_functions::weierstrass_zeta(z, g2, g3);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::weierstrass_zeta(static_cast<compute_t>(z), static_cast<compute_t>(g2), static_cast<compute_t>(g3)));
                 }
             );
         }
@@ -1316,14 +1324,15 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> weierstrass_zeta_backward(
             at::native::gpu_kernel_multiple_outputs(
                 iterator,
                 [] GPU_LAMBDA (scalar_t gradient, scalar_t z, scalar_t g2, scalar_t g3)
-                    -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    -> thrust::tuple<scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::weierstrass_zeta_backward(
-                        gradient, z, g2, g3
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result)
+                            static_cast<compute_t>(gradient), static_cast<compute_t>(z), static_cast<compute_t>(g2), static_cast<compute_t>(g3)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result))
                     );
                 }
             );
@@ -1389,15 +1398,16 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> weierstrass_ze
                     scalar_t z,
                     scalar_t g2,
                     scalar_t g3
-                ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                ) -> thrust::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::weierstrass_zeta_backward_backward(
-                        gg_z, gg_g2, gg_g3, gradient, z, g2, g3
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result),
-                        std::get<3>(result)
+                            static_cast<compute_t>(gg_z), static_cast<compute_t>(gg_g2), static_cast<compute_t>(gg_g3), static_cast<compute_t>(gradient), static_cast<compute_t>(z), static_cast<compute_t>(g2), static_cast<compute_t>(g3)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result)),
+                        static_cast<scalar_t>(std::get<3>(result))
                     );
                 }
             );
@@ -1449,7 +1459,8 @@ inline at::Tensor weierstrass_eta(
             at::native::gpu_kernel(
                 iterator,
                 [] GPU_LAMBDA (scalar_t g2, scalar_t g3) -> scalar_t {
-                    return kernel::special_functions::weierstrass_eta(g2, g3);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::weierstrass_eta(static_cast<compute_t>(g2), static_cast<compute_t>(g3)));
                 }
             );
         }
@@ -1487,13 +1498,14 @@ inline std::tuple<at::Tensor, at::Tensor> weierstrass_eta_backward(
             at::native::gpu_kernel_multiple_outputs(
                 iterator,
                 [] GPU_LAMBDA (scalar_t gradient, scalar_t g2, scalar_t g3)
-                    -> std::tuple<scalar_t, scalar_t> {
+                    -> thrust::tuple<scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::weierstrass_eta_backward(
-                        gradient, g2, g3
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result)
+                            static_cast<compute_t>(gradient), static_cast<compute_t>(g2), static_cast<compute_t>(g3)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result))
                     );
                 }
             );
@@ -1550,14 +1562,15 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> weierstrass_eta_backward_b
                     scalar_t gradient,
                     scalar_t g2,
                     scalar_t g3
-                ) -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                ) -> thrust::tuple<scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::weierstrass_eta_backward_backward(
-                        gg_g2, gg_g3, gradient, g2, g3
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result)
+                            static_cast<compute_t>(gg_g2), static_cast<compute_t>(gg_g3), static_cast<compute_t>(gradient), static_cast<compute_t>(g2), static_cast<compute_t>(g3)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result))
                     );
                 }
             );
@@ -1607,7 +1620,8 @@ inline at::Tensor spherical_hankel_1(
             at::native::gpu_kernel(
                 iterator,
                 [] GPU_LAMBDA (scalar_t n, scalar_t z) -> scalar_t {
-                    return kernel::special_functions::spherical_hankel_1(n, z);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::spherical_hankel_1(static_cast<compute_t>(n), static_cast<compute_t>(z)));
                 }
             );
         }
@@ -1643,13 +1657,14 @@ inline std::tuple<at::Tensor, at::Tensor> spherical_hankel_1_backward(
             at::native::gpu_kernel_multiple_outputs(
                 iterator,
                 [] GPU_LAMBDA (scalar_t gradient, scalar_t n, scalar_t z)
-                    -> std::tuple<scalar_t, scalar_t> {
+                    -> thrust::tuple<scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::spherical_hankel_1_backward(
-                        gradient, n, z
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result)
+                            static_cast<compute_t>(gradient), static_cast<compute_t>(n), static_cast<compute_t>(z)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result))
                     );
                 }
             );
@@ -1708,14 +1723,15 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> spherical_hankel_1_backwar
                     scalar_t gradient,
                     scalar_t n,
                     scalar_t z
-                ) -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                ) -> thrust::tuple<scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::spherical_hankel_1_backward_backward(
-                        n_gradient_gradient, z_gradient_gradient, gradient, n, z
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result)
+                            static_cast<compute_t>(n_gradient_gradient), static_cast<compute_t>(z_gradient_gradient), static_cast<compute_t>(gradient), static_cast<compute_t>(n), static_cast<compute_t>(z)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result))
                     );
                 }
             );
@@ -1762,7 +1778,8 @@ inline at::Tensor spherical_hankel_2(
             at::native::gpu_kernel(
                 iterator,
                 [] GPU_LAMBDA (scalar_t n, scalar_t z) -> scalar_t {
-                    return kernel::special_functions::spherical_hankel_2(n, z);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::spherical_hankel_2(static_cast<compute_t>(n), static_cast<compute_t>(z)));
                 }
             );
         }
@@ -1798,13 +1815,14 @@ inline std::tuple<at::Tensor, at::Tensor> spherical_hankel_2_backward(
             at::native::gpu_kernel_multiple_outputs(
                 iterator,
                 [] GPU_LAMBDA (scalar_t gradient, scalar_t n, scalar_t z)
-                    -> std::tuple<scalar_t, scalar_t> {
+                    -> thrust::tuple<scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::spherical_hankel_2_backward(
-                        gradient, n, z
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result)
+                            static_cast<compute_t>(gradient), static_cast<compute_t>(n), static_cast<compute_t>(z)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result))
                     );
                 }
             );
@@ -1863,14 +1881,15 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> spherical_hankel_2_backwar
                     scalar_t gradient,
                     scalar_t n,
                     scalar_t z
-                ) -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                ) -> thrust::tuple<scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::spherical_hankel_2_backward_backward(
-                        n_gradient_gradient, z_gradient_gradient, gradient, n, z
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result)
+                            static_cast<compute_t>(n_gradient_gradient), static_cast<compute_t>(z_gradient_gradient), static_cast<compute_t>(gradient), static_cast<compute_t>(n), static_cast<compute_t>(z)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result))
                     );
                 }
             );
@@ -1937,7 +1956,8 @@ inline at::Tensor spherical_harmonic_y(
             at::native::gpu_kernel(
                 iterator,
                 [] GPU_LAMBDA (scalar_t l, scalar_t m, scalar_t theta, scalar_t phi) -> scalar_t {
-                    return kernel::special_functions::spherical_harmonic_y(l, m, theta, phi);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::spherical_harmonic_y(static_cast<compute_t>(l), static_cast<compute_t>(m), static_cast<compute_t>(theta), static_cast<compute_t>(phi)));
                 }
             );
         }
@@ -1999,15 +2019,16 @@ spherical_harmonic_y_backward(
             at::native::gpu_kernel_multiple_outputs(
                 iterator,
                 [] GPU_LAMBDA (scalar_t gradient, scalar_t l, scalar_t m, scalar_t theta, scalar_t phi)
-                    -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    -> thrust::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::spherical_harmonic_y_backward(
-                        gradient, l, m, theta, phi
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result),
-                        std::get<3>(result)
+                            static_cast<compute_t>(gradient), static_cast<compute_t>(l), static_cast<compute_t>(m), static_cast<compute_t>(theta), static_cast<compute_t>(phi)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result)),
+                        static_cast<scalar_t>(std::get<3>(result))
                     );
                 }
             );
@@ -2109,18 +2130,19 @@ spherical_harmonic_y_backward_backward(
                     scalar_t m,
                     scalar_t theta,
                     scalar_t phi
-                ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t, scalar_t> {
+                ) -> thrust::tuple<scalar_t, scalar_t, scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::spherical_harmonic_y_backward_backward(
-                        l_gradient_gradient, m_gradient_gradient,
-                        theta_gradient_gradient, phi_gradient_gradient,
-                        gradient, l, m, theta, phi
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result),
-                        std::get<3>(result),
-                        std::get<4>(result)
+                            static_cast<compute_t>(l_gradient_gradient), static_cast<compute_t>(m_gradient_gradient),
+                            static_cast<compute_t>(theta_gradient_gradient), static_cast<compute_t>(phi_gradient_gradient),
+                            static_cast<compute_t>(gradient), static_cast<compute_t>(l), static_cast<compute_t>(m), static_cast<compute_t>(theta), static_cast<compute_t>(phi)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result)),
+                        static_cast<scalar_t>(std::get<3>(result)),
+                        static_cast<scalar_t>(std::get<4>(result))
                     );
                 }
             );
@@ -2169,7 +2191,8 @@ inline at::Tensor dawson(const at::Tensor &z_input) {
             at::native::gpu_kernel(
                 iterator,
                 [] GPU_LAMBDA (scalar_t z) -> scalar_t {
-                    return kernel::special_functions::dawson(z);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::dawson(static_cast<compute_t>(z)));
                 }
             );
         }
@@ -2203,7 +2226,8 @@ inline at::Tensor dawson_backward(
             at::native::gpu_kernel(
                 iterator,
                 [] GPU_LAMBDA (scalar_t gradient, scalar_t z) -> scalar_t {
-                    return kernel::special_functions::dawson_backward(gradient, z);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::dawson_backward(static_cast<compute_t>(gradient), static_cast<compute_t>(z)));
                 }
             );
         }
@@ -2248,13 +2272,14 @@ inline std::tuple<at::Tensor, at::Tensor> dawson_backward_backward(
                     scalar_t z_gradient_gradient,
                     scalar_t gradient,
                     scalar_t z
-                ) -> std::tuple<scalar_t, scalar_t> {
+                ) -> thrust::tuple<scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::dawson_backward_backward(
-                        z_gradient_gradient, gradient, z
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result)
+                            static_cast<compute_t>(z_gradient_gradient), static_cast<compute_t>(gradient), static_cast<compute_t>(z)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result))
                     );
                 }
             );
@@ -2311,7 +2336,8 @@ inline at::Tensor faddeeva_w(const at::Tensor &z_input) {
             at::native::gpu_kernel(
                 iterator,
                 [] GPU_LAMBDA (scalar_t z) -> scalar_t {
-                    return kernel::special_functions::faddeeva_w(z);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::faddeeva_w(static_cast<compute_t>(z)));
                 }
             );
         }
@@ -2343,7 +2369,8 @@ inline at::Tensor faddeeva_w_backward(
             at::native::gpu_kernel(
                 iterator,
                 [] GPU_LAMBDA (scalar_t gradient, scalar_t z) -> scalar_t {
-                    return kernel::special_functions::faddeeva_w_backward(gradient, z);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::faddeeva_w_backward(static_cast<compute_t>(gradient), static_cast<compute_t>(z)));
                 }
             );
         }
@@ -2386,13 +2413,14 @@ inline std::tuple<at::Tensor, at::Tensor> faddeeva_w_backward_backward(
                     scalar_t z_gradient_gradient,
                     scalar_t gradient,
                     scalar_t z
-                ) -> std::tuple<scalar_t, scalar_t> {
+                ) -> thrust::tuple<scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::faddeeva_w_backward_backward(
-                        z_gradient_gradient, gradient, z
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result)
+                            static_cast<compute_t>(z_gradient_gradient), static_cast<compute_t>(gradient), static_cast<compute_t>(z)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result))
                     );
                 }
             );
@@ -2446,7 +2474,8 @@ inline at::Tensor voigt_profile(
             at::native::gpu_kernel(
                 iterator,
                 [] GPU_LAMBDA (scalar_t x, scalar_t sigma, scalar_t gamma) -> scalar_t {
-                    return kernel::special_functions::voigt_profile(x, sigma, gamma);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::voigt_profile(static_cast<compute_t>(x), static_cast<compute_t>(sigma), static_cast<compute_t>(gamma)));
                 }
             );
         }
@@ -2488,14 +2517,15 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> voigt_profile_backward(
             at::native::gpu_kernel_multiple_outputs(
                 iterator,
                 [] GPU_LAMBDA (scalar_t gradient, scalar_t x, scalar_t sigma, scalar_t gamma)
-                    -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    -> thrust::tuple<scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::voigt_profile_backward(
-                        gradient, x, sigma, gamma
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result)
+                            static_cast<compute_t>(gradient), static_cast<compute_t>(x), static_cast<compute_t>(sigma), static_cast<compute_t>(gamma)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result))
                     );
                 }
             );
@@ -2569,15 +2599,16 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> voigt_profile_
                     scalar_t x,
                     scalar_t sigma,
                     scalar_t gamma
-                ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                ) -> thrust::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::voigt_profile_backward_backward(
-                        gg_x, gg_sigma, gg_gamma, gradient, x, sigma, gamma
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result),
-                        std::get<2>(result),
-                        std::get<3>(result)
+                            static_cast<compute_t>(gg_x), static_cast<compute_t>(gg_sigma), static_cast<compute_t>(gg_gamma), static_cast<compute_t>(gradient), static_cast<compute_t>(x), static_cast<compute_t>(sigma), static_cast<compute_t>(gamma)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result)),
+                        static_cast<scalar_t>(std::get<2>(result)),
+                        static_cast<scalar_t>(std::get<3>(result))
                     );
                 }
             );
@@ -2625,7 +2656,8 @@ inline at::Tensor log_multivariate_gamma(const at::Tensor &a_input, int64_t d) {
             at::native::gpu_kernel(
                 iterator,
                 [d] GPU_LAMBDA (scalar_t a) -> scalar_t {
-                    return kernel::special_functions::log_multivariate_gamma(a, d);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::log_multivariate_gamma(static_cast<compute_t>(a), static_cast<compute_t>(d)));
                 }
             );
         }
@@ -2660,7 +2692,8 @@ inline at::Tensor log_multivariate_gamma_backward(
             at::native::gpu_kernel(
                 iterator,
                 [d] GPU_LAMBDA (scalar_t gradient, scalar_t a) -> scalar_t {
-                    return kernel::special_functions::log_multivariate_gamma_backward(gradient, a, d);
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
+                    return static_cast<scalar_t>(kernel::special_functions::log_multivariate_gamma_backward(static_cast<compute_t>(gradient), static_cast<compute_t>(a), static_cast<compute_t>(d)));
                 }
             );
         }
@@ -2703,13 +2736,14 @@ inline std::tuple<at::Tensor, at::Tensor> log_multivariate_gamma_backward_backwa
             at::native::gpu_kernel_multiple_outputs(
                 iterator,
                 [d] GPU_LAMBDA (scalar_t gg_a, scalar_t gradient, scalar_t a)
-                    -> std::tuple<scalar_t, scalar_t> {
+                    -> thrust::tuple<scalar_t, scalar_t> {
+                    using compute_t = torchscience::cuda::promote_t<scalar_t>;
                     auto result = kernel::special_functions::log_multivariate_gamma_backward_backward(
-                        gg_a, gradient, a, d
-                    );
-                    return std::make_tuple(
-                        std::get<0>(result),
-                        std::get<1>(result)
+                            static_cast<compute_t>(gg_a), static_cast<compute_t>(gradient), static_cast<compute_t>(a), static_cast<compute_t>(d)
+                            );
+                    return thrust::make_tuple(
+                        static_cast<scalar_t>(std::get<0>(result)),
+                        static_cast<scalar_t>(std::get<1>(result))
                     );
                 }
             );
