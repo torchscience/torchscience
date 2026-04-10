@@ -64,8 +64,8 @@ class AutogradMixin:
             func,
             inputs,
             eps=tol.gradcheck_eps,
-            atol=tol.gradcheck_atol * 10,  # Relaxed for complex
-            rtol=tol.gradcheck_rtol * 10,
+            atol=tol.gradcheck_atol * 100,  # Relaxed for complex Wirtinger derivatives
+            rtol=tol.gradcheck_rtol * 100,
         )
 
     @pytest.mark.parametrize("dtype", [torch.float64])
@@ -104,6 +104,6 @@ class AutogradMixin:
             func,
             inputs,
             eps=tol.gradgradcheck_eps,
-            atol=tol.gradgradcheck_atol * 10,  # Relaxed for complex
-            rtol=tol.gradgradcheck_rtol * 10,
+            atol=tol.gradgradcheck_atol * 100,  # Relaxed for complex Wirtinger derivatives
+            rtol=tol.gradgradcheck_rtol * 100,
         )

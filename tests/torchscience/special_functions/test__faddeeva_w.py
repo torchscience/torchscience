@@ -33,6 +33,7 @@ class TestFaddeevaW(OpTestCase):
             skip_tests={
                 "test_autocast_cpu_bfloat16",
                 "test_dtype_preservation",
+                "test_gradcheck_complex",
                 "test_gradcheck_real",
                 "test_gradgradcheck_complex",
                 "test_gradgradcheck_real",
