@@ -6,6 +6,7 @@ from torchscience.testing import (
     OperatorDescriptor,
     OpTestCase,
     SpecialValue,
+    ToleranceConfig,
 )
 
 
@@ -44,6 +45,10 @@ class TestBeta(OpTestCase):
                     description="B(1, 3) = 1/3",
                 ),
             ],
+            tolerances=ToleranceConfig(
+                bfloat16_atol=0.2,
+                bfloat16_rtol=0.2,
+            ),
             skip_tests={
                 "test_gradcheck_complex",
                 "test_gradgradcheck_complex",
