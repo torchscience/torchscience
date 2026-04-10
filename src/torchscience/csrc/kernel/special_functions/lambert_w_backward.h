@@ -2,6 +2,7 @@
 
 #include <tuple>
 
+#include "cmath_compat.h"
 #include "lambert_w.h"
 
 namespace torchscience::kernel::special_functions {
@@ -28,7 +29,7 @@ std::tuple<T, T> lambert_w_backward(T gradient, T k, T z) {
   T w = lambert_w(k, z);
 
   // Handle NaN case
-  if (std::isnan(w)) {
+  if (cmath_compat::isnan(w)) {
     return {grad_k, std::numeric_limits<T>::quiet_NaN()};
   }
 

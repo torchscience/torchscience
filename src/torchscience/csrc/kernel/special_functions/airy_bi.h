@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/complex.h>
 #include "rational_polynomial_evaluate.h"
@@ -105,7 +106,7 @@ constexpr double BI_MACHEP = 1.11022302462515654042e-16;  // 2^-53
 template <typename T>
 T airy_bi(T x) {
     // Handle special values
-    if (std::isnan(x)) {
+    if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
@@ -115,12 +116,12 @@ T airy_bi(T x) {
     }
 
     // For positive infinity, return infinity
-    if (std::isinf(x) && x > T(0)) {
+    if (cmath_compat::isinf(x) && x > T(0)) {
         return std::numeric_limits<T>::infinity();
     }
 
     // For negative infinity, oscillates -> 0
-    if (std::isinf(x) && x < T(0)) {
+    if (cmath_compat::isinf(x) && x < T(0)) {
         return T(0);
     }
 

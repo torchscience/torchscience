@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/complex.h>
 #include "chebyshev_polynomial_t_series_evaluate.h"
@@ -48,7 +49,7 @@ constexpr double k1_B[] = {
 template <typename T>
 T modified_bessel_k_1(T x) {
     // Handle special values
-    if (std::isnan(x)) {
+    if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
     if (x <= T(0)) {
@@ -58,7 +59,7 @@ T modified_bessel_k_1(T x) {
         }
         return std::numeric_limits<T>::quiet_NaN();
     }
-    if (std::isinf(x)) {
+    if (cmath_compat::isinf(x)) {
         // K1(+inf) = 0 (exponential decay)
         return T(0);
     }

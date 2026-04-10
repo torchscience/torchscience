@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <tuple>
 #include <c10/util/complex.h>
 #include "kelvin_kei.h"
@@ -19,14 +20,14 @@ namespace detail {
 
 template <typename T>
 T kelvin_kei_second_derivative(T x) {
-    if (std::isnan(x)) {
+    if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
     // kei is even, so kei'' is also even
     x = std::abs(x);
 
-    if (std::isinf(x)) {
+    if (cmath_compat::isinf(x)) {
         return T(0);
     }
 

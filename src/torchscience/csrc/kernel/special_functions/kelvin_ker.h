@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/complex.h>
 
@@ -39,7 +40,7 @@ constexpr double KER_LARGE_X = 8.0;
 template <typename T>
 T kelvin_ker(T x) {
     // Handle special values
-    if (std::isnan(x)) {
+    if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
@@ -51,7 +52,7 @@ T kelvin_ker(T x) {
         return std::numeric_limits<T>::infinity();
     }
 
-    if (std::isinf(x)) {
+    if (cmath_compat::isinf(x)) {
         // ker(x) -> 0 as x -> infinity (exponential decay)
         return T(0);
     }

@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 namespace torchscience::kernel::special_functions {
@@ -99,7 +100,7 @@ T exponential_integral_e_1_continued_fraction(T x) {
 template <typename T>
 T exponential_integral_e_1(T x) {
   // Handle special cases
-  if (std::isnan(x)) {
+  if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -108,7 +109,7 @@ T exponential_integral_e_1(T x) {
     return std::numeric_limits<T>::infinity();
   }
 
-  if (std::isinf(x)) {
+  if (cmath_compat::isinf(x)) {
     if (x > T(0)) {
       // E1(+inf) = 0
       return T(0);
@@ -140,7 +141,7 @@ c10::complex<T> exponential_integral_e_1(c10::complex<T> z) {
   using Complex = c10::complex<T>;
 
   // Handle special cases
-  if (std::isnan(z.real()) || std::isnan(z.imag())) {
+  if (cmath_compat::isnan(z.real()) || cmath_compat::isnan(z.imag())) {
     return Complex(std::numeric_limits<T>::quiet_NaN(),
                    std::numeric_limits<T>::quiet_NaN());
   }

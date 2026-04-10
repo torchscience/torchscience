@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 #include "faddeeva_w.h"
@@ -27,7 +28,7 @@ T dawson(T x) {
   const T sqrt_pi_over_2 = static_cast<T>(0.88622692545275801364908374167057259139);
 
   // Handle special cases
-  if (std::isnan(x)) {
+  if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 

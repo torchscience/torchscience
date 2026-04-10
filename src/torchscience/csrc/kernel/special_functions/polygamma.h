@@ -2,7 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
-
+#include "cmath_compat.h"
 #include "digamma.h"
 #include "trigamma.h"
 #include "tetragamma.h"
@@ -14,8 +14,8 @@ namespace torchscience::kernel::special_functions {
 
 template <typename T>
 T polygamma_general(int n, T z) {
-  if (!std::isfinite(z)) {
-    if (std::isnan(z)) {
+  if (!cmath_compat::isfinite(z)) {
+    if (cmath_compat::isnan(z)) {
       return std::numeric_limits<T>::quiet_NaN();
     }
     return z > T(0) ? T(0) : std::numeric_limits<T>::quiet_NaN();
@@ -89,7 +89,7 @@ T polygamma(T n, T z) {
 
 template <typename T>
 c10::complex<T> polygamma_general(int n, c10::complex<T> z) {
-  if (!std::isfinite(z.real()) || !std::isfinite(z.imag())) {
+  if (!cmath_compat::isfinite(z.real()) || !cmath_compat::isfinite(z.imag())) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(), std::numeric_limits<T>::quiet_NaN());
   }
 

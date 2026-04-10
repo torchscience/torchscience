@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-
+#include "cmath_compat.h"
 #include "erfcinv.h"
 
 namespace torchscience::kernel::special_functions {
@@ -24,7 +24,7 @@ T erfcinv_backward(T gradient, T x) {
   T y2 = y * y;
 
   // Handle edge cases where y is infinite
-  if (std::isinf(y)) {
+  if (cmath_compat::isinf(y)) {
     // At x = 0 or x = 2, the derivative is +/- infinite
     if (y > static_cast<T>(0)) {
       return gradient * (-std::numeric_limits<T>::infinity());

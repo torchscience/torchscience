@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 #include "hypergeometric_2_f_1.h"
@@ -87,7 +88,7 @@ T jacobi_polynomial_p(T n, T alpha, T beta, T z) {
   T coeff = std::exp(log_coeff);
 
   // Handle case where coefficient might be NaN due to gamma poles
-  if (!std::isfinite(static_cast<double>(coeff))) {
+  if (!cmath_compat::isfinite(static_cast<double>(coeff))) {
     coeff = gamma(n + alpha + T(1)) / (gamma(alpha + T(1)) * gamma(n + T(1)));
   }
 

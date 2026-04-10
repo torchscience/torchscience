@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <c10/util/complex.h>
 #include "kelvin_ber.h"
 
@@ -22,7 +23,7 @@ namespace detail {
 template <typename T>
 T kelvin_ber_derivative(T x) {
     // Handle special values
-    if (std::isnan(x)) {
+    if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
@@ -33,7 +34,7 @@ T kelvin_ber_derivative(T x) {
     bool negative = x < T(0);
     x = std::abs(x);
 
-    if (std::isinf(x)) {
+    if (cmath_compat::isinf(x)) {
         return std::numeric_limits<T>::infinity();
     }
 

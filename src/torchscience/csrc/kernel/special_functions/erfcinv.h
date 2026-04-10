@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 #include "erfinv.h"
@@ -66,7 +67,7 @@ T erfcinv_asymptotic(T x) {
 template <typename T>
 T erfcinv(T x) {
   // Handle special cases
-  if (std::isnan(x)) {
+  if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 

@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 namespace torchscience::kernel::special_functions {
@@ -24,7 +25,7 @@ namespace torchscience::kernel::special_functions {
 template <typename T>
 T associated_legendre_polynomial_p(T n, T m, T x) {
   // Propagate NaN
-  if (std::isnan(n) || std::isnan(m) || std::isnan(x)) {
+  if (cmath_compat::isnan(n) || cmath_compat::isnan(m) || cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 

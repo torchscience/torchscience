@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <tuple>
 #include <c10/util/complex.h>
 #include "kelvin_bei.h"
@@ -18,14 +19,14 @@ namespace detail {
 
 template <typename T>
 T kelvin_bei_second_derivative(T x) {
-    if (std::isnan(x)) {
+    if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
     // bei is even, so bei'' is also even
     x = std::abs(x);
 
-    if (std::isinf(x)) {
+    if (cmath_compat::isinf(x)) {
         return std::numeric_limits<T>::infinity();
     }
 

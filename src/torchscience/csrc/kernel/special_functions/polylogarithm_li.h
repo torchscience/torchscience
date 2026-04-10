@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 #include "zeta.h"
@@ -110,7 +111,7 @@ c10::complex<T> polylogarithm_borwein(c10::complex<T> s, c10::complex<T> z, int 
 template <typename T>
 T polylogarithm_li(T s, T z) {
   // Handle special cases
-  if (std::isnan(s) || std::isnan(z)) {
+  if (cmath_compat::isnan(s) || cmath_compat::isnan(z)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -141,8 +142,8 @@ T polylogarithm_li(T s, T z) {
 template <typename T>
 c10::complex<T> polylogarithm_li(c10::complex<T> s, c10::complex<T> z) {
   // Handle special cases
-  if (std::isnan(s.real()) || std::isnan(s.imag()) ||
-      std::isnan(z.real()) || std::isnan(z.imag())) {
+  if (cmath_compat::isnan(s.real()) || cmath_compat::isnan(s.imag()) ||
+      cmath_compat::isnan(z.real()) || cmath_compat::isnan(z.imag())) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(),
                            std::numeric_limits<T>::quiet_NaN());
   }

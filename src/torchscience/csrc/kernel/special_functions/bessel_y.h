@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/BFloat16.h>
 #include <c10/util/Half.h>
@@ -131,7 +132,7 @@ T bessel_y_asymptotic(T n, T z) {
 template <typename T>
 T bessel_y(T n, T z) {
     // Handle special values
-    if (std::isnan(n) || std::isnan(z)) {
+    if (cmath_compat::isnan(n) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
@@ -146,7 +147,7 @@ T bessel_y(T n, T z) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
-    if (std::isinf(z)) {
+    if (cmath_compat::isinf(z)) {
         return T(0);  // Y_n(+inf) = 0 (oscillatory decay)
     }
 

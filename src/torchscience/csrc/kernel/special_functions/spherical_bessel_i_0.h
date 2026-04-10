@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/BFloat16.h>
 #include <c10/util/Half.h>
@@ -31,7 +32,7 @@ inline c10::BFloat16 spherical_bessel_i_0_eps<c10::BFloat16>() { return c10::BFl
 // i_0(z) = sinh(z) / z
 template <typename T>
 T spherical_bessel_i_0(T z) {
-    if (std::isnan(z)) {
+    if (cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/complex.h>
 #include "rational_polynomial_evaluate.h"
@@ -91,7 +92,7 @@ constexpr double Y1_THPIO4 = 2.35619449019234492885;     // 3*pi/4
 template <typename T>
 T bessel_y_1(T z) {
     // Handle special values
-    if (std::isnan(z)) {
+    if (cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
     if (z <= T(0)) {
@@ -101,7 +102,7 @@ T bessel_y_1(T z) {
         }
         return std::numeric_limits<T>::quiet_NaN();
     }
-    if (std::isinf(z)) {
+    if (cmath_compat::isinf(z)) {
         // Y₁(+∞) = 0 (oscillatory decay)
         return T(0);
     }

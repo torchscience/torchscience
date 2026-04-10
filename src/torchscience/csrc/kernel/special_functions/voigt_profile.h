@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 #include "faddeeva_w.h"
@@ -40,7 +41,7 @@ T voigt_profile(T x, T sigma, T gamma) {
   }
 
   // Handle special cases
-  if (std::isnan(x) || std::isnan(sigma) || std::isnan(gamma)) {
+  if (cmath_compat::isnan(x) || cmath_compat::isnan(sigma) || cmath_compat::isnan(gamma)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 

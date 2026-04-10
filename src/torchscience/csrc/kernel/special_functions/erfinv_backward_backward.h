@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <tuple>
 
 #include "erfinv.h"
@@ -33,7 +34,7 @@ std::tuple<T, T> erfinv_backward_backward(
   T y2 = y * y;
 
   // Handle edge cases where y is infinite
-  if (std::isinf(y)) {
+  if (cmath_compat::isinf(y)) {
     T inf = std::numeric_limits<T>::infinity();
     return {gradient_gradient * inf, gradient_gradient * gradient * inf};
   }

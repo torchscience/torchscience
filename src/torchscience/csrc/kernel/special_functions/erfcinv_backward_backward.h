@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <tuple>
 
 #include "erfcinv.h"
@@ -37,7 +38,7 @@ std::tuple<T, T> erfcinv_backward_backward(
   T y2 = y * y;
 
   // Handle edge cases where y is infinite
-  if (std::isinf(y)) {
+  if (cmath_compat::isinf(y)) {
     T inf = std::numeric_limits<T>::infinity();
     // f'(x) is -inf or +inf depending on sign
     T sign = (y > static_cast<T>(0)) ? static_cast<T>(-1) : static_cast<T>(1);

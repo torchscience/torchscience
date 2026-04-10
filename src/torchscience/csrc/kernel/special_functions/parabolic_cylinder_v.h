@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/BFloat16.h>
 #include <c10/util/Half.h>
@@ -181,7 +182,7 @@ c10::complex<T> parabolic_cylinder_v_asymptotic(c10::complex<T> a, c10::complex<
 // Main function: parabolic_cylinder_v(a, z)
 template <typename T>
 T parabolic_cylinder_v(T a, T z) {
-    if (std::isnan(a) || std::isnan(z)) {
+    if (cmath_compat::isnan(a) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 

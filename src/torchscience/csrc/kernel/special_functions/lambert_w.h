@@ -4,7 +4,7 @@
 #include <c10/util/Half.h>
 #include <c10/util/complex.h>
 #include <cmath>
-
+#include "cmath_compat.h"
 namespace torchscience::kernel::special_functions {
 
 namespace detail {
@@ -178,7 +178,7 @@ c10::complex<T> lambert_w_halley_complex(c10::complex<T> z, c10::complex<T> w0) 
 template <typename T>
 T lambert_w(T k, T z) {
   // Handle special cases
-  if (std::isnan(z)) {
+  if (cmath_compat::isnan(z)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 

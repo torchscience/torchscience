@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 namespace torchscience::kernel::special_functions {
@@ -104,7 +105,7 @@ T erfinv_newton_refine(T x, T y) {
 template <typename T>
 T erfinv(T x) {
   // Handle special cases
-  if (std::isnan(x)) {
+  if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 

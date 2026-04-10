@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 namespace torchscience::kernel::special_functions {
@@ -34,7 +35,7 @@ constexpr int num_bernoulli = 12;
 template <typename T>
 T zeta(T s) {
   // Handle special cases
-  if (std::isnan(s)) {
+  if (cmath_compat::isnan(s)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -125,7 +126,7 @@ T zeta(T s) {
 template <typename T>
 c10::complex<T> zeta(c10::complex<T> s) {
   // For complex s, we need Re(s) > 1
-  if (std::isnan(s.real()) || std::isnan(s.imag())) {
+  if (cmath_compat::isnan(s.real()) || cmath_compat::isnan(s.imag())) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(),
                            std::numeric_limits<T>::quiet_NaN());
   }

@@ -150,18 +150,17 @@ jobs:
           echo "CMAKE_CXX_COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
 
       - name: Install dependencies
-        run: uv sync --group dev --python ${{ matrix.python-version }}
+        run: uv sync --group dev --python ${{ matrix.python-version }} --no-install-project
 
       - name: Override PyTorch version
         if: matrix.torch-version != 'latest'
         run: uv pip install torch==${{ matrix.torch-version }}
 
-      - name: Rebuild extension after torch override
-        if: matrix.torch-version != 'latest'
-        run: uv sync --group dev --reinstall-package torchscience
+      - name: Install project
+        run: uv pip install --no-build-isolation -e .
 
       - name: Run CUDA tests
-        run: uv run pytest tests/ -v --tb=short -k "cuda or gpu"
+        run: uv run --no-sync pytest tests/ -v --tb=short -k "cuda or gpu"
 
   build-check:
     needs: [lint]

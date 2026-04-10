@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 namespace torchscience::kernel::special_functions {
@@ -18,7 +19,7 @@ namespace torchscience::kernel::special_functions {
 template <typename T>
 T exponential_integral_ein(T x) {
   // Handle special cases
-  if (std::isnan(x)) {
+  if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -26,7 +27,7 @@ T exponential_integral_ein(T x) {
     return T(0);
   }
 
-  if (std::isinf(x)) {
+  if (cmath_compat::isinf(x)) {
     // Ein(+inf) = +inf, Ein(-inf) = -inf
     return x;
   }
@@ -61,7 +62,7 @@ c10::complex<T> exponential_integral_ein(c10::complex<T> z) {
   using Complex = c10::complex<T>;
 
   // Handle special cases
-  if (std::isnan(z.real()) || std::isnan(z.imag())) {
+  if (cmath_compat::isnan(z.real()) || cmath_compat::isnan(z.imag())) {
     return Complex(std::numeric_limits<T>::quiet_NaN(),
                    std::numeric_limits<T>::quiet_NaN());
   }

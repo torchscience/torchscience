@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 namespace torchscience::kernel::special_functions {
@@ -84,8 +85,8 @@ T hahn_factorial(int k) {
 template <typename T>
 T hahn_polynomial_q(T n, T x, T alpha, T beta, T N) {
   // Guard against non-finite inputs to avoid infinite loops
-  if (!std::isfinite(n) || !std::isfinite(x) || !std::isfinite(alpha) ||
-      !std::isfinite(beta) || !std::isfinite(N)) {
+  if (!cmath_compat::isfinite(n) || !cmath_compat::isfinite(x) || !cmath_compat::isfinite(alpha) ||
+      !cmath_compat::isfinite(beta) || !cmath_compat::isfinite(N)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -138,7 +139,7 @@ c10::complex<T> hahn_polynomial_q(
     c10::complex<T> N) {
 
   // Guard against non-finite n.real() to avoid infinite loops
-  if (!std::isfinite(n.real())) {
+  if (!cmath_compat::isfinite(n.real())) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(), T(0));
   }
 

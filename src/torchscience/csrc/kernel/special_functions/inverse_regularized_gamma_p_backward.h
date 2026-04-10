@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <tuple>
 
@@ -38,7 +39,7 @@ std::tuple<T, T> inverse_regularized_gamma_p_backward(T gradient, T a, T y) {
   // Compute x = inverse_regularized_gamma_p(a, y)
   T x = inverse_regularized_gamma_p(a, y);
 
-  if (x <= T(0) || !std::isfinite(x)) {
+  if (x <= T(0) || !cmath_compat::isfinite(x)) {
     return std::make_tuple(T(0), T(0));
   }
 

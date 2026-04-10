@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 namespace torchscience::kernel::special_functions {
@@ -76,7 +77,7 @@ void sine_integral_auxiliary(T x, T& f, T& g) {
 template <typename T>
 T sine_integral_si(T x) {
   // Handle special cases
-  if (std::isnan(x)) {
+  if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -86,7 +87,7 @@ T sine_integral_si(T x) {
 
   const T pi_2 = T(1.5707963267948966192313216916397514420985846996876);
 
-  if (std::isinf(x)) {
+  if (cmath_compat::isinf(x)) {
     // Si(+inf) = pi/2, Si(-inf) = -pi/2
     return x > T(0) ? pi_2 : -pi_2;
   }
@@ -154,7 +155,7 @@ c10::complex<T> sine_integral_si(c10::complex<T> z) {
   using Complex = c10::complex<T>;
 
   // Handle special cases
-  if (std::isnan(z.real()) || std::isnan(z.imag())) {
+  if (cmath_compat::isnan(z.real()) || cmath_compat::isnan(z.imag())) {
     return Complex(std::numeric_limits<T>::quiet_NaN(),
                    std::numeric_limits<T>::quiet_NaN());
   }

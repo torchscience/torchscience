@@ -2,7 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
-
+#include "cmath_compat.h"
 #include "cos_pi.h"
 #include "sin_pi.h"
 
@@ -10,11 +10,11 @@ namespace torchscience::kernel::special_functions {
 
 template <typename T>
 T trigamma(T z) {
-  if (std::isnan(z)) {
+  if (cmath_compat::isnan(z)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
-  if (std::isinf(z)) {
+  if (cmath_compat::isinf(z)) {
     return z > T(0) ? T(0) : std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -45,7 +45,7 @@ T trigamma(T z) {
 
 template <typename T>
 c10::complex<T> trigamma(c10::complex<T> z) {
-  if (!std::isfinite(z.real()) || !std::isfinite(z.imag())) {
+  if (!cmath_compat::isfinite(z.real()) || !cmath_compat::isfinite(z.imag())) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(), std::numeric_limits<T>::quiet_NaN());
   }
 

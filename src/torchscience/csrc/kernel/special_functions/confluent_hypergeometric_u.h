@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <complex>
 #include <limits>
 #include <type_traits>
@@ -175,7 +176,7 @@ T hypu_integer_b_positive(T a, int n, T z, int max_iter = 200) {
 
   T first_part = T(0);
 
-  if (!std::isinf(log_gamma_a_n1)) {
+  if (!cmath_compat::isinf(log_gamma_a_n1)) {
     // (n-1)! as T
     T factorial_n_minus_1 = T(1);
     for (int i = 2; i < n; ++i) {
@@ -230,7 +231,7 @@ T hypu_integer_b_positive(T a, int n, T z, int max_iter = 200) {
   if (n >= 2) {
     T log_gamma_a = log_gamma(a);
 
-    if (!std::isinf(log_gamma_a)) {
+    if (!cmath_compat::isinf(log_gamma_a)) {
       T factorial_n_minus_2 = T(1);
       for (int i = 2; i <= n - 2; ++i) {
         factorial_n_minus_2 *= T(i);
@@ -279,13 +280,13 @@ T hypu_integer_b_nonpositive(T a, int n, T z) {
   T log_gamma_1_minus_b = log_gamma(one_minus_b);
   T log_gamma_a_minus_b_plus_1 = log_gamma(a_minus_b_plus_1);
 
-  if (std::isinf(log_gamma_a_minus_b_plus_1)) {
+  if (cmath_compat::isinf(log_gamma_a_minus_b_plus_1)) {
     // a - b + 1 is a non-positive integer
     T b_minus_1 = b - T(1);  // Negative
     T log_gamma_b_minus_1 = log_gamma(b_minus_1);
     T log_gamma_a = log_gamma(a);
 
-    if (std::isinf(log_gamma_b_minus_1) || std::isinf(log_gamma_a)) {
+    if (cmath_compat::isinf(log_gamma_b_minus_1) || cmath_compat::isinf(log_gamma_a)) {
       return std::numeric_limits<T>::quiet_NaN();
     }
 
@@ -306,12 +307,12 @@ T hypu_integer_b_nonpositive(T a, int n, T z) {
   T log_gamma_b_minus_1 = log_gamma(b_minus_1);
   T log_gamma_a = log_gamma(a);
 
-  if (std::isinf(log_gamma_b_minus_1)) {
+  if (cmath_compat::isinf(log_gamma_b_minus_1)) {
     // b - 1 is a non-positive integer, second term vanishes
     return sign1 * coeff1 * M1;
   }
 
-  if (std::isinf(log_gamma_a)) {
+  if (cmath_compat::isinf(log_gamma_a)) {
     // a is a non-positive integer, second term vanishes
     return sign1 * coeff1 * M1;
   }
@@ -344,7 +345,7 @@ T hypu_via_m(T a, T b, T z) {
   T sign1 = T(0);
   bool term1_valid = true;
 
-  if (std::isinf(log_gamma_1_minus_b) || std::isinf(log_gamma_a_minus_b_plus_1)) {
+  if (cmath_compat::isinf(log_gamma_1_minus_b) || cmath_compat::isinf(log_gamma_a_minus_b_plus_1)) {
     term1_valid = false;
   } else {
     T M1 = confluent_hypergeometric_m(a, b, z);
@@ -364,7 +365,7 @@ T hypu_via_m(T a, T b, T z) {
   T sign2 = T(0);
   bool term2_valid = true;
 
-  if (std::isinf(log_gamma_b_minus_1) || std::isinf(log_gamma_a)) {
+  if (cmath_compat::isinf(log_gamma_b_minus_1) || cmath_compat::isinf(log_gamma_a)) {
     term2_valid = false;
   } else {
     T coeff2 = std::exp(log_gamma_b_minus_1 - log_gamma_a);
@@ -394,7 +395,7 @@ T hypu_via_m(T a, T b, T z) {
   T log_max = std::max(log_abs_term1, log_abs_term2);
 
   // Guard: if both terms are zero, log_max is -inf and subtraction produces NaN.
-  if (std::isinf(log_max) && log_max < T(0)) {
+  if (cmath_compat::isinf(log_max) && log_max < T(0)) {
     return T(0);
   }
 
@@ -419,7 +420,7 @@ c10::complex<T> hypu_integer_b_positive_complex(c10::complex<T> a, int n, c10::c
 
   C first_part = zero;
 
-  if (!std::isinf(log_gamma_a_n1.real())) {
+  if (!cmath_compat::isinf(log_gamma_a_n1.real())) {
     // (n-1)!
     T factorial_n_minus_1 = T(1);
     for (int i = 2; i < n; ++i) {
@@ -470,7 +471,7 @@ c10::complex<T> hypu_integer_b_positive_complex(c10::complex<T> a, int n, c10::c
   if (n >= 2) {
     C log_gamma_a = log_gamma(a);
 
-    if (!std::isinf(log_gamma_a.real())) {
+    if (!cmath_compat::isinf(log_gamma_a.real())) {
       T factorial_n_minus_2 = T(1);
       for (int i = 2; i <= n - 2; ++i) {
         factorial_n_minus_2 *= T(i);
@@ -540,11 +541,11 @@ T confluent_hypergeometric_u(T a, T b, T z) {
     T log_gamma_num = log_gamma(one_minus_b);
     T log_gamma_denom = log_gamma(a_minus_b_plus_1);
 
-    if (std::isinf(log_gamma_denom)) {
+    if (cmath_compat::isinf(log_gamma_denom)) {
       // a - b + 1 is a non-positive integer
       return T(0);
     }
-    if (std::isinf(log_gamma_num)) {
+    if (cmath_compat::isinf(log_gamma_num)) {
       // 1 - b is a non-positive integer
       return std::numeric_limits<T>::infinity();
     }
@@ -614,10 +615,10 @@ c10::complex<T> confluent_hypergeometric_u(c10::complex<T> a, c10::complex<T> b,
     c10::complex<T> log_gamma_num = log_gamma(one_minus_b);
     c10::complex<T> log_gamma_denom = log_gamma(a_minus_b_plus_1);
 
-    if (std::isinf(log_gamma_denom.real())) {
+    if (cmath_compat::isinf(log_gamma_denom.real())) {
       return c10::complex<T>(T(0), T(0));
     }
-    if (std::isinf(log_gamma_num.real())) {
+    if (cmath_compat::isinf(log_gamma_num.real())) {
       return c10::complex<T>(std::numeric_limits<T>::infinity(), T(0));
     }
 
@@ -679,9 +680,9 @@ c10::complex<T> confluent_hypergeometric_u(c10::complex<T> a, c10::complex<T> b,
   c10::complex<T> term1(T(0), T(0));
   bool term1_valid = true;
 
-  if (std::isinf(log_gamma_1_minus_b.real())) {
+  if (cmath_compat::isinf(log_gamma_1_minus_b.real())) {
     term1_valid = false;
-  } else if (std::isinf(log_gamma_a_minus_b_plus_1.real())) {
+  } else if (cmath_compat::isinf(log_gamma_a_minus_b_plus_1.real())) {
     term1_valid = false;
   } else {
     c10::complex<T> coeff1 = std::exp(log_gamma_1_minus_b - log_gamma_a_minus_b_plus_1);
@@ -697,9 +698,9 @@ c10::complex<T> confluent_hypergeometric_u(c10::complex<T> a, c10::complex<T> b,
   c10::complex<T> term2(T(0), T(0));
   bool term2_valid = true;
 
-  if (std::isinf(log_gamma_b_minus_1.real())) {
+  if (cmath_compat::isinf(log_gamma_b_minus_1.real())) {
     term2_valid = false;
-  } else if (std::isinf(log_gamma_a.real())) {
+  } else if (cmath_compat::isinf(log_gamma_a.real())) {
     term2_valid = false;
   } else {
     c10::complex<T> coeff2 = std::exp(log_gamma_b_minus_1 - log_gamma_a);

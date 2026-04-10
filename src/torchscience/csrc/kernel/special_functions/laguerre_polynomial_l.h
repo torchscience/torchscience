@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 #include "confluent_hypergeometric_m.h"
@@ -85,7 +86,7 @@ T laguerre_polynomial_l(T n, T alpha, T z) {
   coeff = std::exp(log_coeff);
 
   // Handle case where coefficient might be NaN due to gamma poles
-  if (!std::isfinite(static_cast<double>(coeff))) {
+  if (!cmath_compat::isfinite(static_cast<double>(coeff))) {
     // Try computing directly
     coeff = gamma(n + alpha + T(1)) / (gamma(alpha + T(1)) * gamma(n + T(1)));
   }

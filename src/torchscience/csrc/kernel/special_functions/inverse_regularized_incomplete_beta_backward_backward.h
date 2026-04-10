@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <tuple>
 #include <limits>
 
@@ -28,7 +29,7 @@ std::tuple<T, T, T, T> inverse_regularized_incomplete_beta_backward_backward(
   // Compute x = I^{-1}(a, b, y)
   T x = inverse_regularized_incomplete_beta(a, b, y);
 
-  if (x <= T(0) || x >= T(1) || !std::isfinite(x)) {
+  if (x <= T(0) || x >= T(1) || !cmath_compat::isfinite(x)) {
     return std::make_tuple(T(0), T(0), T(0), T(0));
   }
 

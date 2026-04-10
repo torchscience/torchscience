@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <tuple>
 
@@ -14,7 +15,7 @@ namespace detail {
 // Second derivative of zeta function: d^2/ds^2 zeta(s) = sum_{n=2}^inf (ln n)^2 / n^s
 template <typename T>
 T zeta_second_derivative(T s) {
-  if (std::isnan(s)) {
+  if (cmath_compat::isnan(s)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -63,7 +64,7 @@ T zeta_second_derivative(T s) {
 
 template <typename T>
 c10::complex<T> zeta_second_derivative(c10::complex<T> s) {
-  if (std::isnan(s.real()) || std::isnan(s.imag())) {
+  if (cmath_compat::isnan(s.real()) || cmath_compat::isnan(s.imag())) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(),
                            std::numeric_limits<T>::quiet_NaN());
   }

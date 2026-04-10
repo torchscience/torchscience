@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 namespace torchscience::kernel::special_functions {
@@ -193,7 +194,7 @@ c10::complex<T> faddeeva_w_impl(c10::complex<T> z) {
   T x = z.real();
   T y = z.imag();
 
-  if (std::isnan(x) || std::isnan(y)) {
+  if (cmath_compat::isnan(x) || cmath_compat::isnan(y)) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(),
                            std::numeric_limits<T>::quiet_NaN());
   }

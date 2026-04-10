@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/BFloat16.h>
 #include <c10/util/Half.h>
@@ -70,7 +71,7 @@ T bessel_j_series(T n, T z) {
     }
 
     // Handle potential overflow/underflow in prefix
-    if (!std::isfinite(prefix)) {
+    if (!cmath_compat::isfinite(prefix)) {
         if (prefix == T(0)) return T(0);
         return prefix;  // inf or nan
     }
@@ -117,7 +118,7 @@ c10::complex<T> bessel_j_series(c10::complex<T> n, c10::complex<T> z) {
     c10::complex<T> prefix = std::pow(z_half, n);
 
     // Handle potential overflow/underflow
-    if (!std::isfinite(std::abs(prefix))) {
+    if (!cmath_compat::isfinite(std::abs(prefix))) {
         return prefix;
     }
 
@@ -240,7 +241,7 @@ T bessel_j_asymptotic(T n, T z) {
 template <typename T>
 T bessel_j(T n, T z) {
     // Handle special values
-    if (std::isnan(n) || std::isnan(z)) {
+    if (cmath_compat::isnan(n) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/BFloat16.h>
 #include <c10/util/Half.h>
@@ -109,7 +110,7 @@ T modified_bessel_i_series(T n, T z) {
         prefix = std::pow(z_half, n);
     }
 
-    if (!std::isfinite(prefix)) {
+    if (!cmath_compat::isfinite(prefix)) {
         if (prefix == T(0)) return T(0);
         return prefix;
     }
@@ -174,7 +175,7 @@ c10::complex<T> modified_bessel_i_series_complex(c10::complex<T> n, c10::complex
     c10::complex<T> z_half = z / c10::complex<T>(T(2), T(0));
     c10::complex<T> prefix = std::pow(z_half, n);
 
-    if (!std::isfinite(std::abs(prefix))) {
+    if (!cmath_compat::isfinite(std::abs(prefix))) {
         return prefix;
     }
 
@@ -249,7 +250,7 @@ T modified_bessel_k_asymptotic(T n, T z) {
 template <typename T>
 T modified_bessel_k(T n, T z) {
     // Handle special values
-    if (std::isnan(n) || std::isnan(z)) {
+    if (cmath_compat::isnan(n) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
@@ -264,7 +265,7 @@ T modified_bessel_k(T n, T z) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
-    if (std::isinf(z)) {
+    if (cmath_compat::isinf(z)) {
         return T(0);  // K_n(+inf) = 0 (exponential decay)
     }
 

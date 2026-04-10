@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/complex.h>
 
@@ -44,14 +45,14 @@ constexpr double KELVIN_BER_LARGE_X = 20.0;
 template <typename T>
 T kelvin_ber(T x) {
     // Handle special values
-    if (std::isnan(x)) {
+    if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
     // ber is even function: ber(-x) = ber(x)
     x = std::abs(x);
 
-    if (std::isinf(x)) {
+    if (cmath_compat::isinf(x)) {
         // For large x, ber(x) oscillates with growing amplitude
         return std::numeric_limits<T>::infinity();
     }

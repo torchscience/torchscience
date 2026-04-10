@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <complex>
 #include <limits>
 #include <type_traits>
@@ -173,7 +174,7 @@ T whittaker_w(T kappa, T mu, T z) {
   T U_val = confluent_hypergeometric_u(a, b, z);
 
   // Handle case where U returns infinity or NaN
-  if (std::isinf(U_val) || std::isnan(U_val)) {
+  if (cmath_compat::isinf(U_val) || cmath_compat::isnan(U_val)) {
     return U_val;
   }
 
@@ -233,8 +234,8 @@ c10::complex<T> whittaker_w(c10::complex<T> kappa, c10::complex<T> mu, c10::comp
   c10::complex<T> U_val = confluent_hypergeometric_u(a, b, z);
 
   // Handle infinity or NaN
-  if (std::isinf(U_val.real()) || std::isinf(U_val.imag()) ||
-      std::isnan(U_val.real()) || std::isnan(U_val.imag())) {
+  if (cmath_compat::isinf(U_val.real()) || cmath_compat::isinf(U_val.imag()) ||
+      cmath_compat::isnan(U_val.real()) || cmath_compat::isnan(U_val.imag())) {
     return U_val;
   }
 

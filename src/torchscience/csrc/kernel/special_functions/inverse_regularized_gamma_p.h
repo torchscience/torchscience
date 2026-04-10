@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 #include "regularized_gamma_p.h"
@@ -118,7 +119,7 @@ T inverse_regularized_gamma_p(T a, T y) {
   // and their Inverse" by DiDonato and Morris (1986)
 
   // Edge cases
-  if (std::isnan(a) || std::isnan(y)) {
+  if (cmath_compat::isnan(a) || cmath_compat::isnan(y)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -138,7 +139,7 @@ T inverse_regularized_gamma_p(T a, T y) {
   T x = detail::inverse_regularized_gamma_p_initial_guess(a, y);
 
   // Guard against invalid initial guess
-  if (x <= T(0) || !std::isfinite(x)) {
+  if (x <= T(0) || !cmath_compat::isfinite(x)) {
     x = a;  // Use a as fallback
   }
 

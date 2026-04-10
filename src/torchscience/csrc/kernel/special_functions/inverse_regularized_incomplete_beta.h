@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 #include "incomplete_beta.h"
@@ -89,7 +90,7 @@ T inverse_regularized_incomplete_beta_initial_guess(T a, T b, T y) {
   if (a < T(1) && y < T(0.5)) {
     T log_guess = (std::log(y) + std::log(a) + log_beta(a, b)) / a;
     T x_small_a = std::exp(log_guess);
-    if (std::isfinite(x_small_a) && x_small_a > T(0) && x_small_a < T(1)) {
+    if (cmath_compat::isfinite(x_small_a) && x_small_a > T(0) && x_small_a < T(1)) {
       x0 = std::min(x0, x_small_a);
     }
   }
@@ -98,7 +99,7 @@ T inverse_regularized_incomplete_beta_initial_guess(T a, T b, T y) {
   if (b < T(1) && y > T(0.5)) {
     T log_guess = (std::log(T(1) - y) + std::log(b) + log_beta(a, b)) / b;
     T x_small_b = T(1) - std::exp(log_guess);
-    if (std::isfinite(x_small_b) && x_small_b > T(0) && x_small_b < T(1)) {
+    if (cmath_compat::isfinite(x_small_b) && x_small_b > T(0) && x_small_b < T(1)) {
       x0 = std::max(x0, x_small_b);
     }
   }
@@ -117,7 +118,7 @@ T inverse_regularized_incomplete_beta(T a, T b, T y) {
   // and their Inverse" by DiDonato and Morris
 
   // Edge cases
-  if (std::isnan(a) || std::isnan(b) || std::isnan(y)) {
+  if (cmath_compat::isnan(a) || cmath_compat::isnan(b) || cmath_compat::isnan(y)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -138,7 +139,7 @@ T inverse_regularized_incomplete_beta(T a, T b, T y) {
 
   // Guard against invalid initial guess
   const T eps = std::numeric_limits<T>::epsilon();
-  if (x <= T(0) || x >= T(1) || !std::isfinite(x)) {
+  if (x <= T(0) || x >= T(1) || !cmath_compat::isfinite(x)) {
     x = a / (a + b);  // Use mean as fallback
   }
   x = std::max(eps * T(10), std::min(T(1) - eps * T(10), x));

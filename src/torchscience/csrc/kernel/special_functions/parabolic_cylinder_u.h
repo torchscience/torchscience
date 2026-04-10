@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/BFloat16.h>
 #include <c10/util/Half.h>
@@ -60,8 +61,8 @@ T parabolic_cylinder_u_taylor(T a, T z) {
     T U0_prime = -sqrt_pi * std::pow(T(2), T(0.25) - a / T(2)) / gamma_val2;
 
     // Handle gamma poles (set coefficient to 0 when gamma is infinite)
-    if (!std::isfinite(U0)) U0 = T(0);
-    if (!std::isfinite(U0_prime)) U0_prime = T(0);
+    if (!cmath_compat::isfinite(U0)) U0 = T(0);
+    if (!cmath_compat::isfinite(U0_prime)) U0_prime = T(0);
 
     // Special case: z = 0
     // At z=0: 1F1(a;b;0) = 1, so U(a,0) = U0 * 1 + U0_prime * 0 * 1 = U0
@@ -87,7 +88,7 @@ T parabolic_cylinder_u_taylor(T a, T z) {
         if (std::abs(term1) < eps * std::abs(f1)) {
             break;
         }
-        if (!std::isfinite(term1)) {
+        if (!cmath_compat::isfinite(term1)) {
             break;
         }
     }
@@ -105,7 +106,7 @@ T parabolic_cylinder_u_taylor(T a, T z) {
         if (std::abs(term2) < eps * std::abs(f2)) {
             break;
         }
-        if (!std::isfinite(term2)) {
+        if (!cmath_compat::isfinite(term2)) {
             break;
         }
     }
@@ -188,8 +189,8 @@ c10::complex<T> parabolic_cylinder_u_taylor(c10::complex<T> a, c10::complex<T> z
     c10::complex<T> U0_prime = -sqrt_pi_c * std::pow(two, quarter - a / two) / gamma_val2;
 
     // Handle gamma poles (set coefficient to 0 when gamma is infinite)
-    if (!std::isfinite(std::abs(U0))) U0 = c10::complex<T>(T(0), T(0));
-    if (!std::isfinite(std::abs(U0_prime))) U0_prime = c10::complex<T>(T(0), T(0));
+    if (!cmath_compat::isfinite(std::abs(U0))) U0 = c10::complex<T>(T(0), T(0));
+    if (!cmath_compat::isfinite(std::abs(U0_prime))) U0_prime = c10::complex<T>(T(0), T(0));
 
     // Special case: z = 0
     if (std::abs(z) == T(0)) {
@@ -213,7 +214,7 @@ c10::complex<T> parabolic_cylinder_u_taylor(c10::complex<T> a, c10::complex<T> z
         if (std::abs(term1) < eps * std::abs(f1)) {
             break;
         }
-        if (!std::isfinite(std::abs(term1))) {
+        if (!cmath_compat::isfinite(std::abs(term1))) {
             break;
         }
     }
@@ -232,7 +233,7 @@ c10::complex<T> parabolic_cylinder_u_taylor(c10::complex<T> a, c10::complex<T> z
         if (std::abs(term2) < eps * std::abs(f2)) {
             break;
         }
-        if (!std::isfinite(std::abs(term2))) {
+        if (!cmath_compat::isfinite(std::abs(term2))) {
             break;
         }
     }
@@ -292,7 +293,7 @@ c10::complex<T> parabolic_cylinder_u_asymptotic(c10::complex<T> a, c10::complex<
 // Main function: parabolic_cylinder_u(a, z)
 template <typename T>
 T parabolic_cylinder_u(T a, T z) {
-    if (std::isnan(a) || std::isnan(z)) {
+    if (cmath_compat::isnan(a) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 

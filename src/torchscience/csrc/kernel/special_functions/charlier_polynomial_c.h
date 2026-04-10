@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 namespace torchscience::kernel::special_functions {
@@ -38,6 +39,11 @@ namespace torchscience::kernel::special_functions {
 
 template <typename T>
 T charlier_polynomial_c(T n, T x, T a) {
+  // Propagate NaN
+  if (cmath_compat::isnan(n) || cmath_compat::isnan(x) || cmath_compat::isnan(a)) {
+    return std::numeric_limits<T>::quiet_NaN();
+  }
+
   // C_0(x; a) = 1
   if (std::abs(n) < T(1e-10)) {
     return T(1);
@@ -131,6 +137,14 @@ template <typename T>
 c10::complex<T> charlier_polynomial_c(c10::complex<T> n, c10::complex<T> x, c10::complex<T> a) {
   c10::complex<T> one(T(1), T(0));
   c10::complex<T> zero(T(0), T(0));
+
+  // Propagate NaN
+  if (cmath_compat::isnan(n.real()) || cmath_compat::isnan(n.imag()) ||
+      cmath_compat::isnan(x.real()) || cmath_compat::isnan(x.imag()) ||
+      cmath_compat::isnan(a.real()) || cmath_compat::isnan(a.imag())) {
+    return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(),
+                           std::numeric_limits<T>::quiet_NaN());
+  }
 
   // C_0(x; a) = 1
   if (std::abs(n) < T(1e-10)) {

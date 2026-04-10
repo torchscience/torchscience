@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/BFloat16.h>
 #include <c10/util/Half.h>
@@ -155,7 +156,7 @@ c10::complex<T> spherical_bessel_j_backward_recurrence(int n_int, c10::complex<T
 template <typename T>
 T spherical_bessel_j(T n, T z) {
     // Handle special values
-    if (std::isnan(n) || std::isnan(z)) {
+    if (cmath_compat::isnan(n) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 

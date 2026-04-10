@@ -2,7 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
-
+#include "cmath_compat.h"
 #include "sin_pi.h"
 
 namespace torchscience::kernel::special_functions {
@@ -25,10 +25,10 @@ inline double pole_tolerance<double>() { return 1e-12; }
 template <typename T>
 T sin_pi_real(T x) {
   // Handle special cases
-  if (std::isnan(x)) {
+  if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
-  if (std::isinf(x)) {
+  if (cmath_compat::isinf(x)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -98,7 +98,7 @@ T gamma(T z) {
     T gamma_1mz = gamma(T(1) - z);
 
     // If Gamma(1-z) overflows, Gamma(z) underflows to zero
-    if (std::isinf(gamma_1mz)) {
+    if (cmath_compat::isinf(gamma_1mz)) {
       return T(0);
     }
 
@@ -153,7 +153,7 @@ c10::complex<T> gamma(c10::complex<T> z) {
     c10::complex<T> gamma_1mz = gamma(c10::complex<T>(T(1), T(0)) - z);
 
     // If Gamma(1-z) overflows, Gamma(z) underflows to zero
-    if (std::isinf(gamma_1mz.real()) || std::isinf(gamma_1mz.imag())) {
+    if (cmath_compat::isinf(gamma_1mz.real()) || cmath_compat::isinf(gamma_1mz.imag())) {
       return c10::complex<T>(T(0), T(0));
     }
 

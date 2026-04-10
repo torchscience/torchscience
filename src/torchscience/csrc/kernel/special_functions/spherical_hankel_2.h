@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/BFloat16.h>
 #include <c10/util/Half.h>
@@ -57,8 +58,8 @@ c10::complex<T> spherical_hankel_2(c10::complex<T> n, c10::complex<T> z) {
     const c10::complex<T> i_unit(T(0), T(1));
 
     // Handle NaN inputs
-    if (std::isnan(n.real()) || std::isnan(n.imag()) ||
-        std::isnan(z.real()) || std::isnan(z.imag())) {
+    if (cmath_compat::isnan(n.real()) || cmath_compat::isnan(n.imag()) ||
+        cmath_compat::isnan(z.real()) || cmath_compat::isnan(z.imag())) {
         return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(),
                                std::numeric_limits<T>::quiet_NaN());
     }

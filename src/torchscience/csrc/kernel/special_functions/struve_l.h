@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/BFloat16.h>
 #include <c10/util/Half.h>
@@ -63,7 +64,7 @@ T struve_l_series(T n, T z) {
 
     // Compute (z/2)^(n+1)
     T prefix = std::pow(z_half, n + T(1));
-    if (!std::isfinite(prefix)) {
+    if (!cmath_compat::isfinite(prefix)) {
         if (prefix == T(0)) return T(0);
         return prefix;
     }
@@ -119,7 +120,7 @@ c10::complex<T> struve_l_series(c10::complex<T> n, c10::complex<T> z) {
 
     // Compute (z/2)^(n+1)
     c10::complex<T> prefix = std::pow(z_half, n + one);
-    if (!std::isfinite(std::abs(prefix))) {
+    if (!cmath_compat::isfinite(std::abs(prefix))) {
         return prefix;
     }
 
@@ -167,11 +168,11 @@ c10::complex<T> struve_l_series(c10::complex<T> n, c10::complex<T> z) {
 template <typename T>
 T struve_l(T n, T z) {
     // Handle special values
-    if (std::isnan(n) || std::isnan(z)) {
+    if (cmath_compat::isnan(n) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
-    if (std::isinf(z)) {
+    if (cmath_compat::isinf(z)) {
         // L_n(+inf) = +inf for real z > 0
         // L_n(-inf) depends on n
         if (z > T(0)) {

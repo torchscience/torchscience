@@ -4,6 +4,7 @@
 #include <c10/util/Half.h>
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 #include "exponential_integral_e_1.h"
@@ -162,7 +163,7 @@ T exponential_integral_e(T n, T x) {
   const T eps = detail::exponential_integral_e_eps<T>();
 
   // Handle special cases
-  if (std::isnan(n) || std::isnan(x)) {
+  if (cmath_compat::isnan(n) || cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -192,7 +193,7 @@ T exponential_integral_e(T n, T x) {
   }
 
   // x = +inf
-  if (std::isinf(x) && x > T(0)) {
+  if (cmath_compat::isinf(x) && x > T(0)) {
     return T(0);  // E_n(+inf) = 0
   }
 
@@ -221,8 +222,8 @@ c10::complex<T> exponential_integral_e(c10::complex<T> n, c10::complex<T> z) {
   const T eps = detail::exponential_integral_e_eps<T>();
 
   // Handle NaN inputs
-  if (std::isnan(n.real()) || std::isnan(n.imag()) ||
-      std::isnan(z.real()) || std::isnan(z.imag())) {
+  if (cmath_compat::isnan(n.real()) || cmath_compat::isnan(n.imag()) ||
+      cmath_compat::isnan(z.real()) || cmath_compat::isnan(z.imag())) {
     return Complex(std::numeric_limits<T>::quiet_NaN(),
                    std::numeric_limits<T>::quiet_NaN());
   }

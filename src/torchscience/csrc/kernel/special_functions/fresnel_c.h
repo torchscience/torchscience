@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <type_traits>
 
@@ -149,7 +150,7 @@ void fresnel_c_fg_asymptotic_complex(c10::complex<T> z, c10::complex<T>& f, c10:
 template <typename T>
 T fresnel_c(T z) {
   // Handle special cases
-  if (std::isnan(z)) {
+  if (cmath_compat::isnan(z)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -157,7 +158,7 @@ T fresnel_c(T z) {
     return static_cast<T>(0);
   }
 
-  if (std::isinf(z)) {
+  if (cmath_compat::isinf(z)) {
     return (z > 0) ? static_cast<T>(0.5) : static_cast<T>(-0.5);
   }
 

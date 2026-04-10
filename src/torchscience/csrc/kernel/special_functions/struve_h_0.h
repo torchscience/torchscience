@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 #include <c10/util/complex.h>
 
@@ -100,11 +101,11 @@ T struve_h_0_asymptotic(T z) {
 template <typename T>
 T struve_h_0(T z) {
     // Handle special values
-    if (std::isnan(z)) {
+    if (cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
 
-    if (std::isinf(z)) {
+    if (cmath_compat::isinf(z)) {
         // H_0(+inf) and H_0(-inf) oscillate but are bounded
         // Return NaN to indicate undefined limiting behavior
         return std::numeric_limits<T>::quiet_NaN();
@@ -139,7 +140,7 @@ c10::complex<T> struve_h_0(c10::complex<T> z) {
     T mag = std::abs(z);
 
     // Handle special cases
-    if (std::isnan(z.real()) || std::isnan(z.imag())) {
+    if (cmath_compat::isnan(z.real()) || cmath_compat::isnan(z.imag())) {
         return Complex(std::numeric_limits<T>::quiet_NaN(),
                        std::numeric_limits<T>::quiet_NaN());
     }

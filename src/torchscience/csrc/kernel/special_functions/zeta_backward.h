@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 namespace torchscience::kernel::special_functions {
@@ -13,7 +14,7 @@ namespace detail {
 template <typename T>
 T zeta_derivative(T s) {
   // Handle special cases
-  if (std::isnan(s)) {
+  if (cmath_compat::isnan(s)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -106,7 +107,7 @@ T zeta_derivative(T s) {
 
 template <typename T>
 c10::complex<T> zeta_derivative(c10::complex<T> s) {
-  if (std::isnan(s.real()) || std::isnan(s.imag())) {
+  if (cmath_compat::isnan(s.real()) || cmath_compat::isnan(s.imag())) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(),
                            std::numeric_limits<T>::quiet_NaN());
   }

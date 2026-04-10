@@ -2,6 +2,7 @@
 
 #include <c10/util/complex.h>
 #include <cmath>
+#include "cmath_compat.h"
 #include <limits>
 
 namespace torchscience::kernel::special_functions {
@@ -80,7 +81,7 @@ void cosine_integral_auxiliary(T x, T& f, T& g) {
 template <typename T>
 T cosine_integral_ci(T x) {
   // Handle special cases
-  if (std::isnan(x)) {
+  if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
@@ -89,7 +90,7 @@ T cosine_integral_ci(T x) {
     return std::numeric_limits<T>::quiet_NaN();
   }
 
-  if (std::isinf(x)) {
+  if (cmath_compat::isinf(x)) {
     return T(0);  // Ci(+inf) = 0
   }
 
@@ -140,7 +141,7 @@ c10::complex<T> cosine_integral_ci(c10::complex<T> z) {
   using Complex = c10::complex<T>;
 
   // Handle special cases
-  if (std::isnan(z.real()) || std::isnan(z.imag())) {
+  if (cmath_compat::isnan(z.real()) || cmath_compat::isnan(z.imag())) {
     return Complex(std::numeric_limits<T>::quiet_NaN(),
                    std::numeric_limits<T>::quiet_NaN());
   }
