@@ -22,7 +22,13 @@ template <> struct promote<c10::BFloat16> { using type = float; };
 template <typename T> using promote_t = typename promote<T>::type;
 } // namespace torchscience::cuda
 
-#define TORCHSCIENCE_CUDA_POINTWISE_UNARY_DISPATCH(category, name, arg1)                             \
+// Select dispatch macro based on complex flag (token concatenation)
+#define TORCHSCIENCE_CUDA_DISPATCH_true                                        \
+    AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2
+#define TORCHSCIENCE_CUDA_DISPATCH_false                                       \
+    AT_DISPATCH_FLOATING_TYPES_AND2
+
+#define TORCHSCIENCE_CUDA_POINTWISE_UNARY_DISPATCH(category, complex, name, arg1)                    \
 namespace torchscience::cuda::category {                               \
                                                           \
 inline at::Tensor name(                                                        \
@@ -39,7 +45,7 @@ inline at::Tensor name(                                                        \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -78,7 +84,7 @@ inline at::Tensor name##_backward(                                             \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -130,7 +136,7 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward_backward(            \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -186,7 +192,7 @@ TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {                                
   );                                                                           \
 }
 
-#define TORCHSCIENCE_CUDA_POINTWISE_BINARY_DISPATCH(category, name, arg1, arg2)                     \
+#define TORCHSCIENCE_CUDA_POINTWISE_BINARY_DISPATCH(category, complex, name, arg1, arg2)                     \
 namespace torchscience::cuda::category {                               \
                                                                                \
 inline at::Tensor name(                                                        \
@@ -205,7 +211,7 @@ inline at::Tensor name(                                                        \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -250,7 +256,7 @@ inline std::tuple<at::Tensor, at::Tensor> name##_backward(                     \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -326,7 +332,7 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> name##_backward_backward(\
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -385,7 +391,7 @@ TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {                                
   );                                                                           \
 }
 
-#define TORCHSCIENCE_CUDA_POINTWISE_TERNARY_DISPATCH(category, name, arg1, arg2, arg3)              \
+#define TORCHSCIENCE_CUDA_POINTWISE_TERNARY_DISPATCH(category, complex, name, arg1, arg2, arg3)              \
 namespace torchscience::cuda::category {                               \
                                                                                \
 inline at::Tensor name(                                                        \
@@ -406,7 +412,7 @@ inline at::Tensor name(                                                        \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -457,7 +463,7 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> name##_backward(         \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -550,7 +556,7 @@ inline std::tuple<                                                             \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -615,7 +621,7 @@ TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {                                
   );                                                                           \
 }
 
-#define TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY_DISPATCH(category, name, arg1, arg2, arg3, arg4)     \
+#define TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY_DISPATCH(category, complex, name, arg1, arg2, arg3, arg4)     \
 namespace torchscience::cuda::category {                               \
                                                                                \
 inline at::Tensor name(                                                        \
@@ -638,7 +644,7 @@ inline at::Tensor name(                                                        \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -696,7 +702,7 @@ name##_backward(                                                               \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -804,7 +810,7 @@ inline std::tuple<                                                             \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -875,7 +881,7 @@ TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {                                
   );                                                                           \
 }
 
-#define TORCHSCIENCE_CUDA_POINTWISE_QUINARY_DISPATCH(category, name, arg1, arg2, arg3, arg4, arg5)     \
+#define TORCHSCIENCE_CUDA_POINTWISE_QUINARY_DISPATCH(category, complex, name, arg1, arg2, arg3, arg4, arg5)     \
 namespace torchscience::cuda::category {                               \
                                                                                \
 inline at::Tensor name(                                                        \
@@ -900,7 +906,7 @@ inline at::Tensor name(                                                        \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -964,7 +970,7 @@ name##_backward(                                                               \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -1087,7 +1093,7 @@ inline std::tuple<                                                             \
     .cast_common_dtype_to_outputs(true)                                        \
     .build();                                                                  \
                                                                                \
-  AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(                                 \
+  TORCHSCIENCE_CUDA_DISPATCH_##complex(                                        \
     at::kBFloat16,                                                             \
     at::kHalf,                                                                 \
     iterator.common_dtype(),                                                   \
@@ -1165,16 +1171,16 @@ TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {                                
 }
 
 #define TORCHSCIENCE_CUDA_POINTWISE_UNARY(category, complex, name, arg1) \
-    TORCHSCIENCE_CUDA_POINTWISE_UNARY_DISPATCH(category, name, arg1)
+    TORCHSCIENCE_CUDA_POINTWISE_UNARY_DISPATCH(category, complex, name, arg1)
 
 #define TORCHSCIENCE_CUDA_POINTWISE_BINARY(category, complex, name, arg1, arg2) \
-    TORCHSCIENCE_CUDA_POINTWISE_BINARY_DISPATCH(category, name, arg1, arg2)
+    TORCHSCIENCE_CUDA_POINTWISE_BINARY_DISPATCH(category, complex, name, arg1, arg2)
 
 #define TORCHSCIENCE_CUDA_POINTWISE_TERNARY(category, complex, name, arg1, arg2, arg3) \
-    TORCHSCIENCE_CUDA_POINTWISE_TERNARY_DISPATCH(category, name, arg1, arg2, arg3)
+    TORCHSCIENCE_CUDA_POINTWISE_TERNARY_DISPATCH(category, complex, name, arg1, arg2, arg3)
 
 #define TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(category, complex, name, arg1, arg2, arg3, arg4) \
-    TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY_DISPATCH(category, name, arg1, arg2, arg3, arg4)
+    TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY_DISPATCH(category, complex, name, arg1, arg2, arg3, arg4)
 
 #define TORCHSCIENCE_CUDA_POINTWISE_QUINARY(category, complex, name, arg1, arg2, arg3, arg4, arg5) \
-    TORCHSCIENCE_CUDA_POINTWISE_QUINARY_DISPATCH(category, name, arg1, arg2, arg3, arg4, arg5)
+    TORCHSCIENCE_CUDA_POINTWISE_QUINARY_DISPATCH(category, complex, name, arg1, arg2, arg3, arg4, arg5)
