@@ -149,22 +149,40 @@ jobs:
           echo "CMAKE_C_COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
           echo "CMAKE_CXX_COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
 
-      - name: Detect CUDA toolkit
+      - name: Set up CUDA toolkit
         shell: bash
         run: |
+          # Check common locations first
           if command -v nvcc &>/dev/null; then
             CUDA_HOME="$(dirname "$(dirname "$(command -v nvcc)")")"
           elif [ -d /usr/local/cuda ]; then
             CUDA_HOME=/usr/local/cuda
           elif [ -n "$CUDA_PATH" ]; then
             CUDA_HOME="$CUDA_PATH"
+          else
+            # Search versioned directories
+            for dir in /usr/local/cuda-*; do
+              if [ -f "$dir/bin/nvcc" ]; then
+                CUDA_HOME="$dir"
+                break
+              fi
+            done
+          fi
+          # Install if not found (Linux only)
+          if [ -z "$CUDA_HOME" ] && [ "$RUNNER_OS" = "Linux" ]; then
+            DISTRO=$(. /etc/os-release && echo "${ID}${VERSION_ID}" | tr -d '.')
+            ARCH=$(uname -m)
+            wget -q "https://developer.download.nvidia.com/compute/cuda/repos/${DISTRO}/${ARCH}/cuda-keyring_1.1-1_all.deb"
+            sudo dpkg -i cuda-keyring_1.1-1_all.deb
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq cuda-toolkit-12-8
+            CUDA_HOME=/usr/local/cuda-12.8
           fi
           if [ -n "$CUDA_HOME" ]; then
             echo "CUDA_HOME=$CUDA_HOME" >> "$GITHUB_ENV"
             echo "CUDA_TOOLKIT_ROOT_DIR=$CUDA_HOME" >> "$GITHUB_ENV"
+            echo "PATH=$CUDA_HOME/bin:$PATH" >> "$GITHUB_ENV"
             echo "Detected CUDA toolkit at $CUDA_HOME"
-          else
-            echo "::warning::CUDA toolkit not found"
           fi
 
       - name: Install dependencies
