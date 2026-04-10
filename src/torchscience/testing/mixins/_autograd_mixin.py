@@ -64,7 +64,8 @@ class AutogradMixin:
             func,
             inputs,
             eps=tol.gradcheck_eps,
-            atol=tol.gradcheck_atol * 100,  # Relaxed for complex Wirtinger derivatives
+            atol=tol.gradcheck_atol
+            * 100,  # Relaxed for complex Wirtinger derivatives
             rtol=tol.gradcheck_rtol * 100,
         )
 
@@ -104,6 +105,7 @@ class AutogradMixin:
             func,
             inputs,
             eps=tol.gradgradcheck_eps,
-            atol=tol.gradgradcheck_atol * 100,  # Relaxed for complex Wirtinger derivatives
+            atol=tol.gradgradcheck_atol
+            * 100,  # Relaxed for complex Wirtinger derivatives
             rtol=tol.gradgradcheck_rtol * 100,
         )
