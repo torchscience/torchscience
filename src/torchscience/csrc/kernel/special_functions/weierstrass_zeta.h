@@ -86,30 +86,30 @@ T weierstrass_zeta(T z, T g2, T g3) {
     // For small z, use the Laurent series expansion for better accuracy
     // zeta(z) = 1/z - (g2/60)*z^3 - (g3/140)*z^5 + O(z^7)
     if (std::abs(z) < T(0.1)) {
-        T z2 = z * z;
-        T z3 = z2 * z;
-        T z5 = z3 * z2;
-        return T(1) / z - (g2 / T(60)) * z3 - (g3 / T(140)) * z5;
+        T r_z2 = z * z;
+        T r_z3 = r_z2 * z;
+        T r_z5 = r_z3 * r_z2;
+        return T(1) / z - (g2 / T(60)) * r_z3 - (g3 / T(140)) * r_z5;
     }
 
     // Compute zeta(z) = sigma'(z) / sigma(z) via numerical differentiation
     // sigma'(z) = (sigma(z+h) - sigma(z-h)) / (2h)
-    T h = detail::weierstrass_zeta_finite_diff_step<T>();
+    T r_h = detail::weierstrass_zeta_finite_diff_step<T>();
 
-    T sigma_center = weierstrass_sigma(z, g2, g3);
+    T r_sigma_center = weierstrass_sigma(z, g2, g3);
 
     // If sigma is very small, we're near a zero (lattice point)
     // In this case, zeta has a simple pole
-    if (std::abs(sigma_center) < tol) {
+    if (std::abs(r_sigma_center) < tol) {
         return std::numeric_limits<T>::infinity();
     }
 
-    T sigma_plus = weierstrass_sigma(z + h, g2, g3);
-    T sigma_minus = weierstrass_sigma(z - h, g2, g3);
+    T r_sigma_plus = weierstrass_sigma(z + r_h, g2, g3);
+    T r_sigma_minus = weierstrass_sigma(z - r_h, g2, g3);
 
-    T sigma_prime = (sigma_plus - sigma_minus) / (T(2) * h);
+    T r_sigma_prime = (r_sigma_plus - r_sigma_minus) / (T(2) * r_h);
 
-    return sigma_prime / sigma_center;
+    return r_sigma_prime / r_sigma_center;
 }
 
 template <typename T>

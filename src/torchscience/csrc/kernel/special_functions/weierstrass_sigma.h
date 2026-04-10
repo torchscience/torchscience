@@ -153,26 +153,26 @@ T weierstrass_sigma(T z, T g2, T g3) {
     }
 
     // Convert invariants to lattice parameters
-    auto params = weierstrass_detail::invariants_to_lattice_params(g2, g3);
+    auto r_params = weierstrass_detail::invariants_to_lattice_params(g2, g3);
 
     // Extract omega1 and nome q
-    c10::complex<T> omega1 = params.omega1;
-    c10::complex<T> q = params.q;
+    c10::complex<T> r_omega1 = r_params.omega1;
+    c10::complex<T> r_q = r_params.q;
 
     // Compute v = π * z / (2 * ω₁)
-    c10::complex<T> z_c(z, T(0));
-    c10::complex<T> pi_c(pi, T(0));
-    c10::complex<T> two(T(2), T(0));
-    c10::complex<T> v = pi_c * z_c / (two * omega1);
+    c10::complex<T> r_z_c(z, T(0));
+    c10::complex<T> r_pi_c(pi, T(0));
+    c10::complex<T> r_two(T(2), T(0));
+    c10::complex<T> r_v = r_pi_c * r_z_c / (r_two * r_omega1);
 
     // Compute θ₁(v, q)
-    c10::complex<T> theta1_v = theta_1(v, q);
+    c10::complex<T> r_theta1_v = theta_1(r_v, r_q);
 
     // Compute θ₁'(0, q)
-    c10::complex<T> theta1_prime_0 = detail::theta_1_derivative_at_zero(q);
+    c10::complex<T> r_theta1_prime_0 = detail::theta_1_derivative_at_zero(r_q);
 
     // Check for degenerate case
-    if (std::abs(theta1_prime_0) < tol) {
+    if (std::abs(r_theta1_prime_0) < tol) {
         // Fallback to Taylor series
         T z2 = z * z;
         T z4 = z2 * z2;
@@ -182,18 +182,18 @@ T weierstrass_sigma(T z, T g2, T g3) {
     }
 
     // Compute η₁ (quasi-period)
-    c10::complex<T> eta1 = detail::compute_eta1(omega1, q);
+    c10::complex<T> r_eta1 = detail::compute_eta1(r_omega1, r_q);
 
     // Compute the exponential factor: exp(η₁z²/(2ω₁))
-    c10::complex<T> exp_arg = eta1 * z_c * z_c / (two * omega1);
-    c10::complex<T> exp_factor = std::exp(exp_arg);
+    c10::complex<T> r_exp_arg = r_eta1 * r_z_c * r_z_c / (r_two * r_omega1);
+    c10::complex<T> r_exp_factor = std::exp(r_exp_arg);
 
     // Compute σ(z) = (2ω₁/π) * exp(η₁z²/(2ω₁)) * θ₁(v,q) / θ₁'(0,q)
-    c10::complex<T> prefactor = two * omega1 / pi_c;
-    c10::complex<T> result = prefactor * exp_factor * theta1_v / theta1_prime_0;
+    c10::complex<T> r_prefactor = r_two * r_omega1 / r_pi_c;
+    c10::complex<T> r_result = r_prefactor * r_exp_factor * r_theta1_v / r_theta1_prime_0;
 
     // For real inputs, return the real part
-    return result.real();
+    return r_result.real();
 }
 
 template <typename T>

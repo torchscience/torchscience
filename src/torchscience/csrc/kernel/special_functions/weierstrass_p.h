@@ -109,48 +109,48 @@ T weierstrass_p(T z, T g2, T g3) {
     }
 
     // Convert invariants to lattice parameters
-    auto params = weierstrass_detail::invariants_to_lattice_params(g2, g3);
+    auto r_params = weierstrass_detail::invariants_to_lattice_params(g2, g3);
 
     // Extract omega1 and nome q
-    c10::complex<T> omega1 = params.omega1;
-    c10::complex<T> q = params.q;
+    c10::complex<T> r_omega1 = r_params.omega1;
+    c10::complex<T> r_q = r_params.q;
 
     // Compute v = pi * z / (2 * omega1)
-    c10::complex<T> z_c(z, T(0));
-    c10::complex<T> pi_c(pi, T(0));
-    c10::complex<T> two(T(2), T(0));
-    c10::complex<T> v = pi_c * z_c / (two * omega1);
+    c10::complex<T> r_z_c(z, T(0));
+    c10::complex<T> r_pi_c(pi, T(0));
+    c10::complex<T> r_two(T(2), T(0));
+    c10::complex<T> r_v = r_pi_c * r_z_c / (r_two * r_omega1);
 
     // Compute the constant term: (pi/(2*omega1))^2 * (theta2^4(0) + theta3^4(0))/3
-    c10::complex<T> pi_over_2omega1 = pi_c / (two * omega1);
-    c10::complex<T> pi_over_2omega1_sq = pi_over_2omega1 * pi_over_2omega1;
+    c10::complex<T> r_pi_over_2omega1 = r_pi_c / (r_two * r_omega1);
+    c10::complex<T> r_pi_over_2omega1_sq = r_pi_over_2omega1 * r_pi_over_2omega1;
 
-    c10::complex<T> zero_c(T(0), T(0));
-    c10::complex<T> theta2_0 = theta_2(zero_c, q);
-    c10::complex<T> theta3_0 = theta_3(zero_c, q);
+    c10::complex<T> r_zero_c(T(0), T(0));
+    c10::complex<T> r_theta2_0 = theta_2(r_zero_c, r_q);
+    c10::complex<T> r_theta3_0 = theta_3(r_zero_c, r_q);
 
-    c10::complex<T> theta2_4 = theta2_0 * theta2_0 * theta2_0 * theta2_0;
-    c10::complex<T> theta3_4 = theta3_0 * theta3_0 * theta3_0 * theta3_0;
+    c10::complex<T> r_theta2_4 = r_theta2_0 * r_theta2_0 * r_theta2_0 * r_theta2_0;
+    c10::complex<T> r_theta3_4 = r_theta3_0 * r_theta3_0 * r_theta3_0 * r_theta3_0;
 
-    c10::complex<T> three(T(3), T(0));
-    c10::complex<T> constant_term = pi_over_2omega1_sq * (theta2_4 + theta3_4) / three;
+    c10::complex<T> r_three(T(3), T(0));
+    c10::complex<T> r_constant_term = r_pi_over_2omega1_sq * (r_theta2_4 + r_theta3_4) / r_three;
 
     // Compute the theta_1 term: -(pi/(2*omega1))^2 * theta1''(v) / theta1(v)
-    c10::complex<T> theta1_v = theta_1(v, q);
+    c10::complex<T> r_theta1_v = theta_1(r_v, r_q);
 
     // Check if we're at a lattice point (theta1 = 0)
-    if (std::abs(theta1_v) < tol) {
+    if (std::abs(r_theta1_v) < tol) {
         return std::numeric_limits<T>::infinity();
     }
 
-    c10::complex<T> theta1_pp_v = detail::theta_1_second_derivative(v, q);
-    c10::complex<T> theta_term = pi_over_2omega1_sq * theta1_pp_v / theta1_v;
+    c10::complex<T> r_theta1_pp_v = detail::theta_1_second_derivative(r_v, r_q);
+    c10::complex<T> r_theta_term = r_pi_over_2omega1_sq * r_theta1_pp_v / r_theta1_v;
 
     // P(z) = constant_term - theta_term
-    c10::complex<T> result = constant_term - theta_term;
+    c10::complex<T> r_result = r_constant_term - r_theta_term;
 
     // For real inputs, return the real part
-    return result.real();
+    return r_result.real();
 }
 
 template <typename T>
