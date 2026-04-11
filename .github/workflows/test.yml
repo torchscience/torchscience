@@ -195,6 +195,25 @@ jobs:
       - name: Install project
         run: uv pip install --no-build-isolation -e .
 
+      - name: CUDA diagnostic
+        if: always()
+        run: |
+          uv run --no-sync python -c "
+          import torch
+          print('CUDA available:', torch.cuda.is_available())
+          if torch.cuda.is_available():
+              print('GPU:', torch.cuda.get_device_name(0))
+              import torchscience.special_functions as sf
+              for name in ['gamma', 'digamma', 'airy_ai', 'sin_pi']:
+                  fn = getattr(sf, name)
+                  x = torch.tensor([0.5, 1.0, 1.5, 2.0, 2.5], dtype=torch.float64, device='cuda')
+                  y_cuda = fn(x).cpu()
+                  y_cpu = fn(x.cpu())
+                  print(f'{name} CUDA: {y_cuda.tolist()}')
+                  print(f'{name} CPU:  {y_cpu.tolist()}')
+                  print(f'{name} diff: {(y_cuda - y_cpu).abs().max().item():.2e}')
+          "
+
       - name: Run CUDA tests
         run: uv run --no-sync pytest tests/ -v --tb=short -k "cuda or gpu"
 

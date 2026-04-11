@@ -9,31 +9,31 @@
 #include "../kernel/special_functions/gamma_backward.h"
 #include "../kernel/special_functions/gamma_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, gamma, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, gamma, z)
 
 #include "../kernel/special_functions/digamma.h"
 #include "../kernel/special_functions/digamma_backward.h"
 #include "../kernel/special_functions/digamma_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, digamma, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, digamma, z)
 
 #include "../kernel/special_functions/trigamma.h"
 #include "../kernel/special_functions/trigamma_backward.h"
 #include "../kernel/special_functions/trigamma_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, trigamma, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, trigamma, z)
 
 #include "../kernel/special_functions/log_gamma.h"
 #include "../kernel/special_functions/log_gamma_backward.h"
 #include "../kernel/special_functions/log_gamma_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, log_gamma, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, log_gamma, z)
 
 #include "../kernel/special_functions/reciprocal_gamma.h"
 #include "../kernel/special_functions/reciprocal_gamma_backward.h"
 #include "../kernel/special_functions/reciprocal_gamma_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, reciprocal_gamma, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, reciprocal_gamma, z)
 
 #include "../kernel/special_functions/gamma_sign.h"
 #include "../kernel/special_functions/gamma_sign_backward.h"
@@ -46,26 +46,26 @@ TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, gamma_sign, x)
 #include "../kernel/special_functions/beta_backward.h"
 #include "../kernel/special_functions/beta_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, beta, a, b)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, beta, a, b)
 
 #include "../kernel/special_functions/log_beta.h"
 #include "../kernel/special_functions/log_beta_backward.h"
 #include "../kernel/special_functions/log_beta_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, log_beta, a, b)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, log_beta, a, b)
 
 #include "../kernel/special_functions/incomplete_beta.h"
 #include "../kernel/special_functions/incomplete_beta_backward.h"
 #include "../kernel/special_functions/incomplete_beta_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, incomplete_beta, x, a, b)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, incomplete_beta, x, a, b)
 
 // Polygamma
 #include "../kernel/special_functions/polygamma.h"
 #include "../kernel/special_functions/polygamma_backward.h"
 #include "../kernel/special_functions/polygamma_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, polygamma, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, polygamma, n, z)
 
 // Regularized gamma functions
 #include "../kernel/special_functions/regularized_gamma_p.h"
@@ -110,44 +110,44 @@ TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, inverse_complement
 #include "../kernel/special_functions/hypergeometric_2_f_1_backward.h"
 #include "../kernel/special_functions/hypergeometric_2_f_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, false, hypergeometric_2_f_1, a, b, c, z)
+TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, true, hypergeometric_2_f_1, a, b, c, z)
 
 #include "../kernel/special_functions/confluent_hypergeometric_m.h"
 #include "../kernel/special_functions/confluent_hypergeometric_m_backward.h"
 #include "../kernel/special_functions/confluent_hypergeometric_m_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, confluent_hypergeometric_m, a, b, z)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, confluent_hypergeometric_m, a, b, z)
 
 #include "../kernel/special_functions/confluent_hypergeometric_u.h"
 #include "../kernel/special_functions/confluent_hypergeometric_u_backward.h"
 #include "../kernel/special_functions/confluent_hypergeometric_u_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, confluent_hypergeometric_u, a, b, z)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, confluent_hypergeometric_u, a, b, z)
 
 #include "../kernel/special_functions/hypergeometric_0_f_1.h"
 #include "../kernel/special_functions/hypergeometric_0_f_1_backward.h"
 #include "../kernel/special_functions/hypergeometric_0_f_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, hypergeometric_0_f_1, b, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, hypergeometric_0_f_1, b, z)
 
 #include "../kernel/special_functions/hypergeometric_1_f_2.h"
 #include "../kernel/special_functions/hypergeometric_1_f_2_backward.h"
 #include "../kernel/special_functions/hypergeometric_1_f_2_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, false, hypergeometric_1_f_2, a, b1, b2, z)
+TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, true, hypergeometric_1_f_2, a, b1, b2, z)
 
 // Whittaker functions
 #include "../kernel/special_functions/whittaker_m.h"
 #include "../kernel/special_functions/whittaker_m_backward.h"
 #include "../kernel/special_functions/whittaker_m_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, whittaker_m, kappa, mu, z)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, whittaker_m, kappa, mu, z)
 
 #include "../kernel/special_functions/whittaker_w.h"
 #include "../kernel/special_functions/whittaker_w_backward.h"
 #include "../kernel/special_functions/whittaker_w_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, whittaker_w, kappa, mu, z)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, whittaker_w, kappa, mu, z)
 
 // Chebyshev polynomials
 #include "../kernel/special_functions/chebyshev_polynomial_t.h"
@@ -167,489 +167,489 @@ TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, chebyshev_polynomia
 #include "../kernel/special_functions/bessel_j_0_backward.h"
 #include "../kernel/special_functions/bessel_j_0_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, bessel_j_0, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, bessel_j_0, z)
 
 #include "../kernel/special_functions/bessel_j_1.h"
 #include "../kernel/special_functions/bessel_j_1_backward.h"
 #include "../kernel/special_functions/bessel_j_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, bessel_j_1, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, bessel_j_1, z)
 
 #include "../kernel/special_functions/bessel_j.h"
 #include "../kernel/special_functions/bessel_j_backward.h"
 #include "../kernel/special_functions/bessel_j_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, bessel_j, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, bessel_j, n, z)
 
 // Bessel functions of the second kind
 #include "../kernel/special_functions/bessel_y_0.h"
 #include "../kernel/special_functions/bessel_y_0_backward.h"
 #include "../kernel/special_functions/bessel_y_0_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, bessel_y_0, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, bessel_y_0, z)
 
 #include "../kernel/special_functions/bessel_y_1.h"
 #include "../kernel/special_functions/bessel_y_1_backward.h"
 #include "../kernel/special_functions/bessel_y_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, bessel_y_1, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, bessel_y_1, z)
 
 #include "../kernel/special_functions/bessel_y.h"
 #include "../kernel/special_functions/bessel_y_backward.h"
 #include "../kernel/special_functions/bessel_y_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, bessel_y, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, bessel_y, n, z)
 
 // Modified Bessel functions of the first kind
 #include "../kernel/special_functions/modified_bessel_i_0.h"
 #include "../kernel/special_functions/modified_bessel_i_0_backward.h"
 #include "../kernel/special_functions/modified_bessel_i_0_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, modified_bessel_i_0, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, modified_bessel_i_0, z)
 
 #include "../kernel/special_functions/modified_bessel_i_1.h"
 #include "../kernel/special_functions/modified_bessel_i_1_backward.h"
 #include "../kernel/special_functions/modified_bessel_i_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, modified_bessel_i_1, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, modified_bessel_i_1, z)
 
 #include "../kernel/special_functions/modified_bessel_i.h"
 #include "../kernel/special_functions/modified_bessel_i_backward.h"
 #include "../kernel/special_functions/modified_bessel_i_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, modified_bessel_i, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, modified_bessel_i, n, z)
 
 // Modified Bessel functions of the second kind
 #include "../kernel/special_functions/modified_bessel_k_0.h"
 #include "../kernel/special_functions/modified_bessel_k_0_backward.h"
 #include "../kernel/special_functions/modified_bessel_k_0_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, modified_bessel_k_0, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, modified_bessel_k_0, z)
 
 #include "../kernel/special_functions/modified_bessel_k_1.h"
 #include "../kernel/special_functions/modified_bessel_k_1_backward.h"
 #include "../kernel/special_functions/modified_bessel_k_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, modified_bessel_k_1, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, modified_bessel_k_1, z)
 
 #include "../kernel/special_functions/modified_bessel_k.h"
 #include "../kernel/special_functions/modified_bessel_k_backward.h"
 #include "../kernel/special_functions/modified_bessel_k_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, modified_bessel_k, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, modified_bessel_k, n, z)
 
 // Spherical Bessel functions of the first kind
 #include "../kernel/special_functions/spherical_bessel_j_0.h"
 #include "../kernel/special_functions/spherical_bessel_j_0_backward.h"
 #include "../kernel/special_functions/spherical_bessel_j_0_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, spherical_bessel_j_0, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, spherical_bessel_j_0, z)
 
 #include "../kernel/special_functions/spherical_bessel_j_1.h"
 #include "../kernel/special_functions/spherical_bessel_j_1_backward.h"
 #include "../kernel/special_functions/spherical_bessel_j_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, spherical_bessel_j_1, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, spherical_bessel_j_1, z)
 
 #include "../kernel/special_functions/spherical_bessel_j.h"
 #include "../kernel/special_functions/spherical_bessel_j_backward.h"
 #include "../kernel/special_functions/spherical_bessel_j_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, spherical_bessel_j, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, spherical_bessel_j, n, z)
 
 // Spherical Bessel functions of the second kind
 #include "../kernel/special_functions/spherical_bessel_y_0.h"
 #include "../kernel/special_functions/spherical_bessel_y_0_backward.h"
 #include "../kernel/special_functions/spherical_bessel_y_0_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, spherical_bessel_y_0, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, spherical_bessel_y_0, z)
 
 #include "../kernel/special_functions/spherical_bessel_y_1.h"
 #include "../kernel/special_functions/spherical_bessel_y_1_backward.h"
 #include "../kernel/special_functions/spherical_bessel_y_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, spherical_bessel_y_1, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, spherical_bessel_y_1, z)
 
 #include "../kernel/special_functions/spherical_bessel_y.h"
 #include "../kernel/special_functions/spherical_bessel_y_backward.h"
 #include "../kernel/special_functions/spherical_bessel_y_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, spherical_bessel_y, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, spherical_bessel_y, n, z)
 
 // Modified spherical Bessel functions of the first kind
 #include "../kernel/special_functions/spherical_bessel_i_0.h"
 #include "../kernel/special_functions/spherical_bessel_i_0_backward.h"
 #include "../kernel/special_functions/spherical_bessel_i_0_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, spherical_bessel_i_0, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, spherical_bessel_i_0, z)
 
 #include "../kernel/special_functions/spherical_bessel_i_1.h"
 #include "../kernel/special_functions/spherical_bessel_i_1_backward.h"
 #include "../kernel/special_functions/spherical_bessel_i_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, spherical_bessel_i_1, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, spherical_bessel_i_1, z)
 
 #include "../kernel/special_functions/spherical_bessel_i.h"
 #include "../kernel/special_functions/spherical_bessel_i_backward.h"
 #include "../kernel/special_functions/spherical_bessel_i_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, spherical_bessel_i, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, spherical_bessel_i, n, z)
 
 // Modified spherical Bessel functions of the second kind
 #include "../kernel/special_functions/spherical_bessel_k_0.h"
 #include "../kernel/special_functions/spherical_bessel_k_0_backward.h"
 #include "../kernel/special_functions/spherical_bessel_k_0_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, spherical_bessel_k_0, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, spherical_bessel_k_0, z)
 
 #include "../kernel/special_functions/spherical_bessel_k_1.h"
 #include "../kernel/special_functions/spherical_bessel_k_1_backward.h"
 #include "../kernel/special_functions/spherical_bessel_k_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, spherical_bessel_k_1, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, spherical_bessel_k_1, z)
 
 #include "../kernel/special_functions/spherical_bessel_k.h"
 #include "../kernel/special_functions/spherical_bessel_k_backward.h"
 #include "../kernel/special_functions/spherical_bessel_k_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, spherical_bessel_k, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, spherical_bessel_k, n, z)
 
 // Carlson elliptic integrals
 #include "../kernel/special_functions/carlson_elliptic_integral_r_f.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_f_backward.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_f_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, carlson_elliptic_integral_r_f, x, y, z)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, carlson_elliptic_integral_r_f, x, y, z)
 
 #include "../kernel/special_functions/carlson_elliptic_integral_r_d.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_d_backward.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_d_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, carlson_elliptic_integral_r_d, x, y, z)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, carlson_elliptic_integral_r_d, x, y, z)
 
 #include "../kernel/special_functions/carlson_elliptic_integral_r_c.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_c_backward.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_c_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, carlson_elliptic_integral_r_c, x, y)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, carlson_elliptic_integral_r_c, x, y)
 
 #include "../kernel/special_functions/carlson_elliptic_integral_r_j.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_j_backward.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_j_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, false, carlson_elliptic_integral_r_j, x, y, z, p)
+TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, true, carlson_elliptic_integral_r_j, x, y, z, p)
 
 #include "../kernel/special_functions/carlson_elliptic_integral_r_g.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_g_backward.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_g_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, carlson_elliptic_integral_r_g, x, y, z)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, carlson_elliptic_integral_r_g, x, y, z)
 
 #include "../kernel/special_functions/carlson_elliptic_integral_r_e.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_e_backward.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_e_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, carlson_elliptic_integral_r_e, x, y, z)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, carlson_elliptic_integral_r_e, x, y, z)
 
 #include "../kernel/special_functions/carlson_elliptic_integral_r_m.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_m_backward.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_m_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, carlson_elliptic_integral_r_m, x, y, z)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, carlson_elliptic_integral_r_m, x, y, z)
 
 #include "../kernel/special_functions/carlson_elliptic_integral_r_k.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_k_backward.h"
 #include "../kernel/special_functions/carlson_elliptic_integral_r_k_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, carlson_elliptic_integral_r_k, x, y)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, carlson_elliptic_integral_r_k, x, y)
 
 // Legendre elliptic integrals
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_k.h"
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_k_backward.h"
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_k_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, complete_legendre_elliptic_integral_k, m)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, complete_legendre_elliptic_integral_k, m)
 
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_e.h"
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_e_backward.h"
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_e_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, complete_legendre_elliptic_integral_e, m)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, complete_legendre_elliptic_integral_e, m)
 
 #include "../kernel/special_functions/incomplete_legendre_elliptic_integral_e.h"
 #include "../kernel/special_functions/incomplete_legendre_elliptic_integral_e_backward.h"
 #include "../kernel/special_functions/incomplete_legendre_elliptic_integral_e_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, incomplete_legendre_elliptic_integral_e, phi, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, incomplete_legendre_elliptic_integral_e, phi, m)
 
 #include "../kernel/special_functions/incomplete_legendre_elliptic_integral_f.h"
 #include "../kernel/special_functions/incomplete_legendre_elliptic_integral_f_backward.h"
 #include "../kernel/special_functions/incomplete_legendre_elliptic_integral_f_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, incomplete_legendre_elliptic_integral_f, phi, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, incomplete_legendre_elliptic_integral_f, phi, m)
 
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_pi.h"
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_pi_backward.h"
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_pi_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, complete_legendre_elliptic_integral_pi, n, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, complete_legendre_elliptic_integral_pi, n, m)
 
 #include "../kernel/special_functions/incomplete_legendre_elliptic_integral_pi.h"
 #include "../kernel/special_functions/incomplete_legendre_elliptic_integral_pi_backward.h"
 #include "../kernel/special_functions/incomplete_legendre_elliptic_integral_pi_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, incomplete_legendre_elliptic_integral_pi, n, phi, m)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, incomplete_legendre_elliptic_integral_pi, n, phi, m)
 
 // Jacobi elliptic functions
 #include "../kernel/special_functions/jacobi_amplitude_am.h"
 #include "../kernel/special_functions/jacobi_amplitude_am_backward.h"
 #include "../kernel/special_functions/jacobi_amplitude_am_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_amplitude_am, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_amplitude_am, u, m)
 
 #include "../kernel/special_functions/jacobi_elliptic_dn.h"
 #include "../kernel/special_functions/jacobi_elliptic_dn_backward.h"
 #include "../kernel/special_functions/jacobi_elliptic_dn_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_dn, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_elliptic_dn, u, m)
 
 #include "../kernel/special_functions/jacobi_elliptic_cn.h"
 #include "../kernel/special_functions/jacobi_elliptic_cn_backward.h"
 #include "../kernel/special_functions/jacobi_elliptic_cn_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_cn, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_elliptic_cn, u, m)
 
 #include "../kernel/special_functions/jacobi_elliptic_sn.h"
 #include "../kernel/special_functions/jacobi_elliptic_sn_backward.h"
 #include "../kernel/special_functions/jacobi_elliptic_sn_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_sn, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_elliptic_sn, u, m)
 
 #include "../kernel/special_functions/jacobi_elliptic_sd.h"
 #include "../kernel/special_functions/jacobi_elliptic_sd_backward.h"
 #include "../kernel/special_functions/jacobi_elliptic_sd_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_sd, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_elliptic_sd, u, m)
 
 #include "../kernel/special_functions/jacobi_elliptic_cd.h"
 #include "../kernel/special_functions/jacobi_elliptic_cd_backward.h"
 #include "../kernel/special_functions/jacobi_elliptic_cd_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_cd, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_elliptic_cd, u, m)
 
 #include "../kernel/special_functions/jacobi_elliptic_sc.h"
 #include "../kernel/special_functions/jacobi_elliptic_sc_backward.h"
 #include "../kernel/special_functions/jacobi_elliptic_sc_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_sc, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_elliptic_sc, u, m)
 
 #include "../kernel/special_functions/jacobi_elliptic_nd.h"
 #include "../kernel/special_functions/jacobi_elliptic_nd_backward.h"
 #include "../kernel/special_functions/jacobi_elliptic_nd_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_nd, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_elliptic_nd, u, m)
 
 #include "../kernel/special_functions/jacobi_elliptic_nc.h"
 #include "../kernel/special_functions/jacobi_elliptic_nc_backward.h"
 #include "../kernel/special_functions/jacobi_elliptic_nc_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_nc, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_elliptic_nc, u, m)
 
 #include "../kernel/special_functions/jacobi_elliptic_ns.h"
 #include "../kernel/special_functions/jacobi_elliptic_ns_backward.h"
 #include "../kernel/special_functions/jacobi_elliptic_ns_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_ns, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_elliptic_ns, u, m)
 
 #include "../kernel/special_functions/jacobi_elliptic_dc.h"
 #include "../kernel/special_functions/jacobi_elliptic_dc_backward.h"
 #include "../kernel/special_functions/jacobi_elliptic_dc_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_dc, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_elliptic_dc, u, m)
 
 #include "../kernel/special_functions/jacobi_elliptic_ds.h"
 #include "../kernel/special_functions/jacobi_elliptic_ds_backward.h"
 #include "../kernel/special_functions/jacobi_elliptic_ds_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_ds, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_elliptic_ds, u, m)
 
 #include "../kernel/special_functions/jacobi_elliptic_cs.h"
 #include "../kernel/special_functions/jacobi_elliptic_cs_backward.h"
 #include "../kernel/special_functions/jacobi_elliptic_cs_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, jacobi_elliptic_cs, u, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, jacobi_elliptic_cs, u, m)
 
 // Inverse Jacobi elliptic functions
 #include "../kernel/special_functions/inverse_jacobi_elliptic_sn.h"
 #include "../kernel/special_functions/inverse_jacobi_elliptic_sn_backward.h"
 #include "../kernel/special_functions/inverse_jacobi_elliptic_sn_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, inverse_jacobi_elliptic_sn, x, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, inverse_jacobi_elliptic_sn, x, m)
 
 #include "../kernel/special_functions/inverse_jacobi_elliptic_cn.h"
 #include "../kernel/special_functions/inverse_jacobi_elliptic_cn_backward.h"
 #include "../kernel/special_functions/inverse_jacobi_elliptic_cn_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, inverse_jacobi_elliptic_cn, x, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, inverse_jacobi_elliptic_cn, x, m)
 
 #include "../kernel/special_functions/inverse_jacobi_elliptic_dn.h"
 #include "../kernel/special_functions/inverse_jacobi_elliptic_dn_backward.h"
 #include "../kernel/special_functions/inverse_jacobi_elliptic_dn_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, inverse_jacobi_elliptic_dn, x, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, inverse_jacobi_elliptic_dn, x, m)
 
 #include "../kernel/special_functions/inverse_jacobi_elliptic_sd.h"
 #include "../kernel/special_functions/inverse_jacobi_elliptic_sd_backward.h"
 #include "../kernel/special_functions/inverse_jacobi_elliptic_sd_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, inverse_jacobi_elliptic_sd, x, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, inverse_jacobi_elliptic_sd, x, m)
 
 #include "../kernel/special_functions/inverse_jacobi_elliptic_cd.h"
 #include "../kernel/special_functions/inverse_jacobi_elliptic_cd_backward.h"
 #include "../kernel/special_functions/inverse_jacobi_elliptic_cd_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, inverse_jacobi_elliptic_cd, x, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, inverse_jacobi_elliptic_cd, x, m)
 
 #include "../kernel/special_functions/inverse_jacobi_elliptic_sc.h"
 #include "../kernel/special_functions/inverse_jacobi_elliptic_sc_backward.h"
 #include "../kernel/special_functions/inverse_jacobi_elliptic_sc_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, inverse_jacobi_elliptic_sc, x, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, inverse_jacobi_elliptic_sc, x, m)
 
 // Jacobi theta functions
 #include "../kernel/special_functions/theta_1.h"
 #include "../kernel/special_functions/theta_1_backward.h"
 #include "../kernel/special_functions/theta_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, theta_1, z, q)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, theta_1, z, q)
 
 #include "../kernel/special_functions/theta_2.h"
 #include "../kernel/special_functions/theta_2_backward.h"
 #include "../kernel/special_functions/theta_2_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, theta_2, z, q)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, theta_2, z, q)
 
 #include "../kernel/special_functions/theta_3.h"
 #include "../kernel/special_functions/theta_3_backward.h"
 #include "../kernel/special_functions/theta_3_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, theta_3, z, q)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, theta_3, z, q)
 
 #include "../kernel/special_functions/theta_4.h"
 #include "../kernel/special_functions/theta_4_backward.h"
 #include "../kernel/special_functions/theta_4_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, theta_4, z, q)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, theta_4, z, q)
 
 // Exponential integrals
 #include "../kernel/special_functions/exponential_integral_ei.h"
 #include "../kernel/special_functions/exponential_integral_ei_backward.h"
 #include "../kernel/special_functions/exponential_integral_ei_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, exponential_integral_ei, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, exponential_integral_ei, x)
 
 #include "../kernel/special_functions/exponential_integral_e_1.h"
 #include "../kernel/special_functions/exponential_integral_e_1_backward.h"
 #include "../kernel/special_functions/exponential_integral_e_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, exponential_integral_e_1, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, exponential_integral_e_1, x)
 
 #include "../kernel/special_functions/exponential_integral_ein.h"
 #include "../kernel/special_functions/exponential_integral_ein_backward.h"
 #include "../kernel/special_functions/exponential_integral_ein_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, exponential_integral_ein, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, exponential_integral_ein, x)
 
 #include "../kernel/special_functions/exponential_integral_e.h"
 #include "../kernel/special_functions/exponential_integral_e_backward.h"
 #include "../kernel/special_functions/exponential_integral_e_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, exponential_integral_e, n, x)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, exponential_integral_e, n, x)
 
 // Sine and cosine integrals
 #include "../kernel/special_functions/sine_integral_si.h"
 #include "../kernel/special_functions/sine_integral_si_backward.h"
 #include "../kernel/special_functions/sine_integral_si_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, sine_integral_si, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, sine_integral_si, x)
 
 #include "../kernel/special_functions/cosine_integral_ci.h"
 #include "../kernel/special_functions/cosine_integral_ci_backward.h"
 #include "../kernel/special_functions/cosine_integral_ci_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, cosine_integral_ci, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, cosine_integral_ci, x)
 
 // Airy functions
 #include "../kernel/special_functions/airy_ai.h"
 #include "../kernel/special_functions/airy_ai_backward.h"
 #include "../kernel/special_functions/airy_ai_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, airy_ai, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, airy_ai, x)
 
 #include "../kernel/special_functions/airy_bi.h"
 #include "../kernel/special_functions/airy_bi_backward.h"
 #include "../kernel/special_functions/airy_bi_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, airy_bi, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, airy_bi, x)
 
 // Lambert W function
 #include "../kernel/special_functions/lambert_w.h"
 #include "../kernel/special_functions/lambert_w_backward.h"
 #include "../kernel/special_functions/lambert_w_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, lambert_w, k, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, lambert_w, k, z)
 
 // Kelvin functions
 #include "../kernel/special_functions/kelvin_ber.h"
 #include "../kernel/special_functions/kelvin_ber_backward.h"
 #include "../kernel/special_functions/kelvin_ber_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, kelvin_ber, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, kelvin_ber, x)
 
 #include "../kernel/special_functions/kelvin_bei.h"
 #include "../kernel/special_functions/kelvin_bei_backward.h"
 #include "../kernel/special_functions/kelvin_bei_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, kelvin_bei, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, kelvin_bei, x)
 
 #include "../kernel/special_functions/kelvin_ker.h"
 #include "../kernel/special_functions/kelvin_ker_backward.h"
 #include "../kernel/special_functions/kelvin_ker_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, kelvin_ker, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, kelvin_ker, x)
 
 #include "../kernel/special_functions/kelvin_kei.h"
 #include "../kernel/special_functions/kelvin_kei_backward.h"
 #include "../kernel/special_functions/kelvin_kei_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, kelvin_kei, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, kelvin_kei, x)
 
 // Riemann zeta function
 #include "../kernel/special_functions/zeta.h"
 #include "../kernel/special_functions/zeta_backward.h"
 #include "../kernel/special_functions/zeta_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, zeta, s)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, zeta, s)
 
 // Polylogarithm
 #include "../kernel/special_functions/polylogarithm_li.h"
 #include "../kernel/special_functions/polylogarithm_li_backward.h"
 #include "../kernel/special_functions/polylogarithm_li_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, polylogarithm_li, s, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, polylogarithm_li, s, z)
 
 // Parabolic cylinder functions
 #include "../kernel/special_functions/parabolic_cylinder_u.h"
 #include "../kernel/special_functions/parabolic_cylinder_u_backward.h"
 #include "../kernel/special_functions/parabolic_cylinder_u_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, parabolic_cylinder_u, a, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, parabolic_cylinder_u, a, z)
 
 #include "../kernel/special_functions/parabolic_cylinder_v.h"
 #include "../kernel/special_functions/parabolic_cylinder_v_backward.h"
 #include "../kernel/special_functions/parabolic_cylinder_v_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, parabolic_cylinder_v, a, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, parabolic_cylinder_v, a, z)
 
 // Error functions
 #include "../kernel/special_functions/erfinv.h"
@@ -669,20 +669,20 @@ TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, erfcinv, x)
 #include "../kernel/special_functions/fresnel_s_backward.h"
 #include "../kernel/special_functions/fresnel_s_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, fresnel_s, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, fresnel_s, z)
 
 #include "../kernel/special_functions/fresnel_c.h"
 #include "../kernel/special_functions/fresnel_c_backward.h"
 #include "../kernel/special_functions/fresnel_c_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, fresnel_c, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, fresnel_c, z)
 
 // Orthogonal polynomials
 #include "../kernel/special_functions/legendre_polynomial_p.h"
 #include "../kernel/special_functions/legendre_polynomial_p_backward.h"
 #include "../kernel/special_functions/legendre_polynomial_p_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, legendre_polynomial_p, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, legendre_polynomial_p, n, z)
 
 #include "../kernel/special_functions/legendre_polynomial_q.h"
 #include "../kernel/special_functions/legendre_polynomial_q_backward.h"
@@ -695,111 +695,111 @@ TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, legendre_polynomial
 #include "../kernel/special_functions/associated_legendre_polynomial_p_backward.h"
 #include "../kernel/special_functions/associated_legendre_polynomial_p_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, associated_legendre_polynomial_p, n, m, x)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, associated_legendre_polynomial_p, n, m, x)
 
 #include "../kernel/special_functions/hermite_polynomial_h.h"
 #include "../kernel/special_functions/hermite_polynomial_h_backward.h"
 #include "../kernel/special_functions/hermite_polynomial_h_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, hermite_polynomial_h, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, hermite_polynomial_h, n, z)
 
 #include "../kernel/special_functions/hermite_polynomial_he.h"
 #include "../kernel/special_functions/hermite_polynomial_he_backward.h"
 #include "../kernel/special_functions/hermite_polynomial_he_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, hermite_polynomial_he, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, hermite_polynomial_he, n, z)
 
 #include "../kernel/special_functions/laguerre_polynomial_l.h"
 #include "../kernel/special_functions/laguerre_polynomial_l_backward.h"
 #include "../kernel/special_functions/laguerre_polynomial_l_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, laguerre_polynomial_l, n, alpha, z)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, laguerre_polynomial_l, n, alpha, z)
 
 #include "../kernel/special_functions/gegenbauer_polynomial_c.h"
 #include "../kernel/special_functions/gegenbauer_polynomial_c_backward.h"
 #include "../kernel/special_functions/gegenbauer_polynomial_c_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, gegenbauer_polynomial_c, n, lambda, z)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, gegenbauer_polynomial_c, n, lambda, z)
 
 #include "../kernel/special_functions/jacobi_polynomial_p.h"
 #include "../kernel/special_functions/jacobi_polynomial_p_backward.h"
 #include "../kernel/special_functions/jacobi_polynomial_p_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, false, jacobi_polynomial_p, n, alpha, beta, z)
+TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, true, jacobi_polynomial_p, n, alpha, beta, z)
 
 #include "../kernel/special_functions/zernike_polynomial_r.h"
 #include "../kernel/special_functions/zernike_polynomial_r_backward.h"
 #include "../kernel/special_functions/zernike_polynomial_r_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, zernike_polynomial_r, n, m, rho)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, zernike_polynomial_r, n, m, rho)
 
 #include "../kernel/special_functions/zernike_polynomial_z.h"
 #include "../kernel/special_functions/zernike_polynomial_z_backward.h"
 #include "../kernel/special_functions/zernike_polynomial_z_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, false, zernike_polynomial_z, n, m, rho, theta)
+TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, true, zernike_polynomial_z, n, m, rho, theta)
 
 #include "../kernel/special_functions/krawtchouk_polynomial_k.h"
 #include "../kernel/special_functions/krawtchouk_polynomial_k_backward.h"
 #include "../kernel/special_functions/krawtchouk_polynomial_k_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, false, krawtchouk_polynomial_k, n, x, p, N)
+TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, true, krawtchouk_polynomial_k, n, x, p, N)
 
 #include "../kernel/special_functions/meixner_polynomial_m.h"
 #include "../kernel/special_functions/meixner_polynomial_m_backward.h"
 #include "../kernel/special_functions/meixner_polynomial_m_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, false, meixner_polynomial_m, n, x, beta, c)
+TORCHSCIENCE_CUDA_POINTWISE_QUATERNARY(special_functions, true, meixner_polynomial_m, n, x, beta, c)
 
 #include "../kernel/special_functions/charlier_polynomial_c.h"
 #include "../kernel/special_functions/charlier_polynomial_c_backward.h"
 #include "../kernel/special_functions/charlier_polynomial_c_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, false, charlier_polynomial_c, n, x, a)
+TORCHSCIENCE_CUDA_POINTWISE_TERNARY(special_functions, true, charlier_polynomial_c, n, x, a)
 
 // Pochhammer symbol
 #include "../kernel/special_functions/pochhammer.h"
 #include "../kernel/special_functions/pochhammer_backward.h"
 #include "../kernel/special_functions/pochhammer_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, pochhammer, z, m)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, pochhammer, z, m)
 
 // Struve functions
 #include "../kernel/special_functions/struve_h_0.h"
 #include "../kernel/special_functions/struve_h_0_backward.h"
 #include "../kernel/special_functions/struve_h_0_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, struve_h_0, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, struve_h_0, z)
 
 #include "../kernel/special_functions/struve_h_1.h"
 #include "../kernel/special_functions/struve_h_1_backward.h"
 #include "../kernel/special_functions/struve_h_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, struve_h_1, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, struve_h_1, z)
 
 #include "../kernel/special_functions/struve_l_0.h"
 #include "../kernel/special_functions/struve_l_0_backward.h"
 #include "../kernel/special_functions/struve_l_0_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, struve_l_0, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, struve_l_0, z)
 
 #include "../kernel/special_functions/struve_l_1.h"
 #include "../kernel/special_functions/struve_l_1_backward.h"
 #include "../kernel/special_functions/struve_l_1_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, struve_l_1, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, struve_l_1, z)
 
 #include "../kernel/special_functions/struve_h.h"
 #include "../kernel/special_functions/struve_h_backward.h"
 #include "../kernel/special_functions/struve_h_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, struve_h, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, struve_h, n, z)
 
 #include "../kernel/special_functions/struve_l.h"
 #include "../kernel/special_functions/struve_l_backward.h"
 #include "../kernel/special_functions/struve_l_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, struve_l, n, z)
+TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, true, struve_l, n, z)
 
 // Anger and Weber functions
 #include "../kernel/special_functions/anger_j.h"
@@ -833,56 +833,56 @@ TORCHSCIENCE_CUDA_POINTWISE_BINARY(special_functions, false, chebyshev_polynomia
 #include "../kernel/special_functions/tetragamma_backward.h"
 #include "../kernel/special_functions/tetragamma_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, tetragamma, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, tetragamma, z)
 
 // Pentagamma function psi'''(z)
 #include "../kernel/special_functions/pentagamma.h"
 #include "../kernel/special_functions/pentagamma_backward.h"
 #include "../kernel/special_functions/pentagamma_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, pentagamma, z)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, pentagamma, z)
 
 // cos(pi * x)
 #include "../kernel/special_functions/cos_pi.h"
 #include "../kernel/special_functions/cos_pi_backward.h"
 #include "../kernel/special_functions/cos_pi_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, cos_pi, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, cos_pi, x)
 
 // cosh(pi * x)
 #include "../kernel/special_functions/cosh_pi.h"
 #include "../kernel/special_functions/cosh_pi_backward.h"
 #include "../kernel/special_functions/cosh_pi_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, cosh_pi, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, cosh_pi, x)
 
 // sin(pi * x)
 #include "../kernel/special_functions/sin_pi.h"
 #include "../kernel/special_functions/sin_pi_backward.h"
 #include "../kernel/special_functions/sin_pi_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, sin_pi, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, sin_pi, x)
 
 // sinh(pi * x)
 #include "../kernel/special_functions/sinh_pi.h"
 #include "../kernel/special_functions/sinh_pi_backward.h"
 #include "../kernel/special_functions/sinh_pi_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, sinh_pi, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, sinh_pi, x)
 
 // tan(pi * x)
 #include "../kernel/special_functions/tan_pi.h"
 #include "../kernel/special_functions/tan_pi_backward.h"
 #include "../kernel/special_functions/tan_pi_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, tan_pi, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, tan_pi, x)
 
 // tanh(pi * x)
 #include "../kernel/special_functions/tanh_pi.h"
 #include "../kernel/special_functions/tanh_pi_backward.h"
 #include "../kernel/special_functions/tanh_pi_backward_backward.h"
 
-TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, false, tanh_pi, x)
+TORCHSCIENCE_CUDA_POINTWISE_UNARY(special_functions, true, tanh_pi, x)
 
 // Hahn polynomial Q_n(x; alpha, beta, N)
 #include "../kernel/special_functions/hahn_polynomial_q.h"
