@@ -30,6 +30,17 @@ target_include_directories(_csrc PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
 # CUDA-specific linking
 target_link_libraries(_csrc PRIVATE CUDA::cudart)
 
+# NVCC flags required by PyTorch extensions (matches torch.utils.cpp_extension)
+target_compile_options(_csrc PRIVATE
+  $<$<COMPILE_LANGUAGE:CUDA>:
+    --expt-relaxed-constexpr
+    -D__CUDA_NO_HALF_OPERATORS__
+    -D__CUDA_NO_HALF_CONVERSIONS__
+    -D__CUDA_NO_BFLOAT16_CONVERSIONS__
+    -D__CUDA_NO_HALF2_OPERATORS__
+  >
+)
+
 # Compile definition to enable CUDA code paths
 target_compile_definitions(_csrc PRIVATE TORCHSCIENCE_CUDA)
 

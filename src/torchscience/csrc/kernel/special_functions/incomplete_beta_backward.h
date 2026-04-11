@@ -146,21 +146,23 @@ T log_weighted_beta_integral(T x, T a, T b, bool weight_log_t) {
   }
 
   // For small a (< 1), use substitution t = s^(1/a) to handle singularity at t=0
+  // The integrand t^(a-1) diverges as t->0 when a < 1, regardless of the log weight
   // For small b (< 1), the singularity is at t=1 but we integrate up to x < 1, so less problematic
-  bool use_singularity_transform = weight_log_t && (a < T(1));
+  bool use_singularity_transform = (a < T(1));
 
   T integral;
 
   if (use_singularity_transform) {
     // Transform: t = s^(1/a), so s = t^a, ds = a * t^(a-1) dt
     // dt = (1/a) * s^(1/a - 1) ds
-    // t^(a-1) dt = s^((a-1)/a) * (1/a) * s^(1/a - 1) ds = (1/a) * s^((a-1)/a + 1/a - 1) ds = (1/a) ds
-    // log(t) = log(s) / a
+    // t^(a-1) dt = (1/a) ds  (the singularity cancels)
     // (1-t)^(b-1) = (1 - s^(1/a))^(b-1)
     //
-    // So the integrand becomes:
-    // log(t) * t^(a-1) * (1-t)^(b-1) dt = (log(s)/a) * (1/a) * (1 - s^(1/a))^(b-1) ds
-    //                                   = log(s) / a^2 * (1 - s^(1/a))^(b-1) ds
+    // For weight_log_t=true (grad_a):
+    //   log(t) * t^(a-1) * (1-t)^(b-1) dt = log(s)/a^2 * (1 - s^(1/a))^(b-1) ds
+    //
+    // For weight_log_t=false (grad_b):
+    //   log(1-t) * t^(a-1) * (1-t)^(b-1) dt = log(1 - s^(1/a))/a * (1 - s^(1/a))^(b-1) ds
     //
     // The new limits: t = 0 -> s = 0, t = x -> s = x^a
 
@@ -171,22 +173,40 @@ T log_weighted_beta_integral(T x, T a, T b, bool weight_log_t) {
     if (s_lower < eps * T(0.01)) s_lower = eps * T(0.01);
 
     T inv_a = T(1) / a;
-    T inv_a_sq = inv_a * inv_a;
 
-    auto transformed_integrand = [a, b, inv_a, inv_a_sq](T s) -> T {
-      if (s <= T(0)) return T(0);
+    if (weight_log_t) {
+      T inv_a_sq = inv_a * inv_a;
 
-      T t = std::pow(s, inv_a);  // t = s^(1/a)
-      if (t >= T(1)) return T(0);
+      auto transformed_integrand = [a, b, inv_a, inv_a_sq](T s) -> T {
+        if (s <= T(0)) return T(0);
 
-      T one_minus_t = T(1) - t;
-      if (one_minus_t <= T(0)) return T(0);
+        T t = std::pow(s, inv_a);  // t = s^(1/a)
+        if (t >= T(1)) return T(0);
 
-      // log(s) / a^2 * (1-t)^(b-1)
-      return std::log(s) * inv_a_sq * std::pow(one_minus_t, b - T(1));
-    };
+        T one_minus_t = T(1) - t;
+        if (one_minus_t <= T(0)) return T(0);
 
-    integral = adaptive_integrate(transformed_integrand, s_lower, s_upper, tol, max_depth);
+        // log(s) / a^2 * (1-t)^(b-1)
+        return std::log(s) * inv_a_sq * std::pow(one_minus_t, b - T(1));
+      };
+
+      integral = adaptive_integrate(transformed_integrand, s_lower, s_upper, tol, max_depth);
+    } else {
+      auto transformed_integrand = [a, b, inv_a](T s) -> T {
+        if (s <= T(0)) return T(0);
+
+        T t = std::pow(s, inv_a);  // t = s^(1/a)
+        if (t >= T(1)) return T(0);
+
+        T one_minus_t = T(1) - t;
+        if (one_minus_t <= T(0)) return T(0);
+
+        // log(1-t) / a * (1-t)^(b-1)
+        return std::log(one_minus_t) * inv_a * std::pow(one_minus_t, b - T(1));
+      };
+
+      integral = adaptive_integrate(transformed_integrand, s_lower, s_upper, tol, max_depth);
+    }
   } else {
     auto integrand = [a, b, weight_log_t](T t) -> T {
       if (t <= T(0) || t >= T(1)) return T(0);
