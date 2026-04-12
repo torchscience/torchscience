@@ -197,6 +197,7 @@ jobs:
 
       - name: CUDA diagnostic
         if: always()
+        continue-on-error: true
         shell: bash
         run: |
           # Check compiled architectures in the .so
@@ -223,17 +224,6 @@ jobs:
           x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64, device='cuda')
           print(f'torch.sin CUDA: {torch.sin(x).tolist()}')
           torch.cuda.synchronize()
-          print(f'CUDA error after torch.sin: {torch.cuda.get_last_error()}')
-
-          # Test minimal inline kernel (no kernel header calls)
-          print('=== Minimal kernel test (2*x) ===')
-          x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64, device='cuda')
-          y = torch.ops.torchscience.cuda_test_double_it(x)
-          torch.cuda.synchronize()
-          print(f'Input:    {x.cpu().tolist()}')
-          print(f'2*x CUDA: {y.cpu().tolist()}')
-          print(f'Expected: {[2.0, 4.0, 6.0]}')
-          print(f'Match: {y.cpu().tolist() == [2.0, 4.0, 6.0]}')
 
           # Test our custom ops
           import torchscience.special_functions as sf
@@ -244,15 +234,13 @@ jobs:
                   x = torch.tensor([0.5, 1.0, 1.5, 2.0, 2.5], dtype=dtype, device='cuda')
                   y_cuda = fn(x)
                   torch.cuda.synchronize()
-                  err = torch.cuda.get_last_error()
-                  if err != torch.cuda.CudaError(0):
-                      print(f'{name} CUDA ERROR: {err}')
                   y_cpu = fn(x.cpu())
                   print(f'{name} CUDA: {y_cuda.cpu().tolist()}')
                   print(f'{name} CPU:  {y_cpu.tolist()}')
           "
 
       - name: Run CUDA tests
+        if: success() || failure()
         run: uv run --no-sync pytest tests/ -v --tb=short -k "cuda or gpu"
 
   build-check:

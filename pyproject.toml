@@ -77,8 +77,9 @@ fixable = ["F401", "I"]
 index-url = "https://pypi.org/simple"
 cache-keys = [
     { file = "CMakeLists.txt" },
+    { file = "cmake/**" },
     { file = "pyproject.toml" },
-    { file = "src/**/*.{h,c,hpp,cpp}" }
+    { file = "src/**/*.{h,c,hpp,cpp,cu,cuh}" }
 ]
 # Build without isolation to ensure torch ABI compatibility
 # (the isolated build env may have a different torch build than the runtime)

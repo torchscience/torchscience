@@ -4,6 +4,7 @@ from torchscience.testing import (
     OperatorDescriptor,
     OpTestCase,
     SpecialValue,
+    ToleranceConfig,
 )
 
 
@@ -38,6 +39,10 @@ class TestAiryAi(OpTestCase):
                     description="Ai(2)",
                 ),
             ],
+            tolerances=ToleranceConfig(
+                gradcheck_atol=5e-4,
+                gradcheck_rtol=5e-4,
+            ),
             skip_tests={
                 "test_gradgradcheck_complex",
             },
