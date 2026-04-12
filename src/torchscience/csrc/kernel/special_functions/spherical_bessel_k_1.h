@@ -12,26 +12,26 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-constexpr T spherical_bessel_k_1_eps();
+C10_HOST_DEVICE constexpr T spherical_bessel_k_1_eps();
 
 template <>
-constexpr float spherical_bessel_k_1_eps<float>() { return 1e-6f; }
+C10_HOST_DEVICE constexpr float spherical_bessel_k_1_eps<float>() { return 1e-6f; }
 
 template <>
-constexpr double spherical_bessel_k_1_eps<double>() { return 1e-12; }
+C10_HOST_DEVICE constexpr double spherical_bessel_k_1_eps<double>() { return 1e-12; }
 
 template <>
-inline c10::Half spherical_bessel_k_1_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half spherical_bessel_k_1_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 spherical_bessel_k_1_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 spherical_bessel_k_1_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 } // namespace detail
 
 // Modified spherical Bessel function of the second kind, order 1
 // k_1(z) = (pi/2z^2)(1+z) e^(-z)
 template <typename T>
-T spherical_bessel_k_1(T z) {
+C10_HOST_DEVICE T spherical_bessel_k_1(T z) {
     if (cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
@@ -51,7 +51,7 @@ T spherical_bessel_k_1(T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> spherical_bessel_k_1(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_k_1(c10::complex<T> z) {
     const T pi = T(3.14159265358979323846);
     const T eps = detail::spherical_bessel_k_1_eps<T>();
 

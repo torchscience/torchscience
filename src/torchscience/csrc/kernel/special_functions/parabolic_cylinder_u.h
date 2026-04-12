@@ -15,22 +15,22 @@ namespace detail {
 
 // Tolerance constants for parabolic cylinder functions
 template <typename T>
-constexpr T pcf_eps();
+C10_HOST_DEVICE constexpr T pcf_eps();
 
 template <>
-constexpr float pcf_eps<float>() { return 1e-7f; }
+C10_HOST_DEVICE constexpr float pcf_eps<float>() { return 1e-7f; }
 
 template <>
-constexpr double pcf_eps<double>() { return 1e-15; }
+C10_HOST_DEVICE constexpr double pcf_eps<double>() { return 1e-15; }
 
 template <>
-inline c10::Half pcf_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half pcf_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 pcf_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 pcf_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 template <typename T>
-constexpr int pcf_max_iter() { return 500; }
+C10_HOST_DEVICE constexpr int pcf_max_iter() { return 500; }
 
 // Taylor series for U(a, z) using confluent hypergeometric 1F1 representation
 // From mpmath documentation:
@@ -41,7 +41,7 @@ constexpr int pcf_max_iter() { return 500; }
 // 1. The 1F1 series has argument -z^2/2 (alternating signs) rather than z^2 (all positive)
 // 2. The exponential factor is e^{z^2/4} (grows with z) which compensates for the decaying 1F1
 template <typename T>
-T parabolic_cylinder_u_taylor(T a, T z) {
+C10_HOST_DEVICE T parabolic_cylinder_u_taylor(T a, T z) {
     const T eps = pcf_eps<T>();
     const int max_iter = pcf_max_iter<T>();
     const T pi = static_cast<T>(M_PI);
@@ -123,7 +123,7 @@ T parabolic_cylinder_u_taylor(T a, T z) {
 // Asymptotic expansion for U(a, z) for large |z|
 // Uses optimal truncation: stop when terms start growing (asymptotic divergence)
 template <typename T>
-T parabolic_cylinder_u_asymptotic(T a, T z) {
+C10_HOST_DEVICE T parabolic_cylinder_u_asymptotic(T a, T z) {
     const T eps = pcf_eps<T>();
     const int max_terms = 100;
 
@@ -162,7 +162,7 @@ T parabolic_cylinder_u_asymptotic(T a, T z) {
 // e^{-z^2/4} U(a,z) = U(a,0) * 1F1(-a/2+1/4; 1/2; -z^2/2) + U'(a,0) * z * 1F1(-a/2+3/4; 3/2; -z^2/2)
 // Therefore: U(a,z) = e^{z^2/4} * [U(a,0) * 1F1(...) + U'(a,0) * z * 1F1(...)]
 template <typename T>
-c10::complex<T> parabolic_cylinder_u_taylor(c10::complex<T> a, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> parabolic_cylinder_u_taylor(c10::complex<T> a, c10::complex<T> z) {
     const T eps = pcf_eps<T>();
     const int max_iter = pcf_max_iter<T>();
     const c10::complex<T> one(T(1), T(0));
@@ -247,7 +247,7 @@ c10::complex<T> parabolic_cylinder_u_taylor(c10::complex<T> a, c10::complex<T> z
 // Complex asymptotic expansion for U(a, z)
 // Uses optimal truncation: stop when terms start growing (asymptotic divergence)
 template <typename T>
-c10::complex<T> parabolic_cylinder_u_asymptotic(c10::complex<T> a, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> parabolic_cylinder_u_asymptotic(c10::complex<T> a, c10::complex<T> z) {
     const T eps = pcf_eps<T>();
     const int max_terms = 100;
     const c10::complex<T> one(T(1), T(0));
@@ -292,7 +292,7 @@ c10::complex<T> parabolic_cylinder_u_asymptotic(c10::complex<T> a, c10::complex<
 
 // Main function: parabolic_cylinder_u(a, z)
 template <typename T>
-T parabolic_cylinder_u(T a, T z) {
+C10_HOST_DEVICE T parabolic_cylinder_u(T a, T z) {
     if (cmath_compat::isnan(a) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
@@ -309,7 +309,7 @@ T parabolic_cylinder_u(T a, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> parabolic_cylinder_u(c10::complex<T> a, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> parabolic_cylinder_u(c10::complex<T> a, c10::complex<T> z) {
     T abs_z = std::abs(z);
     // Use Taylor series for small z, asymptotic expansion for large z
     // The threshold is chosen to balance accuracy between the two methods

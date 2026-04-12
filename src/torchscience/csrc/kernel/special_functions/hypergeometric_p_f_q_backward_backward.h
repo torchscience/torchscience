@@ -24,7 +24,7 @@ namespace torchscience::kernel::special_functions {
 //   grad_b[j]: gradient of output w.r.t. b[j]
 //   grad_z: gradient of output w.r.t. z
 template <typename T>
-void hypergeometric_p_f_q_backward_backward(
+C10_HOST_DEVICE void hypergeometric_p_f_q_backward_backward(
     const T* gg_a, int p,
     const T* gg_b, int q,
     T gg_z,

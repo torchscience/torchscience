@@ -6,7 +6,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T sin_pi(T x) {
+C10_HOST_DEVICE T sin_pi(T x) {
   T x_mod = std::fmod(x, T(2));
 
   if (x_mod < T(0)) {
@@ -17,7 +17,7 @@ T sin_pi(T x) {
 }
 
 template <typename T>
-c10::complex<T> sin_pi(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> sin_pi(c10::complex<T> z) {
   T x = z.real();
   T y = z.imag();
 

@@ -20,7 +20,7 @@ struct Hyp0F1WithGrad {
 // d/db[0F1(;b;z)] = -sum_{n=1}^inf z^n / ((b)_n * n!) * H_b(n)
 // where H_b(n) = sum_{k=0}^{n-1} 1/(b+k)
 template <typename T>
-Hyp0F1WithGrad<T> hyp0f1_series_with_grad(T b, T z, int max_iter = 500) {
+C10_HOST_DEVICE Hyp0F1WithGrad<T> hyp0f1_series_with_grad(T b, T z, int max_iter = 500) {
   T sum = T(1);
   T db_sum = T(0);
 
@@ -57,7 +57,7 @@ Hyp0F1WithGrad<T> hyp0f1_series_with_grad(T b, T z, int max_iter = 500) {
 //   d/dz[0F1(;b;z)] = 0F1(;b+1;z) / b
 //   d/db requires series with gradient accumulation or finite differences
 template <typename T>
-std::tuple<T, T> hypergeometric_0_f_1_backward(T grad, T b, T z) {
+C10_HOST_DEVICE std::tuple<T, T> hypergeometric_0_f_1_backward(T grad, T b, T z) {
   using detail::hyp0f1_epsilon;
   using detail::hyp0f1_is_complex_v;
   using detail::hyp0f1_is_nonpositive_integer;

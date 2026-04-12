@@ -14,7 +14,7 @@ namespace detail {
 // Second derivative w.r.t. z: d^2Y_n/dz^2
 // Using: d/dz[(Y_{n-1} - Y_{n+1})/2] = (Y_{n-2} - 2Y_n + Y_{n+2})/4
 template <typename T>
-T bessel_y_zz_derivative(T n, T z) {
+C10_HOST_DEVICE T bessel_y_zz_derivative(T n, T z) {
     T y_nm2 = bessel_y(n - T(2), z);
     T y_n = bessel_y(n, z);
     T y_np2 = bessel_y(n + T(2), z);
@@ -24,7 +24,7 @@ T bessel_y_zz_derivative(T n, T z) {
 
 // Mixed second derivative d^2Y_n/dn/dz computed numerically
 template <typename T>
-T bessel_y_nz_derivative(T n, T z) {
+C10_HOST_DEVICE T bessel_y_nz_derivative(T n, T z) {
     const T eps = std::sqrt(bessel_y_eps<T>());
     T h = eps * (std::abs(n) > T(1) ? std::abs(n) : T(1));
 
@@ -42,7 +42,7 @@ T bessel_y_nz_derivative(T n, T z) {
 
 // Second derivative w.r.t. n: d^2Y_n/dn^2 computed numerically
 template <typename T>
-T bessel_y_nn_derivative(T n, T z) {
+C10_HOST_DEVICE T bessel_y_nn_derivative(T n, T z) {
     const T eps = std::cbrt(bessel_y_eps<T>());
     T h = eps * (std::abs(n) > T(1) ? std::abs(n) : T(1));
 
@@ -55,7 +55,7 @@ T bessel_y_nn_derivative(T n, T z) {
 
 // Complex versions
 template <typename T>
-c10::complex<T> bessel_y_zz_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_y_zz_derivative(c10::complex<T> n, c10::complex<T> z) {
     c10::complex<T> two(T(2), T(0));
     c10::complex<T> four(T(4), T(0));
 
@@ -67,7 +67,7 @@ c10::complex<T> bessel_y_zz_derivative(c10::complex<T> n, c10::complex<T> z) {
 }
 
 template <typename T>
-c10::complex<T> bessel_y_nz_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_y_nz_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::sqrt(bessel_y_eps<T>());
     const c10::complex<T> one(T(1), T(0));
     const c10::complex<T> two(T(2), T(0));
@@ -87,7 +87,7 @@ c10::complex<T> bessel_y_nz_derivative(c10::complex<T> n, c10::complex<T> z) {
 }
 
 template <typename T>
-c10::complex<T> bessel_y_nn_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_y_nn_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::cbrt(bessel_y_eps<T>());
     const c10::complex<T> two(T(2), T(0));
 
@@ -107,7 +107,7 @@ c10::complex<T> bessel_y_nn_derivative(c10::complex<T> n, c10::complex<T> z) {
 // Computes gradients of the backward pass w.r.t. (grad_output, n, z)
 // given upstream gradients (gg_n, gg_z) for the outputs (grad_n, grad_z)
 template <typename T>
-std::tuple<T, T, T> bessel_y_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> bessel_y_backward_backward(
     T gg_n,       // upstream gradient for grad_n output
     T gg_z,       // upstream gradient for grad_z output
     T grad_output,
@@ -159,7 +159,7 @@ std::tuple<T, T, T> bessel_y_backward_backward(
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> bessel_y_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> bessel_y_backward_backward(
     c10::complex<T> gg_n,
     c10::complex<T> gg_z,
     c10::complex<T> grad_output,

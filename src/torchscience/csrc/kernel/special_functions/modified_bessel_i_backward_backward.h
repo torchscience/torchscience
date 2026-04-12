@@ -15,7 +15,7 @@ namespace detail {
 // Using: d/dz[(I_{n-1} + I_{n+1})/2] = [(I_{n-2} + I_n)/2 + (I_n + I_{n+2})/2]/2
 //                                    = (I_{n-2} + 2I_n + I_{n+2})/4
 template <typename T>
-T modified_bessel_i_zz_derivative(T n, T z) {
+C10_HOST_DEVICE T modified_bessel_i_zz_derivative(T n, T z) {
     T i_nm2 = modified_bessel_i(n - T(2), z);
     T i_n = modified_bessel_i(n, z);
     T i_np2 = modified_bessel_i(n + T(2), z);
@@ -25,7 +25,7 @@ T modified_bessel_i_zz_derivative(T n, T z) {
 
 // Mixed second derivative d^2I_n/dn/dz computed numerically
 template <typename T>
-T modified_bessel_i_nz_derivative(T n, T z) {
+C10_HOST_DEVICE T modified_bessel_i_nz_derivative(T n, T z) {
     const T eps = std::sqrt(modified_bessel_i_eps<T>());
     T h = eps * (std::abs(n) > T(1) ? std::abs(n) : T(1));
 
@@ -43,7 +43,7 @@ T modified_bessel_i_nz_derivative(T n, T z) {
 
 // Second derivative w.r.t. n: d^2I_n/dn^2 computed numerically
 template <typename T>
-T modified_bessel_i_nn_derivative(T n, T z) {
+C10_HOST_DEVICE T modified_bessel_i_nn_derivative(T n, T z) {
     const T eps = std::cbrt(modified_bessel_i_eps<T>());
     T h = eps * (std::abs(n) > T(1) ? std::abs(n) : T(1));
 
@@ -56,7 +56,7 @@ T modified_bessel_i_nn_derivative(T n, T z) {
 
 // Complex versions
 template <typename T>
-c10::complex<T> modified_bessel_i_zz_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_i_zz_derivative(c10::complex<T> n, c10::complex<T> z) {
     c10::complex<T> two(T(2), T(0));
     c10::complex<T> four(T(4), T(0));
 
@@ -68,7 +68,7 @@ c10::complex<T> modified_bessel_i_zz_derivative(c10::complex<T> n, c10::complex<
 }
 
 template <typename T>
-c10::complex<T> modified_bessel_i_nz_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_i_nz_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::sqrt(modified_bessel_i_eps<T>());
     const c10::complex<T> one(T(1), T(0));
     const c10::complex<T> two(T(2), T(0));
@@ -88,7 +88,7 @@ c10::complex<T> modified_bessel_i_nz_derivative(c10::complex<T> n, c10::complex<
 }
 
 template <typename T>
-c10::complex<T> modified_bessel_i_nn_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_i_nn_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::cbrt(modified_bessel_i_eps<T>());
     const c10::complex<T> two(T(2), T(0));
 
@@ -108,7 +108,7 @@ c10::complex<T> modified_bessel_i_nn_derivative(c10::complex<T> n, c10::complex<
 // Computes gradients of the backward pass w.r.t. (grad_output, n, z)
 // given upstream gradients (gg_n, gg_z) for the outputs (grad_n, grad_z)
 template <typename T>
-std::tuple<T, T, T> modified_bessel_i_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> modified_bessel_i_backward_backward(
     T gg_n,       // upstream gradient for grad_n output
     T gg_z,       // upstream gradient for grad_z output
     T grad_output,
@@ -159,7 +159,7 @@ std::tuple<T, T, T> modified_bessel_i_backward_backward(
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> modified_bessel_i_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> modified_bessel_i_backward_backward(
     c10::complex<T> gg_n,
     c10::complex<T> gg_z,
     c10::complex<T> grad_output,

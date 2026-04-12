@@ -10,7 +10,7 @@ namespace torchscience::kernel::special_functions {
 // At x = 0: undefined (Ci has a singularity there)
 // At x > 0: the derivative is well-defined
 template <typename T>
-T cosine_integral_ci_backward(T gradient, T x) {
+C10_HOST_DEVICE T cosine_integral_ci_backward(T gradient, T x) {
   // Ci is only defined for x > 0, and x = 0 is a singularity
   if (x <= T(0)) {
     return std::numeric_limits<T>::quiet_NaN();
@@ -23,7 +23,7 @@ T cosine_integral_ci_backward(T gradient, T x) {
 // Complex backward: d/dz Ci(z) = cos(z) / z
 // PyTorch convention: grad * conj(d/dz Ci(z)) for Wirtinger derivatives
 template <typename T>
-c10::complex<T> cosine_integral_ci_backward(c10::complex<T> gradient, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> cosine_integral_ci_backward(c10::complex<T> gradient, c10::complex<T> z) {
   using Complex = c10::complex<T>;
 
   // z = 0: singularity

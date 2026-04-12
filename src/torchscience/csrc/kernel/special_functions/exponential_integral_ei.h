@@ -11,14 +11,14 @@ namespace detail {
 
 // Euler-Mascheroni constant
 template <typename T>
-constexpr T euler_mascheroni() {
+C10_HOST_DEVICE constexpr T euler_mascheroni() {
   return T(0.5772156649015328606065120900824024310421593359);
 }
 
 // Series expansion for Ei(x) for small to moderate positive x
 // Ei(x) = gamma + ln(x) + sum_{n=1}^inf x^n / (n * n!)
 template <typename T>
-T exponential_integral_ei_series(T x) {
+C10_HOST_DEVICE T exponential_integral_ei_series(T x) {
   const T gamma = euler_mascheroni<T>();
   T result = gamma + std::log(x);
 
@@ -48,7 +48,7 @@ T exponential_integral_ei_series(T x) {
 // Asymptotic expansion for Ei(x) for large positive x
 // Ei(x) ~ exp(x)/x * sum_{n=0}^inf n!/x^n
 template <typename T>
-T exponential_integral_ei_asymptotic(T x) {
+C10_HOST_DEVICE T exponential_integral_ei_asymptotic(T x) {
   T inv_x = T(1) / x;
   T sum = T(1);
   T term = T(1);
@@ -71,7 +71,7 @@ T exponential_integral_ei_asymptotic(T x) {
 // Continued fraction for E1(x) for x > 0
 // Using the well-known continued fraction representation
 template <typename T>
-T exponential_integral_e1_continued_fraction(T x) {
+C10_HOST_DEVICE T exponential_integral_e1_continued_fraction(T x) {
   const T tiny = std::numeric_limits<T>::min() * T(1e10);
   const T epsilon = std::numeric_limits<T>::epsilon() * T(10);
   const int max_iterations = 100;
@@ -117,7 +117,7 @@ T exponential_integral_e1_continued_fraction(T x) {
 // Series for E1(x) for small positive x
 // E1(x) = -gamma - ln(x) + sum_{n=1}^inf (-1)^{n+1} x^n / (n * n!)
 template <typename T>
-T exponential_integral_e1_series(T x) {
+C10_HOST_DEVICE T exponential_integral_e1_series(T x) {
   const T gamma = euler_mascheroni<T>();
   T result = -gamma - std::log(x);
 
@@ -150,7 +150,7 @@ T exponential_integral_e1_series(T x) {
 // Ei(x) = -PV integral from -x to infinity of e^(-t)/t dt
 //       = integral from -infinity to x of e^t/t dt (principal value)
 template <typename T>
-T exponential_integral_ei(T x) {
+C10_HOST_DEVICE T exponential_integral_ei(T x) {
   // Handle special cases
   if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
@@ -190,7 +190,7 @@ T exponential_integral_ei(T x) {
 
 // Complex exponential integral Ei(z)
 template <typename T>
-c10::complex<T> exponential_integral_ei(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> exponential_integral_ei(c10::complex<T> z) {
   using Complex = c10::complex<T>;
 
   // Handle special cases

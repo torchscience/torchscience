@@ -12,7 +12,7 @@ namespace torchscience::kernel::special_functions {
 // Note: Both y_0 and y_1 are singular at z=0, so no Taylor series is used
 
 template <typename T>
-std::tuple<T, T> spherical_bessel_y_1_backward_backward(T gg_z, T grad_output, T z) {
+C10_HOST_DEVICE std::tuple<T, T> spherical_bessel_y_1_backward_backward(T gg_z, T grad_output, T z) {
     T y0 = spherical_bessel_y_0(z);
     T y1 = spherical_bessel_y_1(z);
     T z2 = z * z;
@@ -28,7 +28,7 @@ std::tuple<T, T> spherical_bessel_y_1_backward_backward(T gg_z, T grad_output, T
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> spherical_bessel_y_1_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> spherical_bessel_y_1_backward_backward(
     c10::complex<T> gg_z, c10::complex<T> grad_output, c10::complex<T> z) {
     c10::complex<T> y0 = spherical_bessel_y_0(z);
     c10::complex<T> y1 = spherical_bessel_y_1(z);

@@ -15,22 +15,22 @@ namespace detail {
 
 // Convergence parameters for general order Struve H
 template <typename T>
-constexpr T struve_h_eps();
+C10_HOST_DEVICE constexpr T struve_h_eps();
 
 template <>
-constexpr float struve_h_eps<float>() { return 1e-6f; }
+C10_HOST_DEVICE constexpr float struve_h_eps<float>() { return 1e-6f; }
 
 template <>
-constexpr double struve_h_eps<double>() { return 1e-14; }
+C10_HOST_DEVICE constexpr double struve_h_eps<double>() { return 1e-14; }
 
 template <>
-inline c10::Half struve_h_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half struve_h_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 struve_h_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 struve_h_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 template <typename T>
-constexpr int struve_h_max_iter() { return 300; }
+C10_HOST_DEVICE constexpr int struve_h_max_iter() { return 300; }
 
 // Power series for H_n(z):
 // H_n(z) = (z/2)^(n+1) * sum_{k=0}^inf (-1)^k * (z/2)^(2k) / [Gamma(k+3/2) * Gamma(k+n+3/2)]
@@ -41,7 +41,7 @@ constexpr int struve_h_max_iter() { return 300; }
 // For k=0: term_0 = (z/2)^(n+1) / [Gamma(3/2) * Gamma(n+3/2)]
 // Recurrence: term_{k+1} = term_k * (-(z/2)^2) / [(k+3/2) * (k+n+3/2)]
 template <typename T>
-T struve_h_series(T n, T z) {
+C10_HOST_DEVICE T struve_h_series(T n, T z) {
     const T eps = struve_h_eps<T>();
     const int max_iter = struve_h_max_iter<T>();
     const T pi = static_cast<T>(M_PI);
@@ -100,7 +100,7 @@ T struve_h_series(T n, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> struve_h_series(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> struve_h_series(c10::complex<T> n, c10::complex<T> z) {
     const T eps = struve_h_eps<T>();
     const int max_iter = struve_h_max_iter<T>();
     const T pi = static_cast<T>(M_PI);
@@ -166,7 +166,7 @@ c10::complex<T> struve_h_series(c10::complex<T> n, c10::complex<T> z) {
 // - n = 0: Use struve_h_0
 // - n = 1: Use struve_h_1
 template <typename T>
-T struve_h(T n, T z) {
+C10_HOST_DEVICE T struve_h(T n, T z) {
     // Handle special values
     if (cmath_compat::isnan(n) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -220,7 +220,7 @@ T struve_h(T n, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> struve_h(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> struve_h(c10::complex<T> n, c10::complex<T> z) {
     const T eps = detail::struve_h_eps<T>();
     const c10::complex<T> zero(T(0), T(0));
 

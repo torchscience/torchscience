@@ -36,7 +36,7 @@ namespace torchscience::kernel::special_functions {
  * @return Tuple of (gradient_u, gradient_m)
  */
 template <typename T>
-std::tuple<T, T> jacobi_amplitude_am_backward(T gradient, T u, T m) {
+C10_HOST_DEVICE std::tuple<T, T> jacobi_amplitude_am_backward(T gradient, T u, T m) {
     const T tolerance = detail::jacobi_amplitude_am_tolerance<T>();
     const T eps = T(1e-7);
 
@@ -77,7 +77,7 @@ std::tuple<T, T> jacobi_amplitude_am_backward(T gradient, T u, T m) {
  * Complex backward pass for Jacobi amplitude function.
  */
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> jacobi_amplitude_am_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> jacobi_amplitude_am_backward(
     c10::complex<T> gradient,
     c10::complex<T> u,
     c10::complex<T> m

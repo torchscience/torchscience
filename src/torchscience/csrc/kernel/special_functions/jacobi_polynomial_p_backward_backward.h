@@ -12,7 +12,7 @@ namespace torchscience::kernel::special_functions {
 //
 // d^2P/dz^2 = (n + alpha + beta + 1)(n + alpha + beta + 2)/4 * P_{n-2}^(alpha+2,beta+2)(z)
 template <typename T>
-std::tuple<T, T, T, T, T> jacobi_polynomial_p_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T, T> jacobi_polynomial_p_backward_backward(
     T gradient_gradient_n,
     T gradient_gradient_alpha,
     T gradient_gradient_beta,
@@ -82,7 +82,7 @@ std::tuple<T, T, T, T, T> jacobi_polynomial_p_backward_backward(
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
 jacobi_polynomial_p_backward_backward(
     c10::complex<T> gradient_gradient_n,
     c10::complex<T> gradient_gradient_alpha,

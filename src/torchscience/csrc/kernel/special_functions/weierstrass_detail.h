@@ -13,21 +13,21 @@ namespace torchscience::kernel::special_functions::weierstrass_detail {
 // ============================================================================
 
 template <typename T>
-inline T tolerance() {
+C10_HOST_DEVICE inline T tolerance() {
     return T(1e-10);
 }
 
 template <>
-inline float tolerance<float>() { return 1e-6f; }
+C10_HOST_DEVICE inline float tolerance<float>() { return 1e-6f; }
 
 template <>
-inline double tolerance<double>() { return 1e-14; }
+C10_HOST_DEVICE inline double tolerance<double>() { return 1e-14; }
 
 template <>
-inline c10::Half tolerance<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half tolerance<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 // Maximum iterations for iterative algorithms
 constexpr int max_iterations = 100;
@@ -39,7 +39,7 @@ constexpr int max_iterations = 100;
 // Standard cbrt doesn't handle negative real inputs correctly in all contexts.
 // This function returns the real cube root for negative real inputs.
 template <typename T>
-T cbrt_real(T x) {
+C10_HOST_DEVICE T cbrt_real(T x) {
     if (x >= T(0)) {
         return std::cbrt(x);
     } else {
@@ -61,7 +61,7 @@ T cbrt_real(T x) {
 // with the constraint uv = -p/3
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 solve_depressed_cubic(T p, T q) {
     const T tol = tolerance<T>();
 
@@ -133,7 +133,7 @@ solve_depressed_cubic(T p, T q) {
 
 // Complex version of solve_depressed_cubic
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 solve_depressed_cubic(c10::complex<T> p, c10::complex<T> q) {
     const T tol = tolerance<T>();
 
@@ -208,7 +208,7 @@ solve_depressed_cubic(c10::complex<T> p, c10::complex<T> q) {
 // t^3 - (g2/4)*t - (g3/4) = 0
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 invariants_to_roots(T g2, T g3) {
     // Convert 4t^3 - g2*t - g3 = 0 to depressed cubic t^3 + pt + q = 0
     // Dividing by 4: t^3 - (g2/4)*t - (g3/4) = 0
@@ -220,7 +220,7 @@ invariants_to_roots(T g2, T g3) {
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 invariants_to_roots(c10::complex<T> g2, c10::complex<T> g3) {
     c10::complex<T> four(T(4), T(0));
     c10::complex<T> p = -g2 / four;
@@ -244,7 +244,7 @@ invariants_to_roots(c10::complex<T> g2, c10::complex<T> g3) {
 // We use the AGM method: K(m) = pi / (2 * agm(1, sqrt(1-m)))
 
 template <typename T>
-c10::complex<T> agm(c10::complex<T> a, c10::complex<T> b) {
+C10_HOST_DEVICE c10::complex<T> agm(c10::complex<T> a, c10::complex<T> b) {
     const T tol = tolerance<T>();
 
     for (int i = 0; i < max_iterations; ++i) {
@@ -269,7 +269,7 @@ c10::complex<T> agm(c10::complex<T> a, c10::complex<T> b) {
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>>
 roots_to_half_periods(c10::complex<T> e1, c10::complex<T> e2, c10::complex<T> e3) {
     const T pi = T(3.14159265358979323846);
     const c10::complex<T> I(T(0), T(1));
@@ -303,7 +303,7 @@ roots_to_half_periods(c10::complex<T> e1, c10::complex<T> e2, c10::complex<T> e3
 
 // Real version - converts to complex and back
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>>
 roots_to_half_periods(T e1, T e2, T e3) {
     return roots_to_half_periods(
         c10::complex<T>(e1, T(0)),
@@ -321,7 +321,7 @@ roots_to_half_periods(T e1, T e2, T e3) {
 // which requires Im(tau) > 0.
 
 template <typename T>
-c10::complex<T> half_periods_to_nome(c10::complex<T> omega1, c10::complex<T> omega3) {
+C10_HOST_DEVICE c10::complex<T> half_periods_to_nome(c10::complex<T> omega1, c10::complex<T> omega3) {
     const T pi = T(3.14159265358979323846);
     const c10::complex<T> I(T(0), T(1));
 
@@ -334,7 +334,7 @@ c10::complex<T> half_periods_to_nome(c10::complex<T> omega1, c10::complex<T> ome
 }
 
 template <typename T>
-c10::complex<T> half_periods_to_nome(T omega1_real, T omega1_imag, T omega3_real, T omega3_imag) {
+C10_HOST_DEVICE c10::complex<T> half_periods_to_nome(T omega1_real, T omega1_imag, T omega3_real, T omega3_imag) {
     c10::complex<T> omega1(omega1_real, omega1_imag);
     c10::complex<T> omega3(omega3_real, omega3_imag);
     return half_periods_to_nome(omega1, omega3);
@@ -358,7 +358,7 @@ struct LatticeParams {
 };
 
 template <typename T>
-LatticeParams<T> invariants_to_lattice_params(T g2, T g3) {
+C10_HOST_DEVICE LatticeParams<T> invariants_to_lattice_params(T g2, T g3) {
     LatticeParams<T> result;
 
     // Find roots of 4t^3 - g2*t - g3 = 0
@@ -383,7 +383,7 @@ LatticeParams<T> invariants_to_lattice_params(T g2, T g3) {
 }
 
 template <typename T>
-LatticeParams<T> invariants_to_lattice_params(c10::complex<T> g2, c10::complex<T> g3) {
+C10_HOST_DEVICE LatticeParams<T> invariants_to_lattice_params(c10::complex<T> g2, c10::complex<T> g3) {
     LatticeParams<T> result;
 
     // Find roots
@@ -408,12 +408,12 @@ LatticeParams<T> invariants_to_lattice_params(c10::complex<T> g2, c10::complex<T
 // ============================================================================
 
 template <typename T>
-T discriminant(T g2, T g3) {
+C10_HOST_DEVICE T discriminant(T g2, T g3) {
     return g2 * g2 * g2 - T(27) * g3 * g3;
 }
 
 template <typename T>
-c10::complex<T> discriminant(c10::complex<T> g2, c10::complex<T> g3) {
+C10_HOST_DEVICE c10::complex<T> discriminant(c10::complex<T> g2, c10::complex<T> g3) {
     return g2 * g2 * g2 - c10::complex<T>(T(27), T(0)) * g3 * g3;
 }
 

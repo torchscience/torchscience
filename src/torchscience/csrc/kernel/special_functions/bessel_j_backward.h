@@ -15,7 +15,7 @@ namespace detail {
 // The analytical formula involves the integral representation and is complex.
 // For practical purposes, we use a numerical approximation.
 template <typename T>
-T bessel_j_n_derivative(T n, T z) {
+C10_HOST_DEVICE T bessel_j_n_derivative(T n, T z) {
     const T eps = std::sqrt(bessel_j_eps<T>());
 
     // Central difference approximation
@@ -29,7 +29,7 @@ T bessel_j_n_derivative(T n, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> bessel_j_n_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_j_n_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::sqrt(bessel_j_eps<T>());
     const c10::complex<T> h_c(eps, T(0));
 
@@ -49,7 +49,7 @@ c10::complex<T> bessel_j_n_derivative(c10::complex<T> n, c10::complex<T> z) {
 // ∂/∂z Jₙ(z) = (Jₙ₋₁(z) - Jₙ₊₁(z)) / 2
 // ∂/∂n Jₙ(z) computed numerically
 template <typename T>
-std::tuple<T, T> bessel_j_backward(T grad_output, T n, T z) {
+C10_HOST_DEVICE std::tuple<T, T> bessel_j_backward(T grad_output, T n, T z) {
     // Gradient w.r.t. z: d/dz J_n(z) = (J_{n-1}(z) - J_{n+1}(z)) / 2
     T j_nm1 = bessel_j(n - T(1), z);
     T j_np1 = bessel_j(n + T(1), z);
@@ -64,7 +64,7 @@ std::tuple<T, T> bessel_j_backward(T grad_output, T n, T z) {
 
 // Complex backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> bessel_j_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> bessel_j_backward(
     c10::complex<T> grad_output,
     c10::complex<T> n,
     c10::complex<T> z

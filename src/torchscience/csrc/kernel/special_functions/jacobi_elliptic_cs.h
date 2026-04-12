@@ -40,14 +40,14 @@ namespace torchscience::kernel::special_functions {
 // - cs(-u, m) = -cs(u, m) (odd function in u)
 
 template <typename T>
-T jacobi_elliptic_cs(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_cs(T u, T m) {
     T cn = jacobi_elliptic_cn(u, m);
     T sn = jacobi_elliptic_sn(u, m);
     return cn / sn;
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_cs(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_cs(c10::complex<T> u, c10::complex<T> m) {
     c10::complex<T> cn = jacobi_elliptic_cn(u, m);
     c10::complex<T> sn = jacobi_elliptic_sn(u, m);
     return cn / sn;

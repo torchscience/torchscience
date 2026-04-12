@@ -12,7 +12,7 @@ namespace torchscience::kernel::special_functions {
 // At x = 0, use Taylor expansion: Si''(0) = 0
 // (since sinc(x) = 1 - x^2/6 + x^4/120 - ..., so sinc'(0) = 0)
 template <typename T>
-std::tuple<T, T> sine_integral_si_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T> sine_integral_si_backward_backward(
   T gradient_gradient,
   T gradient,
   T x
@@ -45,7 +45,7 @@ std::tuple<T, T> sine_integral_si_backward_backward(
 // d/dz Si(z) = sin(z) / z
 // d^2/dz^2 Si(z) = (z * cos(z) - sin(z)) / z^2
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> sine_integral_si_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> sine_integral_si_backward_backward(
   c10::complex<T> gradient_gradient,
   c10::complex<T> gradient,
   c10::complex<T> z

@@ -10,7 +10,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T> cos_pi_backward_backward(T gradient_gradient, T gradient, T x) {
+C10_HOST_DEVICE std::tuple<T, T> cos_pi_backward_backward(T gradient_gradient, T gradient, T x) {
   T x_mod = std::fmod(x, T(2));
 
   if (x_mod < T(0)) {
@@ -27,7 +27,7 @@ std::tuple<T, T> cos_pi_backward_backward(T gradient_gradient, T gradient, T x) 
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> cos_pi_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> cos_pi_backward_backward(
   c10::complex<T> gradient_gradient,
   c10::complex<T> gradient,
   c10::complex<T> z

@@ -16,7 +16,7 @@ namespace torchscience::kernel::special_functions {
 //     b2 = b1; b1 = b0; b0 = x*b1 - b2 + coef[k]
 //   result = 0.5 * (b0 - b2)
 template <typename T>
-T chebyshev_polynomial_t_series_evaluate(T x, const double* coef, int n) {
+C10_HOST_DEVICE T chebyshev_polynomial_t_series_evaluate(T x, const double* coef, int n) {
     if (n == 0) return T(0);
     if (n == 1) return T(0.5) * T(coef[0]);
 
@@ -35,7 +35,7 @@ T chebyshev_polynomial_t_series_evaluate(T x, const double* coef, int n) {
 
 // Complex version
 template <typename T>
-c10::complex<T> chebyshev_polynomial_t_series_evaluate(
+C10_HOST_DEVICE c10::complex<T> chebyshev_polynomial_t_series_evaluate(
     c10::complex<T> x, const double* coef, int n) {
     if (n == 0) return c10::complex<T>(T(0), T(0));
     if (n == 1) return c10::complex<T>(T(0.5) * T(coef[0]), T(0));

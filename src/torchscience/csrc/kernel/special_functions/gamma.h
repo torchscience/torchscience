@@ -10,20 +10,20 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-inline T pole_tolerance() {
+C10_HOST_DEVICE inline T pole_tolerance() {
   // Default for low-precision types
   return T(1e-3);
 }
 
 template <>
-inline float pole_tolerance<float>() { return 1e-6f; }
+C10_HOST_DEVICE inline float pole_tolerance<float>() { return 1e-6f; }
 
 template <>
-inline double pole_tolerance<double>() { return 1e-12; }
+C10_HOST_DEVICE inline double pole_tolerance<double>() { return 1e-12; }
 
 // Real sin_pi with range reduction for accurate computation at large arguments
 template <typename T>
-T sin_pi_real(T x) {
+C10_HOST_DEVICE T sin_pi_real(T x) {
   // Handle special cases
   if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
@@ -57,7 +57,7 @@ T sin_pi_real(T x) {
 
 // Check if a real value is at a pole (non-positive integer)
 template <typename T>
-bool is_pole(T z) {
+C10_HOST_DEVICE bool is_pole(T z) {
   if (z > T(0)) return false;
   T rounded = std::round(z);
   return std::abs(z - rounded) < pole_tolerance<T>();
@@ -66,7 +66,7 @@ bool is_pole(T z) {
 } // namespace detail
 
 template <typename T>
-T gamma(T z) {
+C10_HOST_DEVICE T gamma(T z) {
   constexpr double kGammaG = 7.0;
 
   constexpr double coefficients[] = {
@@ -122,7 +122,7 @@ T gamma(T z) {
 }
 
 template <typename T>
-c10::complex<T> gamma(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> gamma(c10::complex<T> z) {
   constexpr double kGammaG = 7.0;
 
   constexpr double coefficients[] = {

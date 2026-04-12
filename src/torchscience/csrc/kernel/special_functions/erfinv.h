@@ -11,7 +11,7 @@ namespace detail {
 // Coefficients for the central region approximation (|x| < 0.9959)
 // Based on Winitzki's rational approximation with high-precision coefficients
 template <typename T>
-T erfinv_central(T x) {
+C10_HOST_DEVICE T erfinv_central(T x) {
   // w = -log(1 - x^2)
   T w = -std::log((static_cast<T>(1) - x) * (static_cast<T>(1) + x));
   T w_adj = w - static_cast<T>(2.5);
@@ -42,7 +42,7 @@ T erfinv_central(T x) {
 
 // Coefficients for the tail region approximation (|x| >= 0.9959)
 template <typename T>
-T erfinv_tail(T x) {
+C10_HOST_DEVICE T erfinv_tail(T x) {
   T sign = (x >= static_cast<T>(0)) ? static_cast<T>(1) : static_cast<T>(-1);
   T ax = std::abs(x);
 
@@ -80,7 +80,7 @@ T erfinv_tail(T x) {
 // Newton step: y_new = y - (erf(y) - x) / erf'(y)
 //            = y + (x - erf(y)) * sqrt(pi)/2 * exp(y^2)
 template <typename T>
-T erfinv_newton_refine(T x, T y) {
+C10_HOST_DEVICE T erfinv_newton_refine(T x, T y) {
   const T sqrt_pi_over_2 = static_cast<T>(0.8862269254527580136490837416705725914);
 
   // Compute erf(y) using std::erf
@@ -103,7 +103,7 @@ T erfinv_newton_refine(T x, T y) {
 //   erfinv(-1) = -inf
 //   erfinv(|x| > 1) = NaN
 template <typename T>
-T erfinv(T x) {
+C10_HOST_DEVICE T erfinv(T x) {
   // Handle special cases
   if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();

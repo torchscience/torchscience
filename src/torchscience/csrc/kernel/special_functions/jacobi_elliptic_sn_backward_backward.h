@@ -15,7 +15,7 @@ namespace torchscience::kernel::special_functions {
 // Returns gradients w.r.t. (grad_output, u, m)
 
 template <typename T>
-std::tuple<T, T, T> jacobi_elliptic_sn_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> jacobi_elliptic_sn_backward_backward(
     T grad_grad_u,
     T grad_grad_m,
     T gradient,
@@ -71,7 +71,7 @@ std::tuple<T, T, T> jacobi_elliptic_sn_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 jacobi_elliptic_sn_backward_backward(
     c10::complex<T> grad_grad_u,
     c10::complex<T> grad_grad_m,

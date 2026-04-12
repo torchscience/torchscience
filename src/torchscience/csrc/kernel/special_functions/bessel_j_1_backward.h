@@ -10,21 +10,21 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-inline T bessel_j_zero_tolerance() {
+C10_HOST_DEVICE inline T bessel_j_zero_tolerance() {
     return T(1e-12);  // Default for low-precision types
 }
 
 template <>
-inline float bessel_j_zero_tolerance<float>() { return 1e-6f; }
+C10_HOST_DEVICE inline float bessel_j_zero_tolerance<float>() { return 1e-6f; }
 
 template <>
-inline double bessel_j_zero_tolerance<double>() { return 1e-12; }
+C10_HOST_DEVICE inline double bessel_j_zero_tolerance<double>() { return 1e-12; }
 
 } // namespace detail
 
 // Real backward: d/dz J₁(z) = J₀(z) - J₁(z)/z
 template <typename T>
-T bessel_j_1_backward(T grad_output, T z) {
+C10_HOST_DEVICE T bessel_j_1_backward(T grad_output, T z) {
     T j0 = bessel_j_0(z);
     T j1 = bessel_j_1(z);
 
@@ -41,7 +41,7 @@ T bessel_j_1_backward(T grad_output, T z) {
 
 // Complex backward
 template <typename T>
-c10::complex<T> bessel_j_1_backward(c10::complex<T> grad_output, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_j_1_backward(c10::complex<T> grad_output, c10::complex<T> z) {
     c10::complex<T> j0 = bessel_j_0(z);
     c10::complex<T> j1 = bessel_j_1(z);
 

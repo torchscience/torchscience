@@ -8,7 +8,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T pochhammer(T z, T m) {
+C10_HOST_DEVICE T pochhammer(T z, T m) {
   // Pochhammer symbol (z)_m = Gamma(z+m) / Gamma(z)
   // Computed as exp(log_gamma(z+m) - log_gamma(z)) for numerical stability
 
@@ -23,7 +23,7 @@ T pochhammer(T z, T m) {
 }
 
 template <typename T>
-c10::complex<T> pochhammer(c10::complex<T> z, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> pochhammer(c10::complex<T> z, c10::complex<T> m) {
   if (m.real() == T(0) && m.imag() == T(0)) {
     return c10::complex<T>(T(1), T(0));
   }

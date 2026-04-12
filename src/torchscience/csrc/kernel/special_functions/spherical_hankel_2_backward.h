@@ -15,7 +15,7 @@ namespace detail {
 // Compute d/dn h_n^(2)(z) using finite differences
 // The analytical formula is complex, so we use numerical approximation
 template <typename T>
-c10::complex<T> spherical_hankel_2_n_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_hankel_2_n_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::sqrt(spherical_hankel_2_eps<T>());
     const c10::complex<T> two(T(2), T(0));
 
@@ -35,7 +35,7 @@ c10::complex<T> spherical_hankel_2_n_derivative(c10::complex<T> n, c10::complex<
 // d/dz h_n^(2)(z) = (n/z) * h_n^(2)(z) - h_{n+1}^(2)(z)
 // d/dn h_n^(2)(z) computed numerically
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> spherical_hankel_2_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> spherical_hankel_2_backward(
     c10::complex<T> grad_output,
     c10::complex<T> n,
     c10::complex<T> z

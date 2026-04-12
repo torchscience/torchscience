@@ -9,7 +9,7 @@ namespace torchscience::kernel::special_functions {
 // d/dz y_0(z) = d/dz [-cos(z)/z] = sin(z)/z + cos(z)/z^2 = -y_1(z)
 // Direct formula: (sin(z)*z + cos(z)) / z^2
 template <typename T>
-T spherical_bessel_y_0_backward(T grad_output, T z) {
+C10_HOST_DEVICE T spherical_bessel_y_0_backward(T grad_output, T z) {
     // Gradient is undefined at z=0 (singular point)
     if (z == T(0)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -25,7 +25,7 @@ T spherical_bessel_y_0_backward(T grad_output, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> spherical_bessel_y_0_backward(c10::complex<T> grad_output, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_y_0_backward(c10::complex<T> grad_output, c10::complex<T> z) {
     // Gradient is undefined at z=0 (singular point)
     if (z == c10::complex<T>(T(0), T(0))) {
         return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(), std::numeric_limits<T>::quiet_NaN());

@@ -38,7 +38,7 @@ constexpr double KER_LARGE_X = 8.0;
 // where alpha = x/sqrt(2) + pi/8
 //
 template <typename T>
-T kelvin_ker(T x) {
+C10_HOST_DEVICE T kelvin_ker(T x) {
     // Handle special values
     if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -177,7 +177,7 @@ T kelvin_ker(T x) {
 
 // Complex version
 template <typename T>
-c10::complex<T> kelvin_ker(c10::complex<T> x) {
+C10_HOST_DEVICE c10::complex<T> kelvin_ker(c10::complex<T> x) {
     // For complex x, we use the power series which converges for all finite x
     // ker(x) = -(ln(x/2) + gamma) * ber(x) + (pi/4) * bei(x) + correction series
 

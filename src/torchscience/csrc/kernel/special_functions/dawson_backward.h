@@ -16,7 +16,7 @@ namespace torchscience::kernel::special_functions {
 //           = -2z * D(z) + 1
 //           = 1 - 2z * D(z)
 template <typename T>
-T dawson_backward(T gradient, T z) {
+C10_HOST_DEVICE T dawson_backward(T gradient, T z) {
   T D_z = dawson(z);
   T dD_dz = T(1) - T(2) * z * D_z;
   return gradient * dD_dz;
@@ -24,7 +24,7 @@ T dawson_backward(T gradient, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> dawson_backward(c10::complex<T> gradient, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> dawson_backward(c10::complex<T> gradient, c10::complex<T> z) {
   c10::complex<T> one(T(1), T(0));
   c10::complex<T> two(T(2), T(0));
   c10::complex<T> D_z = dawson(z);

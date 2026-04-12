@@ -41,27 +41,27 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-constexpr int jacobi_max_iterations() { return 50; }
+C10_HOST_DEVICE constexpr int jacobi_max_iterations() { return 50; }
 
 template <typename T>
-constexpr T jacobi_tolerance();
+C10_HOST_DEVICE constexpr T jacobi_tolerance();
 
 template <>
-constexpr float jacobi_tolerance<float>() { return 1e-7f; }
+C10_HOST_DEVICE constexpr float jacobi_tolerance<float>() { return 1e-7f; }
 
 template <>
-constexpr double jacobi_tolerance<double>() { return 1e-15; }
+C10_HOST_DEVICE constexpr double jacobi_tolerance<double>() { return 1e-15; }
 
 template <>
-inline c10::Half jacobi_tolerance<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half jacobi_tolerance<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 jacobi_tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 jacobi_tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 } // namespace detail
 
 template <typename T>
-T jacobi_elliptic_sn(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_sn(T u, T m) {
     // Handle special case m = 0: sn(u, 0) = sin(u)
     if (m == T(0)) {
         return std::sin(u);
@@ -154,7 +154,7 @@ T jacobi_elliptic_sn(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_sn(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_sn(c10::complex<T> u, c10::complex<T> m) {
     // Handle special case m = 0: sn(u, 0) = sin(u)
     if (std::abs(m) < detail::jacobi_tolerance<T>()) {
         return std::sin(u);

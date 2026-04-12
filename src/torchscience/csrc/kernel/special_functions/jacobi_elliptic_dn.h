@@ -32,7 +32,7 @@ namespace detail {
 // Compute Jacobi amplitude am(u, m) using the arithmetic-geometric mean (AGM)
 // This is the inverse of the incomplete elliptic integral of the first kind
 template <typename T>
-T jacobi_amplitude_am(T u, T m) {
+C10_HOST_DEVICE T jacobi_amplitude_am(T u, T m) {
     const T eps = std::numeric_limits<T>::epsilon() * T(10);
     const int max_iter = 30;
 
@@ -80,7 +80,7 @@ T jacobi_amplitude_am(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_amplitude_am(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_amplitude_am(c10::complex<T> u, c10::complex<T> m) {
     const T eps = std::numeric_limits<T>::epsilon() * T(10);
     const int max_iter = 30;
 
@@ -133,7 +133,7 @@ c10::complex<T> jacobi_amplitude_am(c10::complex<T> u, c10::complex<T> m) {
 } // namespace detail
 
 template <typename T>
-T jacobi_elliptic_dn(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_dn(T u, T m) {
     const T eps = std::numeric_limits<T>::epsilon() * T(10);
 
     // Special case: m = 0
@@ -162,7 +162,7 @@ T jacobi_elliptic_dn(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_dn(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_dn(c10::complex<T> u, c10::complex<T> m) {
     const T eps = std::numeric_limits<T>::epsilon() * T(10);
     c10::complex<T> one(T(1), T(0));
 

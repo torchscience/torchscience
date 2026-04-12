@@ -22,7 +22,7 @@ namespace torchscience::kernel::special_functions {
 //   gg_out = gg_z * d(grad_z)/d(grad_output) = gg_z * D'(z)
 //   new_grad_z = gg_z * grad_output * D''(z)
 template <typename T>
-std::tuple<T, T> dawson_backward_backward(T gg_z, T gradient, T z) {
+C10_HOST_DEVICE std::tuple<T, T> dawson_backward_backward(T gg_z, T gradient, T z) {
   T D_z = dawson(z);
   T dD_dz = T(1) - T(2) * z * D_z;
 
@@ -40,7 +40,7 @@ std::tuple<T, T> dawson_backward_backward(T gg_z, T gradient, T z) {
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> dawson_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> dawson_backward_backward(
     c10::complex<T> gg_z,
     c10::complex<T> gradient,
     c10::complex<T> z) {

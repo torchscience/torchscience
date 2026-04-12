@@ -14,7 +14,7 @@ namespace detail {
 
 // Second derivative of zeta function: d^2/ds^2 zeta(s) = sum_{n=2}^inf (ln n)^2 / n^s
 template <typename T>
-T zeta_second_derivative(T s) {
+C10_HOST_DEVICE T zeta_second_derivative(T s) {
   if (cmath_compat::isnan(s)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
@@ -63,7 +63,7 @@ T zeta_second_derivative(T s) {
 }
 
 template <typename T>
-c10::complex<T> zeta_second_derivative(c10::complex<T> s) {
+C10_HOST_DEVICE c10::complex<T> zeta_second_derivative(c10::complex<T> s) {
   if (cmath_compat::isnan(s.real()) || cmath_compat::isnan(s.imag())) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(),
                            std::numeric_limits<T>::quiet_NaN());
@@ -112,7 +112,7 @@ c10::complex<T> zeta_second_derivative(c10::complex<T> s) {
 
 // Second-order backward pass
 template <typename T>
-std::tuple<T, T> zeta_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T> zeta_backward_backward(
     T gradient_gradient,
     T gradient,
     T s) {
@@ -129,7 +129,7 @@ std::tuple<T, T> zeta_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> zeta_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> zeta_backward_backward(
     c10::complex<T> gradient_gradient,
     c10::complex<T> gradient,
     c10::complex<T> s) {

@@ -7,7 +7,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T> log_beta_backward(T gradient, T a, T b) {
+C10_HOST_DEVICE std::tuple<T, T> log_beta_backward(T gradient, T a, T b) {
   T psi_ab = digamma(a + b);
   return {
     gradient * (digamma(a) - psi_ab),
@@ -16,7 +16,7 @@ std::tuple<T, T> log_beta_backward(T gradient, T a, T b) {
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> log_beta_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> log_beta_backward(
   c10::complex<T> gradient,
   c10::complex<T> a,
   c10::complex<T> b

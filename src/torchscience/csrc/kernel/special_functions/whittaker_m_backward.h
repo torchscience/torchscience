@@ -13,7 +13,7 @@ namespace torchscience::kernel::special_functions {
 //
 // Returns (grad_kappa, grad_mu, grad_z)
 template <typename T>
-std::tuple<T, T, T> whittaker_m_backward(T grad_output, T kappa, T mu, T z) {
+C10_HOST_DEVICE std::tuple<T, T, T> whittaker_m_backward(T grad_output, T kappa, T mu, T z) {
   using detail::whit_m_epsilon;
   using detail::whit_m_is_complex_v;
   using detail::whit_m_real_type_t;

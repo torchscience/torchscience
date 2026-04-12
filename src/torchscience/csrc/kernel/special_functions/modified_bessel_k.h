@@ -20,27 +20,27 @@ namespace detail {
 
 // Tolerance constants for modified_bessel_k
 template <typename T>
-constexpr T modified_bessel_k_eps();
+C10_HOST_DEVICE constexpr T modified_bessel_k_eps();
 
 template <>
-constexpr float modified_bessel_k_eps<float>() { return 1e-7f; }
+C10_HOST_DEVICE constexpr float modified_bessel_k_eps<float>() { return 1e-7f; }
 
 template <>
-constexpr double modified_bessel_k_eps<double>() { return 1e-15; }
+C10_HOST_DEVICE constexpr double modified_bessel_k_eps<double>() { return 1e-15; }
 
 template <>
-inline c10::Half modified_bessel_k_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half modified_bessel_k_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 modified_bessel_k_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 modified_bessel_k_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 template <typename T>
-constexpr int modified_bessel_k_max_iter() { return 300; }
+C10_HOST_DEVICE constexpr int modified_bessel_k_max_iter() { return 300; }
 
 // Forward recurrence for K_n from K_0 and K_1 for integer n >= 2
 // K_{n+1}(z) = K_{n-1}(z) + (2n/z) * K_n(z)
 template <typename T>
-T modified_bessel_k_forward_recurrence(int n_int, T z) {
+C10_HOST_DEVICE T modified_bessel_k_forward_recurrence(int n_int, T z) {
     if (n_int == 0) return modified_bessel_k_0(z);
     if (n_int == 1) return modified_bessel_k_1(z);
 
@@ -59,7 +59,7 @@ T modified_bessel_k_forward_recurrence(int n_int, T z) {
 
 // Complex forward recurrence
 template <typename T>
-c10::complex<T> modified_bessel_k_forward_recurrence_complex(int n_int, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_k_forward_recurrence_complex(int n_int, c10::complex<T> z) {
     if (n_int == 0) return modified_bessel_k_0(z);
     if (n_int == 1) return modified_bessel_k_1(z);
 
@@ -83,7 +83,7 @@ c10::complex<T> modified_bessel_k_forward_recurrence_complex(int n_int, c10::com
 // For the modified Bessel I_n(z):
 // I_n(z) = (z/2)^n * sum_{k=0}^inf (z^2/4)^k / (k! * Gamma(n+k+1))
 template <typename T>
-T modified_bessel_i_series(T n, T z) {
+C10_HOST_DEVICE T modified_bessel_i_series(T n, T z) {
     const T eps = modified_bessel_k_eps<T>();
     const int max_iter = modified_bessel_k_max_iter<T>();
 
@@ -135,7 +135,7 @@ T modified_bessel_i_series(T n, T z) {
 // Connection formula for non-integer n:
 // K_n(z) = (pi/2) * [I_{-n}(z) - I_n(z)] / sin(n*pi)
 template <typename T>
-T modified_bessel_k_connection_formula(T n, T z) {
+C10_HOST_DEVICE T modified_bessel_k_connection_formula(T n, T z) {
     const T pi = static_cast<T>(M_PI);
     const T eps = modified_bessel_k_eps<T>();
 
@@ -155,7 +155,7 @@ T modified_bessel_k_connection_formula(T n, T z) {
 
 // Complex power series for I_n(z)
 template <typename T>
-c10::complex<T> modified_bessel_i_series_complex(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_i_series_complex(c10::complex<T> n, c10::complex<T> z) {
     const T eps = modified_bessel_k_eps<T>();
     const int max_iter = modified_bessel_k_max_iter<T>();
     const c10::complex<T> one(T(1), T(0));
@@ -199,7 +199,7 @@ c10::complex<T> modified_bessel_i_series_complex(c10::complex<T> n, c10::complex
 
 // Complex connection formula
 template <typename T>
-c10::complex<T> modified_bessel_k_connection_formula(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_k_connection_formula(c10::complex<T> n, c10::complex<T> z) {
     const c10::complex<T> pi_c(static_cast<T>(M_PI), T(0));
     const c10::complex<T> two(T(2), T(0));
     const T eps = modified_bessel_k_eps<T>();
@@ -221,7 +221,7 @@ c10::complex<T> modified_bessel_k_connection_formula(c10::complex<T> n, c10::com
 // Asymptotic expansion for large |z|
 // K_n(z) ~ sqrt(pi/(2z)) * exp(-z) * [1 + (4n^2 - 1)/(8z) + ...]
 template <typename T>
-T modified_bessel_k_asymptotic(T n, T z) {
+C10_HOST_DEVICE T modified_bessel_k_asymptotic(T n, T z) {
     const T pi = static_cast<T>(M_PI);
 
     T mu = T(4) * n * n;
@@ -248,7 +248,7 @@ T modified_bessel_k_asymptotic(T n, T z) {
 } // namespace detail
 
 template <typename T>
-T modified_bessel_k(T n, T z) {
+C10_HOST_DEVICE T modified_bessel_k(T n, T z) {
     // Handle special values
     if (cmath_compat::isnan(n) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -309,7 +309,7 @@ T modified_bessel_k(T n, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> modified_bessel_k(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_k(c10::complex<T> n, c10::complex<T> z) {
     const T eps = detail::modified_bessel_k_eps<T>();
     const c10::complex<T> zero(T(0), T(0));
 

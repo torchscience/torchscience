@@ -7,7 +7,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T> polygamma_backward(
+C10_HOST_DEVICE std::tuple<T, T> polygamma_backward(
   T gradient,
   T n,
   T z
@@ -19,7 +19,7 @@ std::tuple<T, T> polygamma_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> polygamma_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> polygamma_backward(
   c10::complex<T> gradient,
   c10::complex<T> n,
   c10::complex<T> z

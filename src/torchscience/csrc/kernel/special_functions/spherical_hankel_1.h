@@ -16,19 +16,19 @@ namespace detail {
 
 // Tolerance constants for spherical_hankel_1
 template <typename T>
-constexpr T spherical_hankel_1_eps();
+C10_HOST_DEVICE constexpr T spherical_hankel_1_eps();
 
 template <>
-constexpr float spherical_hankel_1_eps<float>() { return 1e-6f; }
+C10_HOST_DEVICE constexpr float spherical_hankel_1_eps<float>() { return 1e-6f; }
 
 template <>
-constexpr double spherical_hankel_1_eps<double>() { return 1e-12; }
+C10_HOST_DEVICE constexpr double spherical_hankel_1_eps<double>() { return 1e-12; }
 
 template <>
-inline c10::Half spherical_hankel_1_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half spherical_hankel_1_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 spherical_hankel_1_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 spherical_hankel_1_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 } // namespace detail
 
@@ -52,7 +52,7 @@ inline c10::BFloat16 spherical_hankel_1_eps<c10::BFloat16>() { return c10::BFloa
 // Complex n, complex z -> complex result
 // This is the primary implementation
 template <typename T>
-c10::complex<T> spherical_hankel_1(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_hankel_1(c10::complex<T> n, c10::complex<T> z) {
     const T eps = detail::spherical_hankel_1_eps<T>();
     const c10::complex<T> i_unit(T(0), T(1));
 

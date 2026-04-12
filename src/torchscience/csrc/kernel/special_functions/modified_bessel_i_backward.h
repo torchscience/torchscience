@@ -14,7 +14,7 @@ namespace detail {
 // The analytical formula is complex, involving integrals.
 // For practical purposes, we use a numerical approximation.
 template <typename T>
-T modified_bessel_i_n_derivative(T n, T z) {
+C10_HOST_DEVICE T modified_bessel_i_n_derivative(T n, T z) {
     const T eps = std::sqrt(modified_bessel_i_eps<T>());
 
     // Central difference approximation
@@ -28,7 +28,7 @@ T modified_bessel_i_n_derivative(T n, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> modified_bessel_i_n_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_i_n_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::sqrt(modified_bessel_i_eps<T>());
     const c10::complex<T> h_c(eps, T(0));
 
@@ -48,7 +48,7 @@ c10::complex<T> modified_bessel_i_n_derivative(c10::complex<T> n, c10::complex<T
 // d/dz I_n(z) = (I_{n-1}(z) + I_{n+1}(z)) / 2
 // d/dn I_n(z) computed numerically
 template <typename T>
-std::tuple<T, T> modified_bessel_i_backward(T grad_output, T n, T z) {
+C10_HOST_DEVICE std::tuple<T, T> modified_bessel_i_backward(T grad_output, T n, T z) {
     // Gradient w.r.t. z: d/dz I_n(z) = (I_{n-1}(z) + I_{n+1}(z)) / 2
     T i_nm1 = modified_bessel_i(n - T(1), z);
     T i_np1 = modified_bessel_i(n + T(1), z);
@@ -63,7 +63,7 @@ std::tuple<T, T> modified_bessel_i_backward(T grad_output, T n, T z) {
 
 // Complex backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> modified_bessel_i_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> modified_bessel_i_backward(
     c10::complex<T> grad_output,
     c10::complex<T> n,
     c10::complex<T> z

@@ -7,12 +7,12 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T log_beta(T a, T b) {
+C10_HOST_DEVICE T log_beta(T a, T b) {
   return log_gamma(a) + log_gamma(b) - log_gamma(a + b);
 }
 
 template <typename T>
-c10::complex<T> log_beta(c10::complex<T> a, c10::complex<T> b) {
+C10_HOST_DEVICE c10::complex<T> log_beta(c10::complex<T> a, c10::complex<T> b) {
   return log_gamma(a) + log_gamma(b) - log_gamma(a + b);
 }
 

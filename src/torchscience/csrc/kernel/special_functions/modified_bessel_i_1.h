@@ -51,7 +51,7 @@ constexpr double i1_B[] = {
 } // namespace detail
 
 template <typename T>
-T modified_bessel_i_1(T x) {
+C10_HOST_DEVICE T modified_bessel_i_1(T x) {
     // Handle special values
     if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -81,7 +81,7 @@ T modified_bessel_i_1(T x) {
 // For complex z far from the real axis, accuracy should be verified empirically.
 // I₁ satisfies the odd function property: I₁(-z) = -I₁(z)
 template <typename T>
-c10::complex<T> modified_bessel_i_1(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_i_1(c10::complex<T> z) {
     T mag = std::abs(z);
 
     if (mag <= T(8.0)) {

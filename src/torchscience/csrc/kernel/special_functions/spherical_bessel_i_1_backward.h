@@ -11,7 +11,7 @@ namespace torchscience::kernel::special_functions {
 // For small z, Taylor series: i_1'(z) = 1/3 + z^2/10 + z^4/168 + ...
 
 template <typename T>
-T spherical_bessel_i_1_backward(T grad_output, T z) {
+C10_HOST_DEVICE T spherical_bessel_i_1_backward(T grad_output, T z) {
     const T eps = detail::spherical_bessel_i_1_eps<T>();
 
     if (std::abs(z) < eps) {
@@ -29,7 +29,7 @@ T spherical_bessel_i_1_backward(T grad_output, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> spherical_bessel_i_1_backward(c10::complex<T> grad_output, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_i_1_backward(c10::complex<T> grad_output, c10::complex<T> z) {
     const T eps = detail::spherical_bessel_i_1_eps<T>();
 
     if (std::abs(z) < eps) {

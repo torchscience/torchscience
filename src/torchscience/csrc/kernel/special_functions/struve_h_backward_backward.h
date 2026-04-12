@@ -19,7 +19,7 @@ namespace detail {
 //             = H_{n-2}(z) - ((n-1)/z)*H_{n-1}(z) + (n/z^2)*H_n - (n/z)*H_{n-1} + (n^2/z^2)*H_n
 //             = H_{n-2}(z) - ((2n-1)/z)*H_{n-1}(z) + ((n+n^2)/z^2)*H_n
 template <typename T>
-T struve_h_zz_derivative(T n, T z) {
+C10_HOST_DEVICE T struve_h_zz_derivative(T n, T z) {
     const T eps = struve_h_eps<T>();
 
     if (std::abs(z) < eps) {
@@ -39,7 +39,7 @@ T struve_h_zz_derivative(T n, T z) {
 
 // Mixed derivative d^2 H_n / dn dz (numerical)
 template <typename T>
-T struve_h_nz_derivative(T n, T z) {
+C10_HOST_DEVICE T struve_h_nz_derivative(T n, T z) {
     const T eps = std::sqrt(struve_h_eps<T>());
     T h = eps * (std::abs(n) > T(1) ? std::abs(n) : T(1));
 
@@ -52,7 +52,7 @@ T struve_h_nz_derivative(T n, T z) {
 
 // Second derivative d^2 H_n / dn^2 (numerical)
 template <typename T>
-T struve_h_nn_derivative(T n, T z) {
+C10_HOST_DEVICE T struve_h_nn_derivative(T n, T z) {
     const T eps = std::cbrt(struve_h_eps<T>());
     T h = eps * (std::abs(n) > T(1) ? std::abs(n) : T(1));
 
@@ -65,7 +65,7 @@ T struve_h_nn_derivative(T n, T z) {
 
 // Complex versions
 template <typename T>
-c10::complex<T> struve_h_zz_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> struve_h_zz_derivative(c10::complex<T> n, c10::complex<T> z) {
     const c10::complex<T> one(T(1), T(0));
     const c10::complex<T> two(T(2), T(0));
     const c10::complex<T> four(T(4), T(0));
@@ -78,7 +78,7 @@ c10::complex<T> struve_h_zz_derivative(c10::complex<T> n, c10::complex<T> z) {
 }
 
 template <typename T>
-c10::complex<T> struve_h_nz_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> struve_h_nz_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::sqrt(struve_h_eps<T>());
     const c10::complex<T> one(T(1), T(0));
     const c10::complex<T> two(T(2), T(0));
@@ -93,7 +93,7 @@ c10::complex<T> struve_h_nz_derivative(c10::complex<T> n, c10::complex<T> z) {
 }
 
 template <typename T>
-c10::complex<T> struve_h_nn_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> struve_h_nn_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::cbrt(struve_h_eps<T>());
     const c10::complex<T> two(T(2), T(0));
 
@@ -112,7 +112,7 @@ c10::complex<T> struve_h_nn_derivative(c10::complex<T> n, c10::complex<T> z) {
 // Second-order backward pass
 // Returns (grad_grad_output, grad_n, grad_z)
 template <typename T>
-std::tuple<T, T, T> struve_h_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> struve_h_backward_backward(
     T gg_n,
     T gg_z,
     T grad_output,
@@ -157,7 +157,7 @@ std::tuple<T, T, T> struve_h_backward_backward(
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> struve_h_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> struve_h_backward_backward(
     c10::complex<T> gg_n,
     c10::complex<T> gg_z,
     c10::complex<T> grad_output,

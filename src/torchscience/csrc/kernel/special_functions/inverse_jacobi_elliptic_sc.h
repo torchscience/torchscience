@@ -47,27 +47,27 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-constexpr int inverse_jacobi_sc_max_iterations() { return 50; }
+C10_HOST_DEVICE constexpr int inverse_jacobi_sc_max_iterations() { return 50; }
 
 template <typename T>
-constexpr T inverse_jacobi_sc_tolerance();
+C10_HOST_DEVICE constexpr T inverse_jacobi_sc_tolerance();
 
 template <>
-constexpr float inverse_jacobi_sc_tolerance<float>() { return 1e-6f; }
+C10_HOST_DEVICE constexpr float inverse_jacobi_sc_tolerance<float>() { return 1e-6f; }
 
 template <>
-constexpr double inverse_jacobi_sc_tolerance<double>() { return 1e-14; }
+C10_HOST_DEVICE constexpr double inverse_jacobi_sc_tolerance<double>() { return 1e-14; }
 
 template <>
-inline c10::Half inverse_jacobi_sc_tolerance<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half inverse_jacobi_sc_tolerance<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 inverse_jacobi_sc_tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 inverse_jacobi_sc_tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 } // namespace detail
 
 template <typename T>
-T inverse_jacobi_elliptic_sc(T x, T m) {
+C10_HOST_DEVICE T inverse_jacobi_elliptic_sc(T x, T m) {
     const T tol = detail::inverse_jacobi_sc_tolerance<T>();
     const int max_iter = detail::inverse_jacobi_sc_max_iterations<T>();
 
@@ -145,7 +145,7 @@ T inverse_jacobi_elliptic_sc(T x, T m) {
 }
 
 template <typename T>
-c10::complex<T> inverse_jacobi_elliptic_sc(c10::complex<T> x, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> inverse_jacobi_elliptic_sc(c10::complex<T> x, c10::complex<T> m) {
     const T tol = detail::inverse_jacobi_sc_tolerance<T>();
     const int max_iter = detail::inverse_jacobi_sc_max_iterations<T>();
 

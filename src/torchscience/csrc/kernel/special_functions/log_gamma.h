@@ -10,18 +10,18 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-constexpr T log_gamma_pole_tolerance();
+C10_HOST_DEVICE constexpr T log_gamma_pole_tolerance();
 
 template <>
-constexpr float log_gamma_pole_tolerance<float>() { return 1e-6f; }
+C10_HOST_DEVICE constexpr float log_gamma_pole_tolerance<float>() { return 1e-6f; }
 
 template <>
-constexpr double log_gamma_pole_tolerance<double>() { return 1e-12; }
+C10_HOST_DEVICE constexpr double log_gamma_pole_tolerance<double>() { return 1e-12; }
 
 } // namespace detail
 
 template <typename T>
-T log_gamma(T z) {
+C10_HOST_DEVICE T log_gamma(T z) {
   constexpr double kGammaG = 7.0;
 
   constexpr double coefficients[] = {
@@ -65,7 +65,7 @@ T log_gamma(T z) {
 }
 
 template <typename T>
-c10::complex<T> log_gamma(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> log_gamma(c10::complex<T> z) {
   constexpr double kGammaG = 7.0;
 
   constexpr double coefficients[] = {

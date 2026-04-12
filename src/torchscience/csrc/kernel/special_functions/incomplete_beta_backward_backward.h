@@ -16,7 +16,7 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-T log_squared_weighted_beta_integral(T x, T a, T b, int weight_type) {
+C10_HOST_DEVICE T log_squared_weighted_beta_integral(T x, T a, T b, int weight_type) {
   if (x <= T(0)) return T(0);
 
   T log_beta_val = log_gamma(a) + log_gamma(b) - log_gamma(a + b);
@@ -108,7 +108,7 @@ T log_squared_weighted_beta_integral(T x, T a, T b, int weight_type) {
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T, T, T> incomplete_beta_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T> incomplete_beta_backward_backward(
     T gg_x, T gg_a, T gg_b,
     T gradient, T x, T a, T b) {
 
@@ -237,7 +237,7 @@ std::tuple<T, T, T, T> incomplete_beta_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
 incomplete_beta_backward_backward(
     c10::complex<T> gg_x, c10::complex<T> gg_a, c10::complex<T> gg_b,
     c10::complex<T> gradient, c10::complex<T> x, c10::complex<T> a, c10::complex<T> b) {

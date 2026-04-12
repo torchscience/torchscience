@@ -105,7 +105,7 @@ constexpr double AIP_MACHEP = 1.11022302462515654042e-16;  // 2^-53
 
 // Compute Ai'(x) - the derivative of the Airy function
 template <typename T>
-T airy_ai_prime(T x) {
+C10_HOST_DEVICE T airy_ai_prime(T x) {
     // Handle special values
     if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -193,7 +193,7 @@ T airy_ai_prime(T x) {
 
 // Complex version of Ai'(z)
 template <typename T>
-c10::complex<T> airy_ai_prime(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> airy_ai_prime(c10::complex<T> z) {
     T re = z.real();
     T im = z.imag();
 
@@ -234,13 +234,13 @@ c10::complex<T> airy_ai_prime(c10::complex<T> z) {
 
 // Backward pass for airy_ai: d/dx Ai(x) = Ai'(x)
 template <typename T>
-T airy_ai_backward(T grad_output, T x) {
+C10_HOST_DEVICE T airy_ai_backward(T grad_output, T x) {
     return grad_output * airy_ai_prime(x);
 }
 
 // Complex backward
 template <typename T>
-c10::complex<T> airy_ai_backward(c10::complex<T> grad_output, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> airy_ai_backward(c10::complex<T> grad_output, c10::complex<T> z) {
     c10::complex<T> aip = airy_ai_prime(z);
     return grad_output * std::conj(aip);
 }

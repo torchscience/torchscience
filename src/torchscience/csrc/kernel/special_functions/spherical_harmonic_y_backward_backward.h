@@ -15,7 +15,7 @@ namespace torchscience::kernel::special_functions {
 // Uses finite differences on the backward function for second derivatives.
 
 template <typename T>
-std::tuple<T, T, T, T, T> spherical_harmonic_y_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T, T> spherical_harmonic_y_backward_backward(
     T gg_l, T gg_m, T gg_theta, T gg_phi,
     T gradient, T l, T m, T theta, T phi) {
 
@@ -119,7 +119,7 @@ std::tuple<T, T, T, T, T> spherical_harmonic_y_backward_backward(
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
 spherical_harmonic_y_backward_backward(
     c10::complex<T> gg_l, c10::complex<T> gg_m, c10::complex<T> gg_theta, c10::complex<T> gg_phi,
     c10::complex<T> gradient, c10::complex<T> l, c10::complex<T> m,

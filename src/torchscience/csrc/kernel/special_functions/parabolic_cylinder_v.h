@@ -20,7 +20,7 @@ namespace detail {
 // Note: This formula has removable singularities at a = -n-1/2 for n >= 0
 // where Gamma(1/2+a) has poles. We handle these by perturbation.
 template <typename T>
-T parabolic_cylinder_v_taylor(T a, T z) {
+C10_HOST_DEVICE T parabolic_cylinder_v_taylor(T a, T z) {
     const T pi = static_cast<T>(M_PI);
 
     T half_plus_a = T(0.5) + a;
@@ -65,7 +65,7 @@ T parabolic_cylinder_v_taylor(T a, T z) {
 // Asymptotic expansion for V(a, z) for large |z|
 // DLMF 12.9.2
 template <typename T>
-T parabolic_cylinder_v_asymptotic(T a, T z) {
+C10_HOST_DEVICE T parabolic_cylinder_v_asymptotic(T a, T z) {
     const T eps = pcf_eps<T>();
     const int max_terms = 50;
     const T pi = static_cast<T>(M_PI);
@@ -97,7 +97,7 @@ T parabolic_cylinder_v_asymptotic(T a, T z) {
 // Complex Taylor series for V(a, z)
 // Same pole handling as real version for a near -n-1/2
 template <typename T>
-c10::complex<T> parabolic_cylinder_v_taylor(c10::complex<T> a, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> parabolic_cylinder_v_taylor(c10::complex<T> a, c10::complex<T> z) {
     const T pi = static_cast<T>(M_PI);
     const c10::complex<T> pi_c(pi, T(0));
     const c10::complex<T> half(T(0.5), T(0));
@@ -142,7 +142,7 @@ c10::complex<T> parabolic_cylinder_v_taylor(c10::complex<T> a, c10::complex<T> z
 
 // Complex asymptotic expansion for V(a, z)
 template <typename T>
-c10::complex<T> parabolic_cylinder_v_asymptotic(c10::complex<T> a, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> parabolic_cylinder_v_asymptotic(c10::complex<T> a, c10::complex<T> z) {
     const T eps = pcf_eps<T>();
     const int max_terms = 50;
     const T pi = static_cast<T>(M_PI);
@@ -181,7 +181,7 @@ c10::complex<T> parabolic_cylinder_v_asymptotic(c10::complex<T> a, c10::complex<
 
 // Main function: parabolic_cylinder_v(a, z)
 template <typename T>
-T parabolic_cylinder_v(T a, T z) {
+C10_HOST_DEVICE T parabolic_cylinder_v(T a, T z) {
     if (cmath_compat::isnan(a) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
@@ -196,7 +196,7 @@ T parabolic_cylinder_v(T a, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> parabolic_cylinder_v(c10::complex<T> a, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> parabolic_cylinder_v(c10::complex<T> a, c10::complex<T> z) {
     T abs_z = std::abs(z);
     if (abs_z < T(10)) {
         return detail::parabolic_cylinder_v_taylor(a, z);

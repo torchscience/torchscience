@@ -8,20 +8,20 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-inline T carlson_rd_tolerance() {
+C10_HOST_DEVICE inline T carlson_rd_tolerance() {
     return T(1e-10);
 }
 
 template <>
-inline float carlson_rd_tolerance<float>() { return 1e-5f; }
+C10_HOST_DEVICE inline float carlson_rd_tolerance<float>() { return 1e-5f; }
 
 template <>
-inline double carlson_rd_tolerance<double>() { return 1e-14; }
+C10_HOST_DEVICE inline double carlson_rd_tolerance<double>() { return 1e-14; }
 
 } // namespace detail
 
 template <typename T>
-T carlson_elliptic_integral_r_d(T x, T y, T z) {
+C10_HOST_DEVICE T carlson_elliptic_integral_r_d(T x, T y, T z) {
     constexpr int max_iterations = 100;
     const T tolerance = detail::carlson_rd_tolerance<T>();
 
@@ -68,7 +68,7 @@ T carlson_elliptic_integral_r_d(T x, T y, T z) {
 }
 
 template <typename T>
-c10::complex<T> carlson_elliptic_integral_r_d(
+C10_HOST_DEVICE c10::complex<T> carlson_elliptic_integral_r_d(
     c10::complex<T> x,
     c10::complex<T> y,
     c10::complex<T> z

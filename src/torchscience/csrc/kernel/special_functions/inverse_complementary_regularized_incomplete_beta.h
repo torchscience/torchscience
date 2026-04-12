@@ -5,7 +5,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T inverse_complementary_regularized_incomplete_beta(T a, T b, T y) {
+C10_HOST_DEVICE T inverse_complementary_regularized_incomplete_beta(T a, T b, T y) {
   // Inverse of the complementary regularized incomplete beta function
   //
   // Since I_c(a, b, x) = 1 - I(a, b, x), we have:

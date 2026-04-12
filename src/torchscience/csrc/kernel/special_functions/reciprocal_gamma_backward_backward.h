@@ -10,7 +10,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T> reciprocal_gamma_backward_backward(T gg_z, T grad_output, T z) {
+C10_HOST_DEVICE std::tuple<T, T> reciprocal_gamma_backward_backward(T gg_z, T grad_output, T z) {
   T rg = reciprocal_gamma(z);
   T psi = digamma(z);
   T psi_sq = psi * psi;
@@ -23,7 +23,7 @@ std::tuple<T, T> reciprocal_gamma_backward_backward(T gg_z, T grad_output, T z) 
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> reciprocal_gamma_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> reciprocal_gamma_backward_backward(
     c10::complex<T> gg_z, c10::complex<T> grad_output, c10::complex<T> z) {
   c10::complex<T> rg = reciprocal_gamma(z);
   c10::complex<T> psi = digamma(z);

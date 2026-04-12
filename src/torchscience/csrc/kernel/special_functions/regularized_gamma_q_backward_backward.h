@@ -10,7 +10,7 @@ namespace torchscience::kernel::special_functions {
 // Since Q = 1 - P, the second derivatives have the same magnitude but signs may differ
 
 template <typename T>
-std::tuple<T, T, T> regularized_gamma_q_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> regularized_gamma_q_backward_backward(
     T grad_grad_a, T grad_grad_x, T grad, T a, T x) {
 
   auto [gg_output_p, grad_a_p, grad_x_p] =

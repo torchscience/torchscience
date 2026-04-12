@@ -9,7 +9,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T, T> complete_legendre_elliptic_integral_pi_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> complete_legendre_elliptic_integral_pi_backward_backward(
     T gg_n,
     T gg_m,
     T gradient,
@@ -40,7 +40,7 @@ std::tuple<T, T, T> complete_legendre_elliptic_integral_pi_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 complete_legendre_elliptic_integral_pi_backward_backward(
     c10::complex<T> gg_n,
     c10::complex<T> gg_m,

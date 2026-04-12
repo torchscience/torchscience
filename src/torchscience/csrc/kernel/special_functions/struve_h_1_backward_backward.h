@@ -14,15 +14,15 @@ namespace detail {
 constexpr double STRUVE_H1_BB_TWO_OVER_PI = 0.6366197723675813430755350534900574;
 
 template <typename T>
-inline T struve_h_1_bb_zero_tolerance() {
+C10_HOST_DEVICE inline T struve_h_1_bb_zero_tolerance() {
     return T(1e-12);
 }
 
 template <>
-inline float struve_h_1_bb_zero_tolerance<float>() { return 1e-6f; }
+C10_HOST_DEVICE inline float struve_h_1_bb_zero_tolerance<float>() { return 1e-6f; }
 
 template <>
-inline double struve_h_1_bb_zero_tolerance<double>() { return 1e-12; }
+C10_HOST_DEVICE inline double struve_h_1_bb_zero_tolerance<double>() { return 1e-12; }
 
 } // namespace detail
 
@@ -72,7 +72,7 @@ inline double struve_h_1_bb_zero_tolerance<double>() { return 1e-12; }
 // So H_1''(0) = 8/(3*pi^2), not 0.
 // I'll use this value.
 template <typename T>
-std::tuple<T, T> struve_h_1_backward_backward(T gg_z, T grad_output, T z) {
+C10_HOST_DEVICE std::tuple<T, T> struve_h_1_backward_backward(T gg_z, T grad_output, T z) {
     T h0 = struve_h_0(z);
     T h1 = struve_h_1(z);
 
@@ -105,7 +105,7 @@ std::tuple<T, T> struve_h_1_backward_backward(T gg_z, T grad_output, T z) {
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> struve_h_1_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> struve_h_1_backward_backward(
     c10::complex<T> gg_z, c10::complex<T> grad_output, c10::complex<T> z) {
     c10::complex<T> h0 = struve_h_0(z);
     c10::complex<T> h1 = struve_h_1(z);

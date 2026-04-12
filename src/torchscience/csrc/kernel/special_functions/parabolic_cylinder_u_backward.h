@@ -12,7 +12,7 @@ namespace detail {
 
 // Compute dU/da using finite differences (numerical)
 template <typename T>
-T parabolic_cylinder_u_a_derivative(T a, T z) {
+C10_HOST_DEVICE T parabolic_cylinder_u_a_derivative(T a, T z) {
     const T eps = std::sqrt(pcf_eps<T>());
     T h = eps * (std::abs(a) > T(1) ? std::abs(a) : T(1));
 
@@ -26,7 +26,7 @@ T parabolic_cylinder_u_a_derivative(T a, T z) {
 // DLMF 12.8.1: U'(a,z) = -z/2 * U(a,z) - (a + 1/2) * U(a+1,z)
 // Or equivalently: U'(a,z) = z/2 * U(a,z) - U(a-1,z)
 template <typename T>
-T parabolic_cylinder_u_z_derivative(T a, T z) {
+C10_HOST_DEVICE T parabolic_cylinder_u_z_derivative(T a, T z) {
     T u_a = parabolic_cylinder_u(a, z);
     T u_am1 = parabolic_cylinder_u(a - T(1), z);
 
@@ -35,7 +35,7 @@ T parabolic_cylinder_u_z_derivative(T a, T z) {
 
 // Complex versions
 template <typename T>
-c10::complex<T> parabolic_cylinder_u_a_derivative(c10::complex<T> a, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> parabolic_cylinder_u_a_derivative(c10::complex<T> a, c10::complex<T> z) {
     const T eps = std::sqrt(pcf_eps<T>());
     T a_mag = std::abs(a);
     c10::complex<T> h(eps * (a_mag > T(1) ? a_mag : T(1)), T(0));
@@ -47,7 +47,7 @@ c10::complex<T> parabolic_cylinder_u_a_derivative(c10::complex<T> a, c10::comple
 }
 
 template <typename T>
-c10::complex<T> parabolic_cylinder_u_z_derivative(c10::complex<T> a, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> parabolic_cylinder_u_z_derivative(c10::complex<T> a, c10::complex<T> z) {
     const c10::complex<T> one(T(1), T(0));
     const c10::complex<T> two(T(2), T(0));
 
@@ -61,7 +61,7 @@ c10::complex<T> parabolic_cylinder_u_z_derivative(c10::complex<T> a, c10::comple
 
 // Real backward: returns (grad_a, grad_z)
 template <typename T>
-std::tuple<T, T> parabolic_cylinder_u_backward(T grad_output, T a, T z) {
+C10_HOST_DEVICE std::tuple<T, T> parabolic_cylinder_u_backward(T grad_output, T a, T z) {
     T du_da = detail::parabolic_cylinder_u_a_derivative(a, z);
     T du_dz = detail::parabolic_cylinder_u_z_derivative(a, z);
 
@@ -70,7 +70,7 @@ std::tuple<T, T> parabolic_cylinder_u_backward(T grad_output, T a, T z) {
 
 // Complex backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> parabolic_cylinder_u_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> parabolic_cylinder_u_backward(
     c10::complex<T> grad_output,
     c10::complex<T> a,
     c10::complex<T> z

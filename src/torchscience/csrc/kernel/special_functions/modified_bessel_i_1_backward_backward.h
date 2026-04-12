@@ -11,7 +11,7 @@ namespace torchscience::kernel::special_functions {
 // Real backward_backward
 // Returns gradients for (grad_output, z)
 template <typename T>
-std::tuple<T, T> modified_bessel_i_1_backward_backward(T gg_z, T grad_output, T z) {
+C10_HOST_DEVICE std::tuple<T, T> modified_bessel_i_1_backward_backward(T gg_z, T grad_output, T z) {
     T i0 = modified_bessel_i_0(z);
     T i1 = modified_bessel_i_1(z);
 
@@ -44,7 +44,7 @@ std::tuple<T, T> modified_bessel_i_1_backward_backward(T gg_z, T grad_output, T 
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> modified_bessel_i_1_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> modified_bessel_i_1_backward_backward(
     c10::complex<T> gg_z, c10::complex<T> grad_output, c10::complex<T> z) {
     c10::complex<T> i0 = modified_bessel_i_0(z);
     c10::complex<T> i1 = modified_bessel_i_1(z);

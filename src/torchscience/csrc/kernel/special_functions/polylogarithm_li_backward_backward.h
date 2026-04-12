@@ -17,7 +17,7 @@ namespace detail {
 //                  = [Li_{s-2}(z)/z - Li_{s-1}(z)] / z^2
 //                  = Li_{s-2}(z)/z^2 - Li_{s-1}(z)/z^2
 template <typename T>
-T polylogarithm_li_d2z(T s, T z) {
+C10_HOST_DEVICE T polylogarithm_li_d2z(T s, T z) {
   if (std::abs(z) < std::numeric_limits<T>::epsilon()) {
     // Limit as z->0
     return T(0);
@@ -31,7 +31,7 @@ T polylogarithm_li_d2z(T s, T z) {
 }
 
 template <typename T>
-c10::complex<T> polylogarithm_li_d2z(c10::complex<T> s, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> polylogarithm_li_d2z(c10::complex<T> s, c10::complex<T> z) {
   if (std::abs(z) < std::numeric_limits<T>::epsilon()) {
     return c10::complex<T>(T(0), T(0));
   }
@@ -48,7 +48,7 @@ c10::complex<T> polylogarithm_li_d2z(c10::complex<T> s, c10::complex<T> z) {
 
 // d^2/ds^2 Li_s(z) = sum (ln k)^2 * z^k / k^s
 template <typename T>
-T polylogarithm_li_d2s(T s, T z, int max_terms = 200) {
+C10_HOST_DEVICE T polylogarithm_li_d2s(T s, T z, int max_terms = 200) {
   if (std::abs(z) < std::numeric_limits<T>::epsilon()) {
     return T(0);
   }
@@ -76,7 +76,7 @@ T polylogarithm_li_d2s(T s, T z, int max_terms = 200) {
 }
 
 template <typename T>
-c10::complex<T> polylogarithm_li_d2s(c10::complex<T> s, c10::complex<T> z, int max_terms = 200) {
+C10_HOST_DEVICE c10::complex<T> polylogarithm_li_d2s(c10::complex<T> s, c10::complex<T> z, int max_terms = 200) {
   c10::complex<T> zero(T(0), T(0));
   if (std::abs(z) < std::numeric_limits<T>::epsilon()) {
     return zero;
@@ -109,7 +109,7 @@ c10::complex<T> polylogarithm_li_d2s(c10::complex<T> s, c10::complex<T> z, int m
 //                  = -sum ln(k) * z^{k-1} / k^{s-1}
 //                  = (1/z) * d/ds Li_{s-1}(z)
 template <typename T>
-T polylogarithm_li_d2sz(T s, T z) {
+C10_HOST_DEVICE T polylogarithm_li_d2sz(T s, T z) {
   if (std::abs(z) < std::numeric_limits<T>::epsilon()) {
     return T(0);
   }
@@ -120,7 +120,7 @@ T polylogarithm_li_d2sz(T s, T z) {
 }
 
 template <typename T>
-c10::complex<T> polylogarithm_li_d2sz(c10::complex<T> s, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> polylogarithm_li_d2sz(c10::complex<T> s, c10::complex<T> z) {
   if (std::abs(z) < std::numeric_limits<T>::epsilon()) {
     return c10::complex<T>(T(0), T(0));
   }
@@ -137,7 +137,7 @@ c10::complex<T> polylogarithm_li_d2sz(c10::complex<T> s, c10::complex<T> z) {
 // Second-order backward pass for polylogarithm_li
 // Returns (grad_gradient, grad_s, grad_z)
 template <typename T>
-std::tuple<T, T, T> polylogarithm_li_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> polylogarithm_li_backward_backward(
     T grad_grad_s,
     T grad_grad_z,
     T gradient,
@@ -165,7 +165,7 @@ std::tuple<T, T, T> polylogarithm_li_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> polylogarithm_li_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> polylogarithm_li_backward_backward(
     c10::complex<T> grad_grad_s,
     c10::complex<T> grad_grad_z,
     c10::complex<T> gradient,

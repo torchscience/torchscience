@@ -27,13 +27,13 @@ namespace torchscience::kernel::special_functions {
 // - K(1) = infinity (logarithmic singularity)
 
 template <typename T>
-T complete_legendre_elliptic_integral_k(T m) {
+C10_HOST_DEVICE T complete_legendre_elliptic_integral_k(T m) {
     // K(m) = R_F(0, 1-m, 1)
     return carlson_elliptic_integral_r_f(T(0), T(1) - m, T(1));
 }
 
 template <typename T>
-c10::complex<T> complete_legendre_elliptic_integral_k(c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> complete_legendre_elliptic_integral_k(c10::complex<T> m) {
     // K(m) = R_F(0, 1-m, 1)
     c10::complex<T> zero(T(0), T(0));
     c10::complex<T> one(T(1), T(0));

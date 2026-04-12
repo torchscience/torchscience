@@ -13,7 +13,7 @@ namespace detail {
 // Compute d/dn j_n(z) using finite differences
 // The analytical formula is complex, so we use numerical approximation
 template <typename T>
-T spherical_bessel_j_n_derivative(T n, T z) {
+C10_HOST_DEVICE T spherical_bessel_j_n_derivative(T n, T z) {
     const T eps = std::sqrt(spherical_bessel_j_eps<T>());
 
     // Central difference approximation
@@ -27,7 +27,7 @@ T spherical_bessel_j_n_derivative(T n, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> spherical_bessel_j_n_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_j_n_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::sqrt(spherical_bessel_j_eps<T>());
     const c10::complex<T> h_c(eps, T(0));
 
@@ -47,7 +47,7 @@ c10::complex<T> spherical_bessel_j_n_derivative(c10::complex<T> n, c10::complex<
 // d/dz j_n(z) = (n/z) * j_n(z) - j_{n+1}(z)
 // d/dn j_n(z) computed numerically
 template <typename T>
-std::tuple<T, T> spherical_bessel_j_backward(T grad_output, T n, T z) {
+C10_HOST_DEVICE std::tuple<T, T> spherical_bessel_j_backward(T grad_output, T n, T z) {
     const T eps = detail::spherical_bessel_j_eps<T>();
 
     // Gradient w.r.t. z: d/dz j_n(z) = (n/z) * j_n(z) - j_{n+1}(z)
@@ -90,7 +90,7 @@ std::tuple<T, T> spherical_bessel_j_backward(T grad_output, T n, T z) {
 
 // Complex backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> spherical_bessel_j_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> spherical_bessel_j_backward(
     c10::complex<T> grad_output,
     c10::complex<T> n,
     c10::complex<T> z

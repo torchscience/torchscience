@@ -7,7 +7,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T, T> inverse_regularized_gamma_q_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> inverse_regularized_gamma_q_backward_backward(
     T gg_a, T gg_y, T grad_output, T a, T y) {
   // Second-order derivatives for inverse_regularized_gamma_q
   //

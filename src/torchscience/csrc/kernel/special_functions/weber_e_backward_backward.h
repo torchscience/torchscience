@@ -11,7 +11,7 @@ namespace torchscience::kernel::special_functions {
 
 // Helper: compute d²/dn² E_nu(z) = -(1/pi) * integral_0^pi theta^2 * sin(nu*theta - z*sin(theta)) d(theta)
 template <typename T>
-T weber_e_second_derivative_n2(T n, T z) {
+C10_HOST_DEVICE T weber_e_second_derivative_n2(T n, T z) {
     const T pi = T(3.14159265358979323846);
 
     const T nodes[10] = {
@@ -48,7 +48,7 @@ T weber_e_second_derivative_n2(T n, T z) {
 
 // Helper: compute d²/dndz E_nu(z) = (1/pi) * integral_0^pi theta * sin(theta) * sin(nu*theta - z*sin(theta)) d(theta)
 template <typename T>
-T weber_e_second_derivative_nz(T n, T z) {
+C10_HOST_DEVICE T weber_e_second_derivative_nz(T n, T z) {
     const T pi = T(3.14159265358979323846);
 
     const T nodes[10] = {
@@ -88,7 +88,7 @@ T weber_e_second_derivative_nz(T n, T z) {
 // Second-order backward pass for Weber function
 // Returns (grad_grad_output, grad_n, grad_z)
 template <typename T>
-std::tuple<T, T, T> weber_e_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> weber_e_backward_backward(
     T gg_n,
     T gg_z,
     T grad_output,
@@ -120,7 +120,7 @@ std::tuple<T, T, T> weber_e_backward_backward(
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> weber_e_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> weber_e_backward_backward(
     c10::complex<T> gg_n,
     c10::complex<T> gg_z,
     c10::complex<T> grad_output,

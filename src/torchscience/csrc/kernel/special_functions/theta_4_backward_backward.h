@@ -13,24 +13,24 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-inline T theta4_finite_diff_step2() {
+C10_HOST_DEVICE inline T theta4_finite_diff_step2() {
     return std::pow(std::numeric_limits<T>::epsilon(), T(0.25));
 }
 
 template <>
-inline float theta4_finite_diff_step2<float>() {
+C10_HOST_DEVICE inline float theta4_finite_diff_step2<float>() {
     return 1e-2f;
 }
 
 template <>
-inline double theta4_finite_diff_step2<double>() {
+C10_HOST_DEVICE inline double theta4_finite_diff_step2<double>() {
     return 1e-4;
 }
 
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T, T> theta_4_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> theta_4_backward_backward(
     T gg_z,
     T gg_q,
     T gradient,
@@ -57,7 +57,7 @@ std::tuple<T, T, T> theta_4_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 theta_4_backward_backward(
     c10::complex<T> gg_z,
     c10::complex<T> gg_q,

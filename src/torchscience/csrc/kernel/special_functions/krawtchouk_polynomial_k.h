@@ -44,7 +44,7 @@ namespace torchscience::kernel::special_functions {
 // - Signal processing
 
 template <typename T>
-T krawtchouk_polynomial_k(T n, T x, T p, T N) {
+C10_HOST_DEVICE T krawtchouk_polynomial_k(T n, T x, T p, T N) {
   // K_n(x; p, N) = 2F1(-n, -x; -N; 1/p)
   T a = -n;
   T b = -x;
@@ -56,7 +56,7 @@ T krawtchouk_polynomial_k(T n, T x, T p, T N) {
 
 // Complex version
 template <typename T>
-c10::complex<T> krawtchouk_polynomial_k(
+C10_HOST_DEVICE c10::complex<T> krawtchouk_polynomial_k(
     c10::complex<T> n,
     c10::complex<T> x,
     c10::complex<T> p,

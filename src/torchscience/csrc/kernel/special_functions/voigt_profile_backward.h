@@ -36,7 +36,7 @@ namespace torchscience::kernel::special_functions {
 // dV/dgamma = Re[dw/dz * dz/dgamma] / (sigma*sqrt(2*pi))
 // where dz/dgamma = i / (sigma*sqrt(2))
 template <typename T>
-std::tuple<T, T, T> voigt_profile_backward(T gradient, T x, T sigma, T gamma) {
+C10_HOST_DEVICE std::tuple<T, T, T> voigt_profile_backward(T gradient, T x, T sigma, T gamma) {
   const T sqrt_2 = static_cast<T>(1.4142135623730950488016887242096980786);
   const T sqrt_pi = static_cast<T>(1.7724538509055160272981674833411451828);
   const T sqrt_2pi = static_cast<T>(2.5066282746310005024157652848110452530);

@@ -38,7 +38,7 @@ namespace torchscience::kernel::special_functions {
 // cd^2 + sd^2 * m = 1 (follows from cn^2 + sn^2 = 1 and dn^2 + m*sn^2 = 1)
 
 template <typename T>
-T jacobi_elliptic_cd(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_cd(T u, T m) {
     T cn = jacobi_elliptic_cn(u, m);
     T dn = jacobi_elliptic_dn(u, m);
 
@@ -59,7 +59,7 @@ T jacobi_elliptic_cd(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_cd(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_cd(c10::complex<T> u, c10::complex<T> m) {
     c10::complex<T> cn = jacobi_elliptic_cn(u, m);
     c10::complex<T> dn = jacobi_elliptic_dn(u, m);
 

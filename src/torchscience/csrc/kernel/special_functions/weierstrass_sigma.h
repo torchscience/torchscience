@@ -47,27 +47,27 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-inline T weierstrass_sigma_tolerance() {
+C10_HOST_DEVICE inline T weierstrass_sigma_tolerance() {
     return T(1e-10);
 }
 
 template <>
-inline float weierstrass_sigma_tolerance<float>() { return 1e-5f; }
+C10_HOST_DEVICE inline float weierstrass_sigma_tolerance<float>() { return 1e-5f; }
 
 template <>
-inline double weierstrass_sigma_tolerance<double>() { return 1e-14; }
+C10_HOST_DEVICE inline double weierstrass_sigma_tolerance<double>() { return 1e-14; }
 
 template <>
-inline c10::Half weierstrass_sigma_tolerance<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half weierstrass_sigma_tolerance<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 weierstrass_sigma_tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 weierstrass_sigma_tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 // Compute θ₁'(0, q) using finite difference
 // θ₁'(v, q) = (θ₁(v+h, q) - θ₁(v-h, q)) / (2h)
 // At v = 0: θ₁'(0, q)
 template <typename T>
-c10::complex<T> theta_1_derivative_at_zero(c10::complex<T> q) {
+C10_HOST_DEVICE c10::complex<T> theta_1_derivative_at_zero(c10::complex<T> q) {
     const T h = T(1e-6);
     const c10::complex<T> h_c(h, T(0));
     const c10::complex<T> zero_c(T(0), T(0));
@@ -79,7 +79,7 @@ c10::complex<T> theta_1_derivative_at_zero(c10::complex<T> q) {
 }
 
 template <typename T>
-T theta_1_derivative_at_zero(T q) {
+C10_HOST_DEVICE T theta_1_derivative_at_zero(T q) {
     const T h = T(1e-6);
 
     T theta_plus = theta_1(h, q);
@@ -96,7 +96,7 @@ T theta_1_derivative_at_zero(T q) {
 // Actually, use: η₁ = -(π²/12ω₁) * (1 - 24 * sum_{n=1}^∞ n*q^{2n}/(1-q^{2n}))
 // For simplicity, we'll use a simpler approximation based on the q-expansion
 template <typename T>
-c10::complex<T> compute_eta1(c10::complex<T> omega1, c10::complex<T> q) {
+C10_HOST_DEVICE c10::complex<T> compute_eta1(c10::complex<T> omega1, c10::complex<T> q) {
     const T pi = T(3.14159265358979323846);
     const T tol = weierstrass_sigma_tolerance<T>();
     constexpr int max_terms = 100;
@@ -126,14 +126,14 @@ c10::complex<T> compute_eta1(c10::complex<T> omega1, c10::complex<T> q) {
 }
 
 template <typename T>
-T compute_eta1_real(c10::complex<T> omega1, c10::complex<T> q) {
+C10_HOST_DEVICE T compute_eta1_real(c10::complex<T> omega1, c10::complex<T> q) {
     return compute_eta1(omega1, q).real();
 }
 
 } // namespace detail
 
 template <typename T>
-T weierstrass_sigma(T z, T g2, T g3) {
+C10_HOST_DEVICE T weierstrass_sigma(T z, T g2, T g3) {
     const T tol = detail::weierstrass_sigma_tolerance<T>();
     const T pi = T(3.14159265358979323846);
 
@@ -197,7 +197,7 @@ T weierstrass_sigma(T z, T g2, T g3) {
 }
 
 template <typename T>
-c10::complex<T> weierstrass_sigma(c10::complex<T> z, c10::complex<T> g2, c10::complex<T> g3) {
+C10_HOST_DEVICE c10::complex<T> weierstrass_sigma(c10::complex<T> z, c10::complex<T> g2, c10::complex<T> g3) {
     const T tol = detail::weierstrass_sigma_tolerance<T>();
     const T pi = T(3.14159265358979323846);
 

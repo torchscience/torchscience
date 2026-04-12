@@ -22,7 +22,7 @@ namespace torchscience::kernel::special_functions {
 // However, for robustness, we use finite differences for all gradients.
 
 template <typename T>
-std::tuple<T, T, T> charlier_polynomial_c_backward(T gradient, T n, T x, T a) {
+C10_HOST_DEVICE std::tuple<T, T, T> charlier_polynomial_c_backward(T gradient, T n, T x, T a) {
   T eps = T(1e-7);
 
   // Gradient with respect to x using finite differences
@@ -45,7 +45,7 @@ std::tuple<T, T, T> charlier_polynomial_c_backward(T gradient, T n, T x, T a) {
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 charlier_polynomial_c_backward(c10::complex<T> gradient, c10::complex<T> n, c10::complex<T> x, c10::complex<T> a) {
   T eps_val = T(1e-7);
   c10::complex<T> eps(eps_val, T(0));

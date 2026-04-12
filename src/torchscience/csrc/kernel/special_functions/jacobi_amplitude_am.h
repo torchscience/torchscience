@@ -11,22 +11,22 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-constexpr T jacobi_amplitude_am_tolerance();
+C10_HOST_DEVICE constexpr T jacobi_amplitude_am_tolerance();
 
 template <>
-constexpr float jacobi_amplitude_am_tolerance<float>() { return 1e-7f; }
+C10_HOST_DEVICE constexpr float jacobi_amplitude_am_tolerance<float>() { return 1e-7f; }
 
 template <>
-constexpr double jacobi_amplitude_am_tolerance<double>() { return 1e-15; }
+C10_HOST_DEVICE constexpr double jacobi_amplitude_am_tolerance<double>() { return 1e-15; }
 
 template <>
-inline c10::Half jacobi_amplitude_am_tolerance<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half jacobi_amplitude_am_tolerance<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 jacobi_amplitude_am_tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 jacobi_amplitude_am_tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 template <typename T>
-constexpr int jacobi_amplitude_am_max_iter() { return 100; }
+C10_HOST_DEVICE constexpr int jacobi_amplitude_am_max_iter() { return 100; }
 
 } // namespace detail
 
@@ -51,7 +51,7 @@ constexpr int jacobi_amplitude_am_max_iter() { return 100; }
  * @return The amplitude phi = am(u, m)
  */
 template <typename T>
-T jacobi_amplitude_am(T u, T m) {
+C10_HOST_DEVICE T jacobi_amplitude_am(T u, T m) {
     const T tolerance = detail::jacobi_amplitude_am_tolerance<T>();
     const int max_iter = detail::jacobi_amplitude_am_max_iter<T>();
     const T pi = T(M_PI);
@@ -127,7 +127,7 @@ T jacobi_amplitude_am(T u, T m) {
  * but with complex arithmetic.
  */
 template <typename T>
-c10::complex<T> jacobi_amplitude_am(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_amplitude_am(c10::complex<T> u, c10::complex<T> m) {
     const T tolerance = detail::jacobi_amplitude_am_tolerance<T>();
     const int max_iter = detail::jacobi_amplitude_am_max_iter<T>();
     const c10::complex<T> one(T(1), T(0));

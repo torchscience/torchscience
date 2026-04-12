@@ -32,7 +32,7 @@ namespace torchscience::kernel::special_functions {
 // - Spectral methods, quadrature rules
 
 template <typename T>
-T jacobi_polynomial_p(T n, T alpha, T beta, T z) {
+C10_HOST_DEVICE T jacobi_polynomial_p(T n, T alpha, T beta, T z) {
   // P_0^(alpha,beta)(z) = 1
   if (std::abs(n) < T(1e-10)) {
     return T(1);
@@ -104,7 +104,7 @@ T jacobi_polynomial_p(T n, T alpha, T beta, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> jacobi_polynomial_p(c10::complex<T> n, c10::complex<T> alpha, c10::complex<T> beta, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> jacobi_polynomial_p(c10::complex<T> n, c10::complex<T> alpha, c10::complex<T> beta, c10::complex<T> z) {
   c10::complex<T> one(T(1), T(0));
   c10::complex<T> two(T(2), T(0));
 

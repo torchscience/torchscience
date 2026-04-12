@@ -16,7 +16,7 @@ namespace detail {
 // where dy_n/dz = (n/z)*y_n - y_{n+1}
 // and dy_{n+1}/dz = ((n+1)/z)*y_{n+1} - y_{n+2}
 template <typename T>
-T spherical_bessel_y_zz_derivative(T n, T z) {
+C10_HOST_DEVICE T spherical_bessel_y_zz_derivative(T n, T z) {
     const T eps = spherical_bessel_y_eps<T>();
 
     if (std::abs(z) < eps) {
@@ -42,7 +42,7 @@ T spherical_bessel_y_zz_derivative(T n, T z) {
 
 // Mixed second derivative d^2/(dn dz) y_n(z) computed numerically
 template <typename T>
-T spherical_bessel_y_nz_derivative(T n, T z) {
+C10_HOST_DEVICE T spherical_bessel_y_nz_derivative(T n, T z) {
     const T eps = std::sqrt(spherical_bessel_y_eps<T>());
     T h = eps * (std::abs(n) > T(1) ? std::abs(n) : T(1));
 
@@ -60,7 +60,7 @@ T spherical_bessel_y_nz_derivative(T n, T z) {
 
 // Second derivative w.r.t. n: d^2/dn^2 y_n(z) computed numerically
 template <typename T>
-T spherical_bessel_y_nn_derivative(T n, T z) {
+C10_HOST_DEVICE T spherical_bessel_y_nn_derivative(T n, T z) {
     const T eps = std::cbrt(spherical_bessel_y_eps<T>());
     T h = eps * (std::abs(n) > T(1) ? std::abs(n) : T(1));
 
@@ -73,7 +73,7 @@ T spherical_bessel_y_nn_derivative(T n, T z) {
 
 // Complex versions
 template <typename T>
-c10::complex<T> spherical_bessel_y_zz_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_y_zz_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = spherical_bessel_y_eps<T>();
     c10::complex<T> one(T(1), T(0));
     c10::complex<T> two(T(2), T(0));
@@ -94,7 +94,7 @@ c10::complex<T> spherical_bessel_y_zz_derivative(c10::complex<T> n, c10::complex
 }
 
 template <typename T>
-c10::complex<T> spherical_bessel_y_nz_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_y_nz_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::sqrt(spherical_bessel_y_eps<T>());
     const c10::complex<T> one(T(1), T(0));
     const c10::complex<T> two(T(2), T(0));
@@ -114,7 +114,7 @@ c10::complex<T> spherical_bessel_y_nz_derivative(c10::complex<T> n, c10::complex
 }
 
 template <typename T>
-c10::complex<T> spherical_bessel_y_nn_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_y_nn_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::cbrt(spherical_bessel_y_eps<T>());
     const c10::complex<T> two(T(2), T(0));
 
@@ -134,7 +134,7 @@ c10::complex<T> spherical_bessel_y_nn_derivative(c10::complex<T> n, c10::complex
 // Computes gradients of the backward pass w.r.t. (grad_output, n, z)
 // given upstream gradients (gg_n, gg_z) for the outputs (grad_n, grad_z)
 template <typename T>
-std::tuple<T, T, T> spherical_bessel_y_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> spherical_bessel_y_backward_backward(
     T gg_n,       // upstream gradient for grad_n output
     T gg_z,       // upstream gradient for grad_z output
     T grad_output,
@@ -180,7 +180,7 @@ std::tuple<T, T, T> spherical_bessel_y_backward_backward(
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> spherical_bessel_y_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> spherical_bessel_y_backward_backward(
     c10::complex<T> gg_n,
     c10::complex<T> gg_z,
     c10::complex<T> grad_output,

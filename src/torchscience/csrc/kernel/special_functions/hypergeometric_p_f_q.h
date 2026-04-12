@@ -23,7 +23,7 @@ template <typename T>
 struct pfq_is_complex_type<c10::complex<T>> : std::true_type {};
 
 template <typename T>
-inline constexpr bool pfq_is_complex_v = pfq_is_complex_type<T>::value;
+C10_HOST_DEVICE inline constexpr bool pfq_is_complex_v = pfq_is_complex_type<T>::value;
 
 template <typename T>
 struct pfq_real_type { using type = T; };
@@ -35,10 +35,10 @@ template <typename T>
 struct pfq_real_type<c10::complex<T>> { using type = T; };
 
 template <typename T>
-using pfq_real_type_t = typename pfq_real_type<T>::type;
+C10_HOST_DEVICE using pfq_real_type_t = typename pfq_real_type<T>::type;
 
 template <typename T>
-constexpr auto pfq_epsilon() {
+C10_HOST_DEVICE constexpr auto pfq_epsilon() {
   using real_t = pfq_real_type_t<T>;
   if constexpr (std::is_same_v<real_t, float>) {
     return float(1e-7);
@@ -50,7 +50,7 @@ constexpr auto pfq_epsilon() {
 }
 
 template <typename T>
-bool pfq_is_nonpositive_integer(T x) {
+C10_HOST_DEVICE bool pfq_is_nonpositive_integer(T x) {
   if constexpr (pfq_is_complex_v<T>) {
     using real_t = pfq_real_type_t<T>;
     auto re = static_cast<real_t>(x.real());
@@ -65,7 +65,7 @@ bool pfq_is_nonpositive_integer(T x) {
 }
 
 template <typename T>
-int pfq_get_nonpositive_int(T x) {
+C10_HOST_DEVICE int pfq_get_nonpositive_int(T x) {
   if constexpr (pfq_is_complex_v<T>) {
     using real_t = pfq_real_type_t<T>;
     return static_cast<int>(std::round(static_cast<real_t>(x.real())));
@@ -77,7 +77,7 @@ int pfq_get_nonpositive_int(T x) {
 // Series expansion for pFq with variable-length parameter arrays
 // pFq(a[]; b[]; z) = sum_{n=0}^{inf} [prod_i(a[i])_n / prod_j(b[j])_n] * z^n / n!
 template <typename T>
-T pfq_series(const T* a, int p, const T* b, int q, T z, int max_iter = 500) {
+C10_HOST_DEVICE T pfq_series(const T* a, int p, const T* b, int q, T z, int max_iter = 500) {
   T sum = T(1);
   T term = T(1);
 
@@ -116,7 +116,7 @@ T pfq_series(const T* a, int p, const T* b, int q, T z, int max_iter = 500) {
 
 // Check if any upper parameter is a non-positive integer (polynomial case)
 template <typename T>
-int pfq_find_terminating_a(const T* a, int p) {
+C10_HOST_DEVICE int pfq_find_terminating_a(const T* a, int p) {
   int min_neg = 0;  // The smallest (most negative) non-positive integer
   bool found = false;
 
@@ -135,7 +135,7 @@ int pfq_find_terminating_a(const T* a, int p) {
 
 // Check if any lower parameter is a non-positive integer (pole)
 template <typename T>
-bool pfq_has_pole(const T* b, int q) {
+C10_HOST_DEVICE bool pfq_has_pole(const T* b, int q) {
   for (int j = 0; j < q; ++j) {
     if (pfq_is_nonpositive_integer(b[j])) {
       return true;
@@ -146,7 +146,7 @@ bool pfq_has_pole(const T* b, int q) {
 
 // Polynomial evaluation for terminating series
 template <typename T>
-T pfq_polynomial(const T* a, int p, const T* b, int q, T z, int degree) {
+C10_HOST_DEVICE T pfq_polynomial(const T* a, int p, const T* b, int q, T z, int degree) {
   T sum = T(1);
   T term = T(1);
 
@@ -194,7 +194,7 @@ T pfq_polynomial(const T* a, int p, const T* b, int q, T z, int degree) {
 //   z: Argument
 //
 template <typename T>
-T hypergeometric_p_f_q(const T* a, int p, const T* b, int q, T z) {
+C10_HOST_DEVICE T hypergeometric_p_f_q(const T* a, int p, const T* b, int q, T z) {
   using detail::pfq_epsilon;
   using detail::pfq_is_complex_v;
   using detail::pfq_real_type_t;
@@ -254,7 +254,7 @@ T hypergeometric_p_f_q(const T* a, int p, const T* b, int q, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> hypergeometric_p_f_q(const c10::complex<T>* a, int p, const c10::complex<T>* b, int q, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> hypergeometric_p_f_q(const c10::complex<T>* a, int p, const c10::complex<T>* b, int q, c10::complex<T> z) {
   using detail::pfq_epsilon;
   using detail::pfq_series;
   using detail::pfq_has_pole;

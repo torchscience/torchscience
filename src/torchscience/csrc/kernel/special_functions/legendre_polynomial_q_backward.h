@@ -19,7 +19,7 @@ namespace torchscience::kernel::special_functions {
 // For dQ_n/dn, we use finite differences since the analytical formula
 // is complex and involves parameter derivatives.
 template <typename T>
-std::tuple<T, T> legendre_polynomial_q_backward(T gradient, T x, T n) {
+C10_HOST_DEVICE std::tuple<T, T> legendre_polynomial_q_backward(T gradient, T x, T n) {
   T one = T(1);
   T eps = T(1e-7);
 

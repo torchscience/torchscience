@@ -10,7 +10,7 @@ namespace torchscience::kernel::special_functions {
 // dQ/da = -dP/da, dQ/dx = -dP/dx
 
 template <typename T>
-std::tuple<T, T> regularized_gamma_q_backward(T grad_output, T a, T x) {
+C10_HOST_DEVICE std::tuple<T, T> regularized_gamma_q_backward(T grad_output, T a, T x) {
   auto [grad_a_p, grad_x_p] = regularized_gamma_p_backward(grad_output, a, x);
   return {-grad_a_p, -grad_x_p};
 }

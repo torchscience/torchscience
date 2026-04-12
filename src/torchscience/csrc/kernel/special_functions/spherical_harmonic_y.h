@@ -39,7 +39,7 @@ namespace detail {
 // Includes Condon-Shortley phase (-1)^m.
 // Assumes m >= 0, l >= m.
 template <typename T>
-T associated_legendre_p(int l, int m, T x) {
+C10_HOST_DEVICE T associated_legendre_p(int l, int m, T x) {
   // Seed: P_m^m(x) = (-1)^m * (2m-1)!! * (1 - x^2)^(m/2)
   T pmm = T(1);
   if (m > 0) {
@@ -75,7 +75,7 @@ T associated_legendre_p(int l, int m, T x) {
 
 // Compute normalization factor N_l^m = sqrt((2l+1)/(4*pi) * (l-m)!/(l+m)!)
 template <typename T>
-T normalization(int l, int m) {
+C10_HOST_DEVICE T normalization(int l, int m) {
   // Compute (l-m)!/(l+m)! iteratively to avoid overflow
   T ratio = T(1);
   for (int i = l - m + 1; i <= l + m; i++) {
@@ -90,7 +90,7 @@ T normalization(int l, int m) {
 // For the real-type dispatch path, computes N * P_l^m(cos(theta)) * cos(m*phi)
 // (or sin(|m|*phi) for negative m)
 template <typename T>
-T spherical_harmonic_y(T l, T m, T theta, T phi) {
+C10_HOST_DEVICE T spherical_harmonic_y(T l, T m, T theta, T phi) {
   int l_int = static_cast<int>(l);
   int m_int = static_cast<int>(m);
   int abs_m = std::abs(m_int);
@@ -118,7 +118,7 @@ T spherical_harmonic_y(T l, T m, T theta, T phi) {
 // Y_l^m = N_l^m * P_l^|m|(cos(theta)) * exp(i*m*phi)
 // For negative m: Y_l^{-|m|} = (-1)^m * conj(Y_l^{|m|})
 template <typename T>
-c10::complex<T> spherical_harmonic_y(
+C10_HOST_DEVICE c10::complex<T> spherical_harmonic_y(
     c10::complex<T> l, c10::complex<T> m,
     c10::complex<T> theta, c10::complex<T> phi) {
   int l_int = static_cast<int>(l.real());

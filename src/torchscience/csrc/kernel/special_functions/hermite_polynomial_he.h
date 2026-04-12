@@ -16,7 +16,7 @@ namespace torchscience::kernel::special_functions {
 //
 // Applications: probability theory, Gaussian integrals, Edgeworth expansion
 template <typename T>
-T hermite_polynomial_he(T n, T z) {
+C10_HOST_DEVICE T hermite_polynomial_he(T n, T z) {
   const T sqrt_2 = std::sqrt(T(2));
   T scale = std::pow(T(2), -n / T(2));
   return scale * hermite_polynomial_h(n, z / sqrt_2);

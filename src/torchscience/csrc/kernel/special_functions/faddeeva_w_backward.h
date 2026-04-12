@@ -24,7 +24,7 @@ struct faddeeva_backward_constants {
 // Complex backward: PyTorch expects grad * conj(d/dz w(z)) for holomorphic functions
 // This handles both y.real.backward() (grad=1+0j) and y.imag.backward() (grad=0+1j)
 template <typename T>
-c10::complex<T> faddeeva_w_backward(c10::complex<T> gradient, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> faddeeva_w_backward(c10::complex<T> gradient, c10::complex<T> z) {
   c10::complex<T> w_z = faddeeva_w(z);
 
   // d/dz w(z) = -2*z*w(z) + 2i/sqrt(pi)

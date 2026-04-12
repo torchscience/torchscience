@@ -8,7 +8,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T> log_gamma_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T> log_gamma_backward_backward(
   T gradient_gradient,
   T gradient,
   T z
@@ -20,7 +20,7 @@ std::tuple<T, T> log_gamma_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> log_gamma_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> log_gamma_backward_backward(
   c10::complex<T> gradient_gradient,
   c10::complex<T> gradient,
   c10::complex<T> z

@@ -17,7 +17,7 @@ namespace detail {
 //            = y - (erfc(y) - x) * (-sqrt(pi)/2) * exp(y^2)
 //            = y + (erfc(y) - x) * sqrt(pi)/2 * exp(y^2)
 template <typename T>
-T erfcinv_newton_refine(T x, T y) {
+C10_HOST_DEVICE T erfcinv_newton_refine(T x, T y) {
   const T sqrt_pi_over_2 = static_cast<T>(0.8862269254527580136490837416705725914);
 
   // Compute erfc(y) using std::erfc
@@ -33,7 +33,7 @@ T erfcinv_newton_refine(T x, T y) {
 // For small x: erfcinv(x) ~ sqrt(-log(x * sqrt(pi)))
 // with higher-order corrections
 template <typename T>
-T erfcinv_asymptotic(T x) {
+C10_HOST_DEVICE T erfcinv_asymptotic(T x) {
   const T sqrt_pi = static_cast<T>(1.7724538509055160272981674833411451828);
 
   // Initial guess: erfcinv(x) ~ sqrt(-log(x * sqrt(pi)))
@@ -65,7 +65,7 @@ T erfcinv_asymptotic(T x) {
 //
 // Relation to erfinv: erfcinv(x) = erfinv(1 - x)
 template <typename T>
-T erfcinv(T x) {
+C10_HOST_DEVICE T erfcinv(T x) {
   // Handle special cases
   if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();

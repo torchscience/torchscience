@@ -22,7 +22,7 @@ namespace torchscience::kernel::special_functions {
 // - At m = 1: dK/dm -> infinity (singularity)
 
 template <typename T>
-T complete_legendre_elliptic_integral_k_backward(T gradient, T m) {
+C10_HOST_DEVICE T complete_legendre_elliptic_integral_k_backward(T gradient, T m) {
     const T eps = std::numeric_limits<T>::epsilon();
 
     // Handle the m = 0 case with the known limit
@@ -53,7 +53,7 @@ T complete_legendre_elliptic_integral_k_backward(T gradient, T m) {
 }
 
 template <typename T>
-c10::complex<T> complete_legendre_elliptic_integral_k_backward(
+C10_HOST_DEVICE c10::complex<T> complete_legendre_elliptic_integral_k_backward(
     c10::complex<T> gradient,
     c10::complex<T> m
 ) {

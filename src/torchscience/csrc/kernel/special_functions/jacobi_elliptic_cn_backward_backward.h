@@ -22,7 +22,7 @@ namespace detail {
 // Compute d(dcn/du)/du = d(-sn * dn)/du = -cn * dn^2 - m * sn^2 * cn / dn
 // But we use numerical differentiation for robustness
 template <typename T>
-T jacobi_elliptic_cn_d2u(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_cn_d2u(T u, T m) {
     const T h = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(static_cast<T>(std::abs(u)), T(1));
 
     // Central difference for d(dcn/du)/du
@@ -36,7 +36,7 @@ T jacobi_elliptic_cn_d2u(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_cn_d2u(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_cn_d2u(c10::complex<T> u, c10::complex<T> m) {
     const T h = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(static_cast<T>(std::abs(u)), T(1));
     c10::complex<T> ch(h, T(0));
 
@@ -51,7 +51,7 @@ c10::complex<T> jacobi_elliptic_cn_d2u(c10::complex<T> u, c10::complex<T> m) {
 
 // Compute d(dcn/du)/dm using numerical differentiation
 template <typename T>
-T jacobi_elliptic_cn_du_dm(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_cn_du_dm(T u, T m) {
     const T h = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(static_cast<T>(std::abs(m)), T(1));
 
     // Handle boundary cases
@@ -78,7 +78,7 @@ T jacobi_elliptic_cn_du_dm(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_cn_du_dm(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_cn_du_dm(c10::complex<T> u, c10::complex<T> m) {
     const T h = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(static_cast<T>(std::abs(m)), T(1));
     c10::complex<T> ch(h, T(0));
 
@@ -93,7 +93,7 @@ c10::complex<T> jacobi_elliptic_cn_du_dm(c10::complex<T> u, c10::complex<T> m) {
 
 // Compute d(dcn/dm)/dm using numerical differentiation
 template <typename T>
-T jacobi_elliptic_cn_d2m(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_cn_d2m(T u, T m) {
     const T h = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(static_cast<T>(std::abs(m)), T(1));
 
     // Handle boundary cases
@@ -117,7 +117,7 @@ T jacobi_elliptic_cn_d2m(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_cn_d2m(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_cn_d2m(c10::complex<T> u, c10::complex<T> m) {
     const T h = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(static_cast<T>(std::abs(m)), T(1));
     c10::complex<T> ch(h, T(0));
 
@@ -129,7 +129,7 @@ c10::complex<T> jacobi_elliptic_cn_d2m(c10::complex<T> u, c10::complex<T> m) {
 
 // Compute d(dcn/dm)/du using numerical differentiation
 template <typename T>
-T jacobi_elliptic_cn_dm_du(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_cn_dm_du(T u, T m) {
     const T h = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(static_cast<T>(std::abs(u)), T(1));
 
     T dcn_dm_plus = jacobi_elliptic_cn_dm(u + h, m);
@@ -139,7 +139,7 @@ T jacobi_elliptic_cn_dm_du(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_cn_dm_du(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_cn_dm_du(c10::complex<T> u, c10::complex<T> m) {
     const T h = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(static_cast<T>(std::abs(u)), T(1));
     c10::complex<T> ch(h, T(0));
 
@@ -152,7 +152,7 @@ c10::complex<T> jacobi_elliptic_cn_dm_du(c10::complex<T> u, c10::complex<T> m) {
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T, T> jacobi_elliptic_cn_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> jacobi_elliptic_cn_backward_backward(
     T gg_u,
     T gg_m,
     T gradient,
@@ -189,7 +189,7 @@ std::tuple<T, T, T> jacobi_elliptic_cn_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 jacobi_elliptic_cn_backward_backward(
     c10::complex<T> gg_u,
     c10::complex<T> gg_m,

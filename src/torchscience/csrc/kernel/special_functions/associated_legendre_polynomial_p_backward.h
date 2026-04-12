@@ -19,7 +19,7 @@ namespace torchscience::kernel::special_functions {
 // Singularity at x = +/-1 handled by clamping x away from endpoints.
 
 template <typename T>
-std::tuple<T, T, T> associated_legendre_polynomial_p_backward(T gradient, T n, T m, T x) {
+C10_HOST_DEVICE std::tuple<T, T, T> associated_legendre_polynomial_p_backward(T gradient, T n, T m, T x) {
   int n_int = static_cast<int>(n);
   int m_int = static_cast<int>(m);
   int abs_m = std::abs(m_int);
@@ -56,7 +56,7 @@ std::tuple<T, T, T> associated_legendre_polynomial_p_backward(T gradient, T n, T
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 associated_legendre_polynomial_p_backward(c10::complex<T> gradient, c10::complex<T> n, c10::complex<T> m, c10::complex<T> x) {
   // Compute gradient using real arithmetic
   auto [gn_r, gm_r, gx_r] = associated_legendre_polynomial_p_backward(T(1), n.real(), m.real(), x.real());

@@ -37,14 +37,14 @@ namespace torchscience::kernel::special_functions {
 // - dc(u + 4K(m), m) = dc(u, m)
 
 template <typename T>
-T jacobi_elliptic_dc(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_dc(T u, T m) {
     T dn = jacobi_elliptic_dn(u, m);
     T cn = jacobi_elliptic_cn(u, m);
     return dn / cn;
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_dc(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_dc(c10::complex<T> u, c10::complex<T> m) {
     c10::complex<T> dn = jacobi_elliptic_dn(u, m);
     c10::complex<T> cn = jacobi_elliptic_cn(u, m);
     return dn / cn;

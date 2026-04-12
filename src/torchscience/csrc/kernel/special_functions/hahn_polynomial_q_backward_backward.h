@@ -12,7 +12,7 @@ namespace torchscience::kernel::special_functions {
 //
 // All derivatives computed via finite differences.
 template <typename T>
-std::tuple<T, T, T, T, T, T> hahn_polynomial_q_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T, T, T> hahn_polynomial_q_backward_backward(
     T gradient_gradient_n,
     T gradient_gradient_x,
     T gradient_gradient_alpha,
@@ -87,7 +87,7 @@ std::tuple<T, T, T, T, T, T> hahn_polynomial_q_backward_backward(
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>,
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>,
            c10::complex<T>, c10::complex<T>, c10::complex<T>>
 hahn_polynomial_q_backward_backward(
     c10::complex<T> gradient_gradient_n,

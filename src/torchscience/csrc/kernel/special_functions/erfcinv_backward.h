@@ -17,7 +17,7 @@ namespace torchscience::kernel::special_functions {
 // This derivative is always negative (erfcinv is monotonically decreasing)
 // and its magnitude grows rapidly as x -> 0 or x -> 2
 template <typename T>
-T erfcinv_backward(T gradient, T x) {
+C10_HOST_DEVICE T erfcinv_backward(T gradient, T x) {
   const T neg_sqrt_pi_over_2 = static_cast<T>(-0.8862269254527580136490837416705725914);
 
   T y = erfcinv(x);

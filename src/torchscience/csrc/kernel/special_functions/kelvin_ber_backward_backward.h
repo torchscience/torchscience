@@ -18,7 +18,7 @@ namespace detail {
 //          = sum_{n=1}^inf (-1)^n * n * (4n-1) / ((2n)!)^2 * (x/2)^(4n-2)
 
 template <typename T>
-T kelvin_ber_second_derivative(T x) {
+C10_HOST_DEVICE T kelvin_ber_second_derivative(T x) {
     if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
@@ -89,7 +89,7 @@ T kelvin_ber_second_derivative(T x) {
 // Real backward_backward
 // Returns gradients for (grad_output, x)
 template <typename T>
-std::tuple<T, T> kelvin_ber_backward_backward(T gg_x, T grad_output, T x) {
+C10_HOST_DEVICE std::tuple<T, T> kelvin_ber_backward_backward(T gg_x, T grad_output, T x) {
     T first_deriv = detail::kelvin_ber_derivative(x);
     T second_deriv = detail::kelvin_ber_second_derivative(x);
 
@@ -104,7 +104,7 @@ std::tuple<T, T> kelvin_ber_backward_backward(T gg_x, T grad_output, T x) {
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> kelvin_ber_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> kelvin_ber_backward_backward(
     c10::complex<T> gg_x, c10::complex<T> grad_output, c10::complex<T> x) {
 
     // Compute first derivative using power series

@@ -13,7 +13,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T polygamma_general(int n, T z) {
+C10_HOST_DEVICE T polygamma_general(int n, T z) {
   if (!cmath_compat::isfinite(z)) {
     if (cmath_compat::isnan(z)) {
       return std::numeric_limits<T>::quiet_NaN();
@@ -66,7 +66,7 @@ T polygamma_general(int n, T z) {
 }
 
 template <typename T>
-T polygamma(T n, T z) {
+C10_HOST_DEVICE T polygamma(T n, T z) {
   int order = static_cast<int>(n);
 
   if (order < 0) {
@@ -88,7 +88,7 @@ T polygamma(T n, T z) {
 }
 
 template <typename T>
-c10::complex<T> polygamma_general(int n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> polygamma_general(int n, c10::complex<T> z) {
   if (!cmath_compat::isfinite(z.real()) || !cmath_compat::isfinite(z.imag())) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(), std::numeric_limits<T>::quiet_NaN());
   }
@@ -135,7 +135,7 @@ c10::complex<T> polygamma_general(int n, c10::complex<T> z) {
 }
 
 template <typename T>
-c10::complex<T> polygamma(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> polygamma(c10::complex<T> n, c10::complex<T> z) {
   // For complex n, only integer values are valid
   int order = static_cast<int>(n.real());
 

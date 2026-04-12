@@ -15,7 +15,7 @@ namespace torchscience::kernel::special_functions {
 // grad_k = 0 (k is discrete, no gradient)
 // grad_z = g * W(z) / (z * (1 + W(z)))
 template <typename T>
-std::tuple<T, T> lambert_w_backward(T gradient, T k, T z) {
+C10_HOST_DEVICE std::tuple<T, T> lambert_w_backward(T gradient, T k, T z) {
   // k is a branch index parameter - no gradient with respect to it
   T grad_k = T(0);
 
@@ -46,7 +46,7 @@ std::tuple<T, T> lambert_w_backward(T gradient, T k, T z) {
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> lambert_w_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> lambert_w_backward(
     c10::complex<T> gradient,
     c10::complex<T> k,
     c10::complex<T> z) {

@@ -13,7 +13,7 @@ namespace torchscience::kernel::special_functions {
 // First derivative: d/dz K_0(z) = -K_1(z)
 // Second derivative: d^2/dz^2 K_0(z) = -d/dz K_1(z) = -(-K_0(z) - K_1(z)/z) = K_0(z) + K_1(z)/z
 template <typename T>
-std::tuple<T, T> modified_bessel_k_0_backward_backward(T gg_z, T grad_output, T z) {
+C10_HOST_DEVICE std::tuple<T, T> modified_bessel_k_0_backward_backward(T gg_z, T grad_output, T z) {
     // K_0 is only defined for z > 0
     if (z <= T(0)) {
         return {std::numeric_limits<T>::quiet_NaN(), std::numeric_limits<T>::quiet_NaN()};
@@ -45,7 +45,7 @@ std::tuple<T, T> modified_bessel_k_0_backward_backward(T gg_z, T grad_output, T 
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> modified_bessel_k_0_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> modified_bessel_k_0_backward_backward(
     c10::complex<T> gg_z, c10::complex<T> grad_output, c10::complex<T> z) {
     c10::complex<T> k0 = modified_bessel_k_0(z);
     c10::complex<T> k1 = modified_bessel_k_1(z);

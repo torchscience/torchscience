@@ -14,7 +14,7 @@ namespace detail {
 // Compute polylogarithm Li_s(z) using series expansion for |z| <= 1
 // Li_s(z) = sum_{k=1}^inf z^k / k^s
 template <typename T>
-T polylogarithm_series(T s, T z, int max_terms = 100) {
+C10_HOST_DEVICE T polylogarithm_series(T s, T z, int max_terms = 100) {
   if (z == T(0)) {
     return T(0);
   }
@@ -39,7 +39,7 @@ T polylogarithm_series(T s, T z, int max_terms = 100) {
 }
 
 template <typename T>
-c10::complex<T> polylogarithm_series(c10::complex<T> s, c10::complex<T> z, int max_terms = 100) {
+C10_HOST_DEVICE c10::complex<T> polylogarithm_series(c10::complex<T> s, c10::complex<T> z, int max_terms = 100) {
   c10::complex<T> zero(T(0), T(0));
   if (std::abs(z) < std::numeric_limits<T>::epsilon()) {
     return zero;
@@ -67,7 +67,7 @@ c10::complex<T> polylogarithm_series(c10::complex<T> s, c10::complex<T> z, int m
 // This implements a faster converging series using the transformation
 // Li_s(z) = sum_{k=0}^{n-1} (-1)^k * (z/(z-1))^(k+1) / (k+1)^s + sum correction terms
 template <typename T>
-T polylogarithm_borwein(T s, T z, int n_terms = 50) {
+C10_HOST_DEVICE T polylogarithm_borwein(T s, T z, int n_terms = 50) {
   // Special case: z = 1 is zeta(s) for s > 1, infinity for s <= 1
   if (z == T(1)) {
     // Use the zeta function from zeta.h
@@ -86,7 +86,7 @@ T polylogarithm_borwein(T s, T z, int n_terms = 50) {
 }
 
 template <typename T>
-c10::complex<T> polylogarithm_borwein(c10::complex<T> s, c10::complex<T> z, int n_terms = 50) {
+C10_HOST_DEVICE c10::complex<T> polylogarithm_borwein(c10::complex<T> s, c10::complex<T> z, int n_terms = 50) {
   c10::complex<T> one(T(1), T(0));
 
   // Special case: z = 1
@@ -109,7 +109,7 @@ c10::complex<T> polylogarithm_borwein(c10::complex<T> s, c10::complex<T> z, int 
 // Domain: |z| <= 1 (principal branch)
 // For |z| > 1, we use analytic continuation via inversion formula
 template <typename T>
-T polylogarithm_li(T s, T z) {
+C10_HOST_DEVICE T polylogarithm_li(T s, T z) {
   // Handle special cases
   if (cmath_compat::isnan(s) || cmath_compat::isnan(z)) {
     return std::numeric_limits<T>::quiet_NaN();
@@ -140,7 +140,7 @@ T polylogarithm_li(T s, T z) {
 }
 
 template <typename T>
-c10::complex<T> polylogarithm_li(c10::complex<T> s, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> polylogarithm_li(c10::complex<T> s, c10::complex<T> z) {
   // Handle special cases
   if (cmath_compat::isnan(s.real()) || cmath_compat::isnan(s.imag()) ||
       cmath_compat::isnan(z.real()) || cmath_compat::isnan(z.imag())) {

@@ -90,7 +90,7 @@ constexpr double J0_PIO4 = 0.78539816339744830961566;    // pi/4
 } // namespace detail
 
 template <typename T>
-T bessel_j_0(T z) {
+C10_HOST_DEVICE T bessel_j_0(T z) {
     // Handle special values
     if (cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -134,7 +134,7 @@ T bessel_j_0(T z) {
 // For complex z far from the real axis, accuracy should be verified empirically.
 // J₀ satisfies the even function property: J₀(-z) = J₀(z)
 template <typename T>
-c10::complex<T> bessel_j_0(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_j_0(c10::complex<T> z) {
     T mag = std::abs(z);
 
     if (mag <= T(5.0)) {

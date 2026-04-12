@@ -14,7 +14,7 @@ namespace detail {
 // The analytical formula is complex, involving integrals and digamma functions.
 // For practical purposes, we use a numerical approximation.
 template <typename T>
-T bessel_y_n_derivative(T n, T z) {
+C10_HOST_DEVICE T bessel_y_n_derivative(T n, T z) {
     const T eps = std::sqrt(bessel_y_eps<T>());
 
     // Central difference approximation
@@ -28,7 +28,7 @@ T bessel_y_n_derivative(T n, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> bessel_y_n_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_y_n_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::sqrt(bessel_y_eps<T>());
     const c10::complex<T> h_c(eps, T(0));
 
@@ -48,7 +48,7 @@ c10::complex<T> bessel_y_n_derivative(c10::complex<T> n, c10::complex<T> z) {
 // d/dz Y_n(z) = (Y_{n-1}(z) - Y_{n+1}(z)) / 2
 // d/dn Y_n(z) computed numerically
 template <typename T>
-std::tuple<T, T> bessel_y_backward(T grad_output, T n, T z) {
+C10_HOST_DEVICE std::tuple<T, T> bessel_y_backward(T grad_output, T n, T z) {
     // Gradient w.r.t. z: d/dz Y_n(z) = (Y_{n-1}(z) - Y_{n+1}(z)) / 2
     T y_nm1 = bessel_y(n - T(1), z);
     T y_np1 = bessel_y(n + T(1), z);
@@ -63,7 +63,7 @@ std::tuple<T, T> bessel_y_backward(T grad_output, T n, T z) {
 
 // Complex backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> bessel_y_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> bessel_y_backward(
     c10::complex<T> grad_output,
     c10::complex<T> n,
     c10::complex<T> z

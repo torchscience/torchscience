@@ -102,7 +102,7 @@ constexpr double BIP_MACHEP = 1.11022302462515654042e-16;  // 2^-53
 
 // Compute Bi'(x) - the derivative of the Airy function of the second kind
 template <typename T>
-T airy_bi_prime(T x) {
+C10_HOST_DEVICE T airy_bi_prime(T x) {
     // Handle special values
     if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -206,7 +206,7 @@ T airy_bi_prime(T x) {
 
 // Complex version of Bi'(z)
 template <typename T>
-c10::complex<T> airy_bi_prime(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> airy_bi_prime(c10::complex<T> z) {
     T re = z.real();
     T im = z.imag();
 
@@ -249,13 +249,13 @@ c10::complex<T> airy_bi_prime(c10::complex<T> z) {
 
 // Backward pass for airy_bi: d/dx Bi(x) = Bi'(x)
 template <typename T>
-T airy_bi_backward(T grad_output, T x) {
+C10_HOST_DEVICE T airy_bi_backward(T grad_output, T x) {
     return grad_output * airy_bi_prime(x);
 }
 
 // Complex backward
 template <typename T>
-c10::complex<T> airy_bi_backward(c10::complex<T> grad_output, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> airy_bi_backward(c10::complex<T> grad_output, c10::complex<T> z) {
     c10::complex<T> bip = airy_bi_prime(z);
     return grad_output * std::conj(bip);
 }

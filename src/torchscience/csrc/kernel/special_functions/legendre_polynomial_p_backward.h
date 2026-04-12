@@ -18,7 +18,7 @@ namespace torchscience::kernel::special_functions {
 // dP/dn: Computed via finite differences since the analytical formula involves
 //   derivatives of hypergeometric functions with respect to parameters
 template <typename T>
-std::tuple<T, T> legendre_polynomial_p_backward(T gradient, T n, T z) {
+C10_HOST_DEVICE std::tuple<T, T> legendre_polynomial_p_backward(T gradient, T n, T z) {
   T c = T(1);
   T w = (T(1) - z) / T(2);
 

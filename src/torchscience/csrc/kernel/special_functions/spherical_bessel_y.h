@@ -17,25 +17,25 @@ namespace detail {
 
 // Tolerance constants for spherical_bessel_y
 template <typename T>
-constexpr T spherical_bessel_y_eps();
+C10_HOST_DEVICE constexpr T spherical_bessel_y_eps();
 
 template <>
-constexpr float spherical_bessel_y_eps<float>() { return 1e-6f; }
+C10_HOST_DEVICE constexpr float spherical_bessel_y_eps<float>() { return 1e-6f; }
 
 template <>
-constexpr double spherical_bessel_y_eps<double>() { return 1e-12; }
+C10_HOST_DEVICE constexpr double spherical_bessel_y_eps<double>() { return 1e-12; }
 
 template <>
-inline c10::Half spherical_bessel_y_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half spherical_bessel_y_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 spherical_bessel_y_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 spherical_bessel_y_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 // Forward recurrence for spherical Bessel functions of the second kind
 // y_{n+1}(z) = (2n+1)/z * y_n(z) - y_{n-1}(z)
 // Forward recurrence is stable for y_n (unlike j_n)
 template <typename T>
-T spherical_bessel_y_forward_recurrence(int n_int, T z) {
+C10_HOST_DEVICE T spherical_bessel_y_forward_recurrence(int n_int, T z) {
     if (n_int == 0) return spherical_bessel_y_0(z);
     if (n_int == 1) return spherical_bessel_y_1(z);
 
@@ -53,7 +53,7 @@ T spherical_bessel_y_forward_recurrence(int n_int, T z) {
 
 // Complex forward recurrence
 template <typename T>
-c10::complex<T> spherical_bessel_y_forward_recurrence(int n_int, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_y_forward_recurrence(int n_int, c10::complex<T> z) {
     if (n_int == 0) return spherical_bessel_y_0(z);
     if (n_int == 1) return spherical_bessel_y_1(z);
 
@@ -75,7 +75,7 @@ c10::complex<T> spherical_bessel_y_forward_recurrence(int n_int, c10::complex<T>
 // Spherical Bessel function of the second kind of general order n
 // y_n(z) = sqrt(pi/2z) * Y_{n+1/2}(z)
 template <typename T>
-T spherical_bessel_y(T n, T z) {
+C10_HOST_DEVICE T spherical_bessel_y(T n, T z) {
     // Handle special values
     if (cmath_compat::isnan(n) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -132,7 +132,7 @@ T spherical_bessel_y(T n, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> spherical_bessel_y(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_y(c10::complex<T> n, c10::complex<T> z) {
     const T eps = detail::spherical_bessel_y_eps<T>();
     const c10::complex<T> one(T(1), T(0));
     const c10::complex<T> zero(T(0), T(0));

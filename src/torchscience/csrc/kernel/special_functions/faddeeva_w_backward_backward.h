@@ -26,7 +26,7 @@ struct faddeeva_second_deriv_constants {
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> faddeeva_w_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> faddeeva_w_backward_backward(
     c10::complex<T> gradient_gradient,
     c10::complex<T> gradient,
     c10::complex<T> z

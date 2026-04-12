@@ -17,19 +17,19 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-constexpr T gauss_kronrod_eps();
+C10_HOST_DEVICE constexpr T gauss_kronrod_eps();
 
 template <>
-constexpr float gauss_kronrod_eps<float>() { return 1e-6f; }
+C10_HOST_DEVICE constexpr float gauss_kronrod_eps<float>() { return 1e-6f; }
 
 template <>
-constexpr double gauss_kronrod_eps<double>() { return 1e-12; }
+C10_HOST_DEVICE constexpr double gauss_kronrod_eps<double>() { return 1e-12; }
 
 template <>
-inline c10::Half gauss_kronrod_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half gauss_kronrod_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 gauss_kronrod_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 gauss_kronrod_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 template <typename T>
 struct GaussKronrodNodes15 {
@@ -86,7 +86,7 @@ struct GaussKronrodNodes15 {
 };
 
 template <typename T, typename F>
-std::pair<T, T> gauss_kronrod_15(F f, T lower, T upper) {
+C10_HOST_DEVICE std::pair<T, T> gauss_kronrod_15(F f, T lower, T upper) {
   T center = (upper + lower) / T(2);
   T half_length = (upper - lower) / T(2);
 
@@ -113,7 +113,7 @@ std::pair<T, T> gauss_kronrod_15(F f, T lower, T upper) {
 }
 
 template <typename T, typename F>
-T adaptive_integrate(F f, T lower, T upper, T tol, int max_depth) {
+C10_HOST_DEVICE T adaptive_integrate(F f, T lower, T upper, T tol, int max_depth) {
   auto [result, error] = gauss_kronrod_15<T>(f, lower, upper);
 
   if (error < tol || max_depth <= 0) {
@@ -128,7 +128,7 @@ T adaptive_integrate(F f, T lower, T upper, T tol, int max_depth) {
 }
 
 template <typename T>
-T log_weighted_beta_integral(T x, T a, T b, bool weight_log_t) {
+C10_HOST_DEVICE T log_weighted_beta_integral(T x, T a, T b, bool weight_log_t) {
   if (x <= T(0)) return T(0);
 
   T log_beta_val = log_gamma(a) + log_gamma(b) - log_gamma(a + b);
@@ -230,7 +230,7 @@ T log_weighted_beta_integral(T x, T a, T b, bool weight_log_t) {
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T, T> incomplete_beta_backward(T gradient, T x, T a, T b) {
+C10_HOST_DEVICE std::tuple<T, T, T> incomplete_beta_backward(T gradient, T x, T a, T b) {
   if (x <= T(0) || x >= T(1)) {
     return {T(0), T(0), T(0)};
   }
@@ -299,7 +299,7 @@ std::tuple<T, T, T> incomplete_beta_backward(T gradient, T x, T a, T b) {
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> incomplete_beta_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> incomplete_beta_backward(
     c10::complex<T> gradient,
     c10::complex<T> x,
     c10::complex<T> a,

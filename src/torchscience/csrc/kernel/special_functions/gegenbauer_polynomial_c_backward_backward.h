@@ -12,7 +12,7 @@ namespace torchscience::kernel::special_functions {
 //
 // d^2C/dz^2 = 4*lambda*(lambda+1) * C_{n-2}^{lambda+2}(z)
 template <typename T>
-std::tuple<T, T, T, T> gegenbauer_polynomial_c_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T> gegenbauer_polynomial_c_backward_backward(
     T gradient_gradient_n,
     T gradient_gradient_lambda,
     T gradient_gradient_z,
@@ -74,7 +74,7 @@ std::tuple<T, T, T, T> gegenbauer_polynomial_c_backward_backward(
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
 gegenbauer_polynomial_c_backward_backward(
     c10::complex<T> gradient_gradient_n,
     c10::complex<T> gradient_gradient_lambda,

@@ -11,7 +11,7 @@ namespace torchscience::kernel::special_functions {
 // Q(a, x) = Gamma(a, x) / Gamma(a) where Gamma(a, x) is the upper incomplete gamma
 
 template <typename T>
-T regularized_gamma_q(T a, T x) {
+C10_HOST_DEVICE T regularized_gamma_q(T a, T x) {
   if (x < T(0) || a <= T(0)) {
     return std::numeric_limits<T>::quiet_NaN();
   }

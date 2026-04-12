@@ -13,7 +13,7 @@ namespace detail {
 
 // Second derivative d²V/da²
 template <typename T>
-T parabolic_cylinder_v_aa_derivative(T a, T z) {
+C10_HOST_DEVICE T parabolic_cylinder_v_aa_derivative(T a, T z) {
     const T eps = std::cbrt(pcf_eps<T>());
     T h = eps * (std::abs(a) > T(1) ? std::abs(a) : T(1));
 
@@ -27,14 +27,14 @@ T parabolic_cylinder_v_aa_derivative(T a, T z) {
 // Second derivative d²V/dz²
 // From differential equation: V''(a,z) = (z²/4 + a) * V(a,z)
 template <typename T>
-T parabolic_cylinder_v_zz_derivative(T a, T z) {
+C10_HOST_DEVICE T parabolic_cylinder_v_zz_derivative(T a, T z) {
     T v = parabolic_cylinder_v(a, z);
     return (z * z / T(4) + a) * v;
 }
 
 // Mixed second derivative d²V/dadz
 template <typename T>
-T parabolic_cylinder_v_az_derivative(T a, T z) {
+C10_HOST_DEVICE T parabolic_cylinder_v_az_derivative(T a, T z) {
     const T eps = std::sqrt(pcf_eps<T>());
     T h = eps * (std::abs(a) > T(1) ? std::abs(a) : T(1));
 
@@ -46,7 +46,7 @@ T parabolic_cylinder_v_az_derivative(T a, T z) {
 
 // Complex versions
 template <typename T>
-c10::complex<T> parabolic_cylinder_v_aa_derivative(c10::complex<T> a, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> parabolic_cylinder_v_aa_derivative(c10::complex<T> a, c10::complex<T> z) {
     const T eps = std::cbrt(pcf_eps<T>());
     T a_mag = std::abs(a);
     c10::complex<T> h(eps * (a_mag > T(1) ? a_mag : T(1)), T(0));
@@ -59,13 +59,13 @@ c10::complex<T> parabolic_cylinder_v_aa_derivative(c10::complex<T> a, c10::compl
 }
 
 template <typename T>
-c10::complex<T> parabolic_cylinder_v_zz_derivative(c10::complex<T> a, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> parabolic_cylinder_v_zz_derivative(c10::complex<T> a, c10::complex<T> z) {
     c10::complex<T> v = parabolic_cylinder_v(a, z);
     return (z * z / c10::complex<T>(T(4), T(0)) + a) * v;
 }
 
 template <typename T>
-c10::complex<T> parabolic_cylinder_v_az_derivative(c10::complex<T> a, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> parabolic_cylinder_v_az_derivative(c10::complex<T> a, c10::complex<T> z) {
     const T eps = std::sqrt(pcf_eps<T>());
     T a_mag = std::abs(a);
     c10::complex<T> h(eps * (a_mag > T(1) ? a_mag : T(1)), T(0));
@@ -80,7 +80,7 @@ c10::complex<T> parabolic_cylinder_v_az_derivative(c10::complex<T> a, c10::compl
 
 // Real backward_backward: returns (grad_grad_output, grad_a, grad_z)
 template <typename T>
-std::tuple<T, T, T> parabolic_cylinder_v_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> parabolic_cylinder_v_backward_backward(
     T gg_a,
     T gg_z,
     T grad_output,
@@ -103,7 +103,7 @@ std::tuple<T, T, T> parabolic_cylinder_v_backward_backward(
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> parabolic_cylinder_v_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> parabolic_cylinder_v_backward_backward(
     c10::complex<T> gg_a,
     c10::complex<T> gg_z,
     c10::complex<T> grad_output,

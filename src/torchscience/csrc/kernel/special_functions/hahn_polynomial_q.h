@@ -49,7 +49,7 @@ namespace detail {
 
 // Pochhammer symbol (rising factorial) (a)_k = a(a+1)(a+2)...(a+k-1)
 template <typename T>
-T hahn_pochhammer(T a, int k) {
+C10_HOST_DEVICE T hahn_pochhammer(T a, int k) {
   if (k <= 0) return T(1);
   T result = T(1);
   for (int i = 0; i < k; ++i) {
@@ -60,7 +60,7 @@ T hahn_pochhammer(T a, int k) {
 
 // Complex version of Pochhammer
 template <typename T>
-c10::complex<T> hahn_pochhammer(c10::complex<T> a, int k) {
+C10_HOST_DEVICE c10::complex<T> hahn_pochhammer(c10::complex<T> a, int k) {
   if (k <= 0) return c10::complex<T>(T(1), T(0));
   c10::complex<T> result(T(1), T(0));
   for (int i = 0; i < k; ++i) {
@@ -71,7 +71,7 @@ c10::complex<T> hahn_pochhammer(c10::complex<T> a, int k) {
 
 // Factorial helper
 template <typename T>
-T hahn_factorial(int k) {
+C10_HOST_DEVICE T hahn_factorial(int k) {
   if (k <= 0) return T(1);
   T result = T(1);
   for (int i = 2; i <= k; ++i) {
@@ -83,7 +83,7 @@ T hahn_factorial(int k) {
 } // namespace detail
 
 template <typename T>
-T hahn_polynomial_q(T n, T x, T alpha, T beta, T N) {
+C10_HOST_DEVICE T hahn_polynomial_q(T n, T x, T alpha, T beta, T N) {
   // Guard against non-finite inputs to avoid infinite loops
   if (!cmath_compat::isfinite(n) || !cmath_compat::isfinite(x) || !cmath_compat::isfinite(alpha) ||
       !cmath_compat::isfinite(beta) || !cmath_compat::isfinite(N)) {
@@ -131,7 +131,7 @@ T hahn_polynomial_q(T n, T x, T alpha, T beta, T N) {
 
 // Complex version
 template <typename T>
-c10::complex<T> hahn_polynomial_q(
+C10_HOST_DEVICE c10::complex<T> hahn_polynomial_q(
     c10::complex<T> n,
     c10::complex<T> x,
     c10::complex<T> alpha,

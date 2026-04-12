@@ -30,7 +30,7 @@ namespace torchscience::kernel::special_functions {
  * @return Tuple of (grad_grad_output, grad_u, grad_m)
  */
 template <typename T>
-std::tuple<T, T, T> jacobi_amplitude_am_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> jacobi_amplitude_am_backward_backward(
     T gradient_gradient_u,
     T gradient_gradient_m,
     T gradient,
@@ -128,7 +128,7 @@ std::tuple<T, T, T> jacobi_amplitude_am_backward_backward(
  * Complex version of second-order backward pass.
  */
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 jacobi_amplitude_am_backward_backward(
     c10::complex<T> gradient_gradient_u,
     c10::complex<T> gradient_gradient_m,

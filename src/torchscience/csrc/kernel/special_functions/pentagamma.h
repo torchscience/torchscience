@@ -9,7 +9,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T pentagamma(T z) {
+C10_HOST_DEVICE T pentagamma(T z) {
   if (cmath_compat::isnan(z)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
@@ -54,7 +54,7 @@ T pentagamma(T z) {
 }
 
 template <typename T>
-c10::complex<T> pentagamma(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> pentagamma(c10::complex<T> z) {
   if (!cmath_compat::isfinite(z.real()) || !cmath_compat::isfinite(z.imag())) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(), std::numeric_limits<T>::quiet_NaN());
   }

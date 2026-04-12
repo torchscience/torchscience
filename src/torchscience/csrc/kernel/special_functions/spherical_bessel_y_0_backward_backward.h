@@ -14,7 +14,7 @@ namespace torchscience::kernel::special_functions {
 //
 // Expanding: d²/dz² y_0(z) = cos(z)/z - 2*sin(z)/z² - 2*cos(z)/z³
 template <typename T>
-std::tuple<T, T> spherical_bessel_y_0_backward_backward(T gg_z, T grad_output, T z) {
+C10_HOST_DEVICE std::tuple<T, T> spherical_bessel_y_0_backward_backward(T gg_z, T grad_output, T z) {
     // Undefined at z=0
     if (z == T(0)) {
         return {std::numeric_limits<T>::quiet_NaN(), std::numeric_limits<T>::quiet_NaN()};
@@ -36,7 +36,7 @@ std::tuple<T, T> spherical_bessel_y_0_backward_backward(T gg_z, T grad_output, T
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> spherical_bessel_y_0_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> spherical_bessel_y_0_backward_backward(
     c10::complex<T> gg_z, c10::complex<T> grad_output, c10::complex<T> z) {
     // Undefined at z=0
     if (z == c10::complex<T>(T(0), T(0))) {

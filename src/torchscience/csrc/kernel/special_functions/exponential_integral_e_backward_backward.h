@@ -22,7 +22,7 @@ namespace torchscience::kernel::special_functions {
 // - d(grad_x)/d(n) = grad_output * (-d/dn E_{n-1}(x)) = 0 (n discrete)
 // - d(grad_x)/d(x) = grad_output * (-d/dx E_{n-1}(x)) = grad_output * E_{n-2}(x)
 template <typename T>
-std::tuple<T, T, T> exponential_integral_e_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> exponential_integral_e_backward_backward(
     T gg_n,       // upstream gradient for grad_n output
     T gg_x,       // upstream gradient for grad_x output
     T grad_output,
@@ -99,7 +99,7 @@ std::tuple<T, T, T> exponential_integral_e_backward_backward(
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 exponential_integral_e_backward_backward(
     c10::complex<T> gg_n,
     c10::complex<T> gg_z,

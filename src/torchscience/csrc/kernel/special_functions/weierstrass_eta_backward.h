@@ -17,24 +17,24 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-inline T weierstrass_eta_finite_diff_step_backward() {
+C10_HOST_DEVICE inline T weierstrass_eta_finite_diff_step_backward() {
     return std::pow(std::numeric_limits<T>::epsilon(), T(1.0/3.0));
 }
 
 template <>
-inline float weierstrass_eta_finite_diff_step_backward<float>() {
+C10_HOST_DEVICE inline float weierstrass_eta_finite_diff_step_backward<float>() {
     return 1e-4f;
 }
 
 template <>
-inline double weierstrass_eta_finite_diff_step_backward<double>() {
+C10_HOST_DEVICE inline double weierstrass_eta_finite_diff_step_backward<double>() {
     return 1e-7;
 }
 
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T> weierstrass_eta_backward(
+C10_HOST_DEVICE std::tuple<T, T> weierstrass_eta_backward(
     T gradient,
     T g2,
     T g3
@@ -56,7 +56,7 @@ std::tuple<T, T> weierstrass_eta_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> weierstrass_eta_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> weierstrass_eta_backward(
     c10::complex<T> gradient,
     c10::complex<T> g2,
     c10::complex<T> g3

@@ -9,7 +9,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T, T, T, T> hypergeometric_2_f_1_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T, T> hypergeometric_2_f_1_backward_backward(
   T gg_a,
   T gg_b,
   T gg_c,

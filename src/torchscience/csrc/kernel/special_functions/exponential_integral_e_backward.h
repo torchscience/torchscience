@@ -12,7 +12,7 @@ namespace torchscience::kernel::special_functions {
 // d/dx E_n(x) = -E_{n-1}(x)
 // d/dn E_n(x) = 0 (n is discrete, gradient w.r.t. n is zero)
 template <typename T>
-std::tuple<T, T> exponential_integral_e_backward(T grad_output, T n, T x) {
+C10_HOST_DEVICE std::tuple<T, T> exponential_integral_e_backward(T grad_output, T n, T x) {
   const T eps = detail::exponential_integral_e_eps<T>();
 
   // grad_n is always 0 since n is a discrete parameter
@@ -52,7 +52,7 @@ std::tuple<T, T> exponential_integral_e_backward(T grad_output, T n, T x) {
 // d/dz E_n(z) = -E_{n-1}(z)
 // PyTorch convention: grad * conj(d/dz E_n(z)) for Wirtinger derivatives
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> exponential_integral_e_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> exponential_integral_e_backward(
     c10::complex<T> grad_output,
     c10::complex<T> n,
     c10::complex<T> z

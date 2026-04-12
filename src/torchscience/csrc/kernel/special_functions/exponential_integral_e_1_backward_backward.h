@@ -10,7 +10,7 @@ namespace torchscience::kernel::special_functions {
 // d/dx E_1(x) = -e^{-x} / x
 // d^2/dx^2 E_1(x) = e^{-x} * (x + 1) / x^2
 template <typename T>
-std::tuple<T, T> exponential_integral_e_1_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T> exponential_integral_e_1_backward_backward(
   T gradient_gradient,
   T gradient,
   T x
@@ -36,7 +36,7 @@ std::tuple<T, T> exponential_integral_e_1_backward_backward(
 // d/dz E_1(z) = -e^{-z} / z
 // d^2/dz^2 E_1(z) = e^{-z} * (z + 1) / z^2
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> exponential_integral_e_1_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> exponential_integral_e_1_backward_backward(
   c10::complex<T> gradient_gradient,
   c10::complex<T> gradient,
   c10::complex<T> z

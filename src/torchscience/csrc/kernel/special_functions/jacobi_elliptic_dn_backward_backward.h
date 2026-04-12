@@ -30,7 +30,7 @@ namespace detail {
 
 // Compute partial derivatives using finite differences
 template <typename T>
-T compute_d2dn_du2(T u, T m) {
+C10_HOST_DEVICE T compute_d2dn_du2(T u, T m) {
     const T h = std::pow(std::numeric_limits<T>::epsilon(), T(1.0/3.0));
 
     // Central difference: d^2(dn)/du^2 = (dn(u+h) - 2*dn(u) + dn(u-h)) / h^2
@@ -42,7 +42,7 @@ T compute_d2dn_du2(T u, T m) {
 }
 
 template <typename T>
-T compute_d2dn_dm2(T u, T m) {
+C10_HOST_DEVICE T compute_d2dn_dm2(T u, T m) {
     const T h = std::pow(std::numeric_limits<T>::epsilon(), T(1.0/3.0));
     const T eps = std::numeric_limits<T>::epsilon() * T(10);
 
@@ -70,7 +70,7 @@ T compute_d2dn_dm2(T u, T m) {
 }
 
 template <typename T>
-T compute_d2dn_dudm(T u, T m) {
+C10_HOST_DEVICE T compute_d2dn_dudm(T u, T m) {
     const T h = std::pow(std::numeric_limits<T>::epsilon(), T(1.0/4.0));
     const T eps = std::numeric_limits<T>::epsilon() * T(10);
 
@@ -99,7 +99,7 @@ T compute_d2dn_dudm(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> compute_d2dn_du2(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> compute_d2dn_du2(c10::complex<T> u, c10::complex<T> m) {
     const T h = std::pow(std::numeric_limits<T>::epsilon(), T(1.0/3.0));
     c10::complex<T> h_c(h, T(0));
     c10::complex<T> two(T(2), T(0));
@@ -112,7 +112,7 @@ c10::complex<T> compute_d2dn_du2(c10::complex<T> u, c10::complex<T> m) {
 }
 
 template <typename T>
-c10::complex<T> compute_d2dn_dm2(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> compute_d2dn_dm2(c10::complex<T> u, c10::complex<T> m) {
     const T h = std::pow(std::numeric_limits<T>::epsilon(), T(1.0/3.0));
     c10::complex<T> h_c(h, T(0));
     c10::complex<T> two(T(2), T(0));
@@ -125,7 +125,7 @@ c10::complex<T> compute_d2dn_dm2(c10::complex<T> u, c10::complex<T> m) {
 }
 
 template <typename T>
-c10::complex<T> compute_d2dn_dudm(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> compute_d2dn_dudm(c10::complex<T> u, c10::complex<T> m) {
     const T h = std::pow(std::numeric_limits<T>::epsilon(), T(1.0/4.0));
     c10::complex<T> h_c(h, T(0));
     c10::complex<T> four(T(4), T(0));
@@ -140,27 +140,27 @@ c10::complex<T> compute_d2dn_dudm(c10::complex<T> u, c10::complex<T> m) {
 
 // Compute ddn/du
 template <typename T>
-T compute_ddn_du(T u, T m) {
+C10_HOST_DEVICE T compute_ddn_du(T u, T m) {
     auto [grad_u, grad_m] = jacobi_elliptic_dn_backward(T(1), u, m);
     return grad_u;
 }
 
 // Compute ddn/dm
 template <typename T>
-T compute_ddn_dm(T u, T m) {
+C10_HOST_DEVICE T compute_ddn_dm(T u, T m) {
     auto [grad_u, grad_m] = jacobi_elliptic_dn_backward(T(1), u, m);
     return grad_m;
 }
 
 template <typename T>
-c10::complex<T> compute_ddn_du(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> compute_ddn_du(c10::complex<T> u, c10::complex<T> m) {
     c10::complex<T> one(T(1), T(0));
     auto [grad_u, grad_m] = jacobi_elliptic_dn_backward(one, u, m);
     return grad_u;
 }
 
 template <typename T>
-c10::complex<T> compute_ddn_dm(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> compute_ddn_dm(c10::complex<T> u, c10::complex<T> m) {
     c10::complex<T> one(T(1), T(0));
     auto [grad_u, grad_m] = jacobi_elliptic_dn_backward(one, u, m);
     return grad_m;
@@ -169,7 +169,7 @@ c10::complex<T> compute_ddn_dm(c10::complex<T> u, c10::complex<T> m) {
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T, T> jacobi_elliptic_dn_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> jacobi_elliptic_dn_backward_backward(
     T gg_u,
     T gg_m,
     T grad,
@@ -210,7 +210,7 @@ std::tuple<T, T, T> jacobi_elliptic_dn_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> jacobi_elliptic_dn_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> jacobi_elliptic_dn_backward_backward(
     c10::complex<T> gg_u,
     c10::complex<T> gg_m,
     c10::complex<T> grad,

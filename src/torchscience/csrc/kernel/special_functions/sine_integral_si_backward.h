@@ -8,7 +8,7 @@ namespace torchscience::kernel::special_functions {
 // Real backward: d/dx Si(x) = sin(x) / x = sinc(x)
 // At x = 0, the derivative has a removable singularity: lim_{x->0} sin(x)/x = 1
 template <typename T>
-T sine_integral_si_backward(T gradient, T x) {
+C10_HOST_DEVICE T sine_integral_si_backward(T gradient, T x) {
   T deriv;
 
   if (x == T(0)) {
@@ -24,7 +24,7 @@ T sine_integral_si_backward(T gradient, T x) {
 // Complex backward: d/dz Si(z) = sin(z) / z
 // PyTorch convention: grad * conj(d/dz Si(z)) for Wirtinger derivatives
 template <typename T>
-c10::complex<T> sine_integral_si_backward(c10::complex<T> gradient, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> sine_integral_si_backward(c10::complex<T> gradient, c10::complex<T> z) {
   using Complex = c10::complex<T>;
 
   Complex deriv;

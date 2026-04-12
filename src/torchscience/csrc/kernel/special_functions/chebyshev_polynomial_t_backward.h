@@ -17,7 +17,7 @@ namespace torchscience::kernel::special_functions {
 //   For x < -1:   dT/dn = -sin(n*pi)*pi * cosh(n * acosh(-x))
 //                       + cos(n*pi) * sinh(n * acosh(-x)) * acosh(-x)
 template <typename T>
-std::tuple<T, T> chebyshev_polynomial_t_backward(T gradient, T x, T n) {
+C10_HOST_DEVICE std::tuple<T, T> chebyshev_polynomial_t_backward(T gradient, T x, T n) {
   const T pi = T(3.14159265358979323846);
 
   T gradient_x;

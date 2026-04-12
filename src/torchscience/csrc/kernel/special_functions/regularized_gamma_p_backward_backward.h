@@ -10,7 +10,7 @@ namespace torchscience::kernel::special_functions {
 // Second-order gradients for regularized_gamma_p
 // Uses numerical differentiation
 template <typename T>
-std::tuple<T, T, T> regularized_gamma_p_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> regularized_gamma_p_backward_backward(
     T grad_grad_a, T grad_grad_x, T grad, T a, T x) {
 
   T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), static_cast<T>(std::abs(a)));

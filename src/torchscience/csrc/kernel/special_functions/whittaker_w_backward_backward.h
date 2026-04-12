@@ -18,7 +18,7 @@ namespace torchscience::kernel::special_functions {
 //
 // Returns (gg_out, new_grad_kappa, new_grad_mu, new_grad_z)
 template <typename T>
-std::tuple<T, T, T, T> whittaker_w_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T> whittaker_w_backward_backward(
   T gg_kappa,
   T gg_mu,
   T gg_z,

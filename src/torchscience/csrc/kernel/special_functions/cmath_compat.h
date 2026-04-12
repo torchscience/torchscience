@@ -9,52 +9,53 @@
 // functions resolves the ambiguity on all compilers.
 
 #include <cmath>
+#include <c10/macros/Macros.h>
 
 namespace torchscience::kernel::special_functions {
 namespace cmath_compat {
 
 template <typename T>
-inline bool isfinite(T x) {
+C10_HOST_DEVICE inline bool isfinite(T x) {
   return std::isfinite(static_cast<double>(x));
 }
 
 template <>
-inline bool isfinite<float>(float x) {
+C10_HOST_DEVICE inline bool isfinite<float>(float x) {
   return std::isfinite(x);
 }
 
 template <>
-inline bool isfinite<double>(double x) {
+C10_HOST_DEVICE inline bool isfinite<double>(double x) {
   return std::isfinite(x);
 }
 
 template <typename T>
-inline bool isinf(T x) {
+C10_HOST_DEVICE inline bool isinf(T x) {
   return std::isinf(static_cast<double>(x));
 }
 
 template <>
-inline bool isinf<float>(float x) {
+C10_HOST_DEVICE inline bool isinf<float>(float x) {
   return std::isinf(x);
 }
 
 template <>
-inline bool isinf<double>(double x) {
+C10_HOST_DEVICE inline bool isinf<double>(double x) {
   return std::isinf(x);
 }
 
 template <typename T>
-inline bool isnan(T x) {
+C10_HOST_DEVICE inline bool isnan(T x) {
   return std::isnan(static_cast<double>(x));
 }
 
 template <>
-inline bool isnan<float>(float x) {
+C10_HOST_DEVICE inline bool isnan<float>(float x) {
   return std::isnan(x);
 }
 
 template <>
-inline bool isnan<double>(double x) {
+C10_HOST_DEVICE inline bool isnan<double>(double x) {
   return std::isnan(x);
 }
 

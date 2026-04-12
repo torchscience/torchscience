@@ -20,7 +20,7 @@ namespace torchscience::kernel::special_functions {
 // where f(x) ~ 1/x - 2!/x^3 + 4!/x^5 - ...
 //       g(x) ~ 1/x^2 - 3!/x^4 + 5!/x^6 - ...
 template <typename T>
-void sine_integral_auxiliary(T x, T& f, T& g) {
+C10_HOST_DEVICE void sine_integral_auxiliary(T x, T& f, T& g) {
   // Compute f(x) and g(x) using asymptotic series
   // f(x) = sum_{n=0}^inf (-1)^n (2n)! / x^(2n+1)
   // g(x) = sum_{n=0}^inf (-1)^n (2n+1)! / x^(2n+2)
@@ -75,7 +75,7 @@ void sine_integral_auxiliary(T x, T& f, T& g) {
 }
 
 template <typename T>
-T sine_integral_si(T x) {
+C10_HOST_DEVICE T sine_integral_si(T x) {
   // Handle special cases
   if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
@@ -151,7 +151,7 @@ T sine_integral_si(T x) {
 
 // Complex sine integral Si(z)
 template <typename T>
-c10::complex<T> sine_integral_si(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> sine_integral_si(c10::complex<T> z) {
   using Complex = c10::complex<T>;
 
   // Handle special cases

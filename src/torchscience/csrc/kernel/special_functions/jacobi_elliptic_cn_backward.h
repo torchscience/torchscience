@@ -28,7 +28,7 @@ namespace detail {
 // Helper to compute sn(u, m) and dn(u, m) using the AGM method
 // Returns (sn, cn, dn) for efficiency
 template <typename T>
-std::tuple<T, T, T> jacobi_elliptic_all(T u, T m) {
+C10_HOST_DEVICE std::tuple<T, T, T> jacobi_elliptic_all(T u, T m) {
     const T eps = jacobi_cn_eps<T>();
 
     // Special case: m = 0
@@ -91,7 +91,7 @@ std::tuple<T, T, T> jacobi_elliptic_all(T u, T m) {
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 jacobi_elliptic_all(c10::complex<T> u, c10::complex<T> m) {
     const T eps = jacobi_cn_eps<T>();
     c10::complex<T> one(T(1), T(0));
@@ -161,7 +161,7 @@ jacobi_elliptic_all(c10::complex<T> u, c10::complex<T> m) {
 // Numerical derivative of cn with respect to m using 5-point stencil
 // for higher accuracy
 template <typename T>
-T jacobi_elliptic_cn_dm(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_cn_dm(T u, T m) {
     // Use a relative step size that balances truncation and round-off errors
     // For numerical differentiation, h ~ eps^(1/3) is optimal for central difference
     const T h_rel = std::cbrt(std::numeric_limits<T>::epsilon());
@@ -190,7 +190,7 @@ T jacobi_elliptic_cn_dm(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_cn_dm(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_cn_dm(c10::complex<T> u, c10::complex<T> m) {
     // Use 5-point stencil in the complex plane for better accuracy
     const T h_rel = std::cbrt(std::numeric_limits<T>::epsilon());
     T h = h_rel * std::max(static_cast<T>(std::abs(m)), T(0.1));
@@ -212,7 +212,7 @@ c10::complex<T> jacobi_elliptic_cn_dm(c10::complex<T> u, c10::complex<T> m) {
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T> jacobi_elliptic_cn_backward(T gradient, T u, T m) {
+C10_HOST_DEVICE std::tuple<T, T> jacobi_elliptic_cn_backward(T gradient, T u, T m) {
     // Get sn, cn, dn
     auto [sn, cn, dn] = detail::jacobi_elliptic_all(u, m);
 
@@ -226,7 +226,7 @@ std::tuple<T, T> jacobi_elliptic_cn_backward(T gradient, T u, T m) {
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>>
 jacobi_elliptic_cn_backward(c10::complex<T> gradient, c10::complex<T> u, c10::complex<T> m) {
     // Get sn, cn, dn
     auto [sn, cn, dn] = detail::jacobi_elliptic_all(u, m);

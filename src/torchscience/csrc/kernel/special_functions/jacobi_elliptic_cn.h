@@ -39,27 +39,27 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-constexpr T jacobi_cn_eps();
+C10_HOST_DEVICE constexpr T jacobi_cn_eps();
 
 template <>
-constexpr float jacobi_cn_eps<float>() { return 1e-7f; }
+C10_HOST_DEVICE constexpr float jacobi_cn_eps<float>() { return 1e-7f; }
 
 template <>
-constexpr double jacobi_cn_eps<double>() { return 1e-15; }
+C10_HOST_DEVICE constexpr double jacobi_cn_eps<double>() { return 1e-15; }
 
 template <>
-inline c10::Half jacobi_cn_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half jacobi_cn_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 jacobi_cn_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 jacobi_cn_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 template <typename T>
-constexpr int jacobi_cn_max_iter() { return 50; }
+C10_HOST_DEVICE constexpr int jacobi_cn_max_iter() { return 50; }
 
 } // namespace detail
 
 template <typename T>
-T jacobi_elliptic_cn(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_cn(T u, T m) {
     const T eps = detail::jacobi_cn_eps<T>();
 
     // Special case: m = 0, cn(u, 0) = cos(u)
@@ -119,7 +119,7 @@ T jacobi_elliptic_cn(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_cn(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_cn(c10::complex<T> u, c10::complex<T> m) {
     const T eps = detail::jacobi_cn_eps<T>();
     c10::complex<T> one(T(1), T(0));
     c10::complex<T> zero(T(0), T(0));

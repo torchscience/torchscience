@@ -22,24 +22,24 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-inline T jacobi_sn_finite_diff_step() {
+C10_HOST_DEVICE inline T jacobi_sn_finite_diff_step() {
     return std::pow(std::numeric_limits<T>::epsilon(), T(1.0/3.0));
 }
 
 template <>
-inline float jacobi_sn_finite_diff_step<float>() {
+C10_HOST_DEVICE inline float jacobi_sn_finite_diff_step<float>() {
     return 1e-3f;
 }
 
 template <>
-inline double jacobi_sn_finite_diff_step<double>() {
+C10_HOST_DEVICE inline double jacobi_sn_finite_diff_step<double>() {
     return 1e-6;
 }
 
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T> jacobi_elliptic_sn_backward(
+C10_HOST_DEVICE std::tuple<T, T> jacobi_elliptic_sn_backward(
     T gradient,
     T u,
     T m
@@ -68,7 +68,7 @@ std::tuple<T, T> jacobi_elliptic_sn_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> jacobi_elliptic_sn_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> jacobi_elliptic_sn_backward(
     c10::complex<T> gradient,
     c10::complex<T> u,
     c10::complex<T> m

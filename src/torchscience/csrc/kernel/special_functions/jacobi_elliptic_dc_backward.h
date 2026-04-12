@@ -28,7 +28,7 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-T jacobi_elliptic_dc_du(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_dc_du(T u, T m) {
     // Use 5-point stencil for numerical derivative
     const T h_rel = std::cbrt(std::numeric_limits<T>::epsilon());
     T h = h_rel * std::max(static_cast<T>(std::abs(u)), T(1));
@@ -44,7 +44,7 @@ T jacobi_elliptic_dc_du(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_dc_du(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_dc_du(c10::complex<T> u, c10::complex<T> m) {
     const T h_rel = std::cbrt(std::numeric_limits<T>::epsilon());
     T h = h_rel * std::max(static_cast<T>(std::abs(u)), T(1));
     h = std::max(h, T(1e-8));
@@ -62,7 +62,7 @@ c10::complex<T> jacobi_elliptic_dc_du(c10::complex<T> u, c10::complex<T> m) {
 }
 
 template <typename T>
-T jacobi_elliptic_dc_dm(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_dc_dm(T u, T m) {
     const T h_rel = std::cbrt(std::numeric_limits<T>::epsilon());
     T h = h_rel * std::max(static_cast<T>(std::abs(m)), T(0.1));
 
@@ -86,7 +86,7 @@ T jacobi_elliptic_dc_dm(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_dc_dm(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_dc_dm(c10::complex<T> u, c10::complex<T> m) {
     const T h_rel = std::cbrt(std::numeric_limits<T>::epsilon());
     T h = h_rel * std::max(static_cast<T>(std::abs(m)), T(0.1));
     h = std::max(h, T(1e-8));
@@ -106,7 +106,7 @@ c10::complex<T> jacobi_elliptic_dc_dm(c10::complex<T> u, c10::complex<T> m) {
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T> jacobi_elliptic_dc_backward(T gradient, T u, T m) {
+C10_HOST_DEVICE std::tuple<T, T> jacobi_elliptic_dc_backward(T gradient, T u, T m) {
     T ddc_du = detail::jacobi_elliptic_dc_du(u, m);
     T ddc_dm = detail::jacobi_elliptic_dc_dm(u, m);
 
@@ -114,7 +114,7 @@ std::tuple<T, T> jacobi_elliptic_dc_backward(T gradient, T u, T m) {
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>>
 jacobi_elliptic_dc_backward(c10::complex<T> gradient, c10::complex<T> u, c10::complex<T> m) {
     c10::complex<T> ddc_du = detail::jacobi_elliptic_dc_du(u, m);
     c10::complex<T> ddc_dm = detail::jacobi_elliptic_dc_dm(u, m);

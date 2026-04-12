@@ -26,7 +26,7 @@ namespace torchscience::kernel::special_functions {
 // - E(pi/2, m) = complete E(m)
 
 template <typename T>
-T incomplete_legendre_elliptic_integral_e(T phi, T m) {
+C10_HOST_DEVICE T incomplete_legendre_elliptic_integral_e(T phi, T m) {
     // Handle edge case phi = 0
     if (phi == T(0)) {
         return T(0);
@@ -52,7 +52,7 @@ T incomplete_legendre_elliptic_integral_e(T phi, T m) {
 }
 
 template <typename T>
-c10::complex<T> incomplete_legendre_elliptic_integral_e(
+C10_HOST_DEVICE c10::complex<T> incomplete_legendre_elliptic_integral_e(
     c10::complex<T> phi,
     c10::complex<T> m
 ) {

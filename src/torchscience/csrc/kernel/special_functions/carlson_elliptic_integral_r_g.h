@@ -9,7 +9,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T carlson_elliptic_integral_r_g(T x, T y, T z) {
+C10_HOST_DEVICE T carlson_elliptic_integral_r_g(T x, T y, T z) {
     // Carlson's elliptic integral R_G(x, y, z)
     //
     // Mathematical definition:
@@ -51,7 +51,7 @@ T carlson_elliptic_integral_r_g(T x, T y, T z) {
 }
 
 template <typename T>
-c10::complex<T> carlson_elliptic_integral_r_g(
+C10_HOST_DEVICE c10::complex<T> carlson_elliptic_integral_r_g(
     c10::complex<T> x,
     c10::complex<T> y,
     c10::complex<T> z

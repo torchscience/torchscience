@@ -19,27 +19,27 @@ namespace detail {
 
 // Tolerance constants for bessel_y
 template <typename T>
-constexpr T bessel_y_eps();
+C10_HOST_DEVICE constexpr T bessel_y_eps();
 
 template <>
-constexpr float bessel_y_eps<float>() { return 1e-7f; }
+C10_HOST_DEVICE constexpr float bessel_y_eps<float>() { return 1e-7f; }
 
 template <>
-constexpr double bessel_y_eps<double>() { return 1e-15; }
+C10_HOST_DEVICE constexpr double bessel_y_eps<double>() { return 1e-15; }
 
 template <>
-inline c10::Half bessel_y_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half bessel_y_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 bessel_y_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 bessel_y_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 template <typename T>
-constexpr int bessel_y_max_iter() { return 300; }
+C10_HOST_DEVICE constexpr int bessel_y_max_iter() { return 300; }
 
 // Forward recurrence for Y_n from Y_0 and Y_1 for integer n >= 2
 // Y_{n+1}(z) = (2n/z) * Y_n(z) - Y_{n-1}(z)
 template <typename T>
-T bessel_y_forward_recurrence(int n_int, T z) {
+C10_HOST_DEVICE T bessel_y_forward_recurrence(int n_int, T z) {
     if (n_int == 0) return bessel_y_0(z);
     if (n_int == 1) return bessel_y_1(z);
 
@@ -59,7 +59,7 @@ T bessel_y_forward_recurrence(int n_int, T z) {
 // Connection formula for non-integer n:
 // Y_n(z) = [J_n(z) * cos(n*pi) - J_{-n}(z)] / sin(n*pi)
 template <typename T>
-T bessel_y_connection_formula(T n, T z) {
+C10_HOST_DEVICE T bessel_y_connection_formula(T n, T z) {
     const T pi = static_cast<T>(M_PI);
 
     T cos_npi = std::cos(n * pi);
@@ -80,7 +80,7 @@ T bessel_y_connection_formula(T n, T z) {
 
 // Complex connection formula
 template <typename T>
-c10::complex<T> bessel_y_connection_formula(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_y_connection_formula(c10::complex<T> n, c10::complex<T> z) {
     const c10::complex<T> pi_c(static_cast<T>(M_PI), T(0));
 
     c10::complex<T> n_pi = n * pi_c;
@@ -102,7 +102,7 @@ c10::complex<T> bessel_y_connection_formula(c10::complex<T> n, c10::complex<T> z
 // Y_n(z) ~ sqrt(2/(pi*z)) * [P(n,z)*sin(chi) + Q(n,z)*cos(chi)]
 // where chi = z - (n/2 + 1/4)*pi
 template <typename T>
-T bessel_y_asymptotic(T n, T z) {
+C10_HOST_DEVICE T bessel_y_asymptotic(T n, T z) {
     const T pi = static_cast<T>(M_PI);
 
     T chi = z - (n / T(2) + T(0.25)) * pi;
@@ -130,7 +130,7 @@ T bessel_y_asymptotic(T n, T z) {
 } // namespace detail
 
 template <typename T>
-T bessel_y(T n, T z) {
+C10_HOST_DEVICE T bessel_y(T n, T z) {
     // Handle special values
     if (cmath_compat::isnan(n) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -196,7 +196,7 @@ T bessel_y(T n, T z) {
 // Complex forward recurrence for Y_n from Y_0 and Y_1 for integer n >= 2
 namespace detail {
 template <typename T>
-c10::complex<T> bessel_y_forward_recurrence_complex(int n_int, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_y_forward_recurrence_complex(int n_int, c10::complex<T> z) {
     if (n_int == 0) return bessel_y_0(z);
     if (n_int == 1) return bessel_y_1(z);
 
@@ -216,7 +216,7 @@ c10::complex<T> bessel_y_forward_recurrence_complex(int n_int, c10::complex<T> z
 
 // Complex version
 template <typename T>
-c10::complex<T> bessel_y(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_y(c10::complex<T> n, c10::complex<T> z) {
     const T eps = detail::bessel_y_eps<T>();
     const c10::complex<T> zero(T(0), T(0));
 

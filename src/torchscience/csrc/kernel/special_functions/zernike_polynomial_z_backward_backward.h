@@ -15,7 +15,7 @@ namespace torchscience::kernel::special_functions {
 // Uses finite differences for second derivatives
 
 template <typename T>
-std::tuple<T, T, T, T, T> zernike_polynomial_z_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T, T> zernike_polynomial_z_backward_backward(
     T gg_n, T gg_m, T gg_rho, T gg_theta,
     T gradient, T n, T m, T rho, T theta) {
 
@@ -155,7 +155,7 @@ std::tuple<T, T, T, T, T> zernike_polynomial_z_backward_backward(
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
 zernike_polynomial_z_backward_backward(
     c10::complex<T> gg_n, c10::complex<T> gg_m, c10::complex<T> gg_rho, c10::complex<T> gg_theta,
     c10::complex<T> gradient, c10::complex<T> n, c10::complex<T> m,

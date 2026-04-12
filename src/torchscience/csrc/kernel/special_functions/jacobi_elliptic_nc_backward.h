@@ -21,7 +21,7 @@ namespace detail {
 
 // Compute d(nc)/du using finite differences
 template <typename T>
-T compute_dnc_du_numerical(T u, T m) {
+C10_HOST_DEVICE T compute_dnc_du_numerical(T u, T m) {
     const T h = std::pow(std::numeric_limits<T>::epsilon(), T(1.0/3.0));
 
     T nc_plus = jacobi_elliptic_nc(u + h, m);
@@ -32,7 +32,7 @@ T compute_dnc_du_numerical(T u, T m) {
 
 // Compute d(nc)/dm using finite differences
 template <typename T>
-T compute_dnc_dm_numerical(T u, T m) {
+C10_HOST_DEVICE T compute_dnc_dm_numerical(T u, T m) {
     const T h = std::pow(std::numeric_limits<T>::epsilon(), T(1.0/3.0));
     const T eps = std::numeric_limits<T>::epsilon() * T(10);
 
@@ -57,7 +57,7 @@ T compute_dnc_dm_numerical(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> compute_dnc_du_numerical(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> compute_dnc_du_numerical(c10::complex<T> u, c10::complex<T> m) {
     const T h = std::pow(std::numeric_limits<T>::epsilon(), T(1.0/3.0));
     c10::complex<T> h_c(h, T(0));
     c10::complex<T> two(T(2), T(0));
@@ -69,7 +69,7 @@ c10::complex<T> compute_dnc_du_numerical(c10::complex<T> u, c10::complex<T> m) {
 }
 
 template <typename T>
-c10::complex<T> compute_dnc_dm_numerical(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> compute_dnc_dm_numerical(c10::complex<T> u, c10::complex<T> m) {
     const T h = std::pow(std::numeric_limits<T>::epsilon(), T(1.0/3.0));
     c10::complex<T> h_c(h, T(0));
     c10::complex<T> two(T(2), T(0));
@@ -83,7 +83,7 @@ c10::complex<T> compute_dnc_dm_numerical(c10::complex<T> u, c10::complex<T> m) {
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T> jacobi_elliptic_nc_backward(T gradient, T u, T m) {
+C10_HOST_DEVICE std::tuple<T, T> jacobi_elliptic_nc_backward(T gradient, T u, T m) {
     const T eps = std::numeric_limits<T>::epsilon() * T(10);
 
     // Special case: m = 0
@@ -109,7 +109,7 @@ std::tuple<T, T> jacobi_elliptic_nc_backward(T gradient, T u, T m) {
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> jacobi_elliptic_nc_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> jacobi_elliptic_nc_backward(
     c10::complex<T> gradient,
     c10::complex<T> u,
     c10::complex<T> m

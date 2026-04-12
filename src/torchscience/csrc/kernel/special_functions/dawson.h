@@ -24,7 +24,7 @@ namespace torchscience::kernel::special_functions {
 //   D(x) has maximum at x ~ 0.924 where D(x) ~ 0.541
 //   D(x) -> 1/(2x) as x -> infinity (asymptotic)
 template <typename T>
-T dawson(T x) {
+C10_HOST_DEVICE T dawson(T x) {
   const T sqrt_pi_over_2 = static_cast<T>(0.88622692545275801364908374167057259139);
 
   // Handle special cases
@@ -46,7 +46,7 @@ T dawson(T x) {
 
 // Complex version of Dawson's integral
 template <typename T>
-c10::complex<T> dawson(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> dawson(c10::complex<T> z) {
   const T sqrt_pi_over_2 = static_cast<T>(0.88622692545275801364908374167057259139);
 
   // Handle z = 0

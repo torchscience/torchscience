@@ -13,7 +13,7 @@ namespace detail {
 
 // Compute dK/dm = [E(m) - (1-m)K(m)] / [2m(1-m)]
 template <typename T>
-T compute_dK_dm(T m) {
+C10_HOST_DEVICE T compute_dK_dm(T m) {
     const T eps = std::numeric_limits<T>::epsilon();
 
     // Handle the m = 0 case with the known limit
@@ -44,7 +44,7 @@ T compute_dK_dm(T m) {
 // Compute second derivative of K (d2K/dm2) using numerical differentiation
 // This is the first derivative of dK/dm
 template <typename T>
-T compute_d2K_dm2(T m) {
+C10_HOST_DEVICE T compute_d2K_dm2(T m) {
     // Use central difference with appropriate step size
     // Step size ~ eps^(1/2) for optimal first derivative accuracy
     const T h = std::sqrt(std::numeric_limits<T>::epsilon());
@@ -71,7 +71,7 @@ T compute_d2K_dm2(T m) {
 }
 
 template <typename T>
-c10::complex<T> compute_dK_dm(c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> compute_dK_dm(c10::complex<T> m) {
     const T eps = std::numeric_limits<T>::epsilon();
     c10::complex<T> zero(T(0), T(0));
     c10::complex<T> one(T(1), T(0));
@@ -105,7 +105,7 @@ c10::complex<T> compute_dK_dm(c10::complex<T> m) {
 }
 
 template <typename T>
-c10::complex<T> compute_d2K_dm2(c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> compute_d2K_dm2(c10::complex<T> m) {
     // Use central difference in the complex plane
     // Step size ~ eps^(1/2) for optimal first derivative accuracy
     const T h = std::sqrt(std::numeric_limits<T>::epsilon());
@@ -123,7 +123,7 @@ c10::complex<T> compute_d2K_dm2(c10::complex<T> m) {
 // Real backward_backward
 // Returns gradients for (grad_output, m)
 template <typename T>
-std::tuple<T, T> complete_legendre_elliptic_integral_k_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T> complete_legendre_elliptic_integral_k_backward_backward(
     T gg_m,
     T grad_output,
     T m
@@ -145,7 +145,7 @@ std::tuple<T, T> complete_legendre_elliptic_integral_k_backward_backward(
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> complete_legendre_elliptic_integral_k_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> complete_legendre_elliptic_integral_k_backward_backward(
     c10::complex<T> gg_m,
     c10::complex<T> grad_output,
     c10::complex<T> m

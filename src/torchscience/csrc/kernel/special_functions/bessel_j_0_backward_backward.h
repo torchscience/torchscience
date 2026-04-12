@@ -13,7 +13,7 @@ namespace torchscience::kernel::special_functions {
 // d/dz J₀(z) = -J₁(z)
 // d²/dz² J₀(z) = -J₁'(z) = -(J₀(z) - J₁(z)/z) = J₁(z)/z - J₀(z)
 template <typename T>
-std::tuple<T, T> bessel_j_0_backward_backward(T gg_z, T grad_output, T z) {
+C10_HOST_DEVICE std::tuple<T, T> bessel_j_0_backward_backward(T gg_z, T grad_output, T z) {
     T j0 = bessel_j_0(z);
     T j1 = bessel_j_1(z);
 
@@ -40,7 +40,7 @@ std::tuple<T, T> bessel_j_0_backward_backward(T gg_z, T grad_output, T z) {
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> bessel_j_0_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> bessel_j_0_backward_backward(
     c10::complex<T> gg_z, c10::complex<T> grad_output, c10::complex<T> z) {
     c10::complex<T> j0 = bessel_j_0(z);
     c10::complex<T> j1 = bessel_j_1(z);

@@ -19,7 +19,7 @@ namespace torchscience::kernel::special_functions {
 //   d(backward)/dx = grad_output * Bi''(x) = grad_output * x * Bi(x)
 
 template <typename T>
-std::tuple<T, T> airy_bi_backward_backward(T gg_x, T grad_output, T x) {
+C10_HOST_DEVICE std::tuple<T, T> airy_bi_backward_backward(T gg_x, T grad_output, T x) {
     T bi = airy_bi(x);
     T bip = airy_bi_prime(x);
 
@@ -34,7 +34,7 @@ std::tuple<T, T> airy_bi_backward_backward(T gg_x, T grad_output, T x) {
 
 // Complex backward_backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> airy_bi_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> airy_bi_backward_backward(
     c10::complex<T> gg_x, c10::complex<T> grad_output, c10::complex<T> z) {
     c10::complex<T> bi = airy_bi(z);
     c10::complex<T> bip = airy_bi_prime(z);

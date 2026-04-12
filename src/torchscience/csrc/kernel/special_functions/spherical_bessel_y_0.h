@@ -12,26 +12,26 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-constexpr T spherical_bessel_y_0_eps();
+C10_HOST_DEVICE constexpr T spherical_bessel_y_0_eps();
 
 template <>
-constexpr float spherical_bessel_y_0_eps<float>() { return 1e-6f; }
+C10_HOST_DEVICE constexpr float spherical_bessel_y_0_eps<float>() { return 1e-6f; }
 
 template <>
-constexpr double spherical_bessel_y_0_eps<double>() { return 1e-12; }
+C10_HOST_DEVICE constexpr double spherical_bessel_y_0_eps<double>() { return 1e-12; }
 
 template <>
-inline c10::Half spherical_bessel_y_0_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half spherical_bessel_y_0_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 spherical_bessel_y_0_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 spherical_bessel_y_0_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 } // namespace detail
 
 // Spherical Bessel function of the second kind, order 0
 // y_0(z) = -cos(z) / z
 template <typename T>
-T spherical_bessel_y_0(T z) {
+C10_HOST_DEVICE T spherical_bessel_y_0(T z) {
     if (cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
     }
@@ -46,7 +46,7 @@ T spherical_bessel_y_0(T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> spherical_bessel_y_0(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_y_0(c10::complex<T> z) {
     // For complex zero, return negative infinity (real part)
     if (z == c10::complex<T>(T(0), T(0))) {
         return c10::complex<T>(-std::numeric_limits<T>::infinity(), T(0));

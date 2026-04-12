@@ -28,7 +28,7 @@ namespace torchscience::kernel::special_functions {
 //   sigma: Gaussian standard deviation (must be > 0)
 //   gamma: Lorentzian half-width at half-maximum (must be >= 0)
 template <typename T>
-T voigt_profile(T x, T sigma, T gamma) {
+C10_HOST_DEVICE T voigt_profile(T x, T sigma, T gamma) {
   const T sqrt_2 = static_cast<T>(1.4142135623730950488016887242096980786);
   const T one_over_sqrt_2pi = static_cast<T>(0.39894228040143267793994605993438186848);
 

@@ -43,7 +43,7 @@ constexpr double KELVIN_BER_LARGE_X = 20.0;
 //            = sum_{n=0}^inf (-1)^n * (x/2)^(4n) / ((2n)!)^2
 //
 template <typename T>
-T kelvin_ber(T x) {
+C10_HOST_DEVICE T kelvin_ber(T x) {
     // Handle special values
     if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -151,7 +151,7 @@ T kelvin_ber(T x) {
 
 // Complex version
 template <typename T>
-c10::complex<T> kelvin_ber(c10::complex<T> x) {
+C10_HOST_DEVICE c10::complex<T> kelvin_ber(c10::complex<T> x) {
     // For complex x, we use the power series which converges for all finite x
     // ber(x) = sum_{n=0}^inf (-1)^n * (x/2)^(4n) / ((2n)!)^2
 

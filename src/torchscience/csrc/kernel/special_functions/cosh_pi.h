@@ -6,12 +6,12 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T cosh_pi(T x) {
+C10_HOST_DEVICE T cosh_pi(T x) {
   return std::cosh(static_cast<T>(M_PI) * x);
 }
 
 template <typename T>
-c10::complex<T> cosh_pi(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> cosh_pi(c10::complex<T> z) {
   T x = z.real();
   T y = z.imag();
 

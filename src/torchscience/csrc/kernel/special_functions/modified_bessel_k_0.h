@@ -46,7 +46,7 @@ constexpr double k0_B[] = {
 } // namespace detail
 
 template <typename T>
-T modified_bessel_k_0(T x) {
+C10_HOST_DEVICE T modified_bessel_k_0(T x) {
     // Handle special values
     if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -80,7 +80,7 @@ T modified_bessel_k_0(T x) {
 
 // Complex version
 template <typename T>
-c10::complex<T> modified_bessel_k_0(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_k_0(c10::complex<T> z) {
     T mag = std::abs(z);
 
     // Handle z = 0

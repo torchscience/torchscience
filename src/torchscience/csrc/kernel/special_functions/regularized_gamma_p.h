@@ -9,7 +9,7 @@ namespace torchscience::kernel::special_functions {
 // Uses series expansion for x < a + 1, continued fraction otherwise
 
 template <typename T>
-T regularized_gamma_p_series(T a, T x, int max_iter = 200) {
+C10_HOST_DEVICE T regularized_gamma_p_series(T a, T x, int max_iter = 200) {
   // Series: P(a, x) = exp(-x) * x^a / Gamma(a) * sum_{n=0}^inf x^n / (a)_{n+1}
   // where (a)_n is the Pochhammer symbol (rising factorial)
   if (x == T(0)) return T(0);
@@ -27,7 +27,7 @@ T regularized_gamma_p_series(T a, T x, int max_iter = 200) {
 }
 
 template <typename T>
-T regularized_gamma_q_cf(T a, T x, int max_iter = 200) {
+C10_HOST_DEVICE T regularized_gamma_q_cf(T a, T x, int max_iter = 200) {
   // Continued fraction for Q(a, x) using Lentz's method
   // Q(a, x) = exp(-x) * x^a / Gamma(a) * CF
   T tiny = std::numeric_limits<T>::min() * T(1e10);
@@ -55,7 +55,7 @@ T regularized_gamma_q_cf(T a, T x, int max_iter = 200) {
 }
 
 template <typename T>
-T regularized_gamma_p(T a, T x) {
+C10_HOST_DEVICE T regularized_gamma_p(T a, T x) {
   if (x < T(0) || a <= T(0)) {
     return std::numeric_limits<T>::quiet_NaN();
   }

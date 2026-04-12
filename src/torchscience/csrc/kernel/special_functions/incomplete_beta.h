@@ -11,12 +11,12 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-T incomplete_beta_cf(T a, T b, T x) {
+C10_HOST_DEVICE T incomplete_beta_cf(T a, T b, T x) {
   return std::exp(a * std::log(x) + b * std::log(T(1) - x) - log_beta(a, b)) * beta_continued_fraction(a, b, x) / a;
 }
 
 template <typename T>
-c10::complex<T> incomplete_beta_cf(c10::complex<T> a, c10::complex<T> b, c10::complex<T> x) {
+C10_HOST_DEVICE c10::complex<T> incomplete_beta_cf(c10::complex<T> a, c10::complex<T> b, c10::complex<T> x) {
   c10::complex<T> one(T(1), T(0));
 
   return std::exp(a * std::log(x) + b * std::log(one - x) - log_beta(a, b)) * beta_continued_fraction(a, b, x) / a;
@@ -25,7 +25,7 @@ c10::complex<T> incomplete_beta_cf(c10::complex<T> a, c10::complex<T> b, c10::co
 } // namespace detail
 
 template <typename T>
-T incomplete_beta(T x, T a, T b) {
+C10_HOST_DEVICE T incomplete_beta(T x, T a, T b) {
   // Check for invalid parameters (non-positive a or b)
   if (a <= T(0) || b <= T(0)) {
     return std::numeric_limits<T>::quiet_NaN();
@@ -61,7 +61,7 @@ T incomplete_beta(T x, T a, T b) {
 }
 
 template <typename T>
-c10::complex<T> incomplete_beta(
+C10_HOST_DEVICE c10::complex<T> incomplete_beta(
   c10::complex<T> x,
   c10::complex<T> a,
   c10::complex<T> b

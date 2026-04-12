@@ -8,7 +8,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T> log_multivariate_gamma_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T> log_multivariate_gamma_backward_backward(
     T gg_a, T grad_output, T a, int64_t d) {
   T sum_psi = T(0);
   T sum_tri = T(0);

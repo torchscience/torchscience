@@ -10,37 +10,37 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T beta(T a, T b) {
+C10_HOST_DEVICE T beta(T a, T b) {
   return std::exp(log_beta(a, b));
 }
 
 template <typename T>
-c10::complex<T> beta(c10::complex<T> a, c10::complex<T> b) {
+C10_HOST_DEVICE c10::complex<T> beta(c10::complex<T> a, c10::complex<T> b) {
   return std::exp(log_beta(a, b));
 }
 
 namespace detail {
 
 template <typename T>
-constexpr T beta_eps();
+C10_HOST_DEVICE constexpr T beta_eps();
 
 template <>
-constexpr float beta_eps<float>() { return 1e-7f; }
+C10_HOST_DEVICE constexpr float beta_eps<float>() { return 1e-7f; }
 
 template <>
-constexpr double beta_eps<double>() { return 1e-15; }
+C10_HOST_DEVICE constexpr double beta_eps<double>() { return 1e-15; }
 
 template <>
-inline c10::Half beta_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half beta_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 beta_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 beta_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 template <typename T>
-constexpr int beta_max_iter() { return 200; }
+C10_HOST_DEVICE constexpr int beta_max_iter() { return 200; }
 
 template <typename T>
-T beta_continued_fraction(T a, T b, T x) {
+C10_HOST_DEVICE T beta_continued_fraction(T a, T b, T x) {
   const T eps = beta_eps<T>();
 
   T qab = a + b;
@@ -103,7 +103,7 @@ T beta_continued_fraction(T a, T b, T x) {
 }
 
 template <typename T>
-c10::complex<T> beta_continued_fraction(c10::complex<T> a, c10::complex<T> b, c10::complex<T> x) {
+C10_HOST_DEVICE c10::complex<T> beta_continued_fraction(c10::complex<T> a, c10::complex<T> b, c10::complex<T> x) {
   const T eps = beta_eps<T>();
   const int max_iter = beta_max_iter<T>();
 

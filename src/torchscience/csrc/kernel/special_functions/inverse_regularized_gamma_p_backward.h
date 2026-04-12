@@ -12,7 +12,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T> inverse_regularized_gamma_p_backward(T gradient, T a, T y) {
+C10_HOST_DEVICE std::tuple<T, T> inverse_regularized_gamma_p_backward(T gradient, T a, T y) {
   // x = inverse_regularized_gamma_p(a, y) satisfies P(a, x) = y
   //
   // By implicit differentiation of P(a, x) = y:

@@ -27,7 +27,7 @@ namespace torchscience::kernel::special_functions {
 // Derivatives with respect to n and m are computed via finite differences
 
 template <typename T>
-std::tuple<T, T, T, T> zernike_polynomial_z_backward(T gradient, T n, T m, T rho, T theta) {
+C10_HOST_DEVICE std::tuple<T, T, T, T> zernike_polynomial_z_backward(T gradient, T n, T m, T rho, T theta) {
   T eps = T(1e-7);
   T abs_m = std::abs(m);
 
@@ -72,7 +72,7 @@ std::tuple<T, T, T, T> zernike_polynomial_z_backward(T gradient, T n, T m, T rho
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
 zernike_polynomial_z_backward(
     c10::complex<T> gradient, c10::complex<T> n, c10::complex<T> m,
     c10::complex<T> rho, c10::complex<T> theta) {

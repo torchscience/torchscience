@@ -22,7 +22,7 @@ namespace torchscience::kernel::special_functions {
 //
 // dHe/dn: use finite differences
 template <typename T>
-std::tuple<T, T> hermite_polynomial_he_backward(T gradient, T n, T z) {
+C10_HOST_DEVICE std::tuple<T, T> hermite_polynomial_he_backward(T gradient, T n, T z) {
   T gradient_z;
 
   // Check if n is a non-negative integer

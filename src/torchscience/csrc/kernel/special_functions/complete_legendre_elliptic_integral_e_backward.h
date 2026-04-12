@@ -21,25 +21,25 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-T finite_diff_step() {
+C10_HOST_DEVICE T finite_diff_step() {
     // Step size for finite differences, scaled to precision
     return std::pow(std::numeric_limits<T>::epsilon(), T(1.0/3.0));
 }
 
 template <>
-inline float finite_diff_step<float>() {
+C10_HOST_DEVICE inline float finite_diff_step<float>() {
     return 1e-3f;
 }
 
 template <>
-inline double finite_diff_step<double>() {
+C10_HOST_DEVICE inline double finite_diff_step<double>() {
     return 1e-6;
 }
 
 } // namespace detail
 
 template <typename T>
-T complete_legendre_elliptic_integral_e_backward(T gradient, T m) {
+C10_HOST_DEVICE T complete_legendre_elliptic_integral_e_backward(T gradient, T m) {
     // Use central finite differences: f'(m) ≈ [f(m+h) - f(m-h)] / (2h)
     T h = detail::finite_diff_step<T>();
 
@@ -52,7 +52,7 @@ T complete_legendre_elliptic_integral_e_backward(T gradient, T m) {
 }
 
 template <typename T>
-c10::complex<T> complete_legendre_elliptic_integral_e_backward(
+C10_HOST_DEVICE c10::complex<T> complete_legendre_elliptic_integral_e_backward(
     c10::complex<T> gradient,
     c10::complex<T> m
 ) {

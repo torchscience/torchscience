@@ -14,7 +14,7 @@ namespace torchscience::kernel::special_functions {
 // derivative support. We use finite differences for the complex cases
 // and analytical formulas where available.
 template <typename T>
-std::tuple<T, T, T> legendre_polynomial_q_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> legendre_polynomial_q_backward_backward(
   T gradient_gradient_x,
   T gradient_gradient_n,
   T gradient,

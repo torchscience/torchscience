@@ -12,7 +12,7 @@ namespace torchscience::kernel::special_functions {
 // Using numerical integration (Gauss-Legendre quadrature) which is more stable
 // than formulas involving Bessel Y
 template <typename T>
-T weber_e(T n, T z) {
+C10_HOST_DEVICE T weber_e(T n, T z) {
     const T pi = T(3.14159265358979323846);
 
     // Use Gaussian quadrature for the integral
@@ -71,7 +71,7 @@ T weber_e(T n, T z) {
 
 // Complex version using numerical integration
 template <typename T>
-c10::complex<T> weber_e(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> weber_e(c10::complex<T> n, c10::complex<T> z) {
     const T pi = T(3.14159265358979323846);
 
     // Use Gaussian quadrature for the integral

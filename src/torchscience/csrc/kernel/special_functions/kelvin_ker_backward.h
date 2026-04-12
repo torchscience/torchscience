@@ -20,7 +20,7 @@ namespace detail {
 // For large x, we differentiate the asymptotic expansion.
 //
 template <typename T>
-T kelvin_ker_derivative(T x) {
+C10_HOST_DEVICE T kelvin_ker_derivative(T x) {
     // Handle special values
     if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -173,13 +173,13 @@ T kelvin_ker_derivative(T x) {
 
 // Real backward: d/dx ker(x)
 template <typename T>
-T kelvin_ker_backward(T grad_output, T x) {
+C10_HOST_DEVICE T kelvin_ker_backward(T grad_output, T x) {
     return grad_output * detail::kelvin_ker_derivative(x);
 }
 
 // Complex backward
 template <typename T>
-c10::complex<T> kelvin_ker_backward(c10::complex<T> grad_output, c10::complex<T> x) {
+C10_HOST_DEVICE c10::complex<T> kelvin_ker_backward(c10::complex<T> grad_output, c10::complex<T> x) {
     // Compute derivative using power series
     c10::complex<T> x_half = x / c10::complex<T>(T(2), T(0));
     c10::complex<T> x2 = x_half * x_half;

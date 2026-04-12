@@ -41,41 +41,41 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-inline T weierstrass_zeta_tolerance() {
+C10_HOST_DEVICE inline T weierstrass_zeta_tolerance() {
     return T(1e-10);
 }
 
 template <>
-inline float weierstrass_zeta_tolerance<float>() { return 1e-5f; }
+C10_HOST_DEVICE inline float weierstrass_zeta_tolerance<float>() { return 1e-5f; }
 
 template <>
-inline double weierstrass_zeta_tolerance<double>() { return 1e-14; }
+C10_HOST_DEVICE inline double weierstrass_zeta_tolerance<double>() { return 1e-14; }
 
 template <>
-inline c10::Half weierstrass_zeta_tolerance<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half weierstrass_zeta_tolerance<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 weierstrass_zeta_tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 weierstrass_zeta_tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 template <typename T>
-inline T weierstrass_zeta_finite_diff_step() {
+C10_HOST_DEVICE inline T weierstrass_zeta_finite_diff_step() {
     return std::pow(std::numeric_limits<T>::epsilon(), T(1.0/3.0));
 }
 
 template <>
-inline float weierstrass_zeta_finite_diff_step<float>() {
+C10_HOST_DEVICE inline float weierstrass_zeta_finite_diff_step<float>() {
     return 1e-4f;
 }
 
 template <>
-inline double weierstrass_zeta_finite_diff_step<double>() {
+C10_HOST_DEVICE inline double weierstrass_zeta_finite_diff_step<double>() {
     return 1e-7;
 }
 
 } // namespace detail
 
 template <typename T>
-T weierstrass_zeta(T z, T g2, T g3) {
+C10_HOST_DEVICE T weierstrass_zeta(T z, T g2, T g3) {
     const T tol = detail::weierstrass_zeta_tolerance<T>();
 
     // Handle z = 0: simple pole, return infinity
@@ -113,7 +113,7 @@ T weierstrass_zeta(T z, T g2, T g3) {
 }
 
 template <typename T>
-c10::complex<T> weierstrass_zeta(c10::complex<T> z, c10::complex<T> g2, c10::complex<T> g3) {
+C10_HOST_DEVICE c10::complex<T> weierstrass_zeta(c10::complex<T> z, c10::complex<T> g2, c10::complex<T> g3) {
     const T tol = detail::weierstrass_zeta_tolerance<T>();
 
     // Handle z = 0: simple pole, return infinity

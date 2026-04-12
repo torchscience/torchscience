@@ -17,28 +17,28 @@ namespace detail {
 
 // Tolerance constants for modified_bessel_i
 template <typename T>
-constexpr T modified_bessel_i_eps();
+C10_HOST_DEVICE constexpr T modified_bessel_i_eps();
 
 template <>
-constexpr float modified_bessel_i_eps<float>() { return 1e-7f; }
+C10_HOST_DEVICE constexpr float modified_bessel_i_eps<float>() { return 1e-7f; }
 
 template <>
-constexpr double modified_bessel_i_eps<double>() { return 1e-15; }
+C10_HOST_DEVICE constexpr double modified_bessel_i_eps<double>() { return 1e-15; }
 
 template <>
-inline c10::Half modified_bessel_i_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half modified_bessel_i_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 modified_bessel_i_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 modified_bessel_i_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 template <typename T>
-constexpr int modified_bessel_i_max_iter() { return 300; }
+C10_HOST_DEVICE constexpr int modified_bessel_i_max_iter() { return 300; }
 
 // Power series for Iₙ(z):
 // Iₙ(z) = (z/2)ⁿ * Σₖ₌₀^∞ (z²/4)ᵏ / (k! * Γ(n+k+1))
 // Named with _general suffix to avoid conflict with modified_bessel_k.h
 template <typename T>
-T modified_bessel_i_series_general(T n, T z) {
+C10_HOST_DEVICE T modified_bessel_i_series_general(T n, T z) {
     const T eps = modified_bessel_i_eps<T>();
     const int max_iter = modified_bessel_i_max_iter<T>();
 
@@ -99,7 +99,7 @@ T modified_bessel_i_series_general(T n, T z) {
 // Complex power series for Iₙ(z)
 // Named with _general suffix to avoid conflict with modified_bessel_k.h
 template <typename T>
-c10::complex<T> modified_bessel_i_series_general(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_i_series_general(c10::complex<T> n, c10::complex<T> z) {
     const T eps = modified_bessel_i_eps<T>();
     const int max_iter = modified_bessel_i_max_iter<T>();
     const c10::complex<T> one(T(1), T(0));
@@ -147,7 +147,7 @@ c10::complex<T> modified_bessel_i_series_general(c10::complex<T> n, c10::complex
 // Recurrence: I_{n+1}(z) = I_{n-1}(z) - (2n/z) * I_n(z)
 // Note: Forward recurrence for I_n is unstable for large n, but we use Miller's backward recurrence for that
 template <typename T>
-T modified_bessel_i_forward_recurrence(int n_int, T z) {
+C10_HOST_DEVICE T modified_bessel_i_forward_recurrence(int n_int, T z) {
     if (n_int < 0) {
         // Use I_{-n}(z) = I_n(z) for integer n
         return modified_bessel_i_forward_recurrence(-n_int, z);
@@ -164,7 +164,7 @@ T modified_bessel_i_forward_recurrence(int n_int, T z) {
 // Miller's backward recurrence for computing Iₙ for integer n
 // This is more stable than forward recurrence for large n
 template <typename T>
-T modified_bessel_i_miller(int n_int, T z) {
+C10_HOST_DEVICE T modified_bessel_i_miller(int n_int, T z) {
     if (n_int < 0) {
         // Use I_{-n}(z) = I_n(z) for integer n
         return modified_bessel_i_miller(-n_int, z);
@@ -228,7 +228,7 @@ T modified_bessel_i_miller(int n_int, T z) {
 
 // Complex forward recurrence
 template <typename T>
-c10::complex<T> modified_bessel_i_forward_recurrence_complex(int n_int, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_i_forward_recurrence_complex(int n_int, c10::complex<T> z) {
     if (n_int < 0) {
         return modified_bessel_i_forward_recurrence_complex(-n_int, z);
     }
@@ -243,7 +243,7 @@ c10::complex<T> modified_bessel_i_forward_recurrence_complex(int n_int, c10::com
 // Asymptotic expansion for large |z|
 // Iₙ(z) ~ exp(z) / sqrt(2πz) * [1 - (4n² - 1)/(8z) + ...]
 template <typename T>
-T modified_bessel_i_asymptotic(T n, T z) {
+C10_HOST_DEVICE T modified_bessel_i_asymptotic(T n, T z) {
     const T pi = static_cast<T>(M_PI);
 
     T mu = T(4) * n * n;
@@ -270,7 +270,7 @@ T modified_bessel_i_asymptotic(T n, T z) {
 } // namespace detail
 
 template <typename T>
-T modified_bessel_i(T n, T z) {
+C10_HOST_DEVICE T modified_bessel_i(T n, T z) {
     // Handle special values
     if (cmath_compat::isnan(n) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -368,7 +368,7 @@ T modified_bessel_i(T n, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> modified_bessel_i(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> modified_bessel_i(c10::complex<T> n, c10::complex<T> z) {
     const T eps = detail::modified_bessel_i_eps<T>();
     const c10::complex<T> one(T(1), T(0));
     const c10::complex<T> zero(T(0), T(0));

@@ -22,7 +22,7 @@ template <typename T>
 struct hyp1f2_is_complex_type<c10::complex<T>> : std::true_type {};
 
 template <typename T>
-inline constexpr bool hyp1f2_is_complex_v = hyp1f2_is_complex_type<T>::value;
+C10_HOST_DEVICE inline constexpr bool hyp1f2_is_complex_v = hyp1f2_is_complex_type<T>::value;
 
 template <typename T>
 struct hyp1f2_real_type { using type = T; };
@@ -34,10 +34,10 @@ template <typename T>
 struct hyp1f2_real_type<c10::complex<T>> { using type = T; };
 
 template <typename T>
-using hyp1f2_real_type_t = typename hyp1f2_real_type<T>::type;
+C10_HOST_DEVICE using hyp1f2_real_type_t = typename hyp1f2_real_type<T>::type;
 
 template <typename T>
-constexpr auto hyp1f2_epsilon() {
+C10_HOST_DEVICE constexpr auto hyp1f2_epsilon() {
   using real_t = hyp1f2_real_type_t<T>;
   if constexpr (std::is_same_v<real_t, float>) {
     return float(1e-7);
@@ -49,7 +49,7 @@ constexpr auto hyp1f2_epsilon() {
 }
 
 template <typename T>
-bool hyp1f2_is_nonpositive_integer(T x) {
+C10_HOST_DEVICE bool hyp1f2_is_nonpositive_integer(T x) {
   if constexpr (hyp1f2_is_complex_v<T>) {
     using real_t = hyp1f2_real_type_t<T>;
     auto re = static_cast<real_t>(x.real());
@@ -64,7 +64,7 @@ bool hyp1f2_is_nonpositive_integer(T x) {
 }
 
 template <typename T>
-int hyp1f2_get_nonpositive_int(T x) {
+C10_HOST_DEVICE int hyp1f2_get_nonpositive_int(T x) {
   if constexpr (hyp1f2_is_complex_v<T>) {
     using real_t = hyp1f2_real_type_t<T>;
     return static_cast<int>(std::round(static_cast<real_t>(x.real())));
@@ -75,7 +75,7 @@ int hyp1f2_get_nonpositive_int(T x) {
 
 // Series expansion: 1F2(a; b1, b2; z) = sum_{n=0}^{inf} (a)_n / ((b1)_n (b2)_n) * z^n / n!
 template <typename T>
-T hyp1f2_series(T a, T b1, T b2, T z, int max_iter = 500) {
+C10_HOST_DEVICE T hyp1f2_series(T a, T b1, T b2, T z, int max_iter = 500) {
   T sum = T(1);
   T term = T(1);
 
@@ -98,7 +98,7 @@ T hyp1f2_series(T a, T b1, T b2, T z, int max_iter = 500) {
 
 // For a being a non-positive integer -m, the series terminates (polynomial)
 template <typename T>
-T hyp1f2_polynomial(int m, T b1, T b2, T z) {
+C10_HOST_DEVICE T hyp1f2_polynomial(int m, T b1, T b2, T z) {
   // m is the absolute value of a (a = -m where m >= 0)
   T sum = T(1);
   T term = T(1);
@@ -138,7 +138,7 @@ T hyp1f2_polynomial(int m, T b1, T b2, T z) {
 //   z: Argument
 //
 template <typename T>
-T hypergeometric_1_f_2(T a, T b1, T b2, T z) {
+C10_HOST_DEVICE T hypergeometric_1_f_2(T a, T b1, T b2, T z) {
   using detail::hyp1f2_epsilon;
   using detail::hyp1f2_is_complex_v;
   using detail::hyp1f2_is_nonpositive_integer;
@@ -179,7 +179,7 @@ T hypergeometric_1_f_2(T a, T b1, T b2, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> hypergeometric_1_f_2(c10::complex<T> a, c10::complex<T> b1, c10::complex<T> b2, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> hypergeometric_1_f_2(c10::complex<T> a, c10::complex<T> b1, c10::complex<T> b2, c10::complex<T> z) {
   using detail::hyp1f2_epsilon;
   using detail::hyp1f2_is_nonpositive_integer;
   using detail::hyp1f2_series;

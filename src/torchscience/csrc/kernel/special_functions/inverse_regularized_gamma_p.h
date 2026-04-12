@@ -15,7 +15,7 @@ namespace detail {
 // Compute the inverse of the standard normal CDF (probit function)
 // using the Abramowitz and Stegun approximation
 template <typename T>
-T inverse_normal_cdf(T p) {
+C10_HOST_DEVICE T inverse_normal_cdf(T p) {
   // Handle edge cases
   if (p <= T(0)) return -std::numeric_limits<T>::infinity();
   if (p >= T(1)) return std::numeric_limits<T>::infinity();
@@ -45,7 +45,7 @@ T inverse_normal_cdf(T p) {
 }
 
 template <typename T>
-T inverse_regularized_gamma_p_initial_guess(T a, T y) {
+C10_HOST_DEVICE T inverse_regularized_gamma_p_initial_guess(T a, T y) {
   // Initial approximation for solving P(a, x) = y for x
   //
   // Based on:
@@ -111,7 +111,7 @@ T inverse_regularized_gamma_p_initial_guess(T a, T y) {
 } // namespace detail
 
 template <typename T>
-T inverse_regularized_gamma_p(T a, T y) {
+C10_HOST_DEVICE T inverse_regularized_gamma_p(T a, T y) {
   // Solve P(a, x) = y for x using Halley's method
   // P(a, x) = regularized lower incomplete gamma
   //

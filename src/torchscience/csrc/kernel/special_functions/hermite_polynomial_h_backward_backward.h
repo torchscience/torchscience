@@ -15,7 +15,7 @@ namespace torchscience::kernel::special_functions {
 //
 // For non-integer n: use finite differences
 template <typename T>
-std::tuple<T, T, T> hermite_polynomial_h_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> hermite_polynomial_h_backward_backward(
   T gradient_gradient_n,
   T gradient_gradient_z,
   T gradient,

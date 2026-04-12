@@ -29,13 +29,13 @@ namespace torchscience::kernel::special_functions {
 // elliptic integral of the first kind.
 
 template <typename T>
-T jacobi_elliptic_ns(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_ns(T u, T m) {
     T sn = jacobi_elliptic_sn(u, m);
     return T(1) / sn;
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_ns(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_ns(c10::complex<T> u, c10::complex<T> m) {
     c10::complex<T> sn = jacobi_elliptic_sn(u, m);
     c10::complex<T> one(T(1), T(0));
     return one / sn;

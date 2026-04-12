@@ -8,7 +8,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T, T> confluent_hypergeometric_u_backward(T grad, T a, T b, T z) {
+C10_HOST_DEVICE std::tuple<T, T, T> confluent_hypergeometric_u_backward(T grad, T a, T b, T z) {
   using detail::hypu_epsilon;
   using detail::hypu_is_complex_v;
   using detail::hypu_real_type_t;

@@ -13,7 +13,7 @@ namespace detail {
 // W_kappa,mu(z) = exp(-z/2) * z^(mu+1/2) * U(a, b, z)
 // where a = mu - kappa + 1/2, b = 2*mu + 1
 template <typename T>
-T whit_w_value(T kappa, T mu, T z) {
+C10_HOST_DEVICE T whit_w_value(T kappa, T mu, T z) {
   T a = mu - kappa + T(0.5);
   T b = T(2) * mu + T(1);
 
@@ -32,7 +32,7 @@ T whit_w_value(T kappa, T mu, T z) {
 //
 // Returns (grad_kappa, grad_mu, grad_z)
 template <typename T>
-std::tuple<T, T, T> whittaker_w_backward(T grad_output, T kappa, T mu, T z) {
+C10_HOST_DEVICE std::tuple<T, T, T> whittaker_w_backward(T grad_output, T kappa, T mu, T z) {
   using detail::whit_w_epsilon;
   using detail::whit_w_is_complex_v;
   using detail::whit_w_real_type_t;

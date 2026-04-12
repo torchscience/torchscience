@@ -45,7 +45,7 @@ namespace torchscience::kernel::special_functions {
 // - Birth-death processes
 
 template <typename T>
-T meixner_polynomial_m(T n, T x, T beta, T c) {
+C10_HOST_DEVICE T meixner_polynomial_m(T n, T x, T beta, T c) {
   // M_n(x; beta, c) = 2F1(-n, -x; beta; 1 - 1/c)
   T a = -n;
   T b = -x;
@@ -56,7 +56,7 @@ T meixner_polynomial_m(T n, T x, T beta, T c) {
 
 // Complex version
 template <typename T>
-c10::complex<T> meixner_polynomial_m(
+C10_HOST_DEVICE c10::complex<T> meixner_polynomial_m(
     c10::complex<T> n,
     c10::complex<T> x,
     c10::complex<T> beta,

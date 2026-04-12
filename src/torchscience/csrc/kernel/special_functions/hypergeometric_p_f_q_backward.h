@@ -19,7 +19,7 @@ namespace torchscience::kernel::special_functions {
 //
 // For parameter derivatives, we use finite differences.
 template <typename T>
-void hypergeometric_p_f_q_backward(
+C10_HOST_DEVICE void hypergeometric_p_f_q_backward(
     T grad,
     const T* a, int p,
     const T* b, int q,

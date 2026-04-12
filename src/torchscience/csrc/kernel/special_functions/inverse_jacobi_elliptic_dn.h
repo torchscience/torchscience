@@ -44,24 +44,24 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-constexpr T inverse_jacobi_dn_tolerance();
+C10_HOST_DEVICE constexpr T inverse_jacobi_dn_tolerance();
 
 template <>
-constexpr float inverse_jacobi_dn_tolerance<float>() { return 1e-7f; }
+C10_HOST_DEVICE constexpr float inverse_jacobi_dn_tolerance<float>() { return 1e-7f; }
 
 template <>
-constexpr double inverse_jacobi_dn_tolerance<double>() { return 1e-15; }
+C10_HOST_DEVICE constexpr double inverse_jacobi_dn_tolerance<double>() { return 1e-15; }
 
 template <>
-inline c10::Half inverse_jacobi_dn_tolerance<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half inverse_jacobi_dn_tolerance<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 inverse_jacobi_dn_tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 inverse_jacobi_dn_tolerance<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 } // namespace detail
 
 template <typename T>
-T inverse_jacobi_elliptic_dn(T x, T m) {
+C10_HOST_DEVICE T inverse_jacobi_elliptic_dn(T x, T m) {
     const T tol = detail::inverse_jacobi_dn_tolerance<T>();
 
     // Handle special case x = 1: arcdn(1, m) = 0
@@ -103,7 +103,7 @@ T inverse_jacobi_elliptic_dn(T x, T m) {
 }
 
 template <typename T>
-c10::complex<T> inverse_jacobi_elliptic_dn(c10::complex<T> x, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> inverse_jacobi_elliptic_dn(c10::complex<T> x, c10::complex<T> m) {
     const T tol = detail::inverse_jacobi_dn_tolerance<T>();
     c10::complex<T> one(T(1), T(0));
     c10::complex<T> zero(T(0), T(0));

@@ -15,7 +15,7 @@ namespace torchscience::kernel::special_functions {
 // Returns gradients w.r.t. (grad_output, m)
 
 template <typename T>
-std::tuple<T, T> complete_legendre_elliptic_integral_e_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T> complete_legendre_elliptic_integral_e_backward_backward(
     T grad_grad_m,
     T gradient,
     T m
@@ -43,7 +43,7 @@ std::tuple<T, T> complete_legendre_elliptic_integral_e_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> complete_legendre_elliptic_integral_e_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> complete_legendre_elliptic_integral_e_backward_backward(
     c10::complex<T> grad_grad_m,
     c10::complex<T> gradient,
     c10::complex<T> m

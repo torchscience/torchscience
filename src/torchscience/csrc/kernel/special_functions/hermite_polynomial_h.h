@@ -23,7 +23,7 @@ template <typename T>
 struct hermite_is_complex_type<c10::complex<T>> : std::true_type {};
 
 template <typename T>
-inline constexpr bool hermite_is_complex_v = hermite_is_complex_type<T>::value;
+C10_HOST_DEVICE inline constexpr bool hermite_is_complex_v = hermite_is_complex_type<T>::value;
 
 template <typename T>
 struct hermite_real_type { using type = T; };
@@ -35,10 +35,10 @@ template <typename T>
 struct hermite_real_type<c10::complex<T>> { using type = T; };
 
 template <typename T>
-using hermite_real_type_t = typename hermite_real_type<T>::type;
+C10_HOST_DEVICE using hermite_real_type_t = typename hermite_real_type<T>::type;
 
 template <typename T>
-constexpr auto hermite_epsilon() {
+C10_HOST_DEVICE constexpr auto hermite_epsilon() {
   using real_t = hermite_real_type_t<T>;
   if constexpr (std::is_same_v<real_t, float>) {
     return float(1e-6);
@@ -51,7 +51,7 @@ constexpr auto hermite_epsilon() {
 
 // Check if n is a non-negative integer
 template <typename T>
-bool hermite_is_nonneg_integer(T n) {
+C10_HOST_DEVICE bool hermite_is_nonneg_integer(T n) {
   if constexpr (hermite_is_complex_v<T>) {
     using real_t = hermite_real_type_t<T>;
     auto re = static_cast<real_t>(n.real());
@@ -65,7 +65,7 @@ bool hermite_is_nonneg_integer(T n) {
 }
 
 template <typename T>
-int hermite_get_integer(T n) {
+C10_HOST_DEVICE int hermite_get_integer(T n) {
   if constexpr (hermite_is_complex_v<T>) {
     using real_t = hermite_real_type_t<T>;
     return static_cast<int>(std::round(static_cast<real_t>(n.real())));
@@ -77,7 +77,7 @@ int hermite_get_integer(T n) {
 // Compute H_n(z) for non-negative integer n using recurrence relation
 // H_{n+1}(z) = 2z * H_n(z) - 2n * H_{n-1}(z)
 template <typename T>
-T hermite_integer_recurrence(int n, T z) {
+C10_HOST_DEVICE T hermite_integer_recurrence(int n, T z) {
   if (n == 0) {
     return T(1);
   }
@@ -97,7 +97,7 @@ T hermite_integer_recurrence(int n, T z) {
 
 // Compute H_n(z) for non-integer n using confluent hypergeometric functions
 template <typename T>
-T hermite_hypergeometric(T n, T z) {
+C10_HOST_DEVICE T hermite_hypergeometric(T n, T z) {
   const T pi = T(3.14159265358979323846);
   const T sqrt_pi = std::sqrt(pi);
 
@@ -133,7 +133,7 @@ T hermite_hypergeometric(T n, T z) {
 // H_n(z) = 2^n * sqrt(pi) / Gamma((1-n)/2) * 1F1(-n/2; 1/2; z^2)
 //        + 2^{n+1} * sqrt(pi) * z / Gamma(-n/2) * 1F1((1-n)/2; 3/2; z^2)
 template <typename T>
-T hermite_polynomial_h(T n, T z) {
+C10_HOST_DEVICE T hermite_polynomial_h(T n, T z) {
   // For non-negative integer n, use the fast recurrence relation
   if (detail::hermite_is_nonneg_integer(n)) {
     int n_int = detail::hermite_get_integer(n);

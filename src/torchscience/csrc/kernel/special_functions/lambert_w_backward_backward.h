@@ -32,7 +32,7 @@ namespace torchscience::kernel::special_functions {
 // grad_k = 0 (k is discrete)
 // grad_z = gg_z * grad_output * d^2W/dz^2 (contribution to z gradient)
 template <typename T>
-std::tuple<T, T, T> lambert_w_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> lambert_w_backward_backward(
     T gg_k,       // upstream gradient for grad_k output (unused since grad_k = 0)
     T gg_z,       // upstream gradient for grad_z output
     T grad_output,
@@ -89,7 +89,7 @@ std::tuple<T, T, T> lambert_w_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> lambert_w_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> lambert_w_backward_backward(
     c10::complex<T> gg_k,
     c10::complex<T> gg_z,
     c10::complex<T> grad_output,

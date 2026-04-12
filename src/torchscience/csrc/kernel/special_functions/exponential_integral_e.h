@@ -15,25 +15,25 @@ namespace detail {
 
 // Tolerance constants for exponential_integral_e
 template <typename T>
-constexpr T exponential_integral_e_eps();
+C10_HOST_DEVICE constexpr T exponential_integral_e_eps();
 
 template <>
-constexpr float exponential_integral_e_eps<float>() { return 1e-6f; }
+C10_HOST_DEVICE constexpr float exponential_integral_e_eps<float>() { return 1e-6f; }
 
 template <>
-constexpr double exponential_integral_e_eps<double>() { return 1e-12; }
+C10_HOST_DEVICE constexpr double exponential_integral_e_eps<double>() { return 1e-12; }
 
 template <>
-inline c10::Half exponential_integral_e_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half exponential_integral_e_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 exponential_integral_e_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 exponential_integral_e_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 // Compute E_n(x) using upward recurrence from E_1(x)
 // E_n(x) = (e^{-x} - x * E_{n-1}(x)) / (n-1) for n >= 2
 // This requires E_1(x) as the base case
 template <typename T>
-T exponential_integral_e_recurrence(int n_int, T x) {
+C10_HOST_DEVICE T exponential_integral_e_recurrence(int n_int, T x) {
   // Base case: E_1(x)
   T e_prev = exponential_integral_e_1(x);
 
@@ -56,7 +56,7 @@ T exponential_integral_e_recurrence(int n_int, T x) {
 // More stable for larger x values
 // E_n(x) = e^{-x} * (1 / (x + n / (1 + 1 / (x + (n+1) / (1 + 2 / (x + ...))))))
 template <typename T>
-T exponential_integral_e_continued_fraction(int n_int, T x) {
+C10_HOST_DEVICE T exponential_integral_e_continued_fraction(int n_int, T x) {
   const T tiny = std::numeric_limits<T>::min() * T(1e10);
   const T epsilon = std::numeric_limits<T>::epsilon() * T(10);
   const int max_iterations = 100;
@@ -92,7 +92,7 @@ T exponential_integral_e_continued_fraction(int n_int, T x) {
 
 // Complex version of recurrence
 template <typename T>
-c10::complex<T> exponential_integral_e_recurrence(int n_int, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> exponential_integral_e_recurrence(int n_int, c10::complex<T> z) {
   using Complex = c10::complex<T>;
 
   // Base case: E_1(z)
@@ -115,7 +115,7 @@ c10::complex<T> exponential_integral_e_recurrence(int n_int, c10::complex<T> z) 
 
 // Complex continued fraction
 template <typename T>
-c10::complex<T> exponential_integral_e_continued_fraction(int n_int, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> exponential_integral_e_continued_fraction(int n_int, c10::complex<T> z) {
   using Complex = c10::complex<T>;
 
   const T tiny = std::numeric_limits<T>::min() * T(1e10);
@@ -159,7 +159,7 @@ c10::complex<T> exponential_integral_e_continued_fraction(int n_int, c10::comple
 // E_1(x) = existing exponential_integral_e_1
 // E_n(x) = (e^{-x} - x * E_{n-1}(x)) / (n-1) for n >= 2
 template <typename T>
-T exponential_integral_e(T n, T x) {
+C10_HOST_DEVICE T exponential_integral_e(T n, T x) {
   const T eps = detail::exponential_integral_e_eps<T>();
 
   // Handle special cases
@@ -217,7 +217,7 @@ T exponential_integral_e(T n, T x) {
 
 // Complex version
 template <typename T>
-c10::complex<T> exponential_integral_e(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> exponential_integral_e(c10::complex<T> n, c10::complex<T> z) {
   using Complex = c10::complex<T>;
   const T eps = detail::exponential_integral_e_eps<T>();
 

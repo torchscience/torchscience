@@ -41,7 +41,7 @@ constexpr double KELVIN_BEI_LARGE_X = 20.0;
 //            = sum_{n=0}^inf (-1)^n * (x/2)^(4n+2) / ((2n+1)!)^2
 //
 template <typename T>
-T kelvin_bei(T x) {
+C10_HOST_DEVICE T kelvin_bei(T x) {
     // Handle special values
     if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -132,7 +132,7 @@ T kelvin_bei(T x) {
 
 // Complex version
 template <typename T>
-c10::complex<T> kelvin_bei(c10::complex<T> x) {
+C10_HOST_DEVICE c10::complex<T> kelvin_bei(c10::complex<T> x) {
     // For complex x, we use the power series which converges for all finite x
     // bei(x) = sum_{n=0}^inf (-1)^n * (x/2)^(4n+2) / ((2n+1)!)^2
 

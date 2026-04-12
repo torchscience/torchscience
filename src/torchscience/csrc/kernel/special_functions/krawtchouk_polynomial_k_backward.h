@@ -14,7 +14,7 @@ namespace torchscience::kernel::special_functions {
 // All derivatives (w.r.t. n, x, p, N) are computed via finite differences
 // since the analytical derivatives involve complex expressions.
 template <typename T>
-std::tuple<T, T, T, T> krawtchouk_polynomial_k_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T> krawtchouk_polynomial_k_backward(
     T gradient,
     T n,
     T x,
@@ -48,7 +48,7 @@ std::tuple<T, T, T, T> krawtchouk_polynomial_k_backward(
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
 krawtchouk_polynomial_k_backward(
     c10::complex<T> gradient,
     c10::complex<T> n,

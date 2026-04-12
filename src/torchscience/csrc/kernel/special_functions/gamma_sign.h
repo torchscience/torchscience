@@ -6,7 +6,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T gamma_sign(T x) {
+C10_HOST_DEVICE T gamma_sign(T x) {
   // Sign of Gamma(x) for real x
   // Gamma(x) > 0 for x > 0
   // Gamma(x) alternates sign for x < 0 between consecutive poles

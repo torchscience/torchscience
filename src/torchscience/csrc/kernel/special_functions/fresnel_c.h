@@ -13,7 +13,7 @@ namespace detail {
 // Power series for Fresnel C (converges for all z, but faster for small |z|)
 // C(z) = sum_{n=0}^{inf} (-1)^n * (pi/2)^{2n} * z^{4n+1} / ((2n)! * (4n+1))
 template <typename T>
-T fresnel_c_series(T z) {
+C10_HOST_DEVICE T fresnel_c_series(T z) {
   const T pi_over_2 = static_cast<T>(1.5707963267948966192313216916397514421);
   T z2 = z * z;
   T z4 = z2 * z2;
@@ -41,7 +41,7 @@ T fresnel_c_series(T z) {
 
 // Complex power series for Fresnel C
 template <typename T>
-c10::complex<T> fresnel_c_series_complex(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> fresnel_c_series_complex(c10::complex<T> z) {
   const T pi_over_2 = static_cast<T>(1.5707963267948966192313216916397514421);
   c10::complex<T> z2 = z * z;
   c10::complex<T> z4 = z2 * z2;
@@ -71,7 +71,7 @@ c10::complex<T> fresnel_c_series_complex(c10::complex<T> z) {
 // S(z) = 0.5 - f(z)*cos(pi*z^2/2) - g(z)*sin(pi*z^2/2)
 // C(z) = 0.5 + f(z)*sin(pi*z^2/2) - g(z)*cos(pi*z^2/2)
 template <typename T>
-void fresnel_c_fg_asymptotic(T z, T& f, T& g) {
+C10_HOST_DEVICE void fresnel_c_fg_asymptotic(T z, T& f, T& g) {
   const T pi = static_cast<T>(3.14159265358979323846264338327950288);
   T pi_z2 = pi * z * z;
   T inv_pi_z2 = static_cast<T>(1) / pi_z2;
@@ -106,7 +106,7 @@ void fresnel_c_fg_asymptotic(T z, T& f, T& g) {
 
 // Complex asymptotic expansion
 template <typename T>
-void fresnel_c_fg_asymptotic_complex(c10::complex<T> z, c10::complex<T>& f, c10::complex<T>& g) {
+C10_HOST_DEVICE void fresnel_c_fg_asymptotic_complex(c10::complex<T> z, c10::complex<T>& f, c10::complex<T>& g) {
   const T pi = static_cast<T>(3.14159265358979323846264338327950288);
   c10::complex<T> pi_z2 = pi * z * z;
   c10::complex<T> inv_pi_z2 = c10::complex<T>(1, 0) / pi_z2;
@@ -148,7 +148,7 @@ void fresnel_c_fg_asymptotic_complex(c10::complex<T> z, c10::complex<T>& f, c10:
 //   C(z) -> 0.5 as z -> +inf
 //   C(z) -> -0.5 as z -> -inf
 template <typename T>
-T fresnel_c(T z) {
+C10_HOST_DEVICE T fresnel_c(T z) {
   // Handle special cases
   if (cmath_compat::isnan(z)) {
     return std::numeric_limits<T>::quiet_NaN();
@@ -187,7 +187,7 @@ T fresnel_c(T z) {
 
 // Complex version of Fresnel C (overload for c10::complex)
 template <typename T>
-c10::complex<T> fresnel_c(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> fresnel_c(c10::complex<T> z) {
   const T pi_over_2 = static_cast<T>(1.5707963267948966192313216916397514421);
 
   // Handle z = 0

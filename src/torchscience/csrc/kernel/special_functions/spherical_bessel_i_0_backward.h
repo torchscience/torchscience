@@ -9,7 +9,7 @@ namespace torchscience::kernel::special_functions {
 // d/dz i_0(z) = d/dz [sinh(z)/z] = cosh(z)/z - sinh(z)/z^2
 // Direct formula: (cosh(z)*z - sinh(z)) / z^2
 template <typename T>
-T spherical_bessel_i_0_backward(T grad_output, T z) {
+C10_HOST_DEVICE T spherical_bessel_i_0_backward(T grad_output, T z) {
     const T eps = detail::spherical_bessel_i_0_eps<T>();
 
     // For small z, use Taylor series: i_0'(z) = z/3 + z^3/30 + ...
@@ -29,7 +29,7 @@ T spherical_bessel_i_0_backward(T grad_output, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> spherical_bessel_i_0_backward(c10::complex<T> grad_output, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_i_0_backward(c10::complex<T> grad_output, c10::complex<T> z) {
     const T eps = detail::spherical_bessel_i_0_eps<T>();
 
     if (std::abs(z) < eps) {

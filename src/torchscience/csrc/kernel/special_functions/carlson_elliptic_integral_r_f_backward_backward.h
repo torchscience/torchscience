@@ -9,7 +9,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T, T, T> carlson_elliptic_integral_r_f_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T> carlson_elliptic_integral_r_f_backward_backward(
     T gg_x,
     T gg_y,
     T gg_z,
@@ -39,7 +39,7 @@ std::tuple<T, T, T, T> carlson_elliptic_integral_r_f_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
 carlson_elliptic_integral_r_f_backward_backward(
     c10::complex<T> gg_x,
     c10::complex<T> gg_y,

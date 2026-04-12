@@ -41,7 +41,7 @@ namespace torchscience::kernel::special_functions {
 // - Moment invariants in computer vision
 
 template <typename T>
-T zernike_polynomial_r(T n, T m, T rho) {
+C10_HOST_DEVICE T zernike_polynomial_r(T n, T m, T rho) {
   // Take absolute value of m (R_n^m = R_n^{-m})
   T abs_m = std::abs(m);
   T diff = n - abs_m;
@@ -90,7 +90,7 @@ T zernike_polynomial_r(T n, T m, T rho) {
 
 // Complex version
 template <typename T>
-c10::complex<T> zernike_polynomial_r(c10::complex<T> n, c10::complex<T> m, c10::complex<T> rho) {
+C10_HOST_DEVICE c10::complex<T> zernike_polynomial_r(c10::complex<T> n, c10::complex<T> m, c10::complex<T> rho) {
   c10::complex<T> zero(T(0), T(0));
   c10::complex<T> one(T(1), T(0));
   c10::complex<T> two(T(2), T(0));

@@ -26,7 +26,7 @@ namespace torchscience::kernel::special_functions {
 // - E(1) = 1
 
 template <typename T>
-T complete_legendre_elliptic_integral_e(T m) {
+C10_HOST_DEVICE T complete_legendre_elliptic_integral_e(T m) {
     // E(m) = 2 * R_G(0, 1-m, 1)
     T zero = T(0);
     T one = T(1);
@@ -36,7 +36,7 @@ T complete_legendre_elliptic_integral_e(T m) {
 }
 
 template <typename T>
-c10::complex<T> complete_legendre_elliptic_integral_e(c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> complete_legendre_elliptic_integral_e(c10::complex<T> m) {
     // E(m) = 2 * R_G(0, 1-m, 1)
     c10::complex<T> zero(T(0), T(0));
     c10::complex<T> one(T(1), T(0));

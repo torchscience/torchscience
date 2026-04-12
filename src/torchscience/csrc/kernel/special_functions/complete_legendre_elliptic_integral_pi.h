@@ -8,7 +8,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T complete_legendre_elliptic_integral_pi(T n, T m) {
+C10_HOST_DEVICE T complete_legendre_elliptic_integral_pi(T n, T m) {
     // Complete elliptic integral of the third kind Pi(n, m)
     //
     // Mathematical definition:
@@ -37,7 +37,7 @@ T complete_legendre_elliptic_integral_pi(T n, T m) {
 }
 
 template <typename T>
-c10::complex<T> complete_legendre_elliptic_integral_pi(
+C10_HOST_DEVICE c10::complex<T> complete_legendre_elliptic_integral_pi(
     c10::complex<T> n,
     c10::complex<T> m
 ) {

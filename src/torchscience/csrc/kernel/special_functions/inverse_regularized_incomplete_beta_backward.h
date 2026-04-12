@@ -12,7 +12,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T, T> inverse_regularized_incomplete_beta_backward(T gradient, T a, T b, T y) {
+C10_HOST_DEVICE std::tuple<T, T, T> inverse_regularized_incomplete_beta_backward(T gradient, T a, T b, T y) {
   // x = inverse_regularized_incomplete_beta(a, b, y) satisfies I_x(a, b) = y
   //
   // By implicit differentiation of I_x(a, b) = y:

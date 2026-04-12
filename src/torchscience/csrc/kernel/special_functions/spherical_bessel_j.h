@@ -17,25 +17,25 @@ namespace detail {
 
 // Tolerance constants for spherical_bessel_j
 template <typename T>
-constexpr T spherical_bessel_j_eps();
+C10_HOST_DEVICE constexpr T spherical_bessel_j_eps();
 
 template <>
-constexpr float spherical_bessel_j_eps<float>() { return 1e-6f; }
+C10_HOST_DEVICE constexpr float spherical_bessel_j_eps<float>() { return 1e-6f; }
 
 template <>
-constexpr double spherical_bessel_j_eps<double>() { return 1e-12; }
+C10_HOST_DEVICE constexpr double spherical_bessel_j_eps<double>() { return 1e-12; }
 
 template <>
-inline c10::Half spherical_bessel_j_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half spherical_bessel_j_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 spherical_bessel_j_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 spherical_bessel_j_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 // Forward recurrence for spherical Bessel functions
 // j_{n+1}(z) = (2n+1)/z * j_n(z) - j_{n-1}(z)
 // This is stable for z > n
 template <typename T>
-T spherical_bessel_j_forward_recurrence(int n_int, T z) {
+C10_HOST_DEVICE T spherical_bessel_j_forward_recurrence(int n_int, T z) {
     if (n_int == 0) return spherical_bessel_j_0(z);
     if (n_int == 1) return spherical_bessel_j_1(z);
 
@@ -54,7 +54,7 @@ T spherical_bessel_j_forward_recurrence(int n_int, T z) {
 // Backward recurrence for spherical Bessel functions (Miller's algorithm)
 // More stable for z < n
 template <typename T>
-T spherical_bessel_j_backward_recurrence(int n_int, T z) {
+C10_HOST_DEVICE T spherical_bessel_j_backward_recurrence(int n_int, T z) {
     // Start from large m and recur downward
     // Use normalization with j_0
     int m = n_int + static_cast<int>(std::sqrt(T(40) * std::max(T(n_int), static_cast<T>(std::abs(z)))) + std::abs(z));
@@ -92,7 +92,7 @@ T spherical_bessel_j_backward_recurrence(int n_int, T z) {
 
 // Complex forward recurrence
 template <typename T>
-c10::complex<T> spherical_bessel_j_forward_recurrence(int n_int, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_j_forward_recurrence(int n_int, c10::complex<T> z) {
     if (n_int == 0) return spherical_bessel_j_0(z);
     if (n_int == 1) return spherical_bessel_j_1(z);
 
@@ -111,7 +111,7 @@ c10::complex<T> spherical_bessel_j_forward_recurrence(int n_int, c10::complex<T>
 
 // Complex backward recurrence
 template <typename T>
-c10::complex<T> spherical_bessel_j_backward_recurrence(int n_int, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_j_backward_recurrence(int n_int, c10::complex<T> z) {
     T z_mag = std::abs(z);
     int m = n_int + static_cast<int>(std::sqrt(T(40) * std::max(T(n_int), z_mag)) + z_mag);
     if (m < n_int + 20) m = n_int + 20;
@@ -154,7 +154,7 @@ c10::complex<T> spherical_bessel_j_backward_recurrence(int n_int, c10::complex<T
 // Spherical Bessel function of the first kind of general order n
 // j_n(z) = sqrt(π/2z) * J_{n+1/2}(z)
 template <typename T>
-T spherical_bessel_j(T n, T z) {
+C10_HOST_DEVICE T spherical_bessel_j(T n, T z) {
     // Handle special values
     if (cmath_compat::isnan(n) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -224,7 +224,7 @@ T spherical_bessel_j(T n, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> spherical_bessel_j(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_j(c10::complex<T> n, c10::complex<T> z) {
     const T eps = detail::spherical_bessel_j_eps<T>();
     const c10::complex<T> one(T(1), T(0));
     const c10::complex<T> zero(T(0), T(0));

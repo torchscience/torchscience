@@ -9,7 +9,7 @@ namespace torchscience::kernel::special_functions {
 
 // Euler-Mascheroni constant
 template <typename T>
-constexpr T euler_mascheroni() {
+C10_HOST_DEVICE constexpr T euler_mascheroni() {
   return T(0.5772156649015328606065120900824024310421593359);
 }
 
@@ -18,7 +18,7 @@ constexpr T euler_mascheroni() {
 // where f(x) ~ 1/x - 2!/x^3 + 4!/x^5 - ...
 //       g(x) ~ 1/x^2 - 3!/x^4 + 5!/x^6 - ...
 template <typename T>
-void cosine_integral_auxiliary(T x, T& f, T& g) {
+C10_HOST_DEVICE void cosine_integral_auxiliary(T x, T& f, T& g) {
   T inv_x = T(1) / x;
   T inv_x2 = inv_x * inv_x;
 
@@ -79,7 +79,7 @@ void cosine_integral_auxiliary(T x, T& f, T& g) {
 // Term ratio: term_n / term_{n-1} = -x^2 * (2n-2) / ((2n) * (2n) * (2n-1))
 //                                 = -x^2 * (n-1) / (n * (2n) * (2n-1))
 template <typename T>
-T cosine_integral_ci(T x) {
+C10_HOST_DEVICE T cosine_integral_ci(T x) {
   // Handle special cases
   if (cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
@@ -137,7 +137,7 @@ T cosine_integral_ci(T x) {
 // For complex z, use analytic continuation via power series
 // Ci(z) = gamma + ln(z) + sum_{n=1}^inf (-1)^n z^(2n) / (2n * (2n)!)
 template <typename T>
-c10::complex<T> cosine_integral_ci(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> cosine_integral_ci(c10::complex<T> z) {
   using Complex = c10::complex<T>;
 
   // Handle special cases

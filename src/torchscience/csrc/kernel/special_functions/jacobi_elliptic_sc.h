@@ -39,7 +39,7 @@ namespace torchscience::kernel::special_functions {
 // sc * cs = 1 (cs = cn/sn)
 
 template <typename T>
-T jacobi_elliptic_sc(T u, T m) {
+C10_HOST_DEVICE T jacobi_elliptic_sc(T u, T m) {
     T sn = jacobi_elliptic_sn(u, m);
     T cn = jacobi_elliptic_cn(u, m);
 
@@ -60,7 +60,7 @@ T jacobi_elliptic_sc(T u, T m) {
 }
 
 template <typename T>
-c10::complex<T> jacobi_elliptic_sc(c10::complex<T> u, c10::complex<T> m) {
+C10_HOST_DEVICE c10::complex<T> jacobi_elliptic_sc(c10::complex<T> u, c10::complex<T> m) {
     c10::complex<T> sn = jacobi_elliptic_sn(u, m);
     c10::complex<T> cn = jacobi_elliptic_cn(u, m);
 

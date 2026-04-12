@@ -7,7 +7,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T log_multivariate_gamma(T a, int64_t d) {
+C10_HOST_DEVICE T log_multivariate_gamma(T a, int64_t d) {
   // log(Gamma_d(a)) = d*(d-1)/4 * log(pi) + sum_{j=1}^{d} log_gamma(a + (1-j)/2)
   // Valid for a > (d-1)/2
 

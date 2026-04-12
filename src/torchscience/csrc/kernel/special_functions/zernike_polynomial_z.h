@@ -47,7 +47,7 @@ namespace torchscience::kernel::special_functions {
 // - Z_3^1 = (3*rho^3 - 2*rho) * cos(theta) (x-coma)
 
 template <typename T>
-T zernike_polynomial_z(T n, T m, T rho, T theta) {
+C10_HOST_DEVICE T zernike_polynomial_z(T n, T m, T rho, T theta) {
   // Compute the radial part R_n^|m|(rho)
   T abs_m = std::abs(m);
   T radial = zernike_polynomial_r(n, abs_m, rho);
@@ -62,7 +62,7 @@ T zernike_polynomial_z(T n, T m, T rho, T theta) {
 
 // Complex version
 template <typename T>
-c10::complex<T> zernike_polynomial_z(c10::complex<T> n, c10::complex<T> m, c10::complex<T> rho, c10::complex<T> theta) {
+C10_HOST_DEVICE c10::complex<T> zernike_polynomial_z(c10::complex<T> n, c10::complex<T> m, c10::complex<T> rho, c10::complex<T> theta) {
   c10::complex<T> zero(T(0), T(0));
 
   // Take absolute value of m (real part for the check)

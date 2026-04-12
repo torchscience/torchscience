@@ -18,7 +18,7 @@ struct Hyp1F1WithGrads {
 
 // Series with gradient accumulation for parameter derivatives
 template <typename T>
-Hyp1F1WithGrads<T> hyp1f1_series_with_grads(T a, T b, T z, int max_iter = 500) {
+C10_HOST_DEVICE Hyp1F1WithGrads<T> hyp1f1_series_with_grads(T a, T b, T z, int max_iter = 500) {
   T sum = T(1);
   T da_sum = T(0);
   T db_sum = T(0);
@@ -54,7 +54,7 @@ Hyp1F1WithGrads<T> hyp1f1_series_with_grads(T a, T b, T z, int max_iter = 500) {
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T, T> confluent_hypergeometric_m_backward(T grad, T a, T b, T z) {
+C10_HOST_DEVICE std::tuple<T, T, T> confluent_hypergeometric_m_backward(T grad, T a, T b, T z) {
   using detail::hyp1f1_epsilon;
   using detail::hyp1f1_is_nonpositive_integer;
   using detail::hyp1f1_series_with_grads;

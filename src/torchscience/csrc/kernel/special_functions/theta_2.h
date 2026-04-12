@@ -26,20 +26,20 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-inline T theta2_tolerance() {
+C10_HOST_DEVICE inline T theta2_tolerance() {
     return T(1e-10);
 }
 
 template <>
-inline float theta2_tolerance<float>() { return 1e-5f; }
+C10_HOST_DEVICE inline float theta2_tolerance<float>() { return 1e-5f; }
 
 template <>
-inline double theta2_tolerance<double>() { return 1e-14; }
+C10_HOST_DEVICE inline double theta2_tolerance<double>() { return 1e-14; }
 
 } // namespace detail
 
 template <typename T>
-T theta_2(T z, T q) {
+C10_HOST_DEVICE T theta_2(T z, T q) {
     constexpr int max_terms = 100;
     const T tolerance = detail::theta2_tolerance<T>();
 
@@ -64,7 +64,7 @@ T theta_2(T z, T q) {
 }
 
 template <typename T>
-c10::complex<T> theta_2(c10::complex<T> z, c10::complex<T> q) {
+C10_HOST_DEVICE c10::complex<T> theta_2(c10::complex<T> z, c10::complex<T> q) {
     constexpr int max_terms = 100;
     const T tolerance = detail::theta2_tolerance<T>();
 

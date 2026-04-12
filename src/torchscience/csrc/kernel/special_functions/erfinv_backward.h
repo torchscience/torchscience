@@ -16,7 +16,7 @@ namespace torchscience::kernel::special_functions {
 //
 // This derivative is always positive and grows rapidly as |x| -> 1
 template <typename T>
-T erfinv_backward(T gradient, T x) {
+C10_HOST_DEVICE T erfinv_backward(T gradient, T x) {
   const T sqrt_pi_over_2 = static_cast<T>(0.8862269254527580136490837416705725914);
 
   T y = erfinv(x);

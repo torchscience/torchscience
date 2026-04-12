@@ -15,7 +15,7 @@ namespace detail {
 // This follows from: Li_s(z) = sum z^k / k^s
 // d/dz = sum k * z^{k-1} / k^s = sum z^{k-1} / k^{s-1} = (1/z) * sum z^k / k^{s-1} = Li_{s-1}(z) / z
 template <typename T>
-T polylogarithm_li_dz(T s, T z) {
+C10_HOST_DEVICE T polylogarithm_li_dz(T s, T z) {
   if (z == T(0)) {
     // d/dz Li_s(z) at z=0: the derivative is Li_{s-1}(0)/0 which is 0/0
     // Actually Li_{s-1}(z)/z as z->0 = 1 (since Li_{s-1}(z) ~ z for small z)
@@ -28,7 +28,7 @@ T polylogarithm_li_dz(T s, T z) {
 }
 
 template <typename T>
-c10::complex<T> polylogarithm_li_dz(c10::complex<T> s, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> polylogarithm_li_dz(c10::complex<T> s, c10::complex<T> z) {
   c10::complex<T> one(T(1), T(0));
   if (std::abs(z) < std::numeric_limits<T>::epsilon()) {
     return one;
@@ -42,7 +42,7 @@ c10::complex<T> polylogarithm_li_dz(c10::complex<T> s, c10::complex<T> z) {
 
 // Derivative with respect to s: d/ds Li_s(z) = -sum ln(k) * z^k / k^s
 template <typename T>
-T polylogarithm_li_ds(T s, T z, int max_terms = 200) {
+C10_HOST_DEVICE T polylogarithm_li_ds(T s, T z, int max_terms = 200) {
   if (z == T(0)) {
     return T(0);
   }
@@ -70,7 +70,7 @@ T polylogarithm_li_ds(T s, T z, int max_terms = 200) {
 }
 
 template <typename T>
-c10::complex<T> polylogarithm_li_ds(c10::complex<T> s, c10::complex<T> z, int max_terms = 200) {
+C10_HOST_DEVICE c10::complex<T> polylogarithm_li_ds(c10::complex<T> s, c10::complex<T> z, int max_terms = 200) {
   c10::complex<T> zero(T(0), T(0));
   if (std::abs(z) < std::numeric_limits<T>::epsilon()) {
     return zero;
@@ -104,14 +104,14 @@ c10::complex<T> polylogarithm_li_ds(c10::complex<T> s, c10::complex<T> z, int ma
 // Backward pass for polylogarithm_li
 // Returns (grad_s, grad_z)
 template <typename T>
-std::tuple<T, T> polylogarithm_li_backward(T gradient, T s, T z) {
+C10_HOST_DEVICE std::tuple<T, T> polylogarithm_li_backward(T gradient, T s, T z) {
   T grad_s = gradient * detail::polylogarithm_li_ds(s, z);
   T grad_z = gradient * detail::polylogarithm_li_dz(s, z);
   return {grad_s, grad_z};
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> polylogarithm_li_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> polylogarithm_li_backward(
     c10::complex<T> gradient,
     c10::complex<T> s,
     c10::complex<T> z) {

@@ -24,7 +24,7 @@ namespace torchscience::kernel::special_functions {
 // dL/dn and dL/dalpha use finite differences for robustness
 
 template <typename T>
-std::tuple<T, T, T> laguerre_polynomial_l_backward(T gradient, T n, T alpha, T z) {
+C10_HOST_DEVICE std::tuple<T, T, T> laguerre_polynomial_l_backward(T gradient, T n, T alpha, T z) {
   T eps = T(1e-7);
 
   // Gradient with respect to z
@@ -67,7 +67,7 @@ std::tuple<T, T, T> laguerre_polynomial_l_backward(T gradient, T n, T alpha, T z
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>>
 laguerre_polynomial_l_backward(c10::complex<T> gradient, c10::complex<T> n, c10::complex<T> alpha, c10::complex<T> z) {
   c10::complex<T> one(T(1), T(0));
   c10::complex<T> zero(T(0), T(0));

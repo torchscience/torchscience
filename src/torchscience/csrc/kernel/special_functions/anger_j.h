@@ -11,7 +11,7 @@ namespace torchscience::kernel::special_functions {
 // Using numerical integration (Gauss-Legendre quadrature) for consistency
 // with backward pass
 template <typename T>
-T anger_j(T n, T z) {
+C10_HOST_DEVICE T anger_j(T n, T z) {
     const T pi = T(3.14159265358979323846);
 
     // 20-point Gauss-Legendre quadrature on [0, pi]
@@ -67,7 +67,7 @@ T anger_j(T n, T z) {
 
 // Complex version using numerical integration
 template <typename T>
-c10::complex<T> anger_j(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> anger_j(c10::complex<T> n, c10::complex<T> z) {
     const T pi = T(3.14159265358979323846);
 
     // Use Gaussian quadrature for the integral

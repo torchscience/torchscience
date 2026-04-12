@@ -17,27 +17,27 @@ namespace detail {
 
 // Tolerance constants for bessel_j
 template <typename T>
-constexpr T bessel_j_eps();
+C10_HOST_DEVICE constexpr T bessel_j_eps();
 
 template <>
-constexpr float bessel_j_eps<float>() { return 1e-7f; }
+C10_HOST_DEVICE constexpr float bessel_j_eps<float>() { return 1e-7f; }
 
 template <>
-constexpr double bessel_j_eps<double>() { return 1e-15; }
+C10_HOST_DEVICE constexpr double bessel_j_eps<double>() { return 1e-15; }
 
 template <>
-inline c10::Half bessel_j_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half bessel_j_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 bessel_j_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 bessel_j_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 template <typename T>
-constexpr int bessel_j_max_iter() { return 300; }
+C10_HOST_DEVICE constexpr int bessel_j_max_iter() { return 300; }
 
 // Power series for Jₙ(z):
 // Jₙ(z) = (z/2)ⁿ * Σₖ₌₀^∞ (-z²/4)ᵏ / (k! * Γ(n+k+1))
 template <typename T>
-T bessel_j_series(T n, T z) {
+C10_HOST_DEVICE T bessel_j_series(T n, T z) {
     const T eps = bessel_j_eps<T>();
     const int max_iter = bessel_j_max_iter<T>();
 
@@ -96,7 +96,7 @@ T bessel_j_series(T n, T z) {
 
 // Complex power series for Jₙ(z)
 template <typename T>
-c10::complex<T> bessel_j_series(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_j_series(c10::complex<T> n, c10::complex<T> z) {
     const T eps = bessel_j_eps<T>();
     const int max_iter = bessel_j_max_iter<T>();
     const c10::complex<T> one(T(1), T(0));
@@ -143,7 +143,7 @@ c10::complex<T> bessel_j_series(c10::complex<T> n, c10::complex<T> z) {
 // Miller's backward recurrence for computing Jₙ for integer n
 // This is more stable than forward recurrence for large n
 template <typename T>
-T bessel_j_miller(int n_int, T z) {
+C10_HOST_DEVICE T bessel_j_miller(int n_int, T z) {
     if (n_int < 0) {
         // Use J_{-n}(z) = (-1)^n * J_n(z)
         T result = bessel_j_miller(-n_int, z);
@@ -208,7 +208,7 @@ T bessel_j_miller(int n_int, T z) {
 // Jₙ(z) ~ sqrt(2/(πz)) * [P(n,z)*cos(χ) - Q(n,z)*sin(χ)]
 // where χ = z - (n/2 + 1/4)*π
 template <typename T>
-T bessel_j_asymptotic(T n, T z) {
+C10_HOST_DEVICE T bessel_j_asymptotic(T n, T z) {
     const T pi = static_cast<T>(M_PI);
 
     T chi = z - (n / T(2) + T(0.25)) * pi;
@@ -239,7 +239,7 @@ T bessel_j_asymptotic(T n, T z) {
 } // namespace detail
 
 template <typename T>
-T bessel_j(T n, T z) {
+C10_HOST_DEVICE T bessel_j(T n, T z) {
     // Handle special values
     if (cmath_compat::isnan(n) || cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -318,7 +318,7 @@ T bessel_j(T n, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> bessel_j(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_j(c10::complex<T> n, c10::complex<T> z) {
     const T eps = detail::bessel_j_eps<T>();
     const c10::complex<T> one(T(1), T(0));
     const c10::complex<T> zero(T(0), T(0));

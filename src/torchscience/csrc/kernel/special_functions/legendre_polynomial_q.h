@@ -21,7 +21,7 @@ namespace torchscience::kernel::special_functions {
 // where P_n is the Legendre polynomial of the first kind.
 // This is undefined at integer n (0/0 form).
 template <typename T>
-T legendre_polynomial_q(T x, T n) {
+C10_HOST_DEVICE T legendre_polynomial_q(T x, T n) {
   // Base cases using recurrence
   // Q_0(x) = arctanh(x) = (1/2) * ln((1+x)/(1-x))
   T one = T(1);

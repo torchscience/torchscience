@@ -17,7 +17,7 @@ namespace detail {
 // - DiDonato and Morris (1992) "Algorithm 708: Significant Digit Computation
 //   of the Incomplete Beta Function Ratios"
 template <typename T>
-T inverse_regularized_incomplete_beta_initial_guess(T a, T b, T y) {
+C10_HOST_DEVICE T inverse_regularized_incomplete_beta_initial_guess(T a, T b, T y) {
   const T eps = std::numeric_limits<T>::epsilon();
 
   // Handle extreme cases - use power law for small/large y
@@ -110,7 +110,7 @@ T inverse_regularized_incomplete_beta_initial_guess(T a, T b, T y) {
 } // namespace detail
 
 template <typename T>
-T inverse_regularized_incomplete_beta(T a, T b, T y) {
+C10_HOST_DEVICE T inverse_regularized_incomplete_beta(T a, T b, T y) {
   // Solve I_x(a, b) = y for x using Halley's method
   // I_x(a, b) = regularized incomplete beta function
   //

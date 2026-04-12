@@ -16,7 +16,7 @@ namespace torchscience::kernel::special_functions {
 // Derivatives with respect to n and lambda are computed via finite differences
 // since analytical forms are complex.
 template <typename T>
-std::tuple<T, T, T> gegenbauer_polynomial_c_backward(T gradient, T n, T lambda, T z) {
+C10_HOST_DEVICE std::tuple<T, T, T> gegenbauer_polynomial_c_backward(T gradient, T n, T lambda, T z) {
   // dC/dz = 2*lambda * C_{n-1}^{lambda+1}(z)
   T gradient_z;
   if (std::abs(n) < T(1e-10)) {
@@ -43,7 +43,7 @@ std::tuple<T, T, T> gegenbauer_polynomial_c_backward(T gradient, T n, T lambda, 
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> gegenbauer_polynomial_c_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> gegenbauer_polynomial_c_backward(
     c10::complex<T> gradient, c10::complex<T> n, c10::complex<T> lambda, c10::complex<T> z) {
   c10::complex<T> one(T(1), T(0));
   c10::complex<T> two(T(2), T(0));

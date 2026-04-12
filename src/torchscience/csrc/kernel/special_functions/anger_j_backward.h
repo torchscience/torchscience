@@ -11,7 +11,7 @@ namespace torchscience::kernel::special_functions {
 // Helper: compute d/dn J_nu(z) = -(1/pi) * integral_0^pi theta * sin(nu*theta - z*sin(theta)) d(theta)
 // using Gauss-Legendre quadrature
 template <typename T>
-T anger_j_derivative_n(T n, T z) {
+C10_HOST_DEVICE T anger_j_derivative_n(T n, T z) {
     const T pi = T(3.14159265358979323846);
 
     // 20-point Gauss-Legendre quadrature on [0, pi]
@@ -66,7 +66,7 @@ T anger_j_derivative_n(T n, T z) {
 
 // Complex version of derivative w.r.t. n
 template <typename T>
-c10::complex<T> anger_j_derivative_n(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> anger_j_derivative_n(c10::complex<T> n, c10::complex<T> z) {
     const T pi = T(3.14159265358979323846);
 
     const T nodes[10] = {
@@ -124,7 +124,7 @@ c10::complex<T> anger_j_derivative_n(c10::complex<T> n, c10::complex<T> z) {
 // Derivative of Anger function w.r.t. nu:
 // d/d(nu) J_nu(z) = -(1/pi) * integral_0^pi theta * sin(nu*theta - z*sin(theta)) d(theta)
 template <typename T>
-std::tuple<T, T> anger_j_backward(T grad_output, T n, T z) {
+C10_HOST_DEVICE std::tuple<T, T> anger_j_backward(T grad_output, T n, T z) {
     T grad_n = grad_output * anger_j_derivative_n(n, z);
 
     T j_nu_minus_1 = anger_j(n - T(1), z);
@@ -136,7 +136,7 @@ std::tuple<T, T> anger_j_backward(T grad_output, T n, T z) {
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> anger_j_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> anger_j_backward(
     c10::complex<T> grad_output,
     c10::complex<T> n,
     c10::complex<T> z

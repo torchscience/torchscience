@@ -18,7 +18,7 @@ namespace torchscience::kernel::special_functions {
 //   grad_phi = dY/d(phi) via central finite differences
 
 template <typename T>
-std::tuple<T, T, T, T> spherical_harmonic_y_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T> spherical_harmonic_y_backward(
     T gradient, T l, T m, T theta, T phi) {
   // Gradients w.r.t. l and m are zero (discrete parameters)
   T grad_l = T(0);
@@ -40,7 +40,7 @@ std::tuple<T, T, T, T> spherical_harmonic_y_backward(
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
 spherical_harmonic_y_backward(
     c10::complex<T> gradient, c10::complex<T> l, c10::complex<T> m,
     c10::complex<T> theta, c10::complex<T> phi) {

@@ -12,7 +12,7 @@ namespace torchscience::kernel::special_functions {
 // d^2/dx^2 Ci(x) = d/dx [cos(x)/x] = (-x*sin(x) - cos(x)) / x^2
 //                                  = -sin(x)/x - cos(x)/x^2
 template <typename T>
-std::tuple<T, T> cosine_integral_ci_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T> cosine_integral_ci_backward_backward(
   T gradient_gradient,
   T gradient,
   T x
@@ -38,7 +38,7 @@ std::tuple<T, T> cosine_integral_ci_backward_backward(
 // d/dz Ci(z) = cos(z) / z
 // d^2/dz^2 Ci(z) = (-z*sin(z) - cos(z)) / z^2
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> cosine_integral_ci_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> cosine_integral_ci_backward_backward(
   c10::complex<T> gradient_gradient,
   c10::complex<T> gradient,
   c10::complex<T> z

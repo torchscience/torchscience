@@ -23,7 +23,7 @@ namespace torchscience::kernel::special_functions {
 // Uses finite differences for second derivatives
 
 template <typename T>
-std::tuple<T, T, T, T> charlier_polynomial_c_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T> charlier_polynomial_c_backward_backward(
     T gg_n, T gg_x, T gg_a,
     T gradient, T n, T x, T a) {
 
@@ -113,7 +113,7 @@ std::tuple<T, T, T, T> charlier_polynomial_c_backward_backward(
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
 charlier_polynomial_c_backward_backward(
     c10::complex<T> gg_n, c10::complex<T> gg_x, c10::complex<T> gg_a,
     c10::complex<T> gradient, c10::complex<T> n, c10::complex<T> x, c10::complex<T> a) {

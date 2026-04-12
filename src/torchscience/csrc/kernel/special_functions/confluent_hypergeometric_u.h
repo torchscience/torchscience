@@ -28,7 +28,7 @@ template <typename T>
 struct hypu_is_complex_type<c10::complex<T>> : std::true_type {};
 
 template <typename T>
-inline constexpr bool hypu_is_complex_v = hypu_is_complex_type<T>::value;
+C10_HOST_DEVICE inline constexpr bool hypu_is_complex_v = hypu_is_complex_type<T>::value;
 
 template <typename T>
 struct hypu_real_type { using type = T; };
@@ -40,10 +40,10 @@ template <typename T>
 struct hypu_real_type<c10::complex<T>> { using type = T; };
 
 template <typename T>
-using hypu_real_type_t = typename hypu_real_type<T>::type;
+C10_HOST_DEVICE using hypu_real_type_t = typename hypu_real_type<T>::type;
 
 template <typename T>
-constexpr auto hypu_epsilon() {
+C10_HOST_DEVICE constexpr auto hypu_epsilon() {
   using real_t = hypu_real_type_t<T>;
   if constexpr (std::is_same_v<real_t, float>) {
     return float(1e-6);
@@ -55,7 +55,7 @@ constexpr auto hypu_epsilon() {
 }
 
 template <typename T>
-bool hypu_is_nonpositive_integer(T x) {
+C10_HOST_DEVICE bool hypu_is_nonpositive_integer(T x) {
   if constexpr (hypu_is_complex_v<T>) {
     using real_t = hypu_real_type_t<T>;
     auto re = static_cast<real_t>(x.real());
@@ -70,7 +70,7 @@ bool hypu_is_nonpositive_integer(T x) {
 }
 
 template <typename T>
-bool hypu_is_positive_integer(T x) {
+C10_HOST_DEVICE bool hypu_is_positive_integer(T x) {
   if constexpr (hypu_is_complex_v<T>) {
     using real_t = hypu_real_type_t<T>;
     auto re = static_cast<real_t>(x.real());
@@ -85,7 +85,7 @@ bool hypu_is_positive_integer(T x) {
 }
 
 template <typename T>
-bool hypu_is_integer(T x) {
+C10_HOST_DEVICE bool hypu_is_integer(T x) {
   if constexpr (hypu_is_complex_v<T>) {
     using real_t = hypu_real_type_t<T>;
     auto re = static_cast<real_t>(x.real());
@@ -99,7 +99,7 @@ bool hypu_is_integer(T x) {
 }
 
 template <typename T>
-int hypu_get_integer(T x) {
+C10_HOST_DEVICE int hypu_get_integer(T x) {
   if constexpr (hypu_is_complex_v<T>) {
     using real_t = hypu_real_type_t<T>;
     return static_cast<int>(std::round(static_cast<real_t>(x.real())));
@@ -113,7 +113,7 @@ int hypu_get_integer(T x) {
 // For x < 0 (non-integer): sign depends on floor(x).
 //   Gamma(x) > 0 when floor(x) is even, < 0 when floor(x) is odd.
 template <typename T>
-int hypu_gamma_sign(T x) {
+C10_HOST_DEVICE int hypu_gamma_sign(T x) {
   if constexpr (hypu_is_complex_v<T>) {
     // For complex arguments, sign tracking via log_gamma phase is correct;
     // this helper is only meaningful for real arguments.
@@ -131,7 +131,7 @@ int hypu_gamma_sign(T x) {
 // Asymptotic expansion for large |z|:
 // U(a, b, z) ~ z^(-a) * sum_{n=0}^{inf} (a)_n * (a - b + 1)_n / n! * (-z)^(-n)
 template <typename T>
-T hypu_asymptotic(T a, T b, T z, int max_iter = 100) {
+C10_HOST_DEVICE T hypu_asymptotic(T a, T b, T z, int max_iter = 100) {
   T sum = T(1);
   T term = T(1);
   T a_minus_b_plus_1 = a - b + T(1);
@@ -168,7 +168,7 @@ T hypu_asymptotic(T a, T b, T z, int max_iter = 100) {
 //            + ((n-2)! / Gamma(a)) *
 //              sum_{k=0}^{n-2} (a-n+1)_k / ((2-n)_k * k!) * z^(k+1-n)
 template <typename T>
-T hypu_integer_b_positive(T a, int n, T z, int max_iter = 200) {
+C10_HOST_DEVICE T hypu_integer_b_positive(T a, int n, T z, int max_iter = 200) {
   // --- First part: logarithmic series ---
   // Coefficient: (-1)^n / (Gamma(a - n + 1) * (n-1)!)
   T a_minus_n_plus_1 = a - T(n) + T(1);
@@ -269,7 +269,7 @@ T hypu_integer_b_positive(T a, int n, T z, int max_iter = 200) {
 
 // U for integer b <= 0 using limiting form
 template <typename T>
-T hypu_integer_b_nonpositive(T a, int n, T z) {
+C10_HOST_DEVICE T hypu_integer_b_nonpositive(T a, int n, T z) {
   // For b = n <= 0 (non-positive integer), the formula simplifies
   // Both 1-b and 2-b are positive integers > 1
   T b = T(n);
@@ -333,7 +333,7 @@ T hypu_integer_b_nonpositive(T a, int n, T z) {
 // log-sum-exp style arithmetic to avoid catastrophic cancellation when
 // the two terms have similar magnitude but opposite sign.
 template <typename T>
-T hypu_via_m(T a, T b, T z) {
+C10_HOST_DEVICE T hypu_via_m(T a, T b, T z) {
   T one_minus_b = T(1) - b;
   T a_minus_b_plus_1 = a - b + T(1);
 
@@ -408,7 +408,7 @@ T hypu_via_m(T a, T b, T z) {
 // Same formula as hypu_integer_b_positive but adapted for complex arithmetic
 // where log_gamma gives the full complex value (no sign tracking needed).
 template <typename T>
-c10::complex<T> hypu_integer_b_positive_complex(c10::complex<T> a, int n, c10::complex<T> z, int max_iter = 200) {
+C10_HOST_DEVICE c10::complex<T> hypu_integer_b_positive_complex(c10::complex<T> a, int n, c10::complex<T> z, int max_iter = 200) {
   using C = c10::complex<T>;
   C one(T(1), T(0));
   C zero(T(0), T(0));
@@ -508,7 +508,7 @@ c10::complex<T> hypu_integer_b_positive_complex(c10::complex<T> a, int n, c10::c
 
 // Confluent hypergeometric function U(a, b, z) (Tricomi function)
 template <typename T>
-T confluent_hypergeometric_u(T a, T b, T z) {
+C10_HOST_DEVICE T confluent_hypergeometric_u(T a, T b, T z) {
   using detail::hypu_epsilon;
   using detail::hypu_is_nonpositive_integer;
   using detail::hypu_is_positive_integer;
@@ -595,7 +595,7 @@ T confluent_hypergeometric_u(T a, T b, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> confluent_hypergeometric_u(c10::complex<T> a, c10::complex<T> b, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> confluent_hypergeometric_u(c10::complex<T> a, c10::complex<T> b, c10::complex<T> z) {
   using detail::hypu_epsilon;
   using detail::hypu_is_nonpositive_integer;
   using detail::hypu_is_integer;

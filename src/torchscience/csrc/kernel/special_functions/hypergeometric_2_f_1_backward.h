@@ -18,7 +18,7 @@ struct Hyp2F1WithGrads {
 };
 
 template <typename T>
-Hyp2F1WithGrads<T> hyp2f1_series_with_grads(T a, T b, T c, T z, int max_iter = 500) {
+C10_HOST_DEVICE Hyp2F1WithGrads<T> hyp2f1_series_with_grads(T a, T b, T c, T z, int max_iter = 500) {
   T sum = T(1);
   T da_sum = T(0);
   T db_sum = T(0);
@@ -58,7 +58,7 @@ Hyp2F1WithGrads<T> hyp2f1_series_with_grads(T a, T b, T c, T z, int max_iter = 5
 } // namespace detail
 
 template <typename T>
-std::tuple<T, T, T, T> hypergeometric_2_f_1_backward(T grad, T a, T b, T c, T z) {
+C10_HOST_DEVICE std::tuple<T, T, T, T> hypergeometric_2_f_1_backward(T grad, T a, T b, T c, T z) {
   using detail::hyp2f1_epsilon;
   using detail::hyp2f1_is_nonpositive_integer;
   using detail::hyp2f1_series_with_grads;

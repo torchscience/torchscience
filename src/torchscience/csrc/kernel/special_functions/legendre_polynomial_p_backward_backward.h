@@ -16,7 +16,7 @@ namespace torchscience::kernel::special_functions {
 //             = (a*b/c) * ((a+1)(b+1)/(c+1)) * 2F1(a+2,b+2;c+2;w) * (dw/dz)^2
 //             = (a*b/c) * ((a+1)(b+1)/(c+1)) * 2F1(a+2,b+2;c+2;w) * (1/4)
 template <typename T>
-std::tuple<T, T, T> legendre_polynomial_p_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> legendre_polynomial_p_backward_backward(
   T gradient_gradient_n,
   T gradient_gradient_z,
   T gradient,

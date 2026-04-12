@@ -16,7 +16,7 @@ constexpr double STRUVE_H0_BACKWARD_TWO_OVER_PI = 0.6366197723675813430755350534
 
 // Real backward: d/dz H_0(z) = (2/pi) - H_1(z)
 template <typename T>
-T struve_h_0_backward(T grad_output, T z) {
+C10_HOST_DEVICE T struve_h_0_backward(T grad_output, T z) {
     T h1 = struve_h_1(z);
     T two_over_pi = T(detail::STRUVE_H0_BACKWARD_TWO_OVER_PI);
 
@@ -28,7 +28,7 @@ T struve_h_0_backward(T grad_output, T z) {
 
 // Complex backward
 template <typename T>
-c10::complex<T> struve_h_0_backward(c10::complex<T> grad_output, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> struve_h_0_backward(c10::complex<T> grad_output, c10::complex<T> z) {
     c10::complex<T> h1 = struve_h_1(z);
     c10::complex<T> two_over_pi(T(detail::STRUVE_H0_BACKWARD_TWO_OVER_PI), T(0));
 

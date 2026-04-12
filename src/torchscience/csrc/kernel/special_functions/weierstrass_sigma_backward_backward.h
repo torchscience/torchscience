@@ -15,7 +15,7 @@ namespace torchscience::kernel::special_functions {
 // Returns gradients w.r.t. (grad_output, z, g2, g3)
 
 template <typename T>
-std::tuple<T, T, T, T> weierstrass_sigma_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T> weierstrass_sigma_backward_backward(
     T grad_grad_z,
     T grad_grad_g2,
     T grad_grad_g3,
@@ -94,7 +94,7 @@ std::tuple<T, T, T, T> weierstrass_sigma_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
 weierstrass_sigma_backward_backward(
     c10::complex<T> grad_grad_z,
     c10::complex<T> grad_grad_g2,

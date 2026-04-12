@@ -91,7 +91,7 @@ constexpr double Y0_PIO4 = 0.78539816339744830961566;    // pi/4
 } // namespace detail
 
 template <typename T>
-T bessel_y_0(T z) {
+C10_HOST_DEVICE T bessel_y_0(T z) {
     // Handle special values
     if (cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -140,7 +140,7 @@ T bessel_y_0(T z) {
 // For complex z with Re(z) < 0, the result depends on the branch.
 // This implementation is primarily validated near the positive real axis.
 template <typename T>
-c10::complex<T> bessel_y_0(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> bessel_y_0(c10::complex<T> z) {
     T re = z.real();
     T im = z.imag();
     T mag = std::abs(z);

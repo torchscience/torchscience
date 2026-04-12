@@ -13,7 +13,7 @@ namespace detail {
 
 // Numerical derivative of L_n(z) with respect to n
 template <typename T>
-T struve_l_n_derivative(T n, T z) {
+C10_HOST_DEVICE T struve_l_n_derivative(T n, T z) {
     const T eps = std::sqrt(struve_l_eps<T>());
     T h = eps * (std::abs(n) > T(1) ? std::abs(n) : T(1));
 
@@ -25,7 +25,7 @@ T struve_l_n_derivative(T n, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> struve_l_n_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> struve_l_n_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::sqrt(struve_l_eps<T>());
     const c10::complex<T> h_c(eps, T(0));
 
@@ -51,7 +51,7 @@ c10::complex<T> struve_l_n_derivative(c10::complex<T> n, c10::complex<T> z) {
 //
 // The derivative with respect to n is computed numerically
 template <typename T>
-std::tuple<T, T> struve_l_backward(T grad_output, T n, T z) {
+C10_HOST_DEVICE std::tuple<T, T> struve_l_backward(T grad_output, T n, T z) {
     const T pi = static_cast<T>(M_PI);
 
     // Gradient w.r.t. z
@@ -87,7 +87,7 @@ std::tuple<T, T> struve_l_backward(T grad_output, T n, T z) {
 
 // Complex backward
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> struve_l_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> struve_l_backward(
     c10::complex<T> grad_output,
     c10::complex<T> n,
     c10::complex<T> z

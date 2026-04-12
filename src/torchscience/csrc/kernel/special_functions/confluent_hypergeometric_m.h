@@ -22,7 +22,7 @@ template <typename T>
 struct hyp1f1_is_complex_type<c10::complex<T>> : std::true_type {};
 
 template <typename T>
-inline constexpr bool hyp1f1_is_complex_v = hyp1f1_is_complex_type<T>::value;
+C10_HOST_DEVICE inline constexpr bool hyp1f1_is_complex_v = hyp1f1_is_complex_type<T>::value;
 
 template <typename T>
 struct hyp1f1_real_type { using type = T; };
@@ -34,10 +34,10 @@ template <typename T>
 struct hyp1f1_real_type<c10::complex<T>> { using type = T; };
 
 template <typename T>
-using hyp1f1_real_type_t = typename hyp1f1_real_type<T>::type;
+C10_HOST_DEVICE using hyp1f1_real_type_t = typename hyp1f1_real_type<T>::type;
 
 template <typename T>
-constexpr auto hyp1f1_epsilon() {
+C10_HOST_DEVICE constexpr auto hyp1f1_epsilon() {
   using real_t = hyp1f1_real_type_t<T>;
   if constexpr (std::is_same_v<real_t, float>) {
     return float(1e-7);
@@ -49,7 +49,7 @@ constexpr auto hyp1f1_epsilon() {
 }
 
 template <typename T>
-bool hyp1f1_is_nonpositive_integer(T x) {
+C10_HOST_DEVICE bool hyp1f1_is_nonpositive_integer(T x) {
   if constexpr (hyp1f1_is_complex_v<T>) {
     using real_t = hyp1f1_real_type_t<T>;
     auto re = static_cast<real_t>(x.real());
@@ -64,7 +64,7 @@ bool hyp1f1_is_nonpositive_integer(T x) {
 }
 
 template <typename T>
-int hyp1f1_get_nonpositive_int(T x) {
+C10_HOST_DEVICE int hyp1f1_get_nonpositive_int(T x) {
   if constexpr (hyp1f1_is_complex_v<T>) {
     using real_t = hyp1f1_real_type_t<T>;
     return static_cast<int>(std::round(static_cast<real_t>(x.real())));
@@ -75,7 +75,7 @@ int hyp1f1_get_nonpositive_int(T x) {
 
 // Series expansion: M(a, b, z) = sum_{n=0}^{inf} (a)_n / (b)_n * z^n / n!
 template <typename T>
-T hyp1f1_series(T a, T b, T z, int max_iter = 500) {
+C10_HOST_DEVICE T hyp1f1_series(T a, T b, T z, int max_iter = 500) {
   T sum = T(1);
   T term = T(1);
 
@@ -99,7 +99,7 @@ T hyp1f1_series(T a, T b, T z, int max_iter = 500) {
 
 // Confluent hypergeometric function M(a, b, z) = 1F1(a; b; z)
 template <typename T>
-T confluent_hypergeometric_m(T a, T b, T z) {
+C10_HOST_DEVICE T confluent_hypergeometric_m(T a, T b, T z) {
   using detail::hyp1f1_epsilon;
   using detail::hyp1f1_is_nonpositive_integer;
   using detail::hyp1f1_get_nonpositive_int;

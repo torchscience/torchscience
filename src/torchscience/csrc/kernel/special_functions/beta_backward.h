@@ -8,7 +8,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<
+C10_HOST_DEVICE std::tuple<
   T,
   T
 > beta_backward(
@@ -23,7 +23,7 @@ std::tuple<
 }
 
 template <typename T>
-std::tuple<
+C10_HOST_DEVICE std::tuple<
   c10::complex<T>,
   c10::complex<T>
 > beta_backward(

@@ -29,7 +29,7 @@ namespace torchscience::kernel::special_functions {
 // - Expansions in spherical coordinates
 
 template <typename T>
-T gegenbauer_polynomial_c(T n, T lambda, T z) {
+C10_HOST_DEVICE T gegenbauer_polynomial_c(T n, T lambda, T z) {
   // C_0^lambda(z) = 1
   if (std::abs(n) < T(1e-10)) {
     return T(1);
@@ -104,7 +104,7 @@ T gegenbauer_polynomial_c(T n, T lambda, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> gegenbauer_polynomial_c(c10::complex<T> n, c10::complex<T> lambda, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> gegenbauer_polynomial_c(c10::complex<T> n, c10::complex<T> lambda, c10::complex<T> z) {
   c10::complex<T> one(T(1), T(0));
   c10::complex<T> two(T(2), T(0));
   c10::complex<T> half(T(0.5), T(0));

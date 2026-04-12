@@ -30,7 +30,7 @@ struct faddeeva_constants {
 // Used for computing w(x) on the real axis
 // Based on Cody, Paciorek, and Thacher (1970) rational approximations
 template <typename T>
-T dawson_impl(T x) {
+C10_HOST_DEVICE T dawson_impl(T x) {
   T ax = std::abs(x);
 
   if (ax < T(0.5)) {
@@ -82,7 +82,7 @@ T dawson_impl(T x) {
 
 // Compute w(x) for real x: w(x) = exp(-x^2) + 2i/sqrt(pi) * Dawson(x)
 template <typename T>
-c10::complex<T> faddeeva_w_real(T x) {
+C10_HOST_DEVICE c10::complex<T> faddeeva_w_real(T x) {
   T exp_mx2 = std::exp(-x * x);
   T daw = dawson_impl(x);
   return c10::complex<T>(exp_mx2, faddeeva_constants<T>::two_sqrt_pi_inv * daw);
@@ -92,7 +92,7 @@ c10::complex<T> faddeeva_w_real(T x) {
 // erfcx(y) = exp(y^2) * erfc(y)
 // Uses the continued fraction representation that converges for all y > 0
 template <typename T>
-T erfcx_impl(T y) {
+C10_HOST_DEVICE T erfcx_impl(T y) {
   if (y < T(0)) {
     return T(2) * std::exp(y * y) - erfcx_impl(-y);
   }
@@ -141,7 +141,7 @@ T erfcx_impl(T y) {
 // More simply: w'(z) = -2z*w(z) + 2i/sqrt(pi)
 // So we can compute derivatives at y=0 and do Taylor in y
 template <typename T>
-c10::complex<T> faddeeva_w_small_y(T x, T y) {
+C10_HOST_DEVICE c10::complex<T> faddeeva_w_small_y(T x, T y) {
   // w(x) at y=0
   c10::complex<T> w0 = faddeeva_w_real(x);
   c10::complex<T> two_i_sqrt_pi(T(0), faddeeva_constants<T>::two_sqrt_pi_inv);
@@ -190,7 +190,7 @@ c10::complex<T> faddeeva_w_small_y(T x, T y) {
 
 // Main implementation
 template <typename T>
-c10::complex<T> faddeeva_w_impl(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> faddeeva_w_impl(c10::complex<T> z) {
   T x = z.real();
   T y = z.imag();
 
@@ -301,12 +301,12 @@ c10::complex<T> faddeeva_w_impl(c10::complex<T> z) {
 }  // namespace detail
 
 template <typename T>
-c10::complex<T> faddeeva_w(T x) {
+C10_HOST_DEVICE c10::complex<T> faddeeva_w(T x) {
   return detail::faddeeva_w_impl(c10::complex<T>(x, T(0)));
 }
 
 template <typename T>
-c10::complex<T> faddeeva_w(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> faddeeva_w(c10::complex<T> z) {
   return detail::faddeeva_w_impl(z);
 }
 

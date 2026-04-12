@@ -7,7 +7,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T> inverse_regularized_gamma_q_backward(T gradient, T a, T y) {
+C10_HOST_DEVICE std::tuple<T, T> inverse_regularized_gamma_q_backward(T gradient, T a, T y) {
   // x = inverse_regularized_gamma_q(a, y) = inverse_regularized_gamma_p(a, 1 - y)
   //
   // Let p = 1 - y. Then x = P^{-1}(a, p).

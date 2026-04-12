@@ -26,7 +26,7 @@ namespace torchscience::kernel::special_functions {
 // - Orthogonal polynomials with weight function x^alpha * exp(-x) on [0, infinity)
 
 template <typename T>
-T laguerre_polynomial_l(T n, T alpha, T z) {
+C10_HOST_DEVICE T laguerre_polynomial_l(T n, T alpha, T z) {
   // L_0^alpha(z) = 1
   if (std::abs(n) < T(1e-10)) {
     return T(1);
@@ -101,7 +101,7 @@ T laguerre_polynomial_l(T n, T alpha, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> laguerre_polynomial_l(c10::complex<T> n, c10::complex<T> alpha, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> laguerre_polynomial_l(c10::complex<T> n, c10::complex<T> alpha, c10::complex<T> z) {
   c10::complex<T> one(T(1), T(0));
   c10::complex<T> zero(T(0), T(0));
 

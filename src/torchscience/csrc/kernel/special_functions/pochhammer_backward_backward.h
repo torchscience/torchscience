@@ -10,7 +10,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T, T> pochhammer_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> pochhammer_backward_backward(
     T gg_z, T gg_m, T grad_output, T z, T m) {
   T poch = pochhammer(z, m);
   T psi_zm = digamma(z + m);
@@ -33,7 +33,7 @@ std::tuple<T, T, T> pochhammer_backward_backward(
 }
 
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> pochhammer_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> pochhammer_backward_backward(
     c10::complex<T> gg_z, c10::complex<T> gg_m, c10::complex<T> grad_output,
     c10::complex<T> z, c10::complex<T> m) {
   c10::complex<T> poch = pochhammer(z, m);

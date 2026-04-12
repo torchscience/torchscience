@@ -15,7 +15,7 @@ namespace detail {
 // Using: d/dz[(n/z)*h_n - h_{n+1}]
 //      = -n/z^2 * h_n + n/z * dh_n/dz - dh_{n+1}/dz
 template <typename T>
-c10::complex<T> spherical_hankel_1_zz_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_hankel_1_zz_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = spherical_hankel_1_eps<T>();
     c10::complex<T> one(T(1), T(0));
     c10::complex<T> two(T(2), T(0));
@@ -38,7 +38,7 @@ c10::complex<T> spherical_hankel_1_zz_derivative(c10::complex<T> n, c10::complex
 
 // Mixed second derivative d^2/(dn dz) h_n^(1)(z) computed numerically
 template <typename T>
-c10::complex<T> spherical_hankel_1_nz_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_hankel_1_nz_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::sqrt(spherical_hankel_1_eps<T>());
     const c10::complex<T> one(T(1), T(0));
     const c10::complex<T> two(T(2), T(0));
@@ -59,7 +59,7 @@ c10::complex<T> spherical_hankel_1_nz_derivative(c10::complex<T> n, c10::complex
 
 // Second derivative w.r.t. n: d^2/dn^2 h_n^(1)(z) computed numerically
 template <typename T>
-c10::complex<T> spherical_hankel_1_nn_derivative(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_hankel_1_nn_derivative(c10::complex<T> n, c10::complex<T> z) {
     const T eps = std::cbrt(spherical_hankel_1_eps<T>());
     const c10::complex<T> two(T(2), T(0));
 
@@ -77,7 +77,7 @@ c10::complex<T> spherical_hankel_1_nn_derivative(c10::complex<T> n, c10::complex
 
 // Complex backward_backward: returns (grad_grad_output, grad_n, grad_z)
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> spherical_hankel_1_backward_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>> spherical_hankel_1_backward_backward(
     c10::complex<T> gg_n,
     c10::complex<T> gg_z,
     c10::complex<T> grad_output,

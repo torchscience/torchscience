@@ -104,7 +104,7 @@ constexpr double BI_MACHEP = 1.11022302462515654042e-16;  // 2^-53
 
 // Airy function of the second kind Bi(x)
 template <typename T>
-T airy_bi(T x) {
+C10_HOST_DEVICE T airy_bi(T x) {
     // Handle special values
     if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -213,7 +213,7 @@ T airy_bi(T x) {
 
 // Complex version of Airy Bi function
 template <typename T>
-c10::complex<T> airy_bi(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> airy_bi(c10::complex<T> z) {
     T re = z.real();
     T im = z.imag();
 

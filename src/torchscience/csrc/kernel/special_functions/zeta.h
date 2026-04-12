@@ -33,7 +33,7 @@ constexpr int num_bernoulli = 12;
 // Riemann zeta function for s > 1 using Euler-Maclaurin summation
 // For s <= 1, returns NaN (pole at s=1, analytic continuation not implemented)
 template <typename T>
-T zeta(T s) {
+C10_HOST_DEVICE T zeta(T s) {
   // Handle special cases
   if (cmath_compat::isnan(s)) {
     return std::numeric_limits<T>::quiet_NaN();
@@ -124,7 +124,7 @@ T zeta(T s) {
 
 // Complex zeta function for Re(s) > 1
 template <typename T>
-c10::complex<T> zeta(c10::complex<T> s) {
+C10_HOST_DEVICE c10::complex<T> zeta(c10::complex<T> s) {
   // For complex s, we need Re(s) > 1
   if (cmath_compat::isnan(s.real()) || cmath_compat::isnan(s.imag())) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(),

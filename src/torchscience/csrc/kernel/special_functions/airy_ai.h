@@ -108,7 +108,7 @@ constexpr double MACHEP = 1.11022302462515654042e-16;  // 2^-53
 
 // Airy function of the first kind Ai(x)
 template <typename T>
-T airy_ai(T x) {
+C10_HOST_DEVICE T airy_ai(T x) {
     // Handle special values
     if (cmath_compat::isnan(x)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -197,7 +197,7 @@ T airy_ai(T x) {
 
 // Complex version of Airy Ai function
 template <typename T>
-c10::complex<T> airy_ai(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> airy_ai(c10::complex<T> z) {
     T re = z.real();
     T im = z.imag();
 

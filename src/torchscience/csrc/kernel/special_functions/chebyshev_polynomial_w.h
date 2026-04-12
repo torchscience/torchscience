@@ -5,7 +5,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T chebyshev_polynomial_w(T x, T n) {
+C10_HOST_DEVICE T chebyshev_polynomial_w(T x, T n) {
   if (std::abs(x) < T(1)) {
     T theta = std::acos(x);
 

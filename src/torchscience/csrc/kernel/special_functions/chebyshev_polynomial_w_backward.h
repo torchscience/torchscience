@@ -8,7 +8,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-std::tuple<T, T> chebyshev_polynomial_w_backward(T gradient, T x, T n) {
+C10_HOST_DEVICE std::tuple<T, T> chebyshev_polynomial_w_backward(T gradient, T x, T n) {
   T gradient_x;
 
   if (std::abs(x + T(1)) < T(1e-10)) {

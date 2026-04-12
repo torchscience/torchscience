@@ -21,7 +21,7 @@ template <typename T>
 struct is_complex_type<c10::complex<T>> : std::true_type {};
 
 template <typename T>
-inline constexpr bool is_complex_v = is_complex_type<T>::value;
+C10_HOST_DEVICE inline constexpr bool is_complex_v = is_complex_type<T>::value;
 
 template <typename T>
 struct real_type { using type = T; };
@@ -33,10 +33,10 @@ template <typename T>
 struct real_type<c10::complex<T>> { using type = T; };
 
 template <typename T>
-using real_type_t = typename real_type<T>::type;
+C10_HOST_DEVICE using real_type_t = typename real_type<T>::type;
 
 template <typename T>
-constexpr auto hyp2f1_epsilon() {
+C10_HOST_DEVICE constexpr auto hyp2f1_epsilon() {
   using real_t = real_type_t<T>;
   if constexpr (std::is_same_v<real_t, float>) {
     return float(1e-7);
@@ -48,7 +48,7 @@ constexpr auto hyp2f1_epsilon() {
 }
 
 template <typename T>
-bool hyp2f1_is_nonpositive_integer(T x) {
+C10_HOST_DEVICE bool hyp2f1_is_nonpositive_integer(T x) {
   if constexpr (is_complex_v<T>) {
     using real_t = real_type_t<T>;
     auto re = static_cast<real_t>(x.real());
@@ -63,7 +63,7 @@ bool hyp2f1_is_nonpositive_integer(T x) {
 }
 
 template <typename T>
-int hyp2f1_get_nonpositive_int(T x) {
+C10_HOST_DEVICE int hyp2f1_get_nonpositive_int(T x) {
   if constexpr (is_complex_v<T>) {
     using real_t = real_type_t<T>;
     return static_cast<int>(std::round(static_cast<real_t>(x.real())));
@@ -73,7 +73,7 @@ int hyp2f1_get_nonpositive_int(T x) {
 }
 
 template <typename T>
-T hyp2f1_series(T a, T b, T c, T z, int max_iter = 500) {
+C10_HOST_DEVICE T hyp2f1_series(T a, T b, T c, T z, int max_iter = 500) {
   T sum = T(1);
   T term = T(1);
 
@@ -94,7 +94,7 @@ T hyp2f1_series(T a, T b, T c, T z, int max_iter = 500) {
 }
 
 template <typename T>
-T hyp2f1_near_one(T a, T b, T c, T z) {
+C10_HOST_DEVICE T hyp2f1_near_one(T a, T b, T c, T z) {
   T z_transformed = z / (z - T(1));
 
   double zt_abs;
@@ -116,7 +116,7 @@ T hyp2f1_near_one(T a, T b, T c, T z) {
 }
 
 template <typename T>
-T hyp2f1_at_one(T a, T b, T c) {
+C10_HOST_DEVICE T hyp2f1_at_one(T a, T b, T c) {
   T s = c - a - b;
 
   double s_real;
@@ -149,7 +149,7 @@ T hyp2f1_at_one(T a, T b, T c) {
 }
 
 template <typename T>
-T hyp2f1_negative_z(T a, T b, T c, T z) {
+C10_HOST_DEVICE T hyp2f1_negative_z(T a, T b, T c, T z) {
   T w = z / (z - T(1));
   T prefactor = std::pow(T(1) - z, -a);
 
@@ -163,13 +163,13 @@ T hyp2f1_negative_z(T a, T b, T c, T z) {
 }
 
 template <typename T>
-bool hyp2f1_on_unit_circle(T z) {
+C10_HOST_DEVICE bool hyp2f1_on_unit_circle(T z) {
   double abs_z = std::abs(z);
   return std::abs(abs_z - 1.0) < 1e-10;
 }
 
 template <typename T>
-bool hyp2f1_series_diverges_on_unit_circle(T a, T b, T c, T z) {
+C10_HOST_DEVICE bool hyp2f1_series_diverges_on_unit_circle(T a, T b, T c, T z) {
   if (!hyp2f1_on_unit_circle(z)) {
     return false;
   }
@@ -201,7 +201,7 @@ bool hyp2f1_series_diverges_on_unit_circle(T a, T b, T c, T z) {
 } // namespace detail
 
 template <typename T>
-T hypergeometric_2_f_1(T a, T b, T c, T z) {
+C10_HOST_DEVICE T hypergeometric_2_f_1(T a, T b, T c, T z) {
   using detail::hyp2f1_epsilon;
   using detail::hyp2f1_is_nonpositive_integer;
   using detail::hyp2f1_get_nonpositive_int;

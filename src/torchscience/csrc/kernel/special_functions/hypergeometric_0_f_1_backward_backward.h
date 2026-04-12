@@ -11,7 +11,7 @@ namespace torchscience::kernel::special_functions {
 // Second-order backward pass for hypergeometric 0F1 function
 // Returns (gg_out, new_grad_b, new_grad_z)
 template <typename T>
-std::tuple<T, T, T> hypergeometric_0_f_1_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T> hypergeometric_0_f_1_backward_backward(
   T gg_b,
   T gg_z,
   T grad,

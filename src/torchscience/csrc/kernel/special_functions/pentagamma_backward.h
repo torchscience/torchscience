@@ -5,7 +5,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T pentagamma_backward(
+C10_HOST_DEVICE T pentagamma_backward(
   T gradient,
   T z
 ) {
@@ -13,7 +13,7 @@ T pentagamma_backward(
 }
 
 template <typename T>
-c10::complex<T> pentagamma_backward(
+C10_HOST_DEVICE c10::complex<T> pentagamma_backward(
   c10::complex<T> gradient,
   c10::complex<T> z
 ) {

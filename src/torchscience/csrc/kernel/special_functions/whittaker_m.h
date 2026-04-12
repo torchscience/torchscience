@@ -25,7 +25,7 @@ template <typename T>
 struct whit_m_is_complex_type<c10::complex<T>> : std::true_type {};
 
 template <typename T>
-inline constexpr bool whit_m_is_complex_v = whit_m_is_complex_type<T>::value;
+C10_HOST_DEVICE inline constexpr bool whit_m_is_complex_v = whit_m_is_complex_type<T>::value;
 
 template <typename T>
 struct whit_m_real_type { using type = T; };
@@ -37,10 +37,10 @@ template <typename T>
 struct whit_m_real_type<c10::complex<T>> { using type = T; };
 
 template <typename T>
-using whit_m_real_type_t = typename whit_m_real_type<T>::type;
+C10_HOST_DEVICE using whit_m_real_type_t = typename whit_m_real_type<T>::type;
 
 template <typename T>
-constexpr auto whit_m_epsilon() {
+C10_HOST_DEVICE constexpr auto whit_m_epsilon() {
   using real_t = whit_m_real_type_t<T>;
   if constexpr (std::is_same_v<real_t, float>) {
     return float(1e-6);
@@ -54,7 +54,7 @@ constexpr auto whit_m_epsilon() {
 // Check if mu is a negative half-integer (e.g., -1/2, -3/2, -5/2, ...)
 // These cause poles in the Whittaker M function due to Gamma(2*mu + 1)
 template <typename T>
-bool whit_m_is_negative_half_integer(T mu) {
+C10_HOST_DEVICE bool whit_m_is_negative_half_integer(T mu) {
   if constexpr (whit_m_is_complex_v<T>) {
     using real_t = whit_m_real_type_t<T>;
     auto re = static_cast<real_t>(mu.real());
@@ -92,7 +92,7 @@ bool whit_m_is_negative_half_integer(T mu) {
 //   - M_kappa,mu(0) is undefined (pole) for mu = -1/2, -3/2, -5/2, ...
 //
 template <typename T>
-T whittaker_m(T kappa, T mu, T z) {
+C10_HOST_DEVICE T whittaker_m(T kappa, T mu, T z) {
   using detail::whit_m_epsilon;
   using detail::whit_m_is_complex_v;
   using detail::whit_m_is_negative_half_integer;
@@ -164,7 +164,7 @@ T whittaker_m(T kappa, T mu, T z) {
 
 // Complex version of Whittaker M function
 template <typename T>
-c10::complex<T> whittaker_m(c10::complex<T> kappa, c10::complex<T> mu, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> whittaker_m(c10::complex<T> kappa, c10::complex<T> mu, c10::complex<T> z) {
   using detail::whit_m_epsilon;
   using detail::whit_m_is_negative_half_integer;
 

@@ -8,7 +8,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T reciprocal_gamma(T z) {
+C10_HOST_DEVICE T reciprocal_gamma(T z) {
   // 1/Gamma(z) is entire - no poles, returns 0 at non-positive integers
   T g = gamma(z);
   if (cmath_compat::isinf(g)) {
@@ -18,7 +18,7 @@ T reciprocal_gamma(T z) {
 }
 
 template <typename T>
-c10::complex<T> reciprocal_gamma(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> reciprocal_gamma(c10::complex<T> z) {
   c10::complex<T> g = gamma(z);
   // Check for infinity (pole of gamma)
   if (cmath_compat::isinf(g.real()) || cmath_compat::isinf(g.imag())) {

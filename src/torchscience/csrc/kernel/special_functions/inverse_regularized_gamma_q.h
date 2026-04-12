@@ -5,7 +5,7 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T inverse_regularized_gamma_q(T a, T y) {
+C10_HOST_DEVICE T inverse_regularized_gamma_q(T a, T y) {
   // Inverse of the regularized upper incomplete gamma function Q(a, x)
   //
   // Since Q(a, x) = 1 - P(a, x), we have:

@@ -22,7 +22,7 @@ namespace torchscience::kernel::special_functions {
 // d/d(gradient) [gradient * f'(x)] = f'(x)
 // d/dx [gradient * f'(x)] = gradient * f''(x)
 template <typename T>
-std::tuple<T, T> erfinv_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T> erfinv_backward_backward(
     T gradient_gradient,
     T gradient,
     T x

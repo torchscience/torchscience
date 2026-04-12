@@ -22,7 +22,7 @@ namespace torchscience::kernel::special_functions {
 //   new_grad_sigma = ... (similar pattern)
 //   new_grad_gamma = ... (similar pattern)
 template <typename T>
-std::tuple<T, T, T, T> voigt_profile_backward_backward(
+C10_HOST_DEVICE std::tuple<T, T, T, T> voigt_profile_backward_backward(
     T gg_x, T gg_sigma, T gg_gamma,
     T gradient, T x, T sigma, T gamma) {
 

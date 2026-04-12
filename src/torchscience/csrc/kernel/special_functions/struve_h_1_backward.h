@@ -10,15 +10,15 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 template <typename T>
-inline T struve_h_1_backward_zero_tolerance() {
+C10_HOST_DEVICE inline T struve_h_1_backward_zero_tolerance() {
     return T(1e-12);
 }
 
 template <>
-inline float struve_h_1_backward_zero_tolerance<float>() { return 1e-6f; }
+C10_HOST_DEVICE inline float struve_h_1_backward_zero_tolerance<float>() { return 1e-6f; }
 
 template <>
-inline double struve_h_1_backward_zero_tolerance<double>() { return 1e-12; }
+C10_HOST_DEVICE inline double struve_h_1_backward_zero_tolerance<double>() { return 1e-12; }
 
 // 2/(3*pi) constant for z=0 limit
 constexpr double STRUVE_H1_BACKWARD_TWO_OVER_3PI = 0.2122065907891937810251783511633525;  // 2/(3*pi)
@@ -28,7 +28,7 @@ constexpr double STRUVE_H1_BACKWARD_TWO_OVER_3PI = 0.212206590789193781025178351
 // Real backward: d/dz H_1(z) = H_0(z) - H_1(z)/z
 // At z=0: limit is 2/(3*pi)
 template <typename T>
-T struve_h_1_backward(T grad_output, T z) {
+C10_HOST_DEVICE T struve_h_1_backward(T grad_output, T z) {
     T derivative;
 
     if (std::abs(z) < detail::struve_h_1_backward_zero_tolerance<T>()) {
@@ -82,7 +82,7 @@ T struve_h_1_backward(T grad_output, T z) {
 
 // Complex backward
 template <typename T>
-c10::complex<T> struve_h_1_backward(c10::complex<T> grad_output, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> struve_h_1_backward(c10::complex<T> grad_output, c10::complex<T> z) {
     c10::complex<T> derivative;
 
     if (std::abs(z) < detail::struve_h_1_backward_zero_tolerance<T>()) {

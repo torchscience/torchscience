@@ -12,7 +12,7 @@ namespace detail {
 // Derivative of zeta function: d/ds zeta(s) = -sum_{n=2}^inf ln(n)/n^s
 // Also uses Euler-Maclaurin summation
 template <typename T>
-T zeta_derivative(T s) {
+C10_HOST_DEVICE T zeta_derivative(T s) {
   // Handle special cases
   if (cmath_compat::isnan(s)) {
     return std::numeric_limits<T>::quiet_NaN();
@@ -106,7 +106,7 @@ T zeta_derivative(T s) {
 }
 
 template <typename T>
-c10::complex<T> zeta_derivative(c10::complex<T> s) {
+C10_HOST_DEVICE c10::complex<T> zeta_derivative(c10::complex<T> s) {
   if (cmath_compat::isnan(s.real()) || cmath_compat::isnan(s.imag())) {
     return c10::complex<T>(std::numeric_limits<T>::quiet_NaN(),
                            std::numeric_limits<T>::quiet_NaN());
@@ -152,12 +152,12 @@ c10::complex<T> zeta_derivative(c10::complex<T> s) {
 
 // Backward pass for zeta: d/ds zeta(s)
 template <typename T>
-T zeta_backward(T gradient, T s) {
+C10_HOST_DEVICE T zeta_backward(T gradient, T s) {
   return gradient * detail::zeta_derivative(s);
 }
 
 template <typename T>
-c10::complex<T> zeta_backward(c10::complex<T> gradient, c10::complex<T> s) {
+C10_HOST_DEVICE c10::complex<T> zeta_backward(c10::complex<T> gradient, c10::complex<T> s) {
   c10::complex<T> deriv = detail::zeta_derivative(s);
   // PyTorch convention for holomorphic functions
   return gradient * std::conj(deriv);

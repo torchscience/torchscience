@@ -18,7 +18,7 @@ constexpr double STRUVE_L0_BACKWARD_TWO_OVER_PI = 0.6366197723675813430755350534
 // Note: Unlike H_0 where d/dz H_0(z) = (2/pi) - H_1(z),
 //       for L_0 we have d/dz L_0(z) = (2/pi) + L_1(z) (positive sign)
 template <typename T>
-T struve_l_0_backward(T grad_output, T z) {
+C10_HOST_DEVICE T struve_l_0_backward(T grad_output, T z) {
     T l1 = struve_l_1(z);
     T two_over_pi = T(detail::STRUVE_L0_BACKWARD_TWO_OVER_PI);
 
@@ -30,7 +30,7 @@ T struve_l_0_backward(T grad_output, T z) {
 
 // Complex backward
 template <typename T>
-c10::complex<T> struve_l_0_backward(c10::complex<T> grad_output, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> struve_l_0_backward(c10::complex<T> grad_output, c10::complex<T> z) {
     c10::complex<T> l1 = struve_l_1(z);
     c10::complex<T> two_over_pi(T(detail::STRUVE_L0_BACKWARD_TWO_OVER_PI), T(0));
 

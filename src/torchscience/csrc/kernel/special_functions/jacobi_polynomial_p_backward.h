@@ -16,7 +16,7 @@ namespace torchscience::kernel::special_functions {
 // Derivatives with respect to n, alpha, and beta are computed via finite differences
 // since analytical forms are complex.
 template <typename T>
-std::tuple<T, T, T, T> jacobi_polynomial_p_backward(T gradient, T n, T alpha, T beta, T z) {
+C10_HOST_DEVICE std::tuple<T, T, T, T> jacobi_polynomial_p_backward(T gradient, T n, T alpha, T beta, T z) {
   // dP/dz = (n + alpha + beta + 1)/2 * P_{n-1}^(alpha+1, beta+1)(z)
   T gradient_z;
   if (std::abs(n) < T(1e-10)) {
@@ -48,7 +48,7 @@ std::tuple<T, T, T, T> jacobi_polynomial_p_backward(T gradient, T n, T alpha, T 
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>, c10::complex<T>, c10::complex<T>>
 jacobi_polynomial_p_backward(
     c10::complex<T> gradient, c10::complex<T> n, c10::complex<T> alpha, c10::complex<T> beta, c10::complex<T> z) {
   c10::complex<T> one(T(1), T(0));

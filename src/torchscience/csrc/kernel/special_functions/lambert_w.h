@@ -11,38 +11,38 @@ namespace detail {
 
 // Constants for Lambert W computation
 template <typename T>
-constexpr T lambert_w_eps();
+C10_HOST_DEVICE constexpr T lambert_w_eps();
 
 template <>
-constexpr float lambert_w_eps<float>() { return 1e-6f; }
+C10_HOST_DEVICE constexpr float lambert_w_eps<float>() { return 1e-6f; }
 
 template <>
-constexpr double lambert_w_eps<double>() { return 1e-14; }
+C10_HOST_DEVICE constexpr double lambert_w_eps<double>() { return 1e-14; }
 
 template <>
-inline c10::Half lambert_w_eps<c10::Half>() { return c10::Half(1e-3f); }
+C10_HOST_DEVICE inline c10::Half lambert_w_eps<c10::Half>() { return c10::Half(1e-3f); }
 
 template <>
-inline c10::BFloat16 lambert_w_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
+C10_HOST_DEVICE inline c10::BFloat16 lambert_w_eps<c10::BFloat16>() { return c10::BFloat16(1e-3f); }
 
 template <typename T>
-constexpr int lambert_w_max_iter() { return 50; }
+C10_HOST_DEVICE constexpr int lambert_w_max_iter() { return 50; }
 
 // Branch point constant: -1/e
 template <typename T>
-constexpr T minus_inv_e() {
+C10_HOST_DEVICE constexpr T minus_inv_e() {
   return static_cast<T>(-0.36787944117144232159552377016146086744581113103177);
 }
 
 // Euler's constant e
 template <typename T>
-constexpr T euler_e() {
+C10_HOST_DEVICE constexpr T euler_e() {
   return static_cast<T>(2.71828182845904523536028747135266249775724709369995);
 }
 
 // Initial approximation for principal branch (k=0)
 template <typename T>
-T lambert_w_initial_guess_0(T z) {
+C10_HOST_DEVICE T lambert_w_initial_guess_0(T z) {
   // Near z = 0: W(z) ~ z - z^2 + 3z^3/2
   if (std::abs(z) < T(0.1)) {
     T z2 = z * z;
@@ -74,7 +74,7 @@ T lambert_w_initial_guess_0(T z) {
 
 // Initial approximation for secondary branch (k=-1)
 template <typename T>
-T lambert_w_initial_guess_m1(T z) {
+C10_HOST_DEVICE T lambert_w_initial_guess_m1(T z) {
   // Branch -1 is only real for -1/e <= z < 0
   // Near branch point: W_{-1}(z) ~ -1 - sqrt(2(ez + 1))
   T branch_dist = z - minus_inv_e<T>();
@@ -97,7 +97,7 @@ T lambert_w_initial_guess_m1(T z) {
 // Halley's iteration for Lambert W
 // w_{n+1} = w_n - (w_n * e^{w_n} - z) / (e^{w_n} * (w_n + 1) - (w_n + 2) * (w_n * e^{w_n} - z) / (2 * w_n + 2))
 template <typename T>
-T lambert_w_halley(T z, T w0) {
+C10_HOST_DEVICE T lambert_w_halley(T z, T w0) {
   const T eps = lambert_w_eps<T>();
   const int max_iter = lambert_w_max_iter<T>();
 
@@ -138,7 +138,7 @@ T lambert_w_halley(T z, T w0) {
 
 // Complex Lambert W using Halley iteration
 template <typename T>
-c10::complex<T> lambert_w_halley_complex(c10::complex<T> z, c10::complex<T> w0) {
+C10_HOST_DEVICE c10::complex<T> lambert_w_halley_complex(c10::complex<T> z, c10::complex<T> w0) {
   const T eps = lambert_w_eps<T>();
   const int max_iter = lambert_w_max_iter<T>();
 
@@ -176,7 +176,7 @@ c10::complex<T> lambert_w_halley_complex(c10::complex<T> z, c10::complex<T> w0) 
 
 // Lambert W function principal branch (k=0)
 template <typename T>
-T lambert_w(T k, T z) {
+C10_HOST_DEVICE T lambert_w(T k, T z) {
   // Handle special cases
   if (cmath_compat::isnan(z)) {
     return std::numeric_limits<T>::quiet_NaN();
@@ -222,7 +222,7 @@ T lambert_w(T k, T z) {
 
 // Complex Lambert W function
 template <typename T>
-c10::complex<T> lambert_w(c10::complex<T> k, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> lambert_w(c10::complex<T> k, c10::complex<T> z) {
   // Handle special case z = 0
   if (std::abs(z) < detail::lambert_w_eps<T>()) {
     return c10::complex<T>(T(0), T(0));

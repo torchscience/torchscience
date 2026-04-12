@@ -22,7 +22,7 @@ template <typename T>
 struct hyp0f1_is_complex_type<c10::complex<T>> : std::true_type {};
 
 template <typename T>
-inline constexpr bool hyp0f1_is_complex_v = hyp0f1_is_complex_type<T>::value;
+C10_HOST_DEVICE inline constexpr bool hyp0f1_is_complex_v = hyp0f1_is_complex_type<T>::value;
 
 template <typename T>
 struct hyp0f1_real_type { using type = T; };
@@ -34,10 +34,10 @@ template <typename T>
 struct hyp0f1_real_type<c10::complex<T>> { using type = T; };
 
 template <typename T>
-using hyp0f1_real_type_t = typename hyp0f1_real_type<T>::type;
+C10_HOST_DEVICE using hyp0f1_real_type_t = typename hyp0f1_real_type<T>::type;
 
 template <typename T>
-constexpr auto hyp0f1_epsilon() {
+C10_HOST_DEVICE constexpr auto hyp0f1_epsilon() {
   using real_t = hyp0f1_real_type_t<T>;
   if constexpr (std::is_same_v<real_t, float>) {
     return float(1e-7);
@@ -49,7 +49,7 @@ constexpr auto hyp0f1_epsilon() {
 }
 
 template <typename T>
-bool hyp0f1_is_nonpositive_integer(T x) {
+C10_HOST_DEVICE bool hyp0f1_is_nonpositive_integer(T x) {
   if constexpr (hyp0f1_is_complex_v<T>) {
     using real_t = hyp0f1_real_type_t<T>;
     auto re = static_cast<real_t>(x.real());
@@ -66,7 +66,7 @@ bool hyp0f1_is_nonpositive_integer(T x) {
 // Series expansion: 0F1(;b;z) = sum_{n=0}^{inf} z^n / ((b)_n * n!)
 // where (b)_n = b(b+1)...(b+n-1) is the Pochhammer symbol
 template <typename T>
-T hyp0f1_series(T b, T z, int max_iter = 500) {
+C10_HOST_DEVICE T hyp0f1_series(T b, T z, int max_iter = 500) {
   T sum = T(1);
   T term = T(1);
 
@@ -94,7 +94,7 @@ T hyp0f1_series(T b, T z, int max_iter = 500) {
 // )
 // This is related to Bessel function asymptotics
 template <typename T>
-T hyp0f1_asymptotic(T b, T z, int max_terms = 20) {
+C10_HOST_DEVICE T hyp0f1_asymptotic(T b, T z, int max_terms = 20) {
   // For real positive z, use relation to Bessel I:
   // 0F1(;b;z) = Gamma(b) * (sqrt(z))^(1-b) * I_{b-1}(2*sqrt(z))
   //
@@ -127,7 +127,7 @@ T hyp0f1_asymptotic(T b, T z, int max_terms = 20) {
 //   z: Argument
 //
 template <typename T>
-T hypergeometric_0_f_1(T b, T z) {
+C10_HOST_DEVICE T hypergeometric_0_f_1(T b, T z) {
   using detail::hyp0f1_epsilon;
   using detail::hyp0f1_is_complex_v;
   using detail::hyp0f1_is_nonpositive_integer;
@@ -164,7 +164,7 @@ T hypergeometric_0_f_1(T b, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> hypergeometric_0_f_1(c10::complex<T> b, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> hypergeometric_0_f_1(c10::complex<T> b, c10::complex<T> z) {
   using detail::hyp0f1_epsilon;
   using detail::hyp0f1_is_nonpositive_integer;
   using detail::hyp0f1_series;

@@ -18,26 +18,26 @@ constexpr double STRUVE_H0_PI = 3.14159265358979323846264338327950288;
 
 // Convergence parameters for H_0
 template <typename T>
-inline T struve_h_0_zero_tolerance() {
+C10_HOST_DEVICE inline T struve_h_0_zero_tolerance() {
     return T(1e-12);
 }
 
 template <>
-inline float struve_h_0_zero_tolerance<float>() { return 1e-6f; }
+C10_HOST_DEVICE inline float struve_h_0_zero_tolerance<float>() { return 1e-6f; }
 
 template <>
-inline double struve_h_0_zero_tolerance<double>() { return 1e-12; }
+C10_HOST_DEVICE inline double struve_h_0_zero_tolerance<double>() { return 1e-12; }
 
 template <typename T>
-inline T struve_h_0_series_tolerance() {
+C10_HOST_DEVICE inline T struve_h_0_series_tolerance() {
     return std::numeric_limits<T>::epsilon() * T(10);
 }
 
 template <>
-inline float struve_h_0_series_tolerance<float>() { return 1e-6f; }
+C10_HOST_DEVICE inline float struve_h_0_series_tolerance<float>() { return 1e-6f; }
 
 template <>
-inline double struve_h_0_series_tolerance<double>() { return 1e-14; }
+C10_HOST_DEVICE inline double struve_h_0_series_tolerance<double>() { return 1e-14; }
 
 // Struve H_0 power series implementation
 // H_0(z) = sum_{k=0}^inf (-1)^k * (z/2)^(2k+1) / [Gamma(k+3/2)]^2
@@ -49,7 +49,7 @@ inline double struve_h_0_series_tolerance<double>() { return 1e-14; }
 //
 // Recurrence: term_{k+1} / term_k = -(z/2)^2 / (k+3/2)^2
 template <typename T>
-T struve_h_0_series(T z) {
+C10_HOST_DEVICE T struve_h_0_series(T z) {
     const T tolerance = struve_h_0_series_tolerance<T>();
     const int max_iterations = 200;
 
@@ -85,7 +85,7 @@ T struve_h_0_series(T z) {
 // For simplicity, we use the power series for all practical arguments
 // since it converges well for |z| < 30
 template <typename T>
-T struve_h_0_asymptotic(T z) {
+C10_HOST_DEVICE T struve_h_0_asymptotic(T z) {
     // Fallback to series for large arguments (asymptotic not implemented)
     // This is acceptable since series converges (slowly) for all z
     return struve_h_0_series(z);
@@ -99,7 +99,7 @@ T struve_h_0_asymptotic(T z) {
 // Symmetry: H_0 is odd: H_0(-z) = -H_0(z)
 // Special values: H_0(0) = 0, H_0(inf) = oscillates (bounded)
 template <typename T>
-T struve_h_0(T z) {
+C10_HOST_DEVICE T struve_h_0(T z) {
     // Handle special values
     if (cmath_compat::isnan(z)) {
         return std::numeric_limits<T>::quiet_NaN();
@@ -134,7 +134,7 @@ T struve_h_0(T z) {
 
 // Complex version of Struve H_0
 template <typename T>
-c10::complex<T> struve_h_0(c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> struve_h_0(c10::complex<T> z) {
     using Complex = c10::complex<T>;
 
     T mag = std::abs(z);

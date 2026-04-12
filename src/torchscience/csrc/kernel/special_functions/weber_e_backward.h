@@ -11,7 +11,7 @@ namespace torchscience::kernel::special_functions {
 // Helper: compute d/dn E_nu(z) = (1/pi) * integral_0^pi theta * cos(nu*theta - z*sin(theta)) d(theta)
 // using Gauss-Legendre quadrature
 template <typename T>
-T weber_e_derivative_n(T n, T z) {
+C10_HOST_DEVICE T weber_e_derivative_n(T n, T z) {
     const T pi = T(3.14159265358979323846);
 
     // 20-point Gauss-Legendre quadrature on [0, pi]
@@ -66,7 +66,7 @@ T weber_e_derivative_n(T n, T z) {
 
 // Complex version of derivative w.r.t. n
 template <typename T>
-c10::complex<T> weber_e_derivative_n(c10::complex<T> n, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> weber_e_derivative_n(c10::complex<T> n, c10::complex<T> z) {
     const T pi = T(3.14159265358979323846);
 
     const T nodes[10] = {
@@ -124,7 +124,7 @@ c10::complex<T> weber_e_derivative_n(c10::complex<T> n, c10::complex<T> z) {
 // Derivative of Weber function w.r.t. nu:
 // d/d(nu) E_nu(z) = (1/pi) * integral_0^pi theta * cos(nu*theta - z*sin(theta)) d(theta)
 template <typename T>
-std::tuple<T, T> weber_e_backward(T grad_output, T n, T z) {
+C10_HOST_DEVICE std::tuple<T, T> weber_e_backward(T grad_output, T n, T z) {
     T grad_n = grad_output * weber_e_derivative_n(n, z);
 
     T e_nu_minus_1 = weber_e(n - T(1), z);
@@ -136,7 +136,7 @@ std::tuple<T, T> weber_e_backward(T grad_output, T n, T z) {
 
 // Complex version
 template <typename T>
-std::tuple<c10::complex<T>, c10::complex<T>> weber_e_backward(
+C10_HOST_DEVICE std::tuple<c10::complex<T>, c10::complex<T>> weber_e_backward(
     c10::complex<T> grad_output,
     c10::complex<T> n,
     c10::complex<T> z

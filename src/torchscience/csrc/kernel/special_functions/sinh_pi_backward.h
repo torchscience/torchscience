@@ -8,12 +8,12 @@
 namespace torchscience::kernel::special_functions {
 
 template <typename T>
-T sinh_pi_backward(T gradient, T x) {
+C10_HOST_DEVICE T sinh_pi_backward(T gradient, T x) {
   return gradient * static_cast<T>(M_PI) * cosh_pi(x);
 }
 
 template <typename T>
-c10::complex<T> sinh_pi_backward(c10::complex<T> gradient, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> sinh_pi_backward(c10::complex<T> gradient, c10::complex<T> z) {
   return gradient * static_cast<T>(M_PI) * cosh_pi(z);
 }
 

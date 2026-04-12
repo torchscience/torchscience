@@ -39,7 +39,7 @@ namespace torchscience::kernel::special_functions {
 // So: d/dz k_1(z) = -(pi/2z^3)(2 + 2z + z^2) e^(-z)
 
 template <typename T>
-T spherical_bessel_k_1_backward(T grad_output, T z) {
+C10_HOST_DEVICE T spherical_bessel_k_1_backward(T grad_output, T z) {
     const T pi = T(3.14159265358979323846);
     const T eps = detail::spherical_bessel_k_1_eps<T>();
 
@@ -60,7 +60,7 @@ T spherical_bessel_k_1_backward(T grad_output, T z) {
 
 // Complex version
 template <typename T>
-c10::complex<T> spherical_bessel_k_1_backward(c10::complex<T> grad_output, c10::complex<T> z) {
+C10_HOST_DEVICE c10::complex<T> spherical_bessel_k_1_backward(c10::complex<T> grad_output, c10::complex<T> z) {
     const T pi = T(3.14159265358979323846);
     const T eps = detail::spherical_bessel_k_1_eps<T>();
 

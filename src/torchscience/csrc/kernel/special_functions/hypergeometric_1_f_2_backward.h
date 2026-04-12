@@ -20,7 +20,7 @@ struct Hyp1F2WithGrads {
 // Series with gradient accumulation for parameter derivatives
 // 1F2(a; b1, b2; z) = sum_{n=0}^inf (a)_n / ((b1)_n (b2)_n) * z^n / n!
 template <typename T>
-Hyp1F2WithGrads<T> hyp1f2_series_with_grads(T a, T b1, T b2, T z, int max_iter = 500) {
+C10_HOST_DEVICE Hyp1F2WithGrads<T> hyp1f2_series_with_grads(T a, T b1, T b2, T z, int max_iter = 500) {
   T sum = T(1);
   T da_sum = T(0);
   T db1_sum = T(0);
@@ -62,7 +62,7 @@ Hyp1F2WithGrads<T> hyp1f2_series_with_grads(T a, T b1, T b2, T z, int max_iter =
 // Backward pass for hypergeometric 1F2 function
 // Returns (grad_a, grad_b1, grad_b2, grad_z)
 template <typename T>
-std::tuple<T, T, T, T> hypergeometric_1_f_2_backward(T grad, T a, T b1, T b2, T z) {
+C10_HOST_DEVICE std::tuple<T, T, T, T> hypergeometric_1_f_2_backward(T grad, T a, T b1, T b2, T z) {
   using detail::hyp1f2_epsilon;
   using detail::hyp1f2_is_complex_v;
   using detail::hyp1f2_is_nonpositive_integer;

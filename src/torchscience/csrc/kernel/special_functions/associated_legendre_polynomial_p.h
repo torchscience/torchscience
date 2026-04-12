@@ -23,7 +23,7 @@ namespace torchscience::kernel::special_functions {
 //   3. (k-|m|+1) P_{k+1}^{|m|}(x) = (2k+1) x P_k^{|m|}(x) - (k+|m|) P_{k-1}^{|m|}(x)
 
 template <typename T>
-T associated_legendre_polynomial_p(T n, T m, T x) {
+C10_HOST_DEVICE T associated_legendre_polynomial_p(T n, T m, T x) {
   // Propagate NaN
   if (cmath_compat::isnan(n) || cmath_compat::isnan(m) || cmath_compat::isnan(x)) {
     return std::numeric_limits<T>::quiet_NaN();
@@ -86,7 +86,7 @@ T associated_legendre_polynomial_p(T n, T m, T x) {
 
 // Complex version: extract real parts for n, m; compute with real arithmetic
 template <typename T>
-c10::complex<T> associated_legendre_polynomial_p(c10::complex<T> n, c10::complex<T> m, c10::complex<T> x) {
+C10_HOST_DEVICE c10::complex<T> associated_legendre_polynomial_p(c10::complex<T> n, c10::complex<T> m, c10::complex<T> x) {
   T result_real = associated_legendre_polynomial_p(n.real(), m.real(), x.real());
   return c10::complex<T>(result_real, T(0));
 }

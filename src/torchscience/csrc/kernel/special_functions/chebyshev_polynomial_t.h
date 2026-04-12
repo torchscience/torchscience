@@ -10,7 +10,7 @@ namespace torchscience::kernel::special_functions {
 // T_n(x) = cosh(n * acosh(x)) for x > 1
 // T_n(x) = cos(n * pi) * cosh(n * acosh(-x)) for x < -1
 template <typename T>
-T chebyshev_polynomial_t(T x, T n) {
+C10_HOST_DEVICE T chebyshev_polynomial_t(T x, T n) {
   const T pi = T(3.14159265358979323846);
 
   if (std::abs(x) <= T(1)) {
