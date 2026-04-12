@@ -1,11 +1,23 @@
 # cmake/cuda.cmake
 # CUDA backend configuration - only included when TORCHSCIENCE_ENABLE_CUDA=ON
 
-# Set CUDA architectures before enable_language(CUDA).
-# "native" compiles for the GPU on the build machine.
-# Fall back to common architectures for cross-compilation.
+# Query the GPU's compute capability from Python/torch for accurate architecture targeting.
+# Falls back to "native" (cmake auto-detect) then to common architectures.
+execute_process(
+  COMMAND ${Python_EXECUTABLE} -c "import torch; print(torch.cuda.get_device_capability()[0]*10+torch.cuda.get_device_capability()[1]) if torch.cuda.is_available() else print('')"
+  OUTPUT_VARIABLE _DETECTED_CUDA_ARCH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
+  RESULT_VARIABLE _detect_result
+)
+
 if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-  set(CMAKE_CUDA_ARCHITECTURES "native")
+  if(_detect_result EQUAL 0 AND _DETECTED_CUDA_ARCH)
+    set(CMAKE_CUDA_ARCHITECTURES "${_DETECTED_CUDA_ARCH}")
+    message(STATUS "Detected GPU compute capability: ${_DETECTED_CUDA_ARCH}")
+  else()
+    set(CMAKE_CUDA_ARCHITECTURES "native")
+  endif()
 endif()
 
 enable_language(CUDA)

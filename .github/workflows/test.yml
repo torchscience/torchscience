@@ -197,21 +197,49 @@ jobs:
 
       - name: CUDA diagnostic
         if: always()
+        shell: bash
         run: |
+          # Check compiled architectures in the .so
+          SO_PATH=$(uv run --no-sync python -c "import torchscience._csrc as m; print(m.__file__)")
+          echo "=== Extension path: $SO_PATH ==="
+          if command -v cuobjdump &>/dev/null; then
+            echo "=== Compiled CUDA architectures ==="
+            cuobjdump --list-elf "$SO_PATH" 2>&1 | head -20 || echo "No ELF sections found"
+            cuobjdump --list-ptx "$SO_PATH" 2>&1 | head -20 || echo "No PTX sections found"
+          fi
+          nvidia-smi --query-gpu=name,compute_cap,driver_version --format=csv 2>/dev/null || true
+
           uv run --no-sync python -c "
-          import torch
+          import torch, sys
+          print('PyTorch:', torch.__version__)
           print('CUDA available:', torch.cuda.is_available())
-          if torch.cuda.is_available():
-              print('GPU:', torch.cuda.get_device_name(0))
-              import torchscience.special_functions as sf
-              for name in ['gamma', 'digamma', 'airy_ai', 'sin_pi']:
+          if not torch.cuda.is_available():
+              sys.exit(0)
+          print('GPU:', torch.cuda.get_device_name(0))
+          cap = torch.cuda.get_device_capability(0)
+          print(f'Compute capability: {cap[0]}.{cap[1]}')
+
+          # Verify native PyTorch CUDA works
+          x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64, device='cuda')
+          print(f'torch.sin CUDA: {torch.sin(x).tolist()}')
+          torch.cuda.synchronize()
+          print(f'CUDA error after torch.sin: {torch.cuda.get_last_error()}')
+
+          # Test our custom ops
+          import torchscience.special_functions as sf
+          for dtype_name, dtype in [('float32', torch.float32), ('float64', torch.float64)]:
+              print(f'--- dtype={dtype_name} ---')
+              for name in ['gamma', 'digamma', 'sin_pi']:
                   fn = getattr(sf, name)
-                  x = torch.tensor([0.5, 1.0, 1.5, 2.0, 2.5], dtype=torch.float64, device='cuda')
-                  y_cuda = fn(x).cpu()
+                  x = torch.tensor([0.5, 1.0, 1.5, 2.0, 2.5], dtype=dtype, device='cuda')
+                  y_cuda = fn(x)
+                  torch.cuda.synchronize()
+                  err = torch.cuda.get_last_error()
+                  if err != torch.cuda.CudaError(0):
+                      print(f'{name} CUDA ERROR: {err}')
                   y_cpu = fn(x.cpu())
-                  print(f'{name} CUDA: {y_cuda.tolist()}')
+                  print(f'{name} CUDA: {y_cuda.cpu().tolist()}')
                   print(f'{name} CPU:  {y_cpu.tolist()}')
-                  print(f'{name} diff: {(y_cuda - y_cpu).abs().max().item():.2e}')
           "
 
       - name: Run CUDA tests
