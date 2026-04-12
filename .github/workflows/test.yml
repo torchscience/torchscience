@@ -225,6 +225,16 @@ jobs:
           torch.cuda.synchronize()
           print(f'CUDA error after torch.sin: {torch.cuda.get_last_error()}')
 
+          # Test minimal inline kernel (no kernel header calls)
+          print('=== Minimal kernel test (2*x) ===')
+          x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64, device='cuda')
+          y = torch.ops.torchscience.cuda_test_double_it(x)
+          torch.cuda.synchronize()
+          print(f'Input:    {x.cpu().tolist()}')
+          print(f'2*x CUDA: {y.cpu().tolist()}')
+          print(f'Expected: {[2.0, 4.0, 6.0]}')
+          print(f'Match: {y.cpu().tolist() == [2.0, 4.0, 6.0]}')
+
           # Test our custom ops
           import torchscience.special_functions as sf
           for dtype_name, dtype in [('float32', torch.float32), ('float64', torch.float64)]:

@@ -4,6 +4,38 @@
 #include "../macros/cuda/pointwise.cuh"
 #include <thrust/tuple.h>
 
+// Minimal CUDA test: hand-written kernel that doubles input.
+// Used to diagnose whether the macro/dispatch framework works.
+namespace torchscience::cuda::special_functions {
+
+inline at::Tensor cuda_test_double_it(const at::Tensor &input) {
+  c10::cuda::CUDAGuard device_guard(input.device());
+  at::Tensor output;
+  auto iterator = at::TensorIteratorConfig()
+    .add_output(output)
+    .add_const_input(input)
+    .build();
+  AT_DISPATCH_FLOATING_TYPES(
+    iterator.common_dtype(), "cuda_test_double_it", [&] {
+      at::native::gpu_kernel(iterator,
+        [] GPU_LAMBDA (scalar_t x) -> scalar_t {
+          return x * static_cast<scalar_t>(2);
+        });
+    });
+  return iterator.output();
+}
+
+} // namespace torchscience::cuda::special_functions
+
+TORCH_LIBRARY_FRAGMENT(torchscience, m) {
+  m.def("cuda_test_double_it(Tensor x) -> Tensor");
+}
+
+TORCH_LIBRARY_IMPL(torchscience, CUDA, module) {
+  module.impl("cuda_test_double_it",
+    torchscience::cuda::special_functions::cuda_test_double_it);
+}
+
 // Gamma function and derivatives
 #include "../kernel/special_functions/gamma.h"
 #include "../kernel/special_functions/gamma_backward.h"
