@@ -14,6 +14,10 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, m_meta_noise) {
         &::torchscience::meta::MetaStochasticCreationOperator<
             ::torchscience::cpu::BrownNoiseCPU>::forward<const at::Tensor&, int64_t>);
     m_meta_noise.impl(
+        "grey_noise",
+        &::torchscience::meta::MetaStochasticCreationOperator<
+            ::torchscience::cpu::GreyNoiseCPU>::forward<const at::Tensor&, int64_t, double>);
+    m_meta_noise.impl(
         "pink_noise",
         &::torchscience::meta::MetaStochasticCreationOperator<
             ::torchscience::cpu::PinkNoiseCPU>::forward<const at::Tensor&, int64_t>);
