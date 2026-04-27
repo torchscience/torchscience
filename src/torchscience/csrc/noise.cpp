@@ -9,8 +9,29 @@
 
 TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   // Anchor tensor (typically 0-dim) supplies dispatch device/dtype like torch.randn.
+  // All five colored-noise ops share the same signature.
+  m.def(
+      "blue_noise(Tensor anchor, int size, Generator? generator=None, "
+      "ScalarType? dtype=None, Layout? layout=None, Device? device=None, "
+      "bool requires_grad=False, bool? pin_memory=None) -> Tensor"
+  );
+  m.def(
+      "brown_noise(Tensor anchor, int size, Generator? generator=None, "
+      "ScalarType? dtype=None, Layout? layout=None, Device? device=None, "
+      "bool requires_grad=False, bool? pin_memory=None) -> Tensor"
+  );
   m.def(
       "pink_noise(Tensor anchor, int size, Generator? generator=None, "
+      "ScalarType? dtype=None, Layout? layout=None, Device? device=None, "
+      "bool requires_grad=False, bool? pin_memory=None) -> Tensor"
+  );
+  m.def(
+      "violet_noise(Tensor anchor, int size, Generator? generator=None, "
+      "ScalarType? dtype=None, Layout? layout=None, Device? device=None, "
+      "bool requires_grad=False, bool? pin_memory=None) -> Tensor"
+  );
+  m.def(
+      "white_noise(Tensor anchor, int size, Generator? generator=None, "
       "ScalarType? dtype=None, Layout? layout=None, Device? device=None, "
       "bool requires_grad=False, bool? pin_memory=None) -> Tensor"
   );
