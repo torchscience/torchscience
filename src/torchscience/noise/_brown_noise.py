@@ -4,7 +4,7 @@ from torch import Tensor
 from ._common import dispatch_colored_noise
 
 
-def pink_noise(
+def brown_noise(
     size: int,
     *,
     generator=None,
@@ -17,43 +17,44 @@ def pink_noise(
     memory_format=torch.contiguous_format,
 ) -> Tensor:
     r"""
-    Pink noise.
+    Brown(ian) noise.
 
-    Generates pink noise of the given size. Pink noise has a power spectral
-    density that is inversely proportional to frequency:
+    Generates brown noise (also called red noise or Brownian noise) of the
+    given size. Brown noise has a power spectral density that falls as
+    :math:`1/f^2`:
 
     .. math::
-        S(f) \propto \frac{1}{f}.
+        S(f) \propto \frac{1}{f^2}.
 
-    A direct consequence is that every octave band carries (approximately) the
-    same total power -- the "equal energy per octave" property. Pink noise is
-    common in audio (it sounds natural, like wind or rain), in 1/f flicker
-    noise found in many physical systems, and in pinkening of integrators or
-    flicker-driven processes.
+    Power per octave halves for each octave shift. This is the spectral
+    analogue of a band-limited Wiener (Brownian) process: the running
+    integral of white noise has the same 1/f^2 shape, hence the name.
 
     Algorithm
     ---------
 
     1. Draw N i.i.d. samples from N(0, 1).
     2. Take the real FFT.
-    3. Divide each non-DC bin by sqrt(|f|), giving |X(f)| ~ 1/sqrt(f) and
-       hence |X(f)|^2 ~ 1/f.
-    4. Set the DC bin (f=0) to zero -- 1/f is undefined at f=0, and zeroing
-       DC also makes the time-domain output exactly zero-mean.
+    3. Divide each non-DC bin by ``|f|``, giving |X(f)| ~ 1/f and hence
+       |X(f)|^2 ~ 1/f^2.
+    4. Set the DC bin (f=0) to zero -- 1/f^2 is undefined at f=0, and
+       zeroing DC makes the time-domain output exactly zero-mean.
     5. Inverse FFT, then normalize by max absolute value so peak amplitude
        is 1.
 
     Testable Guarantees
     -------------------
-    - PSD log-log slope equals -1 (slope test).
-    - Equal total power per octave (octave-power-ratio test).
+    - PSD log-log slope equals -2 (slope test).
+    - Power halves per octave (octave-power-ratio test).
     - Mean is zero up to FFT round-off.
     - Peak absolute value is exactly 1.
 
     Applications
     ------------
-    - Audio mastering and synthesis (natural-sounding noise).
-    - Modeling 1/f flicker noise.
+    - Modeling Brownian / random-walk-like processes in a stationary,
+      band-limited setting.
+    - Geophysical and climate-noise simulation, where 1/f^2 spectra are
+      common.
 
     Dtype Support
     -------------
@@ -83,15 +84,15 @@ def pink_noise(
     Returns
     -------
     Tensor
-        The generated pink noise, shape ``(size,)``.
+        The generated brown noise, shape ``(size,)``.
 
     Examples
     --------
-    >>> pink_noise(10, generator=torch.Generator(device="cpu").manual_seed(1))
+    >>> brown_noise(10, generator=torch.Generator(device="cpu").manual_seed(1))
     """
     return dispatch_colored_noise(
-        "pink_noise",
-        torch.ops.torchscience.pink_noise,
+        "brown_noise",
+        torch.ops.torchscience.brown_noise,
         size,
         generator=generator,
         out=out,

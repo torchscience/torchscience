@@ -31,6 +31,10 @@ Example usage:
 """
 
 from .base import OpTestCase
+from .colored_noise_base import (
+    ColoredNoiseScientificMixin,
+    averaged_periodogram,
+)
 from .creation_op_base import (
     CreationOpDescriptor,
     CreationOpTestCase,
@@ -86,6 +90,8 @@ __all__ = [
     # Base classes
     "OpTestCase",
     "CreationOpTestCase",
+    "ColoredNoiseScientificMixin",
+    "averaged_periodogram",
     # Descriptors
     "OperatorDescriptor",
     "InputSpec",
