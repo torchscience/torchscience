@@ -45,4 +45,33 @@ struct MetaCreationOperator {
 #define REGISTER_META_CREATION(module, name, Traits, ...) \
     module.impl(#name, &::torchscience::meta::MetaCreationOperator<Traits>::forward<__VA_ARGS__>)
 
+// Same parameter list as CPUStochasticCreationOperator (Generator + pin_memory) so Meta
+// impls match the TORCH_LIBRARY_FRAGMENT schema for stochastic creation ops.
+template<typename CreationTraits>
+struct MetaStochasticCreationOperator {
+    template<typename... Args>
+    static at::Tensor forward(
+        Args... args,
+        c10::optional<at::Generator> /*generator*/,
+        const c10::optional<at::ScalarType>& dtype,
+        const c10::optional<at::Layout>& layout,
+        const c10::optional<at::Device>& /*device*/,
+        bool requires_grad,
+        c10::optional<bool> /*pin_memory*/
+    ) {
+        std::vector<int64_t> shape_vec = CreationTraits::output_shape(args...);
+        check_size_nonnegative(shape_vec, "meta_stochastic_creation_op");
+
+        auto options = at::TensorOptions()
+            .dtype(dtype.value_or(
+                c10::typeMetaToScalarType(at::get_default_dtype())
+            ))
+            .layout(layout.value_or(at::kStrided))
+            .device(at::kMeta)
+            .requires_grad(requires_grad);
+
+        return at::empty(shape_vec, options);
+    }
+};
+
 }  // namespace torchscience::meta

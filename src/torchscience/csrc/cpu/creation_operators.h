@@ -4,7 +4,6 @@
 #include <ATen/ATen.h>
 #include <ATen/Dispatch.h>
 #include <ATen/Generator.h>
-#include <ATen/CPUGeneratorImpl.h>
 #include <ATen/native/cpu/Loops.h>
 #include <ATen/TensorIterator.h>
 #include <torch/library.h>
@@ -31,13 +30,18 @@ inline at::TensorOptions build_options(
     const c10::optional<at::ScalarType>& dtype,
     const c10::optional<at::Layout>& layout,
     const c10::optional<at::Device>& device,
-    at::Device default_device = at::kCPU
+    at::Device default_device = at::kCPU,
+    c10::optional<bool> pin_memory = c10::nullopt
 ) {
-    return at::TensorOptions()
+    auto opts = at::TensorOptions()
         .dtype(dtype.value_or(c10::typeMetaToScalarType(at::get_default_dtype())))
         .layout(layout.value_or(at::kStrided))
         .device(device.value_or(default_device))
         .requires_grad(false);
+    if (pin_memory.has_value() && *pin_memory) {
+        opts = opts.pinned_memory(true);
+    }
+    return opts;
 }
 
 }  // anonymous namespace
@@ -101,8 +105,17 @@ struct CPUCreationOperator {
 
 // StochasticCreationTraits must provide:
 //   - static std::vector<int64_t> output_shape(params...);
-//   - template<typename scalar_t, typename RNG>
-//     static void kernel(scalar_t* out, int64_t numel, RNG* rng, params...);
+//   - template<typename scalar_t>
+//     static void kernel(
+//         scalar_t* out, int64_t numel,
+//         c10::optional<at::Generator> generator, params...);
+//
+// Note [Generator type]: at::Tensor::normal_, at::randn, etc. take
+// c10::optional<at::Generator>, not a raw CPUGeneratorImpl*. That optional is the
+// same handle the dispatcher passes into forward(); it already wraps the CPU impl
+// when you pass torch.Generator on CPU. We intentionally do not call
+// get_generator_or_default here while holding CPUGeneratorImpl::mutex_: normal_
+// acquires that lock internally, and holding it here would deadlock.
 
 template<typename CreationTraits>
 struct CPUStochasticCreationOperator {
@@ -113,22 +126,18 @@ struct CPUStochasticCreationOperator {
         const c10::optional<at::ScalarType>& dtype,
         const c10::optional<at::Layout>& layout,
         const c10::optional<at::Device>& device,
-        bool requires_grad
+        bool requires_grad,
+        c10::optional<bool> pin_memory
     ) {
         std::vector<int64_t> shape_vec = CreationTraits::output_shape(args...);
         check_size_nonnegative(shape_vec, "stochastic_creation_op");
 
-        auto options = build_options(dtype, layout, device, at::kCPU);
+        auto options = build_options(dtype, layout, device, at::kCPU, pin_memory);
         int64_t numel = compute_numel(shape_vec);
 
         at::Tensor output = at::empty(shape_vec, options);
 
         if (numel > 0) {
-            auto gen = at::get_generator_or_default<at::CPUGeneratorImpl>(
-                generator, at::detail::getDefaultCPUGenerator()
-            );
-            std::lock_guard<std::mutex> lock(gen->mutex_);
-
             AT_DISPATCH_FLOATING_TYPES_AND2(
                 at::kBFloat16,
                 at::kHalf,
@@ -138,7 +147,7 @@ struct CPUStochasticCreationOperator {
                     CreationTraits::template kernel<scalar_t>(
                         output.data_ptr<scalar_t>(),
                         numel,
-                        gen,
+                        generator,
                         args...
                     );
                 }

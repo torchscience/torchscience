@@ -1,0 +1,110 @@
+import pytest
+import torch
+import torch.testing
+
+import torchscience.noise
+from torchscience.testing import (
+    CreationOpDescriptor,
+    CreationOpTestCase,
+    CreationOpToleranceConfig,
+)
+
+
+def reference_pink_noise(size: int, *, dtype=torch.float64, generator=None) -> torch.Tensor:
+    """Reference pipeline (float64 FFT) for stochastic comparison with a fixed generator."""
+    if generator is None:
+        g = torch.Generator(device="cpu")
+        g.manual_seed(12345)
+    else:
+        g = generator
+
+    white = torch.randn(size, dtype=torch.float64, generator=g)
+    spec = torch.fft.rfft(white)
+    freqs = torch.fft.rfftfreq(size, d=1.0, dtype=torch.float64, device=white.device)
+    scales = torch.maximum(freqs.abs().sqrt(), torch.tensor(1e-6, dtype=torch.float64))
+    filtered = spec / scales
+    pink = torch.fft.irfft(filtered, n=size)
+    mx = pink.abs().max().clamp_min(1e-12)
+    pink = pink / mx
+    return pink.to(dtype)
+
+
+class TestPinkNoise(CreationOpTestCase):
+    @property
+    def descriptor(self) -> CreationOpDescriptor:
+        return CreationOpDescriptor(
+            name="pink_noise",
+            func=torchscience.noise.pink_noise,
+            supported_dtypes=[
+                torch.float16,
+                torch.bfloat16,
+                torch.float32,
+                torch.float64,
+            ],
+            tolerances=CreationOpToleranceConfig(
+                float32_rtol=1e-4,
+                float32_atol=1e-4,
+                float64_rtol=1e-5,
+                float64_atol=1e-5,
+            ),
+            skip_tests={
+                # Stochastic: compared under fixed generator in custom tests below.
+                "test_reference_implementation",
+                "test_torch_compile",
+                # Only CPU and meta kernels exist; anchor-based dispatch errors on CUDA/MPS.
+                "test_cuda_device",
+                "test_dtype_device_combinations",
+            },
+            supports_meta=True,
+            reference_func=None,
+        )
+
+    def test_matches_reference_with_generator(self):
+        """Same CPU generator state should match the reference FFT pipeline."""
+        size = 64
+        gen = torch.Generator(device="cpu").manual_seed(12345)
+        result = torchscience.noise.pink_noise(size, dtype=torch.float64, generator=gen)
+        gen2 = torch.Generator(device="cpu").manual_seed(12345)
+        expected = reference_pink_noise(size, dtype=torch.float64, generator=gen2)
+        torch.testing.assert_close(result, expected, rtol=1e-5, atol=1e-5)
+
+    def test_reproducibility(self):
+        a = torchscience.noise.pink_noise(
+            100, generator=torch.Generator(device="cpu").manual_seed(0)
+        )
+        b = torchscience.noise.pink_noise(
+            100, generator=torch.Generator(device="cpu").manual_seed(0)
+        )
+        torch.testing.assert_close(a, b)
+
+    def test_different_generators_differ(self):
+        a = torchscience.noise.pink_noise(200, generator=torch.Generator(device="cpu").manual_seed(1))
+        b = torchscience.noise.pink_noise(200, generator=torch.Generator(device="cpu").manual_seed(2))
+        assert not torch.allclose(a, b)
+
+    def test_out_not_supported(self):
+        buf = torch.empty(5)
+        with pytest.raises(NotImplementedError):
+            torchscience.noise.pink_noise(5, out=buf)
+
+    def test_non_contiguous_memory_format_rejected(self):
+        with pytest.raises(ValueError, match="contiguous"):
+            torchscience.noise.pink_noise(5, memory_format=torch.channels_last)
+
+    def test_power_density_is_inversely_proportional_to_frequency(self):
+        # Pink noise PSD ~ 1/f => |X(f)|^2 ~ 1/f => log|X|^2 vs log f slope ~ -1.
+        size = 4096
+        noise = torchscience.noise.pink_noise(size, dtype=torch.float64)
+        spec = torch.fft.rfft(noise)
+        freqs = torch.fft.rfftfreq(size, d=1.0, dtype=torch.float64, device=noise.device)
+        mask = (freqs > 0) & (freqs < 0.45)
+        power = (spec.abs()[mask] ** 2).clamp_min(1e-30)
+        f = freqs[mask].abs().clamp_min(1e-30)
+        log_f = torch.log(f)
+        log_p = torch.log(power)
+        mean_log_f = log_f.mean()
+        mean_log_p = log_p.mean()
+        slope = ((log_f * log_p).mean() - mean_log_f * mean_log_p) / (
+            (log_f * log_f).mean() - mean_log_f * mean_log_f
+        )
+        assert -1.6 < slope < -0.25

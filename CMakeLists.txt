@@ -34,6 +34,7 @@ include(cmake/backend_detection.cmake)
 set(TORCHSCIENCE_SOURCES
   src/torchscience/csrc/torchscience.cpp
   src/torchscience/csrc/special_functions.cpp
+  src/torchscience/csrc/noise.cpp
 )
 
 # Create library target
