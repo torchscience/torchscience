@@ -46,6 +46,7 @@
 .streamlit/secrets.toml
 .tox/
 .venv
+.vscode/
 .webassets-cache
 .worktrees/
 /site
