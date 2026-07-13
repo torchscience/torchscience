@@ -14,6 +14,7 @@ concurrency:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
@@ -25,6 +26,7 @@ jobs:
   test-cpu:
     needs: [lint]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -95,34 +97,26 @@ jobs:
         run: uv pip install --no-build-isolation -e .
 
       - name: Run tests
-        run: uv run --no-sync pytest tests/ -v --tb=short
+        run: uv run --no-sync pytest tests/ -v --tb=short --timeout=300
 
   test-cuda:
     needs: [lint]
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
+        # The org only provides a Linux GPU hosted runner
+        # (torchscience-linux-cuda); there is no Windows GPU runner, so
+        # windows-cuda entries would queue for 24 h and get cancelled.
         runner: [torchscience-linux-cuda]
         python-version: ["3.12", "3.13"]
         torch-version: [latest]
         include:
-          - runner: torchscience-windows-cuda
-            python-version: "3.12"
-            torch-version: latest
-          - runner: torchscience-windows-cuda
-            python-version: "3.13"
-            torch-version: latest
           - runner: torchscience-linux-cuda
             python-version: "3.13"
             torch-version: "2.9.1"
           - runner: torchscience-linux-cuda
-            python-version: "3.13"
-            torch-version: "2.10"
-          - runner: torchscience-windows-cuda
-            python-version: "3.13"
-            torch-version: "2.9.1"
-          - runner: torchscience-windows-cuda
             python-version: "3.13"
             torch-version: "2.10"
         exclude:
@@ -241,11 +235,12 @@ jobs:
 
       - name: Run CUDA tests
         if: success() || failure()
-        run: uv run --no-sync pytest tests/ -v --tb=short -k "cuda or gpu"
+        run: uv run --no-sync pytest tests/ -v --tb=short --timeout=300 -k "cuda or gpu"
 
   build-check:
     needs: [lint]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
