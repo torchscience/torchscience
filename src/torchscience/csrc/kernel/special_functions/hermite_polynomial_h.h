@@ -23,7 +23,7 @@ template <typename T>
 struct hermite_is_complex_type<c10::complex<T>> : std::true_type {};
 
 template <typename T>
-C10_HOST_DEVICE inline constexpr bool hermite_is_complex_v = hermite_is_complex_type<T>::value;
+inline constexpr bool hermite_is_complex_v = hermite_is_complex_type<T>::value;
 
 template <typename T>
 struct hermite_real_type { using type = T; };
@@ -35,7 +35,7 @@ template <typename T>
 struct hermite_real_type<c10::complex<T>> { using type = T; };
 
 template <typename T>
-C10_HOST_DEVICE using hermite_real_type_t = typename hermite_real_type<T>::type;
+using hermite_real_type_t = typename hermite_real_type<T>::type;
 
 template <typename T>
 C10_HOST_DEVICE constexpr auto hermite_epsilon() {

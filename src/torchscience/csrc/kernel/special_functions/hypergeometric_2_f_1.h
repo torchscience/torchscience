@@ -21,7 +21,7 @@ template <typename T>
 struct is_complex_type<c10::complex<T>> : std::true_type {};
 
 template <typename T>
-C10_HOST_DEVICE inline constexpr bool is_complex_v = is_complex_type<T>::value;
+inline constexpr bool is_complex_v = is_complex_type<T>::value;
 
 template <typename T>
 struct real_type { using type = T; };
@@ -33,7 +33,7 @@ template <typename T>
 struct real_type<c10::complex<T>> { using type = T; };
 
 template <typename T>
-C10_HOST_DEVICE using real_type_t = typename real_type<T>::type;
+using real_type_t = typename real_type<T>::type;
 
 template <typename T>
 C10_HOST_DEVICE constexpr auto hyp2f1_epsilon() {
